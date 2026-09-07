@@ -38,6 +38,10 @@ const QA: { q: string; a: string }[] = [
     q: "Can I cancel anytime?",
     a: "The free plan needs no card at all, so there is nothing to cancel. Paid plans are monthly.",
   },
+  {
+    q: "Who makes Trove?",
+    a: "A small studio. There is no sales team and no invented customer logos. Write to official@troveai.site — a person reads that inbox.",
+  },
 ];
 
 export function Faq() {

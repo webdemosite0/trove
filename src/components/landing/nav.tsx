@@ -32,6 +32,7 @@ const LINKS = [
   { href: "/features/ai-agents", label: "Agents" },
   { href: "/features/documents-and-spreadsheets", label: "Files" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
   { href: "/#faq", label: "FAQ" },
 ];
 

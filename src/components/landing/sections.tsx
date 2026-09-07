@@ -248,7 +248,7 @@ export function PricingPreview({
               <p className="mt-3 text-[13px] leading-relaxed text-ink-4">{p.blurb}</p>
 
               <Link
-                href={p.price === 0 ? "/chat" : "/plans"}
+                href={p.price === 0 ? "/chat" : "/pricing"}
                 className={cn(
                   "mt-6 flex h-11 items-center justify-center rounded-[var(--r-control)] text-[14px] font-medium",
                   i === 1
@@ -263,7 +263,7 @@ export function PricingPreview({
         </div>
 
         <p className="mt-6 text-center text-[13px] text-ink-4">
-          <Link href="/plans" className="text-accent hover:underline">
+          <Link href="/pricing" className="text-accent hover:underline">
             Compare every plan
           </Link>
         </p>
@@ -311,10 +311,10 @@ export function FinalCta() {
             />
           </Link>
           <Link
-            href="/plans"
+            href="/pricing"
             className="flex h-[52px] items-center rounded-[var(--r-panel)] border border-line-strong px-7 text-[15px] font-medium text-ink transition-colors hover:bg-hover"
           >
-            Explore Trove
+            See pricing
           </Link>
         </div>
 

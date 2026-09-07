@@ -20,6 +20,9 @@ import {
 } from "@/components/landing/workspace-and-steps";
 import { Testimonials } from "@/components/landing/testimonials";
 import { Faq } from "@/components/landing/faq";
+import { ProofBar } from "@/components/landing/proof-bar";
+import { Studio } from "@/components/landing/studio";
+import { About } from "@/components/landing/about";
 import { PLANS } from "@/lib/credits";
 
 
@@ -54,6 +57,8 @@ export default async function Landing() {
       <main>
         <Hero freeCredits={free.monthly} />
 
+        <ProofBar />
+
         <CapabilityStrip />
 
         <div id="capabilities">
@@ -71,8 +76,10 @@ export default async function Landing() {
         </div>
 
         <HowItWorks />
+        <Studio />
         <UseCases />
         <WhyTrust />
+        <About />
 
         {/* No real customers yet, so this renders nothing rather than showing
             invented quotes. See components/landing/testimonials.tsx. */}

@@ -16,7 +16,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 
 /** Reachable without an account. Everything else needs one. */
-const PUBLIC_PAGES = new Set(["/", "/login", "/signup", "/pricing"]);
+const PUBLIC_PAGES = new Set(["/", "/login", "/signup", "/pricing", "/about"]);
 
 const PUBLIC_PREFIXES = [
   "/features/", // the public capability pages — the only indexable content
