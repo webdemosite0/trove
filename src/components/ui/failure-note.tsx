@@ -10,7 +10,7 @@ import {
   FiRefreshCw,
   FiWifiOff,
   FiZap,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { classify, providerAttempts, type FailureKind } from "@/lib/failure";
 import { cn } from "@/lib/utils";

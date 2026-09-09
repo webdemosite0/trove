@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FiArrowRight, FiCheck } from "react-icons/fi";
+import { FiArrowRight, FiCheck } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { cn } from "@/lib/utils";
 

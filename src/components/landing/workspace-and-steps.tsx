@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { FiArrowRight, FiCheck, FiMessageSquare } from "react-icons/fi";
-import { TbSettings2, TbCircleCheck, TbLock, TbDownload, TbCurrencyDollarOff } from "react-icons/tb";
+import { FiArrowRight, FiCheck, FiMessageSquare, TbSettings2, TbCircleCheck, TbLock, TbDownload, TbCurrencyDollarOff } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 
 /* ------------------------------------------------------------------ */

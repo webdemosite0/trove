@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FiMoreHorizontal, FiEdit2, FiTrash2, FiLoader } from "react-icons/fi";
+import { FiMoreHorizontal, FiEdit2, FiTrash2, FiLoader } from "@/components/ui/icons";
 
 import { deleteSaved, renameSaved } from "@/app/actions/library";
 import { Ico } from "@/components/ui/ico";

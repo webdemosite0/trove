@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FiCopy, FiCheck, FiDownload, FiTerminal } from "react-icons/fi";
+import { FiCopy, FiCheck, FiDownload, FiTerminal } from "@/components/ui/icons";
 import type { Target } from "@/lib/targets";
 import { cn } from "@/lib/utils";
 

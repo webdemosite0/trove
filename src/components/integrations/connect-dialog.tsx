@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiX, FiExternalLink, FiLock, FiLoader, FiAlertCircle } from "react-icons/fi";
+import { FiX, FiExternalLink, FiLock, FiLoader, FiAlertCircle } from "@/components/ui/icons";
 import { connect, type ConnectState } from "@/app/actions/connections";
 import { Ico } from "@/components/ui/ico";
 

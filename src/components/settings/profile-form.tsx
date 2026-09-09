@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { FiCheck, FiLoader } from "react-icons/fi";
+import { FiCheck, FiLoader } from "@/components/ui/icons";
 
 import { updateProfile, type Profile, type ProfileState } from "@/app/actions/profile";
 import { Panel, fieldClass } from "@/components/settings/panel";

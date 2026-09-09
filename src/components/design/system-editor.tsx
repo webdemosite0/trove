@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FiCheck, FiCopy, FiDownload, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiCopy, FiDownload, FiPlus, FiTrash2 } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
 import {
   parseDesign,

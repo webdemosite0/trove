@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { FiZap, FiGlobe, FiLink, FiArrowRight } from "react-icons/fi";
-import { HiOutlineSparkles } from "react-icons/hi2";
+import { FiZap, FiGlobe, FiLink, FiArrowRight, HiOutlineSparkles } from "@/components/ui/icons";
 import { currentUser } from "@/lib/auth";
 import { one, num } from "@/lib/db";
 import { Bot } from "@/components/agents/bot";

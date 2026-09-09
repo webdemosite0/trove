@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FiArrowRight, FiCheck } from "react-icons/fi";
+import { FiArrowRight, FiCheck } from "@/components/ui/icons";
 
 import { FEATURES, featureBySlug } from "@/lib/features";
 import { site } from "@/lib/site";

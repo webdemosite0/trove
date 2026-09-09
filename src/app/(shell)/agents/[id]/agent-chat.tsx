@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus } from "react-icons/fi";
+import { FiArrowLeft, FiPlus } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";

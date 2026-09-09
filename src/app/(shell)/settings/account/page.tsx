@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FiLogOut, FiCheck, FiAlertCircle } from "react-icons/fi";
+import { FiLogOut, FiCheck, FiAlertCircle } from "@/components/ui/icons";
 
 import { logOut } from "@/app/actions/auth";
 import { getProfile } from "@/app/actions/profile";

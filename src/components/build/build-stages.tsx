@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { cn } from "@/lib/utils";
 

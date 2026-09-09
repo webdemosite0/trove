@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { TbRobot, TbWorld, TbUsers, TbCode, TbFileText, TbTable } from "react-icons/tb";
+import { TbRobot, TbWorld, TbUsers, TbCode, TbFileText, TbTable } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 
 const ITEMS: {

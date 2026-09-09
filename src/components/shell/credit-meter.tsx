@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiArrowRight, FiLoader } from "react-icons/fi";
+import { FiArrowRight, FiLoader } from "@/components/ui/icons";
 import type { Balance, UsageRow } from "@/lib/credits";
 import { kindLabel } from "@/lib/kind-label";
 import { cn } from "@/lib/utils";

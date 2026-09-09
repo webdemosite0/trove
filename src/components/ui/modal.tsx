@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { FiX } from "react-icons/fi";
+import { FiX } from "@/components/ui/icons";
 import { useMounted } from "@/lib/use-mounted";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";

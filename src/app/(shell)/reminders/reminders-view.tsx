@@ -18,7 +18,7 @@ import {
   FiClock,
   FiAlertCircle,
   FiX,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import {
   createReminder,

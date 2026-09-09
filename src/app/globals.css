@@ -1121,6 +1121,10 @@ select:focus-visible,
   display: inline-flex;
   transform-origin: center;
 }
+.ico svg {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* Layer promotion only while something is actually animating. */
 .group:hover .ico,

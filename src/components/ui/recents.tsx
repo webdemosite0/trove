@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FiClock, FiCornerUpLeft } from "react-icons/fi";
+import { FiClock, FiCornerUpLeft } from "@/components/ui/icons";
 import type { Recent } from "@/lib/recents";
 import { SavedMenu } from "@/components/ui/saved-menu";
 import { cn } from "@/lib/utils";

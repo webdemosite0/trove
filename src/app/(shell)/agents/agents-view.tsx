@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiTrash2, FiAlertCircle, FiLoader } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiAlertCircle, FiLoader } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import {
   createAgent,

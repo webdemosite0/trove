@@ -1,4 +1,4 @@
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 /**
@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
  * variety — a bell rings, a globe spins, a table pops into its grid.
  */
 export type Motion =
-  // movement
   | "spin"
   | "ring"
   | "tilt"
@@ -15,7 +14,6 @@ export type Motion =
   | "pop"
   | "hue"
   | "shake"
-  // direction — where the thing goes
   | "nudge"
   | "back"
   | "down"
@@ -23,7 +21,6 @@ export type Motion =
   | "exit"
   | "launch"
   | "panel"
-  // action — what the thing does
   | "open"
   | "close"
   | "copy"
@@ -40,12 +37,10 @@ export type Motion =
   | "sparkle";
 
 /**
- * Wraps a react-icon so it animates.
+ * Grok-smooth lucide glyph with the existing motion classes.
  *
- * By default motion plays on hover of the nearest `.group` ancestor, which
- * keeps a screen still until the user points at something. `live` loops it
- * (for genuinely ongoing states) and `active` adds the gentle current-page
- * bob. All of it is disabled under prefers-reduced-motion.
+ * Stroke is 1.5 with round caps — the same weight Grok uses — so every
+ * page reads as one icon family instead of Feather + Tabler mixed.
  */
 export function Ico({
   icon: Icon,
@@ -78,7 +73,7 @@ export function Ico({
       style={style}
       title={title}
     >
-      <Icon size={size} />
+      <Icon size={size} strokeWidth={1.5} absoluteStrokeWidth={false} />
     </span>
   );
 }

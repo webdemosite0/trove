@@ -1,17 +1,4 @@
-import {
-  TbWorld,
-  TbRobot,
-  TbCode,
-  TbFileText,
-  TbTable,
-  TbLayoutDashboard,
-  TbSearch,
-  TbBell,
-  TbFolder,
-  TbActivity,
-  TbPlus,
-} from "react-icons/tb";
-import { FiArrowUp, FiPaperclip, FiMic } from "react-icons/fi";
+import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbLayoutDashboard, TbSearch, TbBell, TbFolder, TbActivity, TbPlus, FiArrowUp, FiPaperclip, FiMic } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 
 /**

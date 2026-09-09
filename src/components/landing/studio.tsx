@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FiArrowRight } from "react-icons/fi";
+import { FiArrowRight } from "@/components/ui/icons";
 import { SectionHead } from "@/components/landing/sections";
 import { cn } from "@/lib/utils";
 

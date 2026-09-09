@@ -3,23 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
-import {
-  FiArrowLeft,
-  FiDownload,
-  FiExternalLink,
-  FiMonitor,
-  FiSmartphone,
-  FiTablet,
-  FiRefreshCw,
-  FiCheck,
-  FiChevronDown,
-  FiCopy,
-  FiRotateCcw,
-  FiFile,
-  FiZap,
-  FiLayers,
-} from "react-icons/fi";
-import { TbWorld, TbPuzzle, TbTerminal2, TbCode, TbFiles } from "react-icons/tb";
+import { FiArrowLeft, FiDownload, FiExternalLink, FiMonitor, FiSmartphone, FiTablet, FiRefreshCw, FiCheck, FiChevronDown, FiCopy, FiRotateCcw, FiFile, FiZap, FiLayers, TbWorld, TbPuzzle, TbTerminal2, TbCode, TbFiles, TbSparkles } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
 import { TroveOrb } from "@/components/brand/orb";
@@ -56,7 +40,7 @@ const IDEAS = [
   "A portfolio for a freelance motion designer",
 ];
 
-const QUICK_EDITS = ["Add dark mode", "Add a search bar", "Make it feel more premium"];
+const QUICK_EDITS = ["Add dark mode", "Tighten the hero", "Add a contact form", "Make it feel more premium"];
 
 const DEVICE = {
   desktop: { w: "100%", icon: FiMonitor, label: "Desktop" },
@@ -368,7 +352,7 @@ export function BuilderView({ mobile = false }: { mobile?: boolean }) {
     if (!plan || busy) return;
     setPhase("building");
     setError(null);
-    setPane("console");
+    setPane("preview");
     setHalf("build");
     log(`building ${plan.title} — ${plan.steps.length} steps`);
 
@@ -418,7 +402,7 @@ export function BuilderView({ mobile = false }: { mobile?: boolean }) {
 
   const edit = useCallback(
     async (text: string, attach?: Attachment[]) => {
-      if (!text.trim() || busy || !plan) return;
+      if (!text.trim() || busy || !files.length) return;
       setError(null);
       setPhase("building");
       log(`edit — ${text.slice(0, 60)}`);
@@ -432,7 +416,7 @@ export function BuilderView({ mobile = false }: { mobile?: boolean }) {
             skills: [],
             files: [],
           },
-          styleBrief(plan),
+          plan ? styleBrief(plan) : "Keep the existing visual language. Touch only files that need to change.",
           files,
           { index: 0, total: 1 },
           attach,
@@ -493,29 +477,24 @@ export function BuilderView({ mobile = false }: { mobile?: boolean }) {
   if (phase === "idle") {
     return (
       <div className="relative flex min-h-screen flex-col">
-        {/* The only way out.
-
-            The studio has no rail and no tab bar by design, so without this the
-            idle screen is a dead end — on a phone especially, where there is no
-            sidebar to fall back on. The workspace header carries the same link
-            once a project exists. */}
         <Link
           href="/chat"
-          className="group absolute left-3 top-3 z-10 flex items-center gap-2 rounded-[var(--r-control)] px-2 py-1.5 text-[13px] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+          className="group absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[13px] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
         >
           <Ico icon={FiArrowLeft} motion="back" size={15} />
           Trove
         </Link>
 
-        <div className="nx-in mx-auto flex w-full max-w-[720px] flex-1 flex-col justify-center px-5 py-16">
-        <div className="mb-7 text-center">
-          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[var(--r-panel)] bg-accent/15 text-accent">
-            <Ico icon={TbWorld} motion="spin" size={26} />
+        <div className="nx-in mx-auto flex w-full max-w-[680px] flex-1 flex-col justify-center px-5 py-16">
+        <div className="mb-8 text-center">
+          <span className="mx-auto mb-5 grid h-12 w-12 place-items-center text-ink">
+            <Ico icon={TbSparkles} motion="sparkle" size={28} />
           </span>
-          <h1 className="text-[27px] font-semibold text-ink">Website Builder</h1>
-          <p className="mt-1.5 text-[14.5px] text-ink-3">
-            Describe a site. It asks a couple of questions, plans it, then builds
-            it step by step.
+          <h1 className="text-[clamp(1.75rem,1.2rem+2vw,2.35rem)] font-semibold tracking-[-0.03em] text-ink">
+            What should we build?
+          </h1>
+          <p className="mx-auto mt-2 max-w-[42ch] text-[15px] leading-relaxed text-ink-3">
+            Describe a site in plain language. Trove writes the files, shows a live preview, and keeps editing it with you.
           </p>
         </div>
 
@@ -831,7 +810,7 @@ export function BuilderView({ mobile = false }: { mobile?: boolean }) {
           </div>
 
           <div className="shrink-0 border-t border-line p-3">
-            {phase === "ready" ? (
+            {files.length ? (
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {QUICK_EDITS.map((q) => (
                   <button
@@ -859,13 +838,13 @@ export function BuilderView({ mobile = false }: { mobile?: boolean }) {
 
             {mobile ? (
               <MobileComposer
-                onSend={phase === "ready" ? edit : ask}
-                placeholder={phase === "ready" ? "Describe a change…" : "Build a website for…"}
+                onSend={files.length ? edit : ask}
+                placeholder={files.length ? "Ask Trove to change anything on the site…" : "Describe the site…"}
               />
             ) : (
               <Composer
-                onSend={phase === "ready" ? edit : ask}
-                placeholder={phase === "ready" ? "Describe a change…" : "Build a website for…"}
+                onSend={files.length ? edit : ask}
+                placeholder={files.length ? "Ask Trove to change anything on the site…" : "Describe the site…"}
               />
             )}
 

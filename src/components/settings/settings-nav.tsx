@@ -2,17 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { IconType } from "react-icons";
-import {
-  FiUser,
-  FiShield,
-  FiCreditCard,
-  FiActivity,
-  FiUsers,
-  FiGrid,
-  FiSun,
-} from "react-icons/fi";
-
+import type { IconType } from "@/components/ui/icons";
+import { FiUser, FiShield, FiCreditCard, FiActivity, FiUsers, FiGrid, FiSun } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 interface Section {

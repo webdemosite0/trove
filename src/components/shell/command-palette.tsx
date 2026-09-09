@@ -2,24 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  TbWorld,
-  TbRobot,
-  TbCode,
-  TbFileText,
-  TbTable,
-  TbSearch,
-  TbPresentation,
-  TbPalette,
-  TbUsers,
-  TbMessageCircle,
-  TbLayoutDashboard,
-  TbBell,
-  TbPlugConnected,
-  TbSettings,
-  TbCreditCard,
-} from "react-icons/tb";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
+import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbSearch, TbPresentation, TbPalette, TbUsers, TbMessageCircle, TbLayoutDashboard, TbBell, TbPlugConnected, TbSettings, TbCreditCard } from "@/components/ui/icons";
 import Link from "next/link";
 import type { Recent } from "@/lib/recents";
 import { cn } from "@/lib/utils";

@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
-import { FiAlertCircle, FiCheck, FiLoader } from "react-icons/fi";
+import { FiAlertCircle, FiCheck, FiLoader } from "@/components/ui/icons";
 import { logIn, signUp, type AuthState } from "@/app/actions/auth";
 import { TroveOrb } from "@/components/brand/orb";
 import { Ico } from "@/components/ui/ico";

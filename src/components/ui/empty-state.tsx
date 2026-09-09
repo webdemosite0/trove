@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 /**

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FiArrowRight, FiMenu, FiX } from "react-icons/fi";
+import { FiArrowRight, FiMenu, FiX } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";

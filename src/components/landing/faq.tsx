@@ -1,4 +1,4 @@
-import { FiPlus } from "react-icons/fi";
+import { FiPlus } from "@/components/ui/icons";
 import { SectionHead } from "@/components/landing/sections";
 
 /**

@@ -3,34 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { IconType } from "react-icons";
-import {
-  FiPlus,
-  FiSidebar,
-  FiX,
-  FiUser,
-  FiLogOut,
-  FiChevronRight,
-  FiSettings,
-  FiCreditCard,
-  FiActivity,
-} from "react-icons/fi";
-import {
-  TbBell,
-  TbUsers,
-  TbRobot,
-  TbWorld,
-  TbLayoutDashboard,
-  TbFileText,
-  TbTable,
-  TbPresentation,
-  TbPalette,
-  TbCode,
-  TbSearch,
-  TbMessageCircle,
-  TbPlugConnected,
-  TbRefreshDot,
-} from "react-icons/tb";
+import type { IconType } from "@/components/ui/icons";
+import { FiPlus, FiSidebar, FiX, FiUser, FiLogOut, FiChevronRight, FiSettings, FiCreditCard, FiActivity, TbBell, TbUsers, TbRobot, TbWorld, TbLayoutDashboard, TbFileText, TbTable, TbPresentation, TbPalette, TbCode, TbSearch, TbMessageCircle, TbPlugConnected, TbRefreshDot } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { logOut } from "@/app/actions/auth";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FiArrowRight } from "react-icons/fi";
+import { FiArrowRight } from "@/components/ui/icons";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {

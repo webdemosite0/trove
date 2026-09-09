@@ -1,19 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import {
-  TbWorld,
-  TbRobot,
-  TbCode,
-  TbFileText,
-  TbTable,
-  TbSearch,
-  TbPresentation,
-  TbPalette,
-  TbUsers,
-  TbMessageCircle,
-} from "react-icons/tb";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
+import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbSearch, TbPresentation, TbPalette, TbUsers, TbMessageCircle } from "@/components/ui/icons";
 import type { Recent, RecentKind } from "@/lib/recents";
 import { relativeTime } from "@/lib/time";
 import { TroveOrb } from "@/components/brand/orb";

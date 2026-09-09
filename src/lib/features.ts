@@ -1,16 +1,5 @@
-import type { IconType } from "react-icons";
-import {
-  TbWorld,
-  TbRobot,
-  TbMicroscope,
-  TbFileText,
-  TbTable,
-  TbPresentation,
-  TbUsers,
-  TbCode,
-  TbPalette,
-} from "react-icons/tb";
-
+import type { IconType } from "@/components/ui/icons";
+import { TbWorld, TbRobot, TbMicroscope, TbFileText, TbTable, TbPresentation, TbUsers, TbCode, TbPalette } from "@/components/ui/icons";
 export interface FeatureSection {
   heading: string;
   body: string;

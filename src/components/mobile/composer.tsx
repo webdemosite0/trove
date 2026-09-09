@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FiArrowUp, FiPlus, FiX } from "react-icons/fi";
+import { FiArrowUp, FiPlus, FiX } from "@/components/ui/icons";
 import {
   MAX_FILES,
   MAX_FILE_BYTES,

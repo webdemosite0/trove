@@ -8,7 +8,7 @@ import {
   FiCopy,
   FiCheck,
   FiPrinter,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FiFileText, FiDatabase, FiCheck } from "react-icons/fi";
-import { TbPalette } from "react-icons/tb";
+import { FiFileText, FiDatabase, FiCheck, TbPalette } from "@/components/ui/icons";
 import type { BuildPlan } from "@/lib/builder";
 import { skillLabel } from "@/lib/skills";
 import { cn } from "@/lib/utils";

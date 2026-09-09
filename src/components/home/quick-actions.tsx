@@ -3,15 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  TbWorld,
-  TbRobot,
-  TbCode,
-  TbFileText,
-  TbTable,
-  TbSearch,
-} from "react-icons/tb";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
+import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbSearch } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 interface Action {

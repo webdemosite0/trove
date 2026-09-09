@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FiArrowRight, FiSkipForward } from "react-icons/fi";
+import { FiArrowRight, FiSkipForward } from "@/components/ui/icons";
 import type { Question } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 

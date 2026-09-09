@@ -2,17 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  TbWorld,
-  TbRobot,
-  TbFileText,
-  TbTable,
-  TbPresentation,
-  TbPalette,
-  TbCode,
-  TbSearch,
-} from "react-icons/tb";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
+import { TbWorld, TbRobot, TbFileText, TbTable, TbPresentation, TbPalette, TbCode, TbSearch } from "@/components/ui/icons";
 import { Message } from "@/components/chat/message";
 import { MobileComposer } from "@/components/mobile/composer";
 import { Wordmark } from "@/components/brand/logo";

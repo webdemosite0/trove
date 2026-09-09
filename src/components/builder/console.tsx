@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { FiTrash2 } from "react-icons/fi";
+import { FiTrash2 } from "@/components/ui/icons";
 import type { LogLine } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 

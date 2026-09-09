@@ -6,7 +6,7 @@ import {
   FiCheck,
   FiPlus,
   FiLock,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
 import { CATEGORIES, SERVICES, type Category } from "@/lib/services";

@@ -7,17 +7,8 @@ import { SystemEditor } from "@/components/design/system-editor";
 import { localTimeZone } from "@/lib/context";
 import { FailureNote } from "@/components/ui/failure-note";
 import { useEffect, useRef, useState } from "react";
-import type { IconType } from "react-icons";
-import {
-  FiCopy,
-  FiCheck,
-  FiRotateCcw,
-  FiFileText,
-  FiGrid,
-  FiCode,
-} from "react-icons/fi";
-import { TbMicroscope, TbPresentation } from "react-icons/tb";
-import { HiOutlineCube } from "react-icons/hi2";
+import type { IconType } from "@/components/ui/icons";
+import { FiCopy, FiCheck, FiRotateCcw, FiFileText, FiGrid, FiCode, TbMicroscope, TbPresentation, HiOutlineCube } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { Message } from "@/components/chat/message";
 import { Bot } from "@/components/agents/bot";

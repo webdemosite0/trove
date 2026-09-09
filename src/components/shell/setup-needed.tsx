@@ -1,4 +1,4 @@
-import { FiDatabase, FiExternalLink } from "react-icons/fi";
+import { FiDatabase, FiExternalLink } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
 
 /**

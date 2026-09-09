@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { IconType } from "react-icons";
-import { FiPlus } from "react-icons/fi";
-import { TbPhoto, TbFileText, TbFileCode, TbPaperclip } from "react-icons/tb";
+import type { IconType } from "@/components/ui/icons";
+import { FiPlus, TbPhoto, TbFileText, TbFileCode, TbPaperclip } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 

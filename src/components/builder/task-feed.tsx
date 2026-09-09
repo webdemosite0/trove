@@ -1,16 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  FiFolder,
-  FiFileText,
-  FiCheck,
-  FiChevronDown,
-  FiAlertCircle,
-  FiCalendar,
-} from "react-icons/fi";
-import { TbPuzzle, TbTerminal2 } from "react-icons/tb";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
+import { FiFolder, FiFileText, FiCheck, FiChevronDown, FiAlertCircle, FiCalendar, TbPuzzle, TbTerminal2 } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import type { Task, TaskKind } from "@/lib/builder";
 import { cn } from "@/lib/utils";

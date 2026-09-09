@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { FiDownload, FiExternalLink, FiLoader, FiRotateCcw } from "react-icons/fi";
-import { HiOutlineCube } from "react-icons/hi2";
+import { FiDownload, FiExternalLink, FiLoader, FiRotateCcw, HiOutlineCube } from "@/components/ui/icons";
 import { BriefForm } from "@/components/design/brief-form";
 import { FailureNote } from "@/components/ui/failure-note";
 import { Ico } from "@/components/ui/ico";

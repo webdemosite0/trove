@@ -2,14 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { IconType } from "react-icons";
-import { FiArrowRight } from "react-icons/fi";
-import {
-  TbLayoutGrid,
-  TbWorld,
-  TbFileText,
-  TbRobot,
-} from "react-icons/tb";
+import type { IconType } from "@/components/ui/icons";
+import { FiArrowRight, TbLayoutGrid, TbWorld, TbFileText, TbRobot } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 

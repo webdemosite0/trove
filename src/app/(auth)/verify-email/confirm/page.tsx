@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FiAlertCircle } from "react-icons/fi";
+import { FiAlertCircle } from "@/components/ui/icons";
 import { consumeToken, markVerified } from "@/lib/auth";
 import { TroveOrb } from "@/components/brand/orb";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { FiMonitor, FiMoon, FiSun } from "react-icons/fi";
+import { FiMonitor, FiMoon, FiSun } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 export type Theme = "system" | "light" | "dark";

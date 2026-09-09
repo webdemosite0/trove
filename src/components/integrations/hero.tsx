@@ -1,5 +1,5 @@
-import { TbDeviceDesktop } from "react-icons/tb";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
+import { TbDeviceDesktop } from "@/components/ui/icons";
 import {
   SiGmail,
   SiNotion,

@@ -1,4 +1,4 @@
-import { TbRefreshDot } from "react-icons/tb";
+import { TbRefreshDot } from "@/components/ui/icons";
 import { ComingSoon } from "@/components/ui/coming-soon";
 
 export const metadata = { title: "Workflows" };

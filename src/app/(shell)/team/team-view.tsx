@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FailureNote } from "@/components/ui/failure-note";
-import { FiCheck, FiCopy, FiRotateCcw, FiSquare } from "react-icons/fi";
+import { FiCheck, FiCopy, FiRotateCcw, FiSquare } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { Recents } from "@/components/ui/recents";
 import type { Recent } from "@/lib/recents";

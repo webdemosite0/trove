@@ -8,7 +8,7 @@ import {
   FiLoader,
   FiArrowUp,
   FiArrowDown,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import {
   downloadCsv,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FiArrowRight, FiCheck } from "react-icons/fi";
+import { FiArrowRight, FiCheck } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
 import {
   EMPTY_BRIEF,

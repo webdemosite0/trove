@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { FiEye, FiEyeOff, FiAlertTriangle } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiAlertTriangle } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 

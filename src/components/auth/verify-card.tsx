@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { FiAlertCircle, FiCheck, FiLoader, FiMail } from "react-icons/fi";
+import { FiAlertCircle, FiCheck, FiLoader, FiMail } from "@/components/ui/icons";
 import { logOut, resendVerification, type AuthState } from "@/app/actions/auth";
 import { TroveOrb } from "@/components/brand/orb";
 import { Ico } from "@/components/ui/ico";

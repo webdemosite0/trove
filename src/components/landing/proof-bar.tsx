@@ -1,4 +1,4 @@
-import { TbDownload, TbCreditCardOff, TbSparkles, TbFiles } from "react-icons/tb";
+import { TbDownload, TbCreditCardOff, TbSparkles, TbFiles } from "@/components/ui/icons";
 
 const STATS = [
   { icon: TbSparkles, value: "7", label: "tools in one workspace" },

@@ -9,7 +9,7 @@ import {
   FiFileText,
   FiAlertCircle,
   FiMic,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
 import { useVoice } from "@/components/chat/use-voice";
 import { ModePicker } from "@/components/chat/mode-picker";

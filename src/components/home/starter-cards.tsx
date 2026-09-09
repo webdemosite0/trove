@@ -1,8 +1,7 @@
 "use client";
 
-import { TbWorld, TbRobot, TbSearch, TbFileText } from "react-icons/tb";
-import { FiArrowRight } from "react-icons/fi";
-import type { IconType } from "react-icons";
+import type { IconType } from "@/components/ui/icons";
+import { TbWorld, TbRobot, TbSearch, TbFileText, FiArrowRight } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 /**

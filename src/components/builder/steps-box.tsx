@@ -1,6 +1,6 @@
 "use client";
 
-import { FiCheck, FiAlertCircle } from "react-icons/fi";
+import { FiCheck, FiAlertCircle } from "@/components/ui/icons";
 import type { PlanStep, Task } from "@/lib/builder";
 import { skillLabel } from "@/lib/skills";
 import { cn } from "@/lib/utils";

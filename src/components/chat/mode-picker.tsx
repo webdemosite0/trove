@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FiChevronDown, FiCheck } from "react-icons/fi";
-import type { IconType } from "react-icons";
-import { TbBolt, TbScale, TbTelescope, TbSparkles } from "react-icons/tb";
+import type { IconType } from "@/components/ui/icons";
+import { FiChevronDown, FiCheck, TbBolt, TbScale, TbTelescope, TbSparkles } from "@/components/ui/icons";
 import { MODE_LIST, MODES, type ModeId } from "@/lib/modes";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";

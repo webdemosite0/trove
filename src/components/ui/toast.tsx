@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { FiAlertTriangle, FiCheck, FiInfo, FiX } from "react-icons/fi";
+import { FiAlertTriangle, FiCheck, FiInfo, FiX } from "@/components/ui/icons";
 import { useMounted } from "@/lib/use-mounted";
 import { Ico } from "@/components/ui/ico";
 

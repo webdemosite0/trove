@@ -9,7 +9,7 @@ import {
   FiThumbsUp,
   FiThumbsDown,
   FiFile,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { humanSize, type Attachment } from "@/lib/attachments";

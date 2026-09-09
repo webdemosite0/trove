@@ -16,7 +16,7 @@ import {
   FiPlay,
   FiX,
   FiLayout,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { Composer } from "@/components/chat/composer";
 import { Recents } from "@/components/ui/recents";

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { TbSearch, TbBell, TbHelpCircle } from "react-icons/tb";
-import { FiMenu } from "react-icons/fi";
+import { TbSearch, TbBell, TbHelpCircle, FiMenu } from "@/components/ui/icons";
 import { useNav } from "@/components/shell/nav-state";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";

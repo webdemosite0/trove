@@ -11,7 +11,7 @@ import {
   FiExternalLink,
   FiLoader,
   FiZap,
-} from "react-icons/fi";
+} from "@/components/ui/icons";
 import { choosePlan } from "@/app/actions/billing";
 import { Ico } from "@/components/ui/ico";
 import { FailureNote } from "@/components/ui/failure-note";

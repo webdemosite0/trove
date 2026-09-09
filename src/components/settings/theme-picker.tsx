@@ -1,6 +1,6 @@
 "use client";
 
-import { FiCheck } from "react-icons/fi";
+import { FiCheck } from "@/components/ui/icons";
 
 import { Panel } from "@/components/settings/panel";
 import { THEME_OPTIONS, useTheme } from "@/components/shell/theme";
