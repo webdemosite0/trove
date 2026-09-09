@@ -1,4 +1,4 @@
-import type { IconType } from "@/components/ui/icons";
+import type { CSSProperties, ComponentType } from "react";
 import { TbDeviceDesktop } from "@/components/ui/icons";
 import {
   SiGmail,
@@ -25,8 +25,13 @@ import {
  * chosen for recognisability.)
  */
 
+type IntegrationIcon = ComponentType<{
+  size?: number | string;
+  style?: CSSProperties;
+}>;
+
 interface Node {
-  icon: IconType;
+  icon: IntegrationIcon;
   label: string;
   tone: string;
   /** Percentage position within the diagram box. */
@@ -52,7 +57,6 @@ export function IntegrationsHero({
 }) {
   return (
     <section className="relative overflow-hidden rounded-[var(--r-card)] border border-line bg-raised">
-      {/* A single soft light from the left, so the panel has a direction. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -76,9 +80,7 @@ export function IntegrationsHero({
           </p>
         </div>
 
-        {/* ---- the hub ---- */}
         <div aria-hidden className="relative mx-auto aspect-[4/3] w-full max-w-[420px]">
-          {/* wires, behind everything */}
           <svg
             className="absolute inset-0 h-full w-full"
             viewBox="0 0 100 100"
@@ -98,7 +100,6 @@ export function IntegrationsHero({
             ))}
           </svg>
 
-          {/* the hub itself */}
           <span
             className="absolute grid h-[60px] w-[60px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-[var(--r-card)] border bg-canvas sm:h-[74px] sm:w-[74px]"
             style={{
@@ -111,7 +112,6 @@ export function IntegrationsHero({
             <TbDeviceDesktop size={30} className="text-accent" />
           </span>
 
-          {/* the services */}
           {NODES.map((n, i) => (
             <span
               key={n.label}
