@@ -10,7 +10,13 @@ export interface CompatProvider {
   model: string;
 }
 
-/** Which of these are actually configured, in the order they should be tried. */
+/**
+ * Configured OpenAI-compatible providers.
+ *
+ * Note: Puter's /puterai/openai/v1 endpoint requires a **paid Puter plan**
+ * (402 subscription_required on free accounts). Prefer Gemini + OpenRouter
+ * for free stacks; set PUTER_MODEL only if the account is subscribed.
+ */
 export function compatProviders(): CompatProvider[] {
   const out: CompatProvider[] = [];
 
@@ -21,7 +27,10 @@ export function compatProviders(): CompatProvider[] {
       label: "OpenRouter",
       baseUrl: "https://openrouter.ai/api/v1",
       apiKey: openrouter,
-      model: process.env.OPENROUTER_MODEL?.trim() || "nvidia/nemotron-3.5-lightning:free",
+      // Large context free model — lightning was failing on long system prompts
+      model:
+        process.env.OPENROUTER_MODEL?.trim() ||
+        "nvidia/nemotron-3-nano-30b-a3b:free",
     });
   }
 
@@ -43,8 +52,9 @@ export function compatProviders(): CompatProvider[] {
       label: "Puter",
       baseUrl: "https://api.puter.com/puterai/openai/v1",
       apiKey: puter,
-      // Strong default for website generation / chat when Puter is configured
-      model: process.env.PUTER_MODEL?.trim() || "openai/gpt-6-astra-pro",
+      // Premium models need a Puter subscription on this endpoint.
+      // Override with PUTER_MODEL when the account is paid.
+      model: process.env.PUTER_MODEL?.trim() || "gpt-5.4-nano",
     });
   }
 
@@ -83,6 +93,14 @@ function readUsage(u: unknown): Usage | null {
   };
 }
 
+/** Free OpenRouter models choke on huge max_tokens; keep them bounded. */
+function clampMaxTokens(provider: CompatProvider, maxOutputTokens: number): number {
+  if (provider.id === "openrouter" && /:free$/i.test(provider.model)) {
+    return Math.min(maxOutputTokens, 4096);
+  }
+  return maxOutputTokens;
+}
+
 export async function compatGenerate({
   provider,
   turns,
@@ -98,6 +116,7 @@ export async function compatGenerate({
   maxOutputTokens: number;
   onUsage?: OnUsage;
 }): Promise<string> {
+  const max_tokens = clampMaxTokens(provider, maxOutputTokens);
   const res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: "POST",
     headers: headersFor(provider),
@@ -105,7 +124,7 @@ export async function compatGenerate({
       model: provider.model,
       messages: toMessages(turns, system),
       temperature,
-      max_tokens: maxOutputTokens,
+      max_tokens,
     }),
     signal: AbortSignal.timeout(90_000),
   });
@@ -143,6 +162,7 @@ export async function compatStream({
   maxOutputTokens: number;
   onUsage?: OnUsage;
 }): Promise<ReadableStream<Uint8Array>> {
+  const max_tokens = clampMaxTokens(provider, maxOutputTokens);
   const res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: "POST",
     headers: headersFor(provider),
@@ -150,7 +170,7 @@ export async function compatStream({
       model: provider.model,
       messages: toMessages(turns, system),
       temperature,
-      max_tokens: maxOutputTokens,
+      max_tokens,
       stream: true,
       stream_options: { include_usage: true },
     }),
