@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
 import {
   TbWorld,
@@ -32,37 +33,88 @@ const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> 
   research: { label: "Research", icon: TbSearch, tone: "#22d3ee" },
 };
 
-/**
- * Cool bottom strip: recent work across the product.
- * Place under page content in shell/studio layouts.
- */
+/** Path prefix → which recent kinds belong on that page. */
+const PATH_KINDS: { match: (p: string) => boolean; kinds: RecentKind[] | null }[] = [
+  // Full-screen builder — strip is rendered inside the builder idle screen instead
+  { match: (p) => p.startsWith("/websites"), kinds: null },
+  { match: (p) => p.startsWith("/chat") || p === "/", kinds: ["chat"] },
+  { match: (p) => p.startsWith("/documents"), kinds: ["docs"] },
+  { match: (p) => p.startsWith("/spreadsheets"), kinds: ["sheets"] },
+  { match: (p) => p.startsWith("/slides"), kinds: ["slides"] },
+  { match: (p) => p.startsWith("/design"), kinds: ["design"] },
+  { match: (p) => p.startsWith("/research"), kinds: ["research"] },
+  { match: (p) => p.startsWith("/code"), kinds: ["code"] },
+  { match: (p) => p.startsWith("/agents"), kinds: ["agent"] },
+  { match: (p) => p.startsWith("/team"), kinds: ["team"] },
+];
+
+function kindsForPath(pathname: string): RecentKind[] | "all" | "hide" {
+  for (const rule of PATH_KINDS) {
+    if (rule.match(pathname)) {
+      return rule.kinds === null ? "hide" : rule.kinds;
+    }
+  }
+  return "all";
+}
+
 export function YourWork({
   items,
   className,
+  /** Force a kind filter (e.g. builder idle: only sites). */
+  kinds: kindsProp,
+  title = "Pick up where you left off",
+  emptyHint,
 }: {
   items: Recent[];
   className?: string;
+  kinds?: RecentKind | RecentKind[];
+  title?: string;
+  emptyHint?: string;
 }) {
-  const shown = items.slice(0, 8);
-  if (!shown.length) return null;
+  const pathname = usePathname() || "/";
+  const auto = kindsForPath(pathname);
+
+  if (kindsProp == null && auto === "hide") return null;
+
+  const allowed: RecentKind[] | null = kindsProp
+    ? Array.isArray(kindsProp)
+      ? kindsProp
+      : [kindsProp]
+    : auto === "all" || auto === "hide"
+      ? null
+      : auto;
+
+  const filtered = allowed
+    ? items.filter((r) => allowed.includes(r.kind))
+    : items;
+  const shown = filtered.slice(0, 8);
+
+  if (!shown.length) {
+    if (!emptyHint) return null;
+    return (
+      <section className={cn("mx-auto w-full max-w-[1100px] px-5 pb-8 pt-4 lg:px-8", className)} aria-label="Your work">
+        <div className="rounded-[20px] border border-dashed border-line px-4 py-6 text-center text-[13px] text-ink-4">
+          {emptyHint}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-[1100px] px-5 pb-10 pt-6 lg:px-8",
+        "relative z-10 mx-auto w-full max-w-[1100px] shrink-0 px-5 pb-8 pt-4 lg:px-8",
         className,
       )}
       aria-label="Your work"
     >
-      <div className="overflow-hidden rounded-[24px] border border-line bg-gradient-to-br from-raised/90 via-rail/40 to-sunk/50 p-4 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.6)] backdrop-blur-md sm:p-5">
+      <div className="overflow-hidden rounded-[24px] border border-line bg-gradient-to-br from-raised/95 via-rail/50 to-sunk/60 p-4 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.55)] backdrop-blur-md sm:p-5">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">
               Your work
             </p>
-            <h2 className="mt-0.5 text-[15px] font-semibold text-ink">
-              Pick up where you left off
-            </h2>
+            <h2 className="mt-0.5 text-[15px] font-semibold text-ink">{title}</h2>
           </div>
           <Link
             href="/dashboard"
