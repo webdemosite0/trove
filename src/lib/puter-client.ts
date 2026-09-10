@@ -1,14 +1,9 @@
 /**
- * Client-side Puter.js bridge — no API keys required.
+ * Client-side Puter.js helpers (optional).
  *
- * Puter uses the User-Pays model: the signed-in Puter user covers AI usage.
- * Load the SDK once via the CDN script in the root layout, then call these
- * helpers from the browser.
- *
- * Docs: https://docs.puter.com/AI/
- * Examples:
- *   puter.ai.chat(`What is life?`, { model: "gpt-5.6-luna" })
- *   puter.ai.txt2img('A picture of a cat.', true)
+ * Disabled by default so the app never prompts users to sign in to Puter.
+ * Server routes use PUTER_AUTH_TOKEN when configured.
+ * Opt in: localStorage.setItem('trove_puter', '1')
  */
 
 export type PuterChatMessage = { role: "user" | "assistant" | "system"; content: string };
@@ -38,12 +33,11 @@ declare global {
   }
 }
 
-const DEFAULT_CHAT_MODEL = "gpt-5.6-luna";
+const DEFAULT_CHAT_MODEL = "openai/gpt-6-astra-pro";
 const PUTER_SCRIPT = "https://js.puter.com/v2/";
 
 let loadPromise: Promise<void> | null = null;
 
-/** Ensure Puter.js is on the page (idempotent). */
 export function loadPuter(): Promise<void> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Puter is browser-only."));
@@ -56,7 +50,6 @@ export function loadPuter(): Promise<void> {
     if (existing) {
       existing.addEventListener("load", () => resolve());
       existing.addEventListener("error", () => reject(new Error("Failed to load Puter.js")));
-      // Already loaded
       if (window.puter?.ai) resolve();
       return;
     }
@@ -86,10 +79,6 @@ function contentFromResponse(response: unknown): string {
   return String(response ?? "");
 }
 
-/**
- * Chat via Puter.js — no developer API key.
- * Mirrors: puter.ai.chat(`What is life?`, { model: "gpt-5.6-luna" })
- */
 export async function puterChat(
   prompt: string,
   options?: { model?: string; system?: string },
@@ -111,9 +100,6 @@ export async function puterChat(
   return contentFromResponse(response);
 }
 
-/**
- * Multi-turn chat for the workspace transcript.
- */
 export async function puterChatTurns(
   turns: { role: "user" | "model"; text: string }[],
   options?: { model?: string; system?: string },
@@ -138,12 +124,6 @@ export async function puterChatTurns(
   return contentFromResponse(response);
 }
 
-/**
- * Image generation via Puter.js — no developer API key.
- * Mirrors: puter.ai.txt2img('A picture of a cat.', true)
- *
- * @param testMode - true avoids spending credits (sample/test image)
- */
 export async function puterTxt2Img(
   prompt: string,
   testMode = false,
@@ -157,14 +137,12 @@ export async function puterTxt2Img(
   return { url, element: image };
 }
 
-/** Prefer client Puter when the SDK is loaded and enabled. */
+/** Client Puter is OFF by default (avoids Puter login popups). */
 export function preferClientPuter(): boolean {
   if (typeof window === "undefined") return false;
-  // Opt out with localStorage trove_puter=0; default on when script is present.
   try {
-    if (localStorage.getItem("trove_puter") === "0") return false;
+    return localStorage.getItem("trove_puter") === "1";
   } catch {
-    /* private mode */
+    return false;
   }
-  return true;
 }
