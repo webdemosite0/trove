@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Backdrop } from "@/components/shell/backdrop";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { NavProvider } from "@/components/shell/nav-state";
@@ -7,9 +8,18 @@ import { resolveShell } from "@/components/shell/guard";
 import { ToastProvider } from "@/components/ui/toast";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
+import type { Recent } from "@/lib/recents";
 import { isMobile } from "@/lib/device";
 import { MobileShell } from "@/components/mobile/shell";
 import { YourWork } from "@/components/shell/your-work";
+
+function YourWorkSlot({ items, className }: { items: Recent[]; className?: string }) {
+  return (
+    <Suspense fallback={null}>
+      <YourWork items={items} className={className} />
+    </Suspense>
+  );
+}
 
 export default async function StudioLayout({
   children,
@@ -30,7 +40,7 @@ export default async function StudioLayout({
           balance={balance}
         >
           {children}
-          <YourWork items={recents} className="px-3 pb-24" />
+          <YourWorkSlot items={recents} className="px-3 pb-24" />
         </MobileShell>
       </ToastProvider>
     );
@@ -51,7 +61,7 @@ export default async function StudioLayout({
           <main className="flex min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-            <YourWork items={recents} />
+            <YourWorkSlot items={recents} />
           </main>
         </div>
       </ToastProvider>
