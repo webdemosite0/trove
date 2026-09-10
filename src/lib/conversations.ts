@@ -4,15 +4,6 @@ import { one, all, batch, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import type { RecentKind } from "@/lib/recents";
 
-/**
- * Saved conversations.
- *
- * The Recents strip used to store only the prompt, so clicking one re-ran it —
- * and a model asked the same question twice does not give the same answer, so
- * people lost the reply they wanted to come back to. These rows hold the real
- * exchange; reopening replays them and never calls the model.
- */
-
 export interface StoredMessage {
   role: "user" | "model";
   text: string;
@@ -26,12 +17,6 @@ export interface Conversation {
   updatedAt: number;
 }
 
-/**
- * Only a same-origin app path is acceptable as a return link. Anything else —
- * an absolute URL, a protocol-relative "//host", a traversal — is discarded
- * rather than trusted, since this value comes from the browser and is later
- * rendered as a link.
- */
 function safePath(path: unknown): string | null {
   if (typeof path !== "string") return null;
   const p = path.trim();
@@ -41,14 +26,6 @@ function safePath(path: unknown): string | null {
   return p;
 }
 
-/**
- * Where a saved conversation is reopened.
- *
- * The owning page reports its own path, because a central kind→path map here
- * had no entry for `agent` or `site` and quietly fell back to "/" — so those
- * threads pointed at the landing page and reopened as a blank session. The
- * map remains only as a fallback for callers that cannot supply a path.
- */
 export function hrefFor(kind: RecentKind, id: string, path?: unknown): string {
   const known: Partial<Record<RecentKind, string>> = {
     chat: "/chat",
@@ -59,6 +36,8 @@ export function hrefFor(kind: RecentKind, id: string, path?: unknown): string {
     research: "/research",
     code: "/code",
     team: "/team",
+    site: "/websites",
+    agent: "/agents",
   };
   const base = safePath(path) ?? known[kind] ?? "/chat";
   return `${base}?c=${encodeURIComponent(id)}`;
@@ -69,14 +48,6 @@ function clean(title: string) {
   return t.length > 90 ? `${t.slice(0, 89)}…` : t;
 }
 
-/**
- * Creates or replaces a conversation, and keeps the matching Recents row in
- * step so the strip always points at something that can actually be reopened.
- *
- * Messages are rewritten wholesale rather than appended: the client always
- * sends the full thread, and a full replace cannot drift out of order or
- * duplicate a turn if a request is retried.
- */
 export async function saveConversation({
   id,
   kind,
@@ -88,7 +59,6 @@ export async function saveConversation({
   kind: RecentKind;
   title: string;
   messages: StoredMessage[];
-  /** Where the thread lives, as reported by the page that owns it. */
   path?: string | null;
 }): Promise<string | null> {
   const user = await currentUser();
@@ -101,7 +71,6 @@ export async function saveConversation({
   let convoId = id ?? null;
 
   if (convoId) {
-    // Scoped by user_id so an id from somewhere else cannot be written to.
     const owned = await one(
       `SELECT id FROM conversations WHERE id = ? AND user_id = ?`,
       [convoId, user.id],
@@ -137,8 +106,6 @@ export async function saveConversation({
     });
   });
 
-  // Keep Recents pointing at this conversation. Matching on href rather than
-  // title means renaming a thread moves the row instead of adding a second one.
   const href = hrefFor(kind, convoId, path);
   writes.push({
     sql: `DELETE FROM recents WHERE user_id = ? AND kind = ? AND href = ?`,
@@ -150,14 +117,11 @@ export async function saveConversation({
     args: [uid("rec"), user.id, kind, text, href, now],
   });
 
-  // Atomic: replacing the message set and rewriting the recents row must not
-  // be observable half-done, or a reader sees a thread with no messages.
   await batch(writes);
 
   return convoId;
 }
 
-/** Loads a conversation, scoped to the person asking. */
 export async function loadConversation(id: string): Promise<Conversation | null> {
   const user = await currentUser();
   if (!user || !id) return null;
