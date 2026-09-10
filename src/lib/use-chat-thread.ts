@@ -14,19 +14,15 @@ export interface Turn {
   files?: Attachment[];
 }
 
+/** Detect "generate / draw / create an image…" style prompts. */
+function isImagePrompt(text: string): boolean {
+  return /\b(generate|create|draw|make|paint|render|imagine)\b[\s\S]{0,40}\b(image|picture|photo|illustration|artwork|logo|icon)\b/i.test(
+    text,
+  ) || /\b(txt2img|text to image|image of)\b/i.test(text);
+}
 
 /**
  * A conversation: the transcript, the request, the stream, and the save.
- *
- * Extracted so the desktop and mobile chat screens can be different designs
- * without being different implementations. They render nothing in common — one
- * is a centred column with side panels, the other is a full-bleed list over a
- * docked composer — but the part that can actually be wrong is identical, and
- * two copies of a streaming loop is two places for a bug to survive a fix.
- *
- * The presentation owns the mode picker and passes the current mode in, since
- * where that control lives is exactly the kind of thing the two designs
- * disagree about.
  */
 export function useChatThread({
   restored,
@@ -51,8 +47,53 @@ export function useChatThread({
     bottom.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [turns]);
 
+  const runImage = useCallback(
+    async (history: Turn[], prompt: string) => {
+      setBusy(true);
+      setError(null);
+      const replyId = nextId.current++;
+      setTurns((t) => [...t, { id: replyId, role: "model", text: "" }]);
+
+      try {
+        const res = await fetch("/api/image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error ?? `Image request failed (${res.status}).`);
+        }
+        const url = data?.url as string;
+        const caption = prompt.replace(/^(generate|create|draw|make|paint|render|imagine)\s+(an?\s+)?(image|picture|photo|illustration)\s+(of\s+)?/i, "").trim() || prompt;
+        const markdown = `![${caption}](${url})\n\n*Generated image*${data?.provider ? ` via ${data.provider}` : ""}`;
+        setTurns((t) => {
+          const next = t.map((x) => (x.id === replyId ? { ...x, text: markdown } : x));
+          void save(
+            next.map(({ role, text }) => ({ role, text })),
+            next[0]?.text,
+          );
+          return next;
+        });
+        router.refresh();
+      } catch (e) {
+        setTurns((t) => t.filter((x) => x.id !== replyId));
+        setError(e instanceof Error ? e.message : "Image generation failed.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [router, save],
+  );
+
   const run = useCallback(
     async (history: Turn[], files?: Attachment[]) => {
+      const lastUser = [...history].reverse().find((t) => t.role === "user");
+      if (lastUser && isImagePrompt(lastUser.text) && !(files && files.length)) {
+        await runImage(history, lastUser.text);
+        return;
+      }
+
       setBusy(true);
       setError(null);
       const replyId = nextId.current++;
@@ -65,9 +106,6 @@ export function useChatThread({
           body: JSON.stringify({
             messages: history.map(({ role, text }) => ({ role, text })),
             mode,
-            // The server runs in UTC wherever it is deployed, so without this
-            // "what is today's date" is answered for the datacentre rather
-            // than for the person asking.
             timeZone: localTimeZone(),
             attachments: files?.map(({ name, mimeType, size, data, kind }) => ({
               name, mimeType, size, data, kind,
@@ -88,8 +126,6 @@ export function useChatThread({
             t.map((x) => (x.id === replyId ? { ...x, text: x.text + chunk } : x)),
           );
         }
-        // Read the finished thread out of state rather than closing over a
-        // stale copy — the reply text only exists after the stream drains.
         setTurns((t) => {
           void save(
             t.map(({ role, text }) => ({ role, text })),
@@ -105,7 +141,7 @@ export function useChatThread({
         setBusy(false);
       }
     },
-    [router, save, mode],
+    [router, save, mode, runImage],
   );
 
   const send = useCallback(
@@ -120,13 +156,10 @@ export function useChatThread({
     [turns, run],
   );
 
-  /** Re-send the thread as-is, after a failure. */
   const retry = useCallback(() => void run(turns), [turns, run]);
 
-  /** Drop the last reply and ask again. */
   const regenerate = useCallback(() => void run(turns.slice(0, -1)), [turns, run]);
 
-  /** Start over: empty transcript, no error, and a fresh saved-thread id. */
   const clear = useCallback(() => {
     setTurns([]);
     setError(null);
