@@ -42,13 +42,15 @@ HARD RULES
 - ZERO external network requests at runtime. No CDN, no web fonts, no remote
   images, no analytics, no third-party API.
 
-FUNCTIONALITY BAR — dead UI is a failed step
-- If the idea is a game (tic-tac-toe, memory, quiz, etc.), implement the FULL
-  loop in script.js: board/state, legal moves, win/draw, restart. Clicks must
-  change the DOM from state. Incomplete games are incomplete builds.
-- Forms, calculators, todos, timers: read input, update UI, handle empty/error.
-- Every interactive element works. A button that does nothing is worse than no
-  button — either wire it up or leave it out.
+FUNCTIONALITY BAR — every idea, not only games
+A pretty shell with dead controls is a FAILED step. Match the product type:
+- Any UI control you render must work in the browser preview.
+- Shops: cart add/remove + totals. Booking/contact: validated form + confirm.
+- Portfolios/landings: working nav, modals/lightbox. Dashboards: real tab panels.
+- Games: full state loop, legal moves, win/draw, restart.
+- Tools: inputs update outputs on every change.
+- Forms/lists: add/edit/remove (as relevant), empty and error states.
+- No href="#" primary actions. No buttons that only look clickable.
 
 CONTINUITY — you are editing a real project, not starting over
 - Reuse exact class names, custom properties and data shapes from prior files.
@@ -59,12 +61,12 @@ QUALITY BAR — this ships as-is
 - Real, specific copy. No lorem ipsum, no "Product 1", no empty href="#".
 - JavaScript is defensive: guard querySelector, try/catch JSON and localStorage.
 - Responsive to 360px with no horizontal scroll.
+- Prefer one state object and re-render from it.
 
 VISUAL BAR
 - Inline SVG for icons; CSS gradients for decoration. No remote images.
 - One accent; neutrals carry the page. One corner radius.
-- Motion for feedback: hover, focus, state change, 150-280ms. Short enter
-  transitions are fine. No infinite decorative loops.
+- Motion for feedback: hover, focus, state change, 150-280ms.
 - Type hierarchy by size and weight, not color tricks.`;
 
 function parseFiles(raw: string): { files: ProjectFile[]; summary: string } {
@@ -118,7 +120,6 @@ function checkFile(f: ProjectFile): string[] {
   }
 
   if (f.path.endsWith(".js") || f.path.endsWith(".jsx")) {
-    // Heuristic: interactive pages should listen for clicks
     if (c.length > 80 && !/addEventListener|onclick|=\s*function|=>\s*\{/.test(c)) {
       notes.push("JS may lack event handlers — interactivity at risk");
     }
@@ -234,8 +235,10 @@ export async function POST(req: NextRequest) {
           `${prior}Project idea: ${idea}\n\n` +
           `Now do step ${index + 1} of ${total}: ${step.title}\n` +
           `${step.detail ?? ""}\n` +
-          `Files to write in this step: ${(step.files ?? []).join(", ") || "as needed"}\n` +
-          `Remember: interactive behaviour must work in the browser preview.`;
+          `Files to write in this step: ${(step.files ?? []).join(", ") || "as needed"}\n\n` +
+          `CRITICAL: Implement working behaviour for this idea (not a static mock). ` +
+          `Buttons, forms, nav, cart, filters, games, tools — whatever the idea needs — ` +
+          `must function in the offline browser preview.`;
 
         const raw = await generateText({
           onUsage: (u) => account && spend(account.userId, "site", u.totalTokens),
@@ -250,7 +253,7 @@ export async function POST(req: NextRequest) {
             }),
           turns: [{ role: "user", text: prompt }],
           system,
-          temperature: 0.7,
+          temperature: 0.65,
           maxOutputTokens: 32768,
           extraParts: attachments.length ? toParts(attachments) : undefined,
         });
