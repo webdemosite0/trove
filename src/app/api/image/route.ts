@@ -8,7 +8,8 @@ export const maxDuration = 120;
  * Generate an image for the AI workspace.
  *
  * Order of attempts:
- *  1. Gemini Imagen (when GEMINI_API_KEY is set)
+ *  1. Gemini native image (Nano Banana 2 / gemini-3.1-flash-image)
+ *     — Imagen's :predict API was shut down 2026-08-17
  *  2. Puter OpenAI-compatible images endpoint (when PUTER_AUTH_TOKEN is set)
  *
  * Returns { url } as a data URL or remote URL the client can render in chat.
@@ -48,46 +49,86 @@ export async function POST(req: NextRequest) {
 
   const errors: string[] = [];
 
-  // --- Gemini Imagen ---
+  const aspectRatio =
+    size === "1792x1024" || size === "1920x1080"
+      ? "16:9"
+      : size === "1024x1792" || size === "1080x1920"
+        ? "9:16"
+        : "1:1";
+
+  // --- Gemini native image (Nano Banana 2) ---
+  // Imagen models (imagen-4.0-*) were shut down 2026-08-17.
+  // Replacement uses generateContent + responseModalities: ["IMAGE"].
   const geminiKey = process.env.GEMINI_API_KEY?.trim();
   if (geminiKey) {
     try {
       const model =
-        process.env.GEMINI_IMAGE_MODEL?.trim() || "imagen-4.0-generate-001";
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${geminiKey}`,
-        {
+        process.env.GEMINI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image";
+
+      // Prefer v1beta; fall back is handled by error path.
+      const endpoints = [
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiKey}`,
+      ];
+
+      let succeeded = false;
+      for (const url of endpoints) {
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            instances: [{ prompt }],
-            parameters: {
-              sampleCount: 1,
-              aspectRatio: size === "1792x1024" ? "16:9" : size === "1024x1792" ? "9:16" : "1:1",
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseModalities: ["IMAGE"],
+              // Some API revisions accept responseFormat.image; others imageConfig.
+              // Send both so either shape is accepted.
+              responseFormat: {
+                image: { aspectRatio, imageSize: "1K" },
+              },
+              imageConfig: {
+                aspectRatio,
+                imageSize: "1K",
+              },
             },
           }),
           signal: AbortSignal.timeout(90_000),
-        },
-      );
+        });
 
-      if (res.ok) {
+        if (!res.ok) {
+          const detail = await res.text().catch(() => "");
+          errors.push(`Gemini ${res.status}: ${detail.slice(0, 180)}`);
+          continue;
+        }
+
         const json = await res.json();
-        const b64 =
-          json?.predictions?.[0]?.bytesBase64Encoded ||
-          json?.predictions?.[0]?.image?.imageBytes;
-        if (typeof b64 === "string" && b64) {
-          // Rough token-equivalent charge so image gen is metered like chat.
+        const parts = json?.candidates?.[0]?.content?.parts ?? [];
+        let b64: string | null = null;
+        let mime = "image/png";
+
+        for (const part of parts) {
+          const inline = part?.inlineData || part?.inline_data;
+          if (inline?.data) {
+            b64 = String(inline.data);
+            mime = String(inline.mimeType || inline.mime_type || "image/png");
+            break;
+          }
+        }
+
+        if (b64) {
           if (account) await spend(account.userId, "image", 4000);
+          succeeded = true;
           return Response.json({
-            url: `data:image/png;base64,${b64}`,
+            url: `data:${mime};base64,${b64}`,
             provider: "gemini",
             model,
           });
         }
+
         errors.push("Gemini returned no image bytes.");
-      } else {
-        const detail = await res.text().catch(() => "");
-        errors.push(`Gemini ${res.status}: ${detail.slice(0, 160)}`);
+      }
+
+      if (!succeeded && errors.length === 0) {
+        errors.push("Gemini image request failed with no detail.");
       }
     } catch (e) {
       errors.push(e instanceof Error ? e.message : String(e));
@@ -99,20 +140,26 @@ export async function POST(req: NextRequest) {
   if (puter) {
     try {
       const model = process.env.PUTER_IMAGE_MODEL?.trim() || "gpt-image-2";
-      const res = await fetch("https://api.puter.com/puterai/openai/v1/images/generations", {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${puter}`,
-          "content-type": "application/json",
+      const res = await fetch(
+        "https://api.puter.com/puterai/openai/v1/images/generations",
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${puter}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            prompt,
+            n: 1,
+            size:
+              size === "1792x1024" || size === "1024x1792"
+                ? size
+                : "1024x1024",
+          }),
+          signal: AbortSignal.timeout(90_000),
         },
-        body: JSON.stringify({
-          model,
-          prompt,
-          n: 1,
-          size: size === "1792x1024" || size === "1024x1792" ? size : "1024x1024",
-        }),
-        signal: AbortSignal.timeout(90_000),
-      });
+      );
 
       if (res.ok) {
         const json = await res.json();
