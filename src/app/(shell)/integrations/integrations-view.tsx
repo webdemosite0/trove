@@ -5,7 +5,6 @@ import {
   FiSearch,
   FiCheck,
   FiPlus,
-  FiLock,
   FiExternalLink,
 } from "@/components/ui/icons";
 import { disconnect } from "@/app/actions/connections";
@@ -38,6 +37,7 @@ export function IntegrationsView({
   const [opening, setOpening] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | "All">("All");
+  const [showAll, setShowAll] = useState(false);
   const [pending, startTransition] = useTransition();
   const [nangoBusy, setNangoBusy] = useState<string | null>(null);
   const [nangoError, setNangoError] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export function IntegrationsView({
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return SERVICES.filter((s) => {
+    let list = SERVICES.filter((s) => {
       if (category !== "All" && s.category !== category) return false;
       if (!q) return true;
       return (
@@ -65,7 +65,24 @@ export function IntegrationsView({
         s.category.toLowerCase().includes(q)
       );
     });
-  }, [query, category]);
+
+    // Connected first always
+    list = [...list].sort((a, b) => {
+      const ac = byId.has(a.id) ? 0 : 1;
+      const bc = byId.has(b.id) ? 0 : 1;
+      if (ac !== bc) return ac - bc;
+      return a.name.localeCompare(b.name);
+    });
+
+    // Default: only connected + a short “coming soon” sample unless Show all
+    if (!showAll && !q) {
+      const live = list.filter((s) => byId.has(s.id) || connectable[s.id] || nangoSet.has(s.id));
+      const rest = list.filter((s) => !byId.has(s.id) && !connectable[s.id] && !nangoSet.has(s.id));
+      list = [...live, ...rest.slice(0, 6)];
+    }
+
+    return list;
+  }, [query, category, byId, showAll, connectable, nangoSet]);
 
   function remove(id: string) {
     startTransition(async () => {
@@ -89,7 +106,6 @@ export function IntegrationsView({
       const link = data.connectLink as string;
       const popup = window.open(link, "nango-connect", "width=520,height=720");
 
-      // When the popup closes, sync connections from Nango.
       const started = Date.now();
       await new Promise<void>((resolve) => {
         const t = setInterval(() => {
@@ -103,8 +119,6 @@ export function IntegrationsView({
       const sync = await fetch("/api/nango/sync", { method: "POST" });
       const syncData = await sync.json().catch(() => null);
       if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync.");
-
-      // Refresh the page so Connected state appears.
       window.location.reload();
     } catch (e) {
       setNangoError(e instanceof Error ? e.message : "Could not connect.");
@@ -119,28 +133,12 @@ export function IntegrationsView({
 
       {nangoOn ? (
         <p className="nx-rise mt-4 rounded-[14px] border border-accent/25 bg-accent/[0.06] px-4 py-3 text-[13px] leading-relaxed text-ink-2">
-          <span className="font-medium text-accent">Nango is on.</span>{" "}
-          OAuth apps (Gmail, Drive, Slack, …) open Nango’s connect flow — one place manages tokens for you.{" "}
-          <a
-            href="https://app.nango.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-accent hover:underline"
-          >
+          <span className="font-medium text-accent">Nango is on.</span> OAuth apps open Nango’s connect flow.{" "}
+          <a href="https://app.nango.dev" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
             Dashboard <FiExternalLink size={11} />
           </a>
         </p>
-      ) : (
-        <p className="nx-rise mt-4 rounded-[14px] border border-line bg-rail/60 px-4 py-3 text-[13px] leading-relaxed text-ink-3">
-          To unlock Gmail, Drive, and other OAuth apps in one place, add{" "}
-          <code className="rounded bg-sunk px-1.5 py-0.5 text-[12px] text-ink">NANGO_SECRET_KEY</code>{" "}
-          from{" "}
-          <a href="https://app.nango.dev" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-            app.nango.dev
-          </a>{" "}
-          → Environment Settings → API Keys, then redeploy.
-        </p>
-      )}
+      ) : null}
 
       {nangoError ? (
         <p className="mt-3 rounded-[12px] border border-critical/30 bg-critical/10 px-3 py-2 text-[13px] text-critical">
@@ -149,7 +147,12 @@ export function IntegrationsView({
       ) : null}
 
       <div className="mb-5 mt-9 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-[19px] font-semibold text-ink">My integrations</h2>
+        <div>
+          <h2 className="text-[19px] font-semibold text-ink">My integrations</h2>
+          <p className="mt-0.5 text-[12.5px] text-ink-4">
+            {optimistic.length} connected · type <kbd className="rounded bg-sunk px-1.5 py-0.5 text-[11px]">@</kbd> in chat to use them
+          </p>
+        </div>
 
         <div className="relative w-full sm:w-[340px]">
           <Ico
@@ -168,28 +171,37 @@ export function IntegrationsView({
         </div>
       </div>
 
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {(["All", ...CATEGORIES] as const).map((c) => (
-          <button
-            key={c}
-            onClick={() => setCategory(c)}
-            className={cn(
-              "shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] transition-colors",
-              category === c
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-line-strong text-ink-3 hover:bg-hover hover:text-ink",
-            )}
-          >
-            {c}
-          </button>
-        ))}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {(["All", ...CATEGORIES] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setCategory(c)}
+              className={cn(
+                "shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] transition-colors",
+                category === c
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line-strong text-ink-3 hover:bg-hover hover:text-ink",
+              )}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="ml-auto shrink-0 rounded-full border border-line px-3 py-1.5 text-[12.5px] text-ink-3 transition hover:bg-hover hover:text-ink"
+        >
+          {showAll ? "Connected first" : "Show all"}
+        </button>
       </div>
 
       {results.length === 0 ? (
         <EmptyState
           icon={FiSearch}
           title={`No integration matches “${query}”`}
-          body="Try a shorter word, or clear the filter to see everything Trove can connect to."
+          body="Try a shorter word, or clear the filter."
         />
       ) : (
         <div className="grid min-w-0 gap-x-8 gap-y-1 lg:grid-cols-2">
@@ -198,6 +210,7 @@ export function IntegrationsView({
             const on = Boolean(conn);
             const spec = connectable[s.id];
             const viaNango = nangoOn && nangoSet.has(s.id);
+            const canConnect = Boolean(spec || viaNango);
             return (
               <article
                 key={s.id}
@@ -227,12 +240,19 @@ export function IntegrationsView({
                       <p className="truncate text-[11.5px] text-ink-4">
                         {conn
                           ? `${conn.account || "connected"} · ${conn.hint}`
-                          : viaNango
-                            ? "OAuth via Nango"
-                            : s.category}
+                          : canConnect
+                            ? viaNango
+                              ? "OAuth via Nango"
+                              : s.category
+                            : "Coming soon"}
                       </p>
                     </div>
                   </div>
+                  {on ? (
+                    <span className="rounded-full bg-positive/15 px-2 py-0.5 text-[10.5px] font-medium text-positive">
+                      Live
+                    </span>
+                  ) : null}
                 </div>
 
                 <p className="mt-2.5 flex-1 text-[12.5px] leading-relaxed text-ink-3">{s.blurb}</p>
@@ -265,11 +285,8 @@ export function IntegrationsView({
                     <Ico icon={FiPlus} motion="open" size={13} /> Connect
                   </button>
                 ) : (
-                  <span
-                    title="Configure Nango (NANGO_SECRET_KEY) to connect OAuth apps, or use a token-based service."
-                    className="mt-3.5 flex items-center justify-center gap-1.5 rounded-[var(--r-control)] border border-dashed border-line-strong py-2 text-[12.5px] text-ink-4"
-                  >
-                    <FiLock size={11} /> Needs Nango or OAuth app
+                  <span className="mt-3.5 flex items-center justify-center gap-1.5 rounded-[var(--r-control)] border border-dashed border-line-strong py-2 text-[12.5px] text-ink-4">
+                    Coming soon
                   </span>
                 )}
               </article>
