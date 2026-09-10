@@ -6,6 +6,7 @@ import { Backdrop } from "@/components/shell/backdrop";
 import { resolveShell } from "@/components/shell/guard";
 import { ToastProvider } from "@/components/ui/toast";
 import { MobileShell } from "@/components/mobile/shell";
+import { YourWork } from "@/components/shell/your-work";
 import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
@@ -15,23 +16,15 @@ export default async function ShellLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Auth, database health and the ephemeral-storage refusal all live in the
-  // guard, shared with the full-bleed layout so neither can drift open.
   const gate = await resolveShell();
   if (!gate.ok) return gate.screen;
   const { user, balance } = gate;
 
-  // One COUNT alongside the two queries the guard already runs. It is on every
-  // navigation, so it stays a count — the reminders themselves are fetched by
-  // the page that shows them.
   const [due, recents] = await Promise.all([
     countDueReminders(),
-    listAllRecents(6),
+    listAllRecents(8),
   ]);
 
-  // Two separate UIs, not one that reflows. The phone gets its own chrome —
-  // tab bar, sheets, no rail — and never renders the desktop tree, so nothing
-  // here can regress the desktop layout.
   if (await isMobile()) {
     return (
       <ToastProvider>
@@ -41,6 +34,7 @@ export default async function ShellLayout({
           balance={balance}
         >
           {children}
+          <YourWork items={recents} className="px-3 pb-24" />
         </MobileShell>
       </ToastProvider>
     );
@@ -53,12 +47,10 @@ export default async function ShellLayout({
         <CommandPalette recents={recents} />
         <div className="flex min-h-screen">
           <Sidebar user={user} balance={balance} />
-          {/* children are NOT wrapped in a re-keying client component: combined
-              with the loading.tsx Suspense boundary that left page content
-              server-rendered but never hydrated, so nothing was clickable. */}
           <main className="flex min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
-            {children}
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+            <YourWork items={recents} />
           </main>
         </div>
       </ToastProvider>
