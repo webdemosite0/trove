@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
 import { CommandPalette } from "@/components/shell/command-palette";
@@ -10,6 +11,15 @@ import { YourWork } from "@/components/shell/your-work";
 import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
+import type { Recent } from "@/lib/recents";
+
+function YourWorkSlot({ items, className }: { items: Recent[]; className?: string }) {
+  return (
+    <Suspense fallback={null}>
+      <YourWork items={items} className={className} />
+    </Suspense>
+  );
+}
 
 export default async function ShellLayout({
   children,
@@ -34,7 +44,7 @@ export default async function ShellLayout({
           balance={balance}
         >
           {children}
-          <YourWork items={recents} className="px-3 pb-24" />
+          <YourWorkSlot items={recents} className="px-3 pb-24" />
         </MobileShell>
       </ToastProvider>
     );
@@ -50,7 +60,7 @@ export default async function ShellLayout({
           <main className="flex min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-            <YourWork items={recents} />
+            <YourWorkSlot items={recents} />
           </main>
         </div>
       </ToastProvider>
