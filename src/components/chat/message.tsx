@@ -15,6 +15,7 @@ import { Ico, type Motion } from "@/components/ui/ico";
 import { humanSize, type Attachment } from "@/lib/attachments";
 import { highlight, TOKEN_VAR } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
+import { ChatImage } from "@/components/chat/chat-image";
 
 /** Minimal markdown: fenced code, images, links, tables, lists, headings, bold, inline code. */
 function render(text: string) {
@@ -37,29 +38,16 @@ function render(text: string) {
         const key = `b${i}-${j}`;
         const lines = block.split("\n");
 
-        // Markdown image on its own line(s)
         const imgOnly = block.trim().match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)$/);
         if (imgOnly) {
           out.push(
-            <figure key={key} className="overflow-hidden rounded-[var(--r-panel)] border border-line bg-sunk shadow-[0_1px_0_rgba(0,0,0,0.04)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imgOnly[2]}
-                alt={imgOnly[1] || "Generated image"}
-                className="max-h-[420px] w-full object-contain bg-canvas"
-                loading="lazy"
-              />
-              {imgOnly[1] ? (
-                <figcaption className="border-t border-line px-3 py-2 text-[12px] text-ink-3">
-                  {imgOnly[1]}
-                </figcaption>
-              ) : null}
-            </figure>,
+            <div key={key}>
+              <ChatImage src={imgOnly[2]} alt={imgOnly[1] || "Image"} />
+            </div>,
           );
           return;
         }
 
-        // Simple GFM table
         if (lines.length >= 2 && lines[0].includes("|") && /^\s*\|?[-:\s|]+\|?\s*$/.test(lines[1])) {
           const split = (row: string) =>
             row
@@ -130,19 +118,13 @@ function render(text: string) {
           const body = inline(heading[2]);
           if (level === 1) {
             out.push(
-              <h1
-                key={key}
-                className="text-[27px] font-semibold leading-[1.25] tracking-[-0.015em] text-ink"
-              >
+              <h1 key={key} className="text-[27px] font-semibold leading-[1.25] tracking-[-0.015em] text-ink">
                 {body}
               </h1>,
             );
           } else if (level === 2) {
             out.push(
-              <h2
-                key={key}
-                className="text-[19px] font-semibold leading-[1.35] tracking-[-0.01em] text-ink"
-              >
+              <h2 key={key} className="text-[19px] font-semibold leading-[1.35] tracking-[-0.01em] text-ink">
                 {body}
               </h2>,
             );
@@ -185,7 +167,6 @@ function render(text: string) {
 
 function inline(text: string) {
   const nodes: React.ReactNode[] = [];
-  // images, links, inline code, bold
   const re = /(!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|`[^`]+`|\*\*[^*]+\*\*)/g;
   let last = 0;
   let m: RegExpExecArray | null;
@@ -198,14 +179,9 @@ function inline(text: string) {
       const im = tok.match(/^!\[([^\]]*)\]\(([^)\s]+)\)/);
       if (im) {
         nodes.push(
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={k++}
-            src={im[2]}
-            alt={im[1]}
-            className="my-1 inline-block max-h-48 max-w-full rounded-[var(--r-chip)] border border-line"
-            loading="lazy"
-          />,
+          <span key={k++} className="my-1 block max-w-full">
+            <ChatImage src={im[2]} alt={im[1] || "Image"} />
+          </span>,
         );
       }
     } else if (tok.startsWith("[")) {
@@ -273,10 +249,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
         </button>
       </div>
       <pre className="overflow-x-auto px-3.5 py-3.5">
-        <code
-          className="font-mono text-[12.5px] leading-[1.7]"
-          style={{ color: "var(--sx-plain)" }}
-        >
+        <code className="font-mono text-[12.5px] leading-[1.7]" style={{ color: "var(--sx-plain)" }}>
           {tokens.map((t, i) =>
             t.kind === "plain" ? (
               t.text
