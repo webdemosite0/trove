@@ -23,7 +23,7 @@ export const TARGETS: Record<TargetId, Target> = {
     previewable: true,
     entry: "index.html",
     commands: ["open index.html"],
-    prompt: `STACK — a static site that actually works in the browser.
+    prompt: `STACK — a static site that actually works in the browser preview.
 
 Flat files: index.html, styles.css, script.js, plus extra pages/modules when
 needed. No build step, no bundler, no framework, no CDN, no remote assets.
@@ -33,40 +33,42 @@ index.html must link siblings with relative paths:
   <script src="script.js" defer></script>
 
 ════════════════════════════════════════
-FUNCTIONALITY — non-negotiable
+FUNCTIONALITY — applies to EVERY idea (shop, portfolio, landing, game, tool…)
 ════════════════════════════════════════
-A pretty shell with dead buttons is a FAILED build. Every interactive control
-must do something the user can verify in the preview:
+A pretty shell with dead controls is a FAILED build. The preview must be usable
+end-to-end without opening the console. Wire real behaviour for the idea:
 
-GAMES (tic-tac-toe, memory, quiz, snake, etc.)
-- Full game loop in script.js: state, legal moves, win/draw detection, reset.
-- Clicking a cell / button MUST update the board in the DOM.
-- Show whose turn it is, winner, or draw. Disable illegal moves.
-- Include a Restart control that clears state and re-renders.
+UNIVERSAL (all projects)
+- Primary CTAs, nav links, tabs, modals, filters, and toggles must work.
+- No href="#" for primary actions. No "Coming soon" buttons that do nothing.
+- Forms: preventDefault, validate, show errors/success, update the DOM.
+- Lists/carts/todos: add, remove, edit (as relevant) from a single state object.
+- Prefer localStorage when the idea implies saved data (cart, notes, settings).
+- Mobile nav / hamburger must open and close if present.
+- Filter / search / sort must change visible items when those controls exist.
 
-FORMS & TOOLS (todo, calculator, timer, converter, notes)
-- Read inputs, validate, update the UI. Persist with localStorage when useful.
-- Empty states, error messages, and success feedback are required.
-
-MULTI-PAGE / NAV
-- Real section switching or multi-page links that work offline.
-- No href="#" placeholders for primary actions.
+BY PRODUCT TYPE (pick what matches the idea)
+- Shop / menu: add-to-cart, cart count, remove line, total recalculation.
+- Booking / contact: form validation + confirmation state (no real email).
+- Portfolio / landing: smooth section nav, working modal/lightbox for projects.
+- Dashboard / admin-style: tabs or views that switch real content panels.
+- Games (any): full loop — state, legal moves, win/draw/lose, restart.
+- Tools (calc, converter, timer, quiz): inputs drive outputs on every change.
 
 JS RULES
 - One IIFE or module pattern; no leaked globals.
 - Guard every querySelector / getElementById before use.
 - try/catch around JSON.parse and localStorage.
-- Prefer data attributes + event delegation over brittle per-node handlers.
-- Re-render from a single source of truth (state object), not scattered DOM edits.
+- Event delegation + data attributes preferred over per-node handlers.
+- Re-render from one source of truth (state), not scattered DOM edits.
 
 VISUAL
 - System fonts, CSS variables, inline SVG only. Responsive to 360px.
-- Motion: short CSS transitions on hover/focus/state (150–280ms). Optional
-  subtle enter animations. No endless decorative loops.
+- Short transitions on hover/focus/state (150–280ms). No infinite loops.
 
-QUALITY BAR
-- Specific copy, not lorem. Working controls only — if you cannot wire it, omit it.
-- The preview must be usable without opening the console.`,
+QUALITY
+- Specific copy, not lorem. If you cannot make a control work, omit it.
+- The user should be able to click through the happy path in the preview.`,
   },
 
   react: {
@@ -85,9 +87,9 @@ Required files:
   package.json, vite.config.js, index.html (root), src/main.jsx, src/App.jsx,
   src/index.css. Real pinned versions — never "*".
 
-FUNCTIONALITY: the app must be interactive. Games need full state + win logic.
-Forms need validation. Lists need add/edit/delete with stable keys.
-No dead buttons. No placeholder-only UI.
+FUNCTIONALITY — every idea, not only games:
+Working state for the product (cart, form, tabs, game board, filters, etc.).
+No dead buttons. Lists use stable keys. Forms validate. Games have full loops.
 
 Function components + hooks only. Plain CSS. No network calls at runtime.`,
   },
@@ -102,8 +104,8 @@ Function components + hooks only. Plain CSS. No network calls at runtime.`,
     serves: "http://localhost:3000",
     prompt: `STACK — Node.js with Express 4, ES modules.
 Runs after \`npm install && npm start\`.
-Working CRUD routes, validation, JSON file store, README with curl examples.
-No fake endpoints.`,
+Working CRUD for the domain of the idea, validation, JSON file store,
+README with curl examples. No fake endpoints.`,
   },
 
   python: {
@@ -120,7 +122,8 @@ No fake endpoints.`,
     ],
     serves: "http://127.0.0.1:8000  (docs at /docs)",
     prompt: `STACK — Python 3.11, FastAPI, Pydantic v2.
-Working endpoints, typed models, JSON persistence, README with curl examples.`,
+Working endpoints for the idea's domain, typed models, JSON persistence,
+README with curl examples.`,
   },
 };
 
