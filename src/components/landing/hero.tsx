@@ -3,24 +3,18 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { IconType } from "@/components/ui/icons";
-import { FiArrowRight, TbLayoutGrid, TbWorld, TbFileText, TbRobot } from "@/components/ui/icons";
+import {
+  FiArrowRight,
+  TbLayoutGrid,
+  TbWorld,
+  TbFileText,
+  TbRobot,
+  FiZap,
+  FiShield,
+  FiDownload,
+} from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
-
-/**
- * The first screen, built around the box rather than around a paragraph.
- *
- * A landing page for a tool you type into should put the thing you type into
- * at the optical centre and let everything else explain it. The previous hero
- * put prose on the left and a picture of the product on the right, which meant
- * the one interactive element on the page was a button labelled "Start
- * building" that led somewhere else entirely.
- *
- * What is typed here survives signing in: it goes to /chat?q=…, middleware
- * carries the whole path through ?next=, and the composer opens with it
- * already in the box. Losing someone's first sentence at the login wall is the
- * fastest way to make them not write a second one.
- */
 
 interface Lane {
   id: string;
@@ -29,6 +23,7 @@ interface Lane {
   motion: Motion;
   placeholder: string;
   examples: string[];
+  href?: string;
 }
 
 const LANES: Lane[] = [
@@ -37,8 +32,8 @@ const LANES: Lane[] = [
     label: "Websites",
     icon: TbWorld,
     motion: "spin",
-    placeholder: "Build a landing page for my specialty coffee roastery…",
-    examples: ["Landing page", "Portfolio", "Online shop", "Booking site"],
+    placeholder: "Build a working tic-tac-toe game with score and restart…",
+    examples: ["Landing page", "Portfolio", "Online shop", "Tic-tac-toe"],
   },
   {
     id: "docs",
@@ -66,6 +61,24 @@ const LANES: Lane[] = [
   },
 ];
 
+const PILLARS = [
+  {
+    icon: FiZap,
+    title: "Fast when it should be",
+    body: "Short chats skip the heavy path. Deep work still gets full tools.",
+  },
+  {
+    icon: FiShield,
+    title: "Real files, not chat sludge",
+    body: "Sites, docs and code you can download and keep running offline.",
+  },
+  {
+    icon: FiDownload,
+    title: "Preview that works",
+    body: "Interactive builds — games, forms, tools — not empty shells.",
+  },
+];
+
 export function Hero({ freeCredits }: { freeCredits: number }) {
   const router = useRouter();
   const [lane, setLane] = useState(LANES[0]);
@@ -74,7 +87,10 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
   function go(text: string) {
     const idea = text.trim();
     if (!idea) return;
-    // Signed out, middleware bounces this to /login?next=… and brings it back.
+    if (lane.id === "site") {
+      router.push(`/websites?q=${encodeURIComponent(idea.slice(0, 2000))}`);
+      return;
+    }
     router.push(`/chat?q=${encodeURIComponent(idea.slice(0, 2000))}`);
   }
 
@@ -82,26 +98,30 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
     <section className="relative px-5 pb-16 pt-14 lg:pb-24 lg:pt-20">
       <div className="spotlight" />
 
-      <div className="relative mx-auto max-w-[880px] text-center">
-        <h1 className="nx-rise-big text-[clamp(2.5rem,1.4rem+3.4vw,4.25rem)] font-semibold leading-[1.04] tracking-[-0.025em] text-ink">
-          Describe it once.{" "}
-          {/* One phrase in accent, not the whole line — the emphasis has to
-              land on the promise, and a fully coloured headline emphasises
-              nothing. */}
-          <span className="text-accent">Keep the file.</span>
+      <div className="relative mx-auto max-w-[920px] text-center">
+        <div
+          className="nx-rise mb-6 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1.5 text-[12.5px] font-medium text-accent"
+          style={{ animationFillMode: "backwards" }}
+        >
+          <span className="size-1.5 animate-pulse rounded-full bg-accent" />
+          AI workspace · websites, docs, agents, code
+        </div>
+
+        <h1 className="nx-rise-big text-[clamp(2.55rem,1.35rem+3.6vw,4.4rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-ink">
+          Build it.{" "}
+          <span className="bg-gradient-to-r from-accent to-[#60a5fa] bg-clip-text text-transparent">
+            Ship the file.
+          </span>
         </h1>
 
         <p
-          className="nx-rise mx-auto mt-5 max-w-[52ch] text-[17.5px] leading-relaxed text-ink-3"
+          className="nx-rise mx-auto mt-5 max-w-[50ch] text-[17.5px] leading-relaxed text-ink-3"
           style={{ animationDelay: "60ms", animationFillMode: "backwards" }}
         >
-          An AI workspace that turns a sentence into finished work — websites,
-          documents, spreadsheets, code and agents you can actually download.
+          Describe the outcome once. Trove plans, builds, and leaves you with
+          real working files — not a chat that disappears.
         </p>
 
-        {/* The lanes change the placeholder and the examples below, so picking
-            one changes what the page is offering rather than just which pill
-            is highlighted. */}
         <div
           className="nx-rise mt-8 flex flex-wrap items-center justify-center gap-2"
           style={{ animationDelay: "110ms", animationFillMode: "backwards" }}
@@ -117,9 +137,9 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                 aria-selected={on}
                 onClick={() => setLane(l)}
                 className={cn(
-                  "group flex h-10 items-center gap-2 rounded-[var(--r-panel)] border px-3.5 text-[13.5px] font-medium transition-colors",
+                  "group flex h-10 items-center gap-2 rounded-[var(--r-panel)] border px-3.5 text-[13.5px] font-medium transition-all",
                   on
-                    ? "border-line-strong bg-raised text-ink shadow-[var(--elev)]"
+                    ? "border-accent/50 bg-accent/10 text-ink shadow-[0_0_24px_-8px_rgba(124,92,255,0.5)]"
                     : "border-transparent text-ink-3 hover:bg-hover hover:text-ink",
                 )}
               >
@@ -139,7 +159,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
               e.preventDefault();
               go(value);
             }}
-            className="composer rounded-[var(--r-hero)] border bg-raised shadow-[var(--sh-2)]"
+            className="composer rounded-[var(--r-hero)] border border-line-strong/80 bg-raised/90 shadow-[var(--sh-2)] ring-1 ring-accent/10"
           >
             <label className="sr-only" htmlFor="hero-idea">
               Describe what to build
@@ -159,6 +179,9 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
               className="block max-h-[180px] w-full resize-none bg-transparent px-5 pb-3 pt-5 text-[16.5px] leading-[1.6] text-ink outline-none placeholder:text-ink-4"
             />
             <div className="flex items-center gap-2 px-3.5 pb-3.5">
+              <span className="hidden text-[12px] text-ink-4 sm:inline">
+                Enter to start · Shift+Enter for newline
+              </span>
               <span className="flex-1" />
               <button
                 type="submit"
@@ -175,30 +198,44 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           </form>
         </div>
 
-        {/* Filling the box rather than navigating away — the point being taught
-            is "describe it here". */}
         <div
           className="nx-rise mt-5 flex flex-wrap items-center justify-center gap-2"
           style={{ animationDelay: "210ms", animationFillMode: "backwards" }}
         >
-          <span className="text-[13px] text-ink-4">Try one</span>
+          <span className="text-[13px] text-ink-4">Try</span>
           {lane.examples.map((e) => (
             <button
               key={e}
               onClick={() => setValue(`${e} — `)}
-              className="rounded-full border border-line bg-rail px-3 py-1.5 text-[13px] text-ink-2 transition-colors hover:border-line-strong hover:bg-hover hover:text-ink"
+              className="rounded-full border border-line bg-rail px-3 py-1.5 text-[13px] text-ink-2 transition-colors hover:border-accent/40 hover:bg-hover hover:text-ink"
             >
               {e}
             </button>
           ))}
         </div>
 
-        <p
-          className="nx-rise mt-7 text-[13.5px] text-ink-4"
+        <div
+          className="nx-rise mx-auto mt-12 grid max-w-[820px] gap-3 sm:grid-cols-3"
           style={{ animationDelay: "260ms", animationFillMode: "backwards" }}
         >
-          {/* A real number from lib/credits, not a claim about how many people
-              use this. */}
+          {PILLARS.map((p) => (
+            <div
+              key={p.title}
+              className="rounded-[18px] border border-line bg-rail/50 px-4 py-4 text-left backdrop-blur-sm"
+            >
+              <p className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
+                <p.icon size={15} className="text-accent" />
+                {p.title}
+              </p>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-3">{p.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <p
+          className="nx-rise mt-8 text-[13.5px] text-ink-4"
+          style={{ animationDelay: "300ms", animationFillMode: "backwards" }}
+        >
           Free to start · {freeCredits.toLocaleString()} credits every month · no card required
         </p>
       </div>
