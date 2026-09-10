@@ -58,73 +58,81 @@ export async function POST(req: NextRequest) {
 
   // --- Gemini native image (Nano Banana 2) ---
   // Imagen models (imagen-4.0-*) were shut down 2026-08-17.
-  // Replacement uses generateContent + responseModalities: ["IMAGE"].
+  // Use generateContent with responseModalities: ["IMAGE"] only.
+  // Do NOT send response_format.image — that field rejects aspect_ratio on v1/v1beta.
   const geminiKey = process.env.GEMINI_API_KEY?.trim();
   if (geminiKey) {
     try {
       const model =
         process.env.GEMINI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image";
 
-      // Prefer v1beta; fall back is handled by error path.
       const endpoints = [
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
         `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiKey}`,
       ];
 
-      let succeeded = false;
-      for (const url of endpoints) {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseModalities: ["IMAGE"],
-              // Some API revisions accept responseFormat.image; others imageConfig.
-              // Send both so either shape is accepted.
-              responseFormat: {
-                image: { aspectRatio, imageSize: "1K" },
-              },
-              imageConfig: {
-                aspectRatio,
-                imageSize: "1K",
-              },
+      // Try minimal body first (most compatible), then with imageConfig.
+      const bodies: Record<string, unknown>[] = [
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["IMAGE"],
+          },
+        },
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["TEXT", "IMAGE"],
+            imageConfig: {
+              aspectRatio,
+              imageSize: "1K",
             },
-          }),
-          signal: AbortSignal.timeout(90_000),
-        });
+          },
+        },
+      ];
 
-        if (!res.ok) {
-          const detail = await res.text().catch(() => "");
-          errors.push(`Gemini ${res.status}: ${detail.slice(0, 180)}`);
-          continue;
-        }
-
-        const json = await res.json();
-        const parts = json?.candidates?.[0]?.content?.parts ?? [];
-        let b64: string | null = null;
-        let mime = "image/png";
-
-        for (const part of parts) {
-          const inline = part?.inlineData || part?.inline_data;
-          if (inline?.data) {
-            b64 = String(inline.data);
-            mime = String(inline.mimeType || inline.mime_type || "image/png");
-            break;
-          }
-        }
-
-        if (b64) {
-          if (account) await spend(account.userId, "image", 4000);
-          succeeded = true;
-          return Response.json({
-            url: `data:${mime};base64,${b64}`,
-            provider: "gemini",
-            model,
+      let succeeded = false;
+      outer: for (const url of endpoints) {
+        for (const body of bodies) {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(90_000),
           });
-        }
 
-        errors.push("Gemini returned no image bytes.");
+          if (!res.ok) {
+            const detail = await res.text().catch(() => "");
+            errors.push(`Gemini ${res.status}: ${detail.slice(0, 180)}`);
+            continue;
+          }
+
+          const json = await res.json();
+          const parts = json?.candidates?.[0]?.content?.parts ?? [];
+          let b64: string | null = null;
+          let mime = "image/png";
+
+          for (const part of parts) {
+            const inline = part?.inlineData || part?.inline_data;
+            if (inline?.data) {
+              b64 = String(inline.data);
+              mime = String(inline.mimeType || inline.mime_type || "image/png");
+              break;
+            }
+          }
+
+          if (b64) {
+            if (account) await spend(account.userId, "image", 4000);
+            succeeded = true;
+            return Response.json({
+              url: `data:${mime};base64,${b64}`,
+              provider: "gemini",
+              model,
+            });
+          }
+
+          errors.push("Gemini returned no image bytes.");
+        }
       }
 
       if (!succeeded && errors.length === 0) {
