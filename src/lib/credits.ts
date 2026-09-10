@@ -1,6 +1,6 @@
 import "server-only";
 
-import { one, all, run, uid, num } from "@/lib/db";
+import { one, all, run, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 
 /**
@@ -273,4 +273,59 @@ export async function usageByDay(userId: string, days = 14): Promise<DayRow[]> {
 /** When the current month's grant is replaced, as a date. */
 export function periodResetsAt(now = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+}
+
+/**
+ * Admin: add bonus credits to this month's grant for a user id.
+ * Never reduces the grant. Safe to call repeatedly.
+ */
+export async function grantBonusCredits(
+  userId: string,
+  planId: string,
+  bonus: number,
+): Promise<Balance> {
+  const period = currentPeriod();
+  const add = Math.max(0, Math.floor(bonus));
+  const current = await ensureGrant(userId, planId, period);
+  const next = current + add;
+
+  await run(
+    `UPDATE credit_grants SET credits = ? WHERE user_id = ? AND period = ?`,
+    [next, userId, period],
+  );
+
+  return balanceFor(userId, planId);
+}
+
+/**
+ * Admin: recredit a member by email for the current period.
+ * Returns null if no user exists with that email.
+ */
+export async function recreditByEmail(
+  email: string,
+  bonus = 5_000,
+): Promise<
+  | (Balance & { userId: string; email: string; name: string; planId: string })
+  | null
+> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const row = await one(
+    `SELECT id, email, name, plan FROM users WHERE lower(email) = ?`,
+    [normalized],
+  );
+  if (!row) return null;
+
+  const userId = str(row.id);
+  const planId = str(row.plan) || "free";
+  const balance = await grantBonusCredits(userId, planId, bonus);
+
+  return {
+    ...balance,
+    userId,
+    email: str(row.email),
+    name: str(row.name),
+    planId,
+  };
 }
