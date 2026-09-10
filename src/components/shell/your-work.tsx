@@ -33,17 +33,12 @@ const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> 
   research: { label: "Research", icon: TbSearch, tone: "#22d3ee" },
 };
 
-/**
- * Where the layout strip belongs.
- *
- * Chat already has ContinuePanel under the composer. Websites is a full-screen
- * builder. Active threads (?c=) are work in progress — not the "front" of the page.
- * The strip only appears on idle tool fronts (composer visible, no open thread)
- * and on overview pages like dashboard / integrations.
- */
 const PATH_KINDS: { match: (p: string) => boolean; kinds: RecentKind[] | "hide" | "all" }[] = [
   { match: (p) => p.startsWith("/websites"), kinds: "hide" },
   { match: (p) => p.startsWith("/chat"), kinds: "hide" },
+  { match: (p) => p.startsWith("/integrations"), kinds: "hide" },
+  { match: (p) => p.startsWith("/plans"), kinds: "hide" },
+  { match: (p) => p.startsWith("/settings"), kinds: "hide" },
   { match: (p) => p.startsWith("/documents"), kinds: ["docs"] },
   { match: (p) => p.startsWith("/spreadsheets"), kinds: ["sheets"] },
   { match: (p) => p.startsWith("/slides"), kinds: ["slides"] },
@@ -53,9 +48,6 @@ const PATH_KINDS: { match: (p: string) => boolean; kinds: RecentKind[] | "hide" 
   { match: (p) => p.startsWith("/agents"), kinds: ["agent"] },
   { match: (p) => p.startsWith("/team"), kinds: ["team"] },
   { match: (p) => p.startsWith("/dashboard"), kinds: "all" },
-  { match: (p) => p.startsWith("/integrations"), kinds: "all" },
-  { match: (p) => p.startsWith("/plans"), kinds: "hide" },
-  { match: (p) => p.startsWith("/settings"), kinds: "hide" },
 ];
 
 function kindsForPath(pathname: string): RecentKind[] | "all" | "hide" {
@@ -71,7 +63,6 @@ export function YourWork({
   kinds: kindsProp,
   title = "Pick up where you left off",
   emptyHint,
-  /** When true, skip path rules (e.g. embedded under an idle composer). */
   force,
 }: {
   items: Recent[];
@@ -85,7 +76,6 @@ export function YourWork({
   const search = useSearchParams();
   const hasThread = Boolean(search?.get("c"));
 
-  // Active conversation on a tool page → hide layout strip.
   if (!force && hasThread) return null;
 
   const auto = kindsForPath(pathname);
