@@ -13,9 +13,8 @@ export interface CompatProvider {
 /**
  * Configured OpenAI-compatible providers.
  *
- * Note: Puter's /puterai/openai/v1 endpoint requires a **paid Puter plan**
- * (402 subscription_required on free accounts). Prefer Gemini + OpenRouter
- * for free stacks; set PUTER_MODEL only if the account is subscribed.
+ * Puter's /puterai/openai/v1 endpoint requires a paid Puter plan
+ * (402 on free accounts). Prefer Gemini + OpenRouter for free stacks.
  */
 export function compatProviders(): CompatProvider[] {
   const out: CompatProvider[] = [];
@@ -27,10 +26,9 @@ export function compatProviders(): CompatProvider[] {
       label: "OpenRouter",
       baseUrl: "https://openrouter.ai/api/v1",
       apiKey: openrouter,
-      // Large context free model — lightning was failing on long system prompts
-      model:
-        process.env.OPENROUTER_MODEL?.trim() ||
-        "nvidia/nemotron-3-nano-30b-a3b:free",
+      // Auto-picks a free model that is actually available right now.
+      // Specific free models go offline often; the router is stable.
+      model: process.env.OPENROUTER_MODEL?.trim() || "openrouter/free",
     });
   }
 
@@ -52,8 +50,6 @@ export function compatProviders(): CompatProvider[] {
       label: "Puter",
       baseUrl: "https://api.puter.com/puterai/openai/v1",
       apiKey: puter,
-      // Premium models need a Puter subscription on this endpoint.
-      // Override with PUTER_MODEL when the account is paid.
       model: process.env.PUTER_MODEL?.trim() || "gpt-5.4-nano",
     });
   }
@@ -93,9 +89,9 @@ function readUsage(u: unknown): Usage | null {
   };
 }
 
-/** Free OpenRouter models choke on huge max_tokens; keep them bounded. */
 function clampMaxTokens(provider: CompatProvider, maxOutputTokens: number): number {
-  if (provider.id === "openrouter" && /:free$/i.test(provider.model)) {
+  if (provider.id === "openrouter") {
+    // Free router + free models: keep completion modest
     return Math.min(maxOutputTokens, 4096);
   }
   return maxOutputTokens;
