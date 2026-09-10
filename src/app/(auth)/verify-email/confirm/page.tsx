@@ -38,6 +38,7 @@ export default async function ConfirmPage({
     : "That link has already been used, or it expired.";
 
   return (
+    <div className="flex min-h-dvh items-center justify-center bg-canvas px-5 py-14">
     <div className="nx-in w-full max-w-[420px] rounded-[var(--r-panel)] border border-line bg-rail p-6 text-center shadow-[0_24px_70px_-20px_rgba(0,0,0,0.85)] sm:p-7">
       <div className="mb-5 flex flex-col items-center">
         <TroveOrb size={40} state="error" />
@@ -61,6 +62,7 @@ export default async function ConfirmPage({
       >
         Go to sign in
       </Link>
+    </div>
     </div>
   );
 }

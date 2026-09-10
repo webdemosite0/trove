@@ -1,4 +1,5 @@
 import { AuthCard } from "@/components/auth/auth-card";
+import { SplitAuth } from "@/components/auth/split-auth";
 import { googleConfigured } from "@/lib/google";
 
 /** Not indexed — see the note in the sign-in page. */
@@ -13,5 +14,9 @@ export default async function SignupPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  return <AuthCard mode="signup" googleEnabled={googleConfigured()} oauthError={error} />;
+  return (
+    <SplitAuth>
+      <AuthCard mode="signup" googleEnabled={googleConfigured()} oauthError={error} />
+    </SplitAuth>
+  );
 }

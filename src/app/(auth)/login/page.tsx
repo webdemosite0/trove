@@ -1,4 +1,5 @@
 import { AuthCard } from "@/components/auth/auth-card";
+import { SplitAuth } from "@/components/auth/split-auth";
 import { googleConfigured } from "@/lib/google";
 
 /**
@@ -24,12 +25,14 @@ export default async function LoginPage({
   const { error, next, verified } = await searchParams;
 
   return (
-    <AuthCard
-      mode="login"
-      googleEnabled={googleConfigured()}
-      oauthError={error}
-      next={next}
-      justVerified={verified === "1"}
-    />
+    <SplitAuth>
+      <AuthCard
+        mode="login"
+        googleEnabled={googleConfigured()}
+        oauthError={error}
+        next={next}
+        justVerified={verified === "1"}
+      />
+    </SplitAuth>
   );
 }

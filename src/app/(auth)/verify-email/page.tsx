@@ -17,5 +17,9 @@ export default async function VerifyEmailPage() {
   if (!user) redirect("/login");
   if (user.emailVerified) redirect("/chat");
 
-  return <VerifyCard email={user.email} mailerConfigured={mailerConfigured()} />;
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-canvas px-5 py-14">
+      <VerifyCard email={user.email} mailerConfigured={mailerConfigured()} />
+    </div>
+  );
 }
