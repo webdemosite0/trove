@@ -2,6 +2,7 @@ import { IntegrationsView } from "./integrations-view";
 import { currentUser } from "@/lib/auth";
 import { listConnections } from "@/lib/connections";
 import { PROVIDERS } from "@/lib/providers";
+import { nangoEnabled, NANGO_MAP } from "@/lib/nango";
 
 export const metadata = { title: "Integrations" };
 export const dynamic = "force-dynamic";
@@ -10,8 +11,6 @@ export default async function IntegrationsPage() {
   const user = await currentUser();
   const connections = await listConnections();
 
-  // Only what the client needs to render a form: never the verify function,
-  // and never anything resembling a credential.
   const connectable = Object.fromEntries(
     Object.entries(PROVIDERS).map(([id, p]) => [
       id,
@@ -28,6 +27,8 @@ export default async function IntegrationsPage() {
       }))}
       connectable={connectable}
       signedIn={Boolean(user)}
+      nangoOn={nangoEnabled()}
+      nangoServices={Object.keys(NANGO_MAP)}
     />
   );
 }
