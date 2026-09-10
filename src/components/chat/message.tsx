@@ -16,7 +16,7 @@ import { humanSize, type Attachment } from "@/lib/attachments";
 import { highlight, TOKEN_VAR } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 
-/** Minimal markdown: fenced code, inline code, bold, headings, bullets. */
+/** Minimal markdown: fenced code, images, links, tables, lists, headings, bold, inline code. */
 function render(text: string) {
   const out: React.ReactNode[] = [];
   const parts = text.split(/```/);
@@ -37,6 +37,67 @@ function render(text: string) {
         const key = `b${i}-${j}`;
         const lines = block.split("\n");
 
+        // Markdown image on its own line(s)
+        const imgOnly = block.trim().match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)$/);
+        if (imgOnly) {
+          out.push(
+            <figure key={key} className="overflow-hidden rounded-[var(--r-panel)] border border-line bg-sunk shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imgOnly[2]}
+                alt={imgOnly[1] || "Generated image"}
+                className="max-h-[420px] w-full object-contain bg-canvas"
+                loading="lazy"
+              />
+              {imgOnly[1] ? (
+                <figcaption className="border-t border-line px-3 py-2 text-[12px] text-ink-3">
+                  {imgOnly[1]}
+                </figcaption>
+              ) : null}
+            </figure>,
+          );
+          return;
+        }
+
+        // Simple GFM table
+        if (lines.length >= 2 && lines[0].includes("|") && /^\s*\|?[-:\s|]+\|?\s*$/.test(lines[1])) {
+          const split = (row: string) =>
+            row
+              .replace(/^\|/, "")
+              .replace(/\|$/, "")
+              .split("|")
+              .map((c) => c.trim());
+          const header = split(lines[0]);
+          const rows = lines.slice(2).filter((l) => l.includes("|")).map(split);
+          out.push(
+            <div key={key} className="overflow-x-auto rounded-[var(--r-panel)] border border-line">
+              <table className="w-full min-w-[280px] border-collapse text-left text-[13.5px]">
+                <thead className="bg-rail">
+                  <tr>
+                    {header.map((h, hi) => (
+                      <th key={hi} className="border-b border-line px-3 py-2 font-semibold text-ink">
+                        {inline(h)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, ri) => (
+                    <tr key={ri} className="odd:bg-canvas even:bg-sunk/40">
+                      {row.map((cell, ci) => (
+                        <td key={ci} className="border-b border-line/70 px-3 py-2 text-ink-2">
+                          {inline(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>,
+          );
+          return;
+        }
+
         if (lines.every((l) => /^\s*[-*]\s+/.test(l))) {
           out.push(
             <ul key={key} className="list-disc space-y-1.5 pl-5">
@@ -50,10 +111,21 @@ function render(text: string) {
           return;
         }
 
+        if (lines.every((l) => /^\s*\d+[.)]\s+/.test(l))) {
+          out.push(
+            <ol key={key} className="list-decimal space-y-1.5 pl-5">
+              {lines.map((l, k) => (
+                <li key={k} className="leading-[1.7]">
+                  {inline(l.replace(/^\s*\d+[.)]\s+/, ""))}
+                </li>
+              ))}
+            </ol>,
+          );
+          return;
+        }
+
         const heading = block.match(/^(#{1,3})\s+(.*)$/);
         if (heading) {
-          // Every level used to render as the same 16px h3, which flattened
-          // documents into one grey wall. Real levels, real scale.
           const level = heading[1].length;
           const body = inline(heading[2]);
           if (level === 1) {
@@ -84,6 +156,22 @@ function render(text: string) {
           return;
         }
 
+        if (/^>\s?/.test(block)) {
+          const quote = block
+            .split("\n")
+            .map((l) => l.replace(/^>\s?/, ""))
+            .join("\n");
+          out.push(
+            <blockquote
+              key={key}
+              className="border-l-[3px] border-accent/50 bg-sunk/50 py-2 pl-3.5 pr-3 text-[14.5px] leading-[1.7] text-ink-2"
+            >
+              {inline(quote)}
+            </blockquote>,
+          );
+          return;
+        }
+
         out.push(
           <p key={key} className="whitespace-pre-wrap leading-[1.75]">
             {inline(block.trim())}
@@ -97,7 +185,8 @@ function render(text: string) {
 
 function inline(text: string) {
   const nodes: React.ReactNode[] = [];
-  const re = /(`[^`]+`|\*\*[^*]+\*\*)/g;
+  // images, links, inline code, bold
+  const re = /(!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|`[^`]+`|\*\*[^*]+\*\*)/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let k = 0;
@@ -105,7 +194,36 @@ function inline(text: string) {
   while ((m = re.exec(text))) {
     if (m.index > last) nodes.push(text.slice(last, m.index));
     const tok = m[0];
-    if (tok.startsWith("`")) {
+    if (tok.startsWith("![")) {
+      const im = tok.match(/^!\[([^\]]*)\]\(([^)\s]+)\)/);
+      if (im) {
+        nodes.push(
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={k++}
+            src={im[2]}
+            alt={im[1]}
+            className="my-1 inline-block max-h-48 max-w-full rounded-[var(--r-chip)] border border-line"
+            loading="lazy"
+          />,
+        );
+      }
+    } else if (tok.startsWith("[")) {
+      const lm = tok.match(/^\[([^\]]+)\]\(([^)]+)\)/);
+      if (lm) {
+        nodes.push(
+          <a
+            key={k++}
+            href={lm[2]}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="font-medium text-accent underline decoration-accent/30 underline-offset-[3px] transition-colors hover:decoration-accent"
+          >
+            {lm[1]}
+          </a>,
+        );
+      }
+    } else if (tok.startsWith("`")) {
       nodes.push(
         <code
           key={k++}
@@ -129,12 +247,10 @@ function inline(text: string) {
 
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   const [copied, setCopied] = useState(false);
-
-  // Re-tokenising on every keystroke of a streaming reply would be wasteful.
   const tokens = useMemo(() => highlight(code, lang), [code, lang]);
 
   return (
-    <div className="overflow-hidden rounded-[var(--r-panel)] border border-line bg-sunk">
+    <div className="group/code overflow-hidden rounded-[var(--r-panel)] border border-line bg-sunk shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="flex items-center justify-between border-b border-line bg-rail px-3.5 py-2">
         <span className="font-mono text-[11.5px] lowercase tracking-wide text-ink-3">
           {lang || "code"}
@@ -201,8 +317,8 @@ function Action({
       aria-label={label}
       title={label}
       className={cn(
-        "group grid h-7 w-7 place-items-center rounded-[var(--r-chip)] transition-colors",
-        active ? "text-accent" : "text-ink-4 hover:bg-hover hover:text-ink-2",
+        "group grid h-8 w-8 place-items-center rounded-[var(--r-chip)] transition-all duration-150",
+        active ? "bg-accent/10 text-accent" : "text-ink-4 hover:bg-hover hover:text-ink-2",
       )}
     >
       <Ico icon={icon} motion={motion} size={14} />
@@ -230,21 +346,21 @@ export function Message({
     return (
       <div className="nx-in flex flex-col items-end gap-2">
         {files?.length ? (
-          <div className="flex max-w-[85%] flex-wrap justify-end gap-2">
+          <div className="flex max-w-[min(85%,520px)] flex-wrap justify-end gap-2">
             {files.map((f, i) => (
               <span
                 key={`${f.name}-${i}`}
-                className="flex items-center gap-2 rounded-[var(--r-control)] border border-line bg-raised py-1.5 pl-1.5 pr-2.5"
+                className="flex items-center gap-2 rounded-[var(--r-control)] border border-line bg-raised py-1.5 pl-1.5 pr-2.5 shadow-sm"
               >
                 {f.kind === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`data:${f.mimeType};base64,${f.data}`}
                     alt={f.name}
-                    className="h-8 w-8 rounded-[var(--r-chip)] object-cover"
+                    className="h-9 w-9 rounded-[var(--r-chip)] object-cover"
                   />
                 ) : (
-                  <span className="grid h-8 w-8 place-items-center rounded-[var(--r-chip)] bg-sunk text-ink-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-[var(--r-chip)] bg-sunk text-ink-3">
                     <Ico icon={FiFile} motion="lift" size={14} />
                   </span>
                 )}
@@ -261,7 +377,7 @@ export function Message({
           </div>
         ) : null}
         {text ? (
-          <div className="max-w-[85%] rounded-[var(--r-panel)] rounded-br-[5px] bg-sunk px-4 py-2.5 text-[15px] leading-[1.6] text-ink">
+          <div className="max-w-[min(85%,520px)] rounded-2xl rounded-br-md bg-gradient-to-br from-accent to-accent/85 px-4 py-2.5 text-[15px] leading-[1.6] text-white shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)]">
             <p className="whitespace-pre-wrap">{text}</p>
           </div>
         ) : null}
@@ -271,32 +387,36 @@ export function Message({
 
   return (
     <div className="nx-in flex gap-3.5">
-      {/* The mark orbits while the model is working and settles when it stops,
-          so the brand itself is the activity indicator. */}
       <span className={cn("relative mt-0.5 shrink-0", pending && "nx-thinking")}>
-        {/* State is passed explicitly rather than as a boolean that defaults
-            to on. The previous mark defaulted `animated` to true, so an
-            undefined `pending` on a finished message left completed replies
-            orbiting forever. */}
-        <TroveOrb size={26} state={pending ? "thinking" : "idle"} />
+        <TroveOrb size={28} state={pending ? "thinking" : "idle"} />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="space-y-3.5 text-[15px] text-ink-2">
-          {text ? render(text) : null}
-          {pending && !text ? (
-            /* Before the first token there is nothing to show, and a bare
-               blinking caret reads as broken rather than busy. */
-            <span className="nx-dots inline-block text-[14.5px] text-ink-3">
-              Thinking
-            </span>
-          ) : null}
-          {pending && text ? (
-            <span className="inline-block h-[15px] w-[7px] translate-y-[2px] rounded-[var(--r-tight)] bg-ink-3 [animation:nx-blink_1s_step-end_infinite]" />
-          ) : null}
+        <div
+          className={cn(
+            "rounded-2xl rounded-tl-md border border-line/80 bg-raised/60 px-4 py-3.5 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]",
+            pending && "ring-1 ring-accent/15",
+          )}
+        >
+          <div className="space-y-3.5 text-[15px] text-ink-2">
+            {text ? render(text) : null}
+            {pending && !text ? (
+              <span className="nx-dots inline-flex items-center gap-2 text-[14.5px] text-ink-3">
+                <span className="inline-flex gap-1">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent/80" />
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent/60 [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent/40 [animation-delay:300ms]" />
+                </span>
+                Thinking
+              </span>
+            ) : null}
+            {pending && text ? (
+              <span className="inline-block h-[15px] w-[7px] translate-y-[2px] rounded-[var(--r-tight)] bg-accent/70 [animation:nx-blink_1s_step-end_infinite]" />
+            ) : null}
+          </div>
         </div>
 
         {!pending && text ? (
-          <div className="mt-3 flex items-center gap-0.5">
+          <div className="mt-2 flex items-center gap-0.5 opacity-80 transition-opacity hover:opacity-100">
             <Action
               icon={copied ? FiCheck : FiCopy}
               label="Copy"
