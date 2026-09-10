@@ -21,13 +21,11 @@ export type { Turn, Usage, OnUsage, OnAttempt, Source, OnSources };
 
 /**
  * Provider chain (configured keys only):
- *   1. Puter   — User-Pays, 500+ models, preferred when PUTER_AUTH_TOKEN is set
- *   2. Gemini  — primary for search grounding
- *   3. Grok    — xAI
- *   4. OpenRouter
+ *   1. Gemini  — primary (search + chat)
+ *   2. OpenRouter → Grok → Puter (compat fallbacks)
  *
- * Failover is silent to the user; each switch is logged for operators.
- * Web search is Gemini-only; other providers answer without grounding.
+ * Puter's OpenAI-compatible API often returns 402 on free accounts;
+ * those errors fall through instead of stopping the chain.
  */
 
 interface Common {
@@ -43,7 +41,7 @@ function errText(e: unknown): string {
 }
 
 function shouldFallOver(message: string): boolean {
-  return /429|quota|rate.?limit|exhaust|billing|insufficient|401|403|invalid.?api.?key|not available|404|503|overload/i.test(
+  return /429|402|quota|rate.?limit|exhaust|billing|insufficient|subscription_required|401|403|invalid.?api.?key|incorrect api key|not available|404|503|overload|context.?length|maximum context/i.test(
     message,
   );
 }
@@ -75,19 +73,12 @@ function describe(p: CompatProvider) {
   return `${p.label} (${p.model})`;
 }
 
-/** Ordered: Puter → Grok → OpenRouter (Gemini is separate). */
+/** OpenRouter → Grok → Puter (Puter last: often needs paid plan on openai endpoint). */
 function orderedCompat(): CompatProvider[] {
   const all = compatProviders();
-  const rank = (id: string) => (id === "puter" ? 0 : id === "xai" ? 1 : id === "openrouter" ? 2 : 9);
+  const rank = (id: string) =>
+    id === "openrouter" ? 0 : id === "xai" ? 1 : id === "puter" ? 2 : 9;
   return [...all].sort((a, b) => rank(a.id) - rank(b.id));
-}
-
-function puterProvider(): CompatProvider | undefined {
-  return orderedCompat().find((p) => p.id === "puter");
-}
-
-function nonPuterCompat(): CompatProvider[] {
-  return orderedCompat().filter((p) => p.id !== "puter");
 }
 
 async function tryCompatGenerate(
@@ -169,24 +160,7 @@ export async function generateText(
 
   const attempts: { label: string; reason: string }[] = [];
 
-  // 1) Puter first when configured
-  const puter = puterProvider();
-  if (puter) {
-    const text = await tryCompatGenerate(
-      [puter],
-      {
-        turns: opts.turns,
-        system: systemForCompat,
-        temperature,
-        maxOutputTokens,
-        onUsage: opts.onUsage,
-      },
-      attempts,
-    );
-    if (text !== null) return text;
-  }
-
-  // 2) Gemini (with optional grounding)
+  // 1) Gemini first
   const grounded = { ...opts, search: Boolean(opts.search) && groundingAvailable() };
   const ungrounded = {
     ...opts,
@@ -212,10 +186,15 @@ export async function generateText(
   }
 
   const message = errText(first);
-  if (!shouldFallOver(message)) throw first instanceof Error ? first : new Error(message);
+  if (!shouldFallOver(message)) {
+    // Still try compat fallbacks for common provider outages
+    if (!/429|402|401|403|quota|billing|key|subscription|context/i.test(message)) {
+      throw first instanceof Error ? first : new Error(message);
+    }
+  }
 
-  // 3–4) Grok → OpenRouter
-  const rest = nonPuterCompat();
+  // 2) OpenRouter → Grok → Puter
+  const rest = orderedCompat();
   if (!rest.length) throw chainFailure(first, attempts);
 
   const text = await tryCompatGenerate(
@@ -251,23 +230,6 @@ export async function streamText(
 
   const attempts: { label: string; reason: string }[] = [];
 
-  // 1) Puter first when configured
-  const puter = puterProvider();
-  if (puter) {
-    const stream = await tryCompatStream(
-      [puter],
-      {
-        turns: opts.turns,
-        system: systemForCompat,
-        temperature,
-        maxOutputTokens,
-        onUsage: opts.onUsage,
-      },
-      attempts,
-    );
-    if (stream) return stream;
-  }
-
   const wantSearch = Boolean(opts.search);
   const tryGrounding = wantSearch && groundingAvailable();
 
@@ -296,7 +258,7 @@ export async function streamText(
     }
   }
 
-  // 2) Gemini
+  // 1) Gemini
   let first: unknown;
   try {
     return await geminiStream(tryGrounding ? { ...opts, search: true } : ungrounded);
@@ -325,10 +287,11 @@ export async function streamText(
   }
 
   const message = errText(first);
-  if (!shouldFallOver(message)) throw first instanceof Error ? first : new Error(message);
+  // Always attempt compat fallbacks when Gemini is out
+  console.warn("ai: Gemini failed —", message.slice(0, 200));
 
-  // 3–4) Grok → OpenRouter
-  const rest = nonPuterCompat();
+  // 2) OpenRouter → Grok → Puter
+  const rest = orderedCompat();
   if (!rest.length) throw chainFailure(first, attempts);
 
   const stream = await tryCompatStream(
@@ -349,9 +312,7 @@ export async function streamText(
 
 /** For /api/health: which providers could answer. */
 export function providerChain(): string[] {
-  const labels: string[] = [];
-  if (puterProvider()) labels.push("Puter");
-  labels.push("Gemini");
-  for (const p of nonPuterCompat()) labels.push(p.label);
+  const labels: string[] = ["Gemini"];
+  for (const p of orderedCompat()) labels.push(p.label);
   return labels;
 }
