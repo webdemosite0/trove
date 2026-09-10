@@ -31,7 +31,8 @@ export interface BuildPlan {
 }
 
 const SYSTEM = `You are Trove's build planner. You turn a one-line idea into a
-concrete plan for a production-ready website that runs from a folder of files.
+concrete plan for a production-ready website that runs from a folder of files
+and WORKS in the browser preview — not a static mock.
 
 Reply with ONE JSON object and nothing else — no prose, no markdown fence.
 
@@ -40,7 +41,7 @@ Reply with ONE JSON object and nothing else — no prose, no markdown fence.
   "summary": "one sentence on what gets built",
   "requirements": {
     "overview": "two sentences on scope",
-    "features": ["6-9 specific features, each under 10 words"],
+    "features": ["6-9 specific WORKING features, each under 12 words"],
     "pages": [{"name": "Home", "purpose": "under 12 words"}],
     "rules": ["4-6 constraints or edge cases worth stating"]
   },
@@ -62,22 +63,19 @@ Reply with ONE JSON object and nothing else — no prose, no markdown fence.
 
 Rules for steps:
 - Between MIN_STEPS and MAX_STEPS steps, ordered so each builds on the last.
-- Across the whole plan, list AT LEAST 10 distinct file paths. Prefer 12–16.
-  Always include when relevant: index.html (or entry), styles.css / main CSS,
-  main JS, README.md, .env.example, package.json (if JS tooling), and extra
-  pages or modules (e.g. about.html, components/nav.js, assets/icons.svg).
-  Use ".env.example" not a real secrets file. Nested paths like src/App.jsx are fine.
+- Across the whole plan, list AT LEAST 8 distinct file paths (prefer 10–14).
+  Always include index.html (or entry), main CSS, main JS, and extras as needed
+  (README.md, .env.example, extra pages/modules). Nested paths are fine.
 - The FIRST step must establish the design system and produce the main stylesheet.
-- Include at least one step that adds motion / micro-interactions (CSS or JS),
-  with smooth transitions (hover, scroll, focus) — not flashy neon.
-- The LAST step must be a review pass that checks the whole site holds together.
-- Every step lists the files it will create or change, using the paths the
-  stack below requires. A step may list up to 8 files.
+- Include at least one step dedicated to INTERACTIVITY for this product type
+  (cart, forms, filters, game loop, tabs, booking flow, etc.) in script/JS.
+- Include a motion / micro-interaction pass (hover, focus, state transitions).
+- The LAST step must review that primary user flows actually work end-to-end.
+- features[] must describe behaviour the user can click through, not decoration.
+- Every step lists the files it will create or change (up to 8 files per step).
 - "skills" may only contain ids from this list: SKILL_IDS_HERE
-- Pick skills honestly — list one only when that step really needs it.
-
-The plan must fit the stack described below, and must never assume a hosted
-database, a payment processor or an email service exists.
+- Never assume a hosted database, payment processor, or email service exists.
+  Simulate those flows in the client (localStorage, confirmation states).
 
 STACK_PROMPT_HERE`;
 
@@ -218,7 +216,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Deep builds aim for richer multi-file projects (10+ files across steps).
   const bounds = depth === "quick" ? { min: 4, max: 6 } : { min: 6, max: 10 };
 
   const system = SYSTEM.replace(
@@ -235,11 +232,14 @@ export async function POST(req: NextRequest) {
       turns: [
         {
           role: "user",
-          text: `Idea: ${idea}${answerBrief(answers, questions)}`,
+          text:
+            `Idea: ${idea}${answerBrief(answers, questions)}\n\n` +
+            `Plan for a site the user can fully use in the preview ` +
+            `(working controls for this product type, not decoration only).`,
         },
       ],
       system,
-      temperature: 0.6,
+      temperature: 0.55,
       maxOutputTokens: 8192,
       extraParts: attachments.length ? toParts(attachments) : undefined,
     });
