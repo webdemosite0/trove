@@ -31,8 +31,7 @@ export interface BuildPlan {
 }
 
 const SYSTEM = `You are Trove's build planner. You turn a one-line idea into a
-concrete plan for a small static website that runs from a folder of files, with
-no server and no build step.
+concrete plan for a production-ready website that runs from a folder of files.
 
 Reply with ONE JSON object and nothing else — no prose, no markdown fence.
 
@@ -63,10 +62,17 @@ Reply with ONE JSON object and nothing else — no prose, no markdown fence.
 
 Rules for steps:
 - Between MIN_STEPS and MAX_STEPS steps, ordered so each builds on the last.
-- The FIRST step must establish the design system and produce styles.css.
+- Across the whole plan, list AT LEAST 10 distinct file paths. Prefer 12–16.
+  Always include when relevant: index.html (or entry), styles.css / main CSS,
+  main JS, README.md, .env.example, package.json (if JS tooling), and extra
+  pages or modules (e.g. about.html, components/nav.js, assets/icons.svg).
+  Use ".env.example" not a real secrets file. Nested paths like src/App.jsx are fine.
+- The FIRST step must establish the design system and produce the main stylesheet.
+- Include at least one step that adds motion / micro-interactions (CSS or JS),
+  with smooth transitions (hover, scroll, focus) — not flashy neon.
 - The LAST step must be a review pass that checks the whole site holds together.
 - Every step lists the files it will create or change, using the paths the
-  stack below requires.
+  stack below requires. A step may list up to 8 files.
 - "skills" may only contain ids from this list: SKILL_IDS_HERE
 - Pick skills honestly — list one only when that step really needs it.
 
@@ -75,7 +81,6 @@ database, a payment processor or an email service exists.
 
 STACK_PROMPT_HERE`;
 
-/** Pulls the first JSON object out of a reply, tolerating fences and prose. */
 function extractJson(raw: string): unknown {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const body = fenced ? fenced[1] : raw;
@@ -99,13 +104,6 @@ const list = (v: unknown, max: number): string[] =>
         .slice(0, max)
     : [];
 
-/**
- * Coerces whatever came back into a usable plan.
- *
- * A model that drifts on one field should not cost the user the whole build,
- * so every field falls back rather than throwing. The one thing worth failing
- * on is having no steps at all — there would be nothing to execute.
- */
 function normalise(data: unknown, idea: string, maxSteps: number): BuildPlan | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
@@ -125,9 +123,7 @@ function normalise(data: unknown, idea: string, maxSteps: number): BuildPlan | n
         title: str(o.title, `Step ${i + 1}`),
         detail: str(o.detail, ""),
         skills,
-        // Nested paths are required for React and Python projects; a path
-        // that cannot be made safe is dropped rather than mangled.
-        files: list(o.files, 6)
+        files: list(o.files, 10)
           .map((f) => safeProjectPath(f))
           .filter((f): f is string => Boolean(f)),
       };
@@ -165,7 +161,6 @@ function normalise(data: unknown, idea: string, maxSteps: number): BuildPlan | n
   };
 }
 
-/** Renders the answers as a brief the planner can actually use. */
 function answerBrief(answers: Record<string, unknown>, questions: unknown): string {
   const labels = new Map<string, string>();
   if (Array.isArray(questions)) {
@@ -215,9 +210,6 @@ export async function POST(req: NextRequest) {
         { status: 402 },
       );
     }
-    // Not a credit problem, so it is the database — the balance lookup is
-    // the first query these routes make. Rethrowing made an outage
-    // indistinguishable from a model failure, as a blank 500.
     const why = e instanceof Error ? e.message : String(e);
     console.error("builder/plan: credit check failed —", why);
     return Response.json(
@@ -226,9 +218,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Quick trades breadth for cost: fewer steps means fewer generations, which
-  // is what actually drives the credit spend on a build.
-  const bounds = depth === "quick" ? { min: 3, max: 4 } : { min: 5, max: 8 };
+  // Deep builds aim for richer multi-file projects (10+ files across steps).
+  const bounds = depth === "quick" ? { min: 4, max: 6 } : { min: 6, max: 10 };
 
   const system = SYSTEM.replace(
     "SKILL_IDS_HERE",
@@ -249,7 +240,7 @@ export async function POST(req: NextRequest) {
       ],
       system,
       temperature: 0.6,
-      maxOutputTokens: 4096,
+      maxOutputTokens: 8192,
       extraParts: attachments.length ? toParts(attachments) : undefined,
     });
 
