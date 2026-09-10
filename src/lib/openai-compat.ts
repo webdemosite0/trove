@@ -5,9 +5,8 @@ import { site } from "@/lib/site";
 /**
  * One adapter for every provider that speaks the OpenAI chat format.
  *
- * OpenRouter and xAI both do, so this is written once and configured twice.
- * They differ only in a base URL, a key and a model name — writing a class per
- * vendor would be three copies of the same SSE parser waiting to drift.
+ * OpenRouter, xAI/Grok and Puter all do, so this is written once and configured
+ * per provider. They differ only in a base URL, a key and a model name.
  *
  * Deliberately not the official SDK: this needs one endpoint, and a dependency
  * that ships a retry policy, a telemetry layer and a browser bundle is a poor
@@ -50,6 +49,20 @@ export function compatProviders(): CompatProvider[] {
       baseUrl: "https://api.x.ai/v1",
       apiKey: xai,
       model: process.env.XAI_MODEL?.trim() || "grok-2-latest",
+    });
+  }
+
+  // Puter AI — User-Pays model. 500+ models (GPT, Claude, Gemini, Grok, DeepSeek,
+  // GLM …). Users cover their own usage; the platform pays nothing. Token is a
+  // Puter auth token (create one at puter.com/dashboard).
+  const puter = process.env.PUTER_AUTH_TOKEN?.trim();
+  if (puter) {
+    out.push({
+      id: "puter",
+      label: "Puter",
+      baseUrl: "https://api.puter.com/puterai/openai/v1",
+      apiKey: puter,
+      model: process.env.PUTER_MODEL?.trim() || "gpt-5.4-nano",
     });
   }
 
