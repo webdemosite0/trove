@@ -2,17 +2,6 @@ import "server-only";
 import type { Turn, Usage, OnUsage } from "@/lib/gemini";
 import { site } from "@/lib/site";
 
-/**
- * One adapter for every provider that speaks the OpenAI chat format.
- *
- * OpenRouter, xAI/Grok and Puter all do, so this is written once and configured
- * per provider. They differ only in a base URL, a key and a model name.
- *
- * Deliberately not the official SDK: this needs one endpoint, and a dependency
- * that ships a retry policy, a telemetry layer and a browser bundle is a poor
- * trade for `fetch`.
- */
-
 export interface CompatProvider {
   id: string;
   label: string;
@@ -32,11 +21,6 @@ export function compatProviders(): CompatProvider[] {
       label: "OpenRouter",
       baseUrl: "https://openrouter.ai/api/v1",
       apiKey: openrouter,
-      // A zero-priced model by default. The previous default was a paid
-      // one, so a fresh OpenRouter key with no balance failed on every
-      // request — the fallback existed and could never fire, which is worse
-      // than not having one because it looks configured.
-      // Verified zero-priced and text->text against OpenRouter own model list.
       model: process.env.OPENROUTER_MODEL?.trim() || "nvidia/nemotron-3.5-lightning:free",
     });
   }
@@ -52,9 +36,6 @@ export function compatProviders(): CompatProvider[] {
     });
   }
 
-  // Puter AI — User-Pays model. 500+ models (GPT, Claude, Gemini, Grok, DeepSeek,
-  // GLM …). Users cover their own usage; the platform pays nothing. Token is a
-  // Puter auth token (create one at puter.com/dashboard).
   const puter = process.env.PUTER_AUTH_TOKEN?.trim();
   if (puter) {
     out.push({
@@ -62,20 +43,19 @@ export function compatProviders(): CompatProvider[] {
       label: "Puter",
       baseUrl: "https://api.puter.com/puterai/openai/v1",
       apiKey: puter,
-      model: process.env.PUTER_MODEL?.trim() || "gpt-5.4-nano",
+      // Strong default for website generation / chat when Puter is configured
+      model: process.env.PUTER_MODEL?.trim() || "openai/gpt-6-astra-pro",
     });
   }
 
   return out;
 }
 
-/** Gemini's shape converted to the OpenAI one. */
 function toMessages(turns: Turn[], system: string) {
   const messages: { role: string; content: string }[] = [
     { role: "system", content: system },
   ];
   for (const t of turns) {
-    // Gemini calls the assistant "model"; OpenAI calls it "assistant".
     messages.push({ role: t.role === "model" ? "assistant" : "user", content: t.text });
   }
   return messages;
@@ -86,12 +66,7 @@ function headersFor(p: CompatProvider) {
     authorization: `Bearer ${p.apiKey}`,
     "content-type": "application/json",
   };
-  // OpenRouter asks callers to identify themselves; it affects rate limits and
-  // shows up in the dashboard, which is worth having when debugging spend.
   if (p.id === "openrouter") {
-    // site.url, not the raw variable: NEXT_PUBLIC_SITE_URL is unset on both
-    // deployments, and site.url falls back to Vercel own URL rather than to a
-    // domain this app is not actually served from.
     h["HTTP-Referer"] = site.url;
     h["X-Title"] = "Trove";
   }
@@ -177,8 +152,6 @@ export async function compatStream({
       temperature,
       max_tokens: maxOutputTokens,
       stream: true,
-      // Without this the usage block never arrives on a streamed response, and
-      // the request would be billed to the account as zero tokens.
       stream_options: { include_usage: true },
     }),
     signal: AbortSignal.timeout(90_000),
@@ -219,7 +192,7 @@ export async function compatStream({
                 controller.enqueue(encoder.encode(delta));
               }
             } catch {
-              /* partial frame; the next chunk completes it */
+              /* partial frame */
             }
           }
         }
