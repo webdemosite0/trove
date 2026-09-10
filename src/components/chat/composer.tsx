@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FiArrowUp,
   FiLoader,
@@ -14,6 +14,10 @@ import { Ico } from "@/components/ui/ico";
 import { useVoice } from "@/components/chat/use-voice";
 import { ModePicker } from "@/components/chat/mode-picker";
 import { AttachMenu } from "@/components/chat/attach-menu";
+import {
+  ConnectorMenu,
+  type ConnectorItem,
+} from "@/components/integrations/connector-menu";
 import type { ModeId } from "@/lib/modes";
 import {
   MAX_FILES,
@@ -37,9 +41,7 @@ export function Composer({
   compact = false,
 }: {
   onSend?: (value: string, attachments?: Attachment[]) => void;
-  /** Prefills the field. Change it with a key= to refill an existing box. */
   initialValue?: string;
-  /** Shown as a picker when supplied; the caller sends it with the request. */
   mode?: ModeId;
   onModeChange?: (id: ModeId) => void;
   placeholder?: string;
@@ -47,7 +49,6 @@ export function Composer({
   disabled?: boolean;
   leading?: React.ReactNode;
   allowAttachments?: boolean;
-  /** Tighter spacing and type, for narrow side panels. */
   compact?: boolean;
 }) {
   const [value, setValue] = useState(initialValue);
@@ -55,8 +56,26 @@ export function Composer({
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [connectors, setConnectors] = useState<ConnectorItem[]>([]);
+  const [atOpen, setAtOpen] = useState(false);
+  const [atQuery, setAtQuery] = useState("");
+  const [atIndex, setAtIndex] = useState(0);
+  const [atStart, setAtStart] = useState(-1);
   const ref = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/connectors")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && Array.isArray(d?.items)) setConnectors(d.items);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const voice = useVoice((text) =>
     setValue((v) => (v ? `${v} ${text}` : text)),
@@ -67,6 +86,38 @@ export function Composer({
   function grow(el: HTMLTextAreaElement) {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
+  }
+
+  function detectAt(text: string, cursor: number) {
+    const before = text.slice(0, cursor);
+    const m = before.match(/(^|[\s])@([\w.-]*)$/);
+    if (!m) {
+      setAtOpen(false);
+      return;
+    }
+    setAtStart(cursor - (m[2]?.length ?? 0) - 1);
+    setAtQuery(m[2] ?? "");
+    setAtIndex(0);
+    setAtOpen(true);
+  }
+
+  function pickConnector(item: ConnectorItem) {
+    const el = ref.current;
+    if (!el || atStart < 0) return;
+    const cursor = el.selectionStart ?? value.length;
+    const before = value.slice(0, atStart);
+    const after = value.slice(cursor);
+    const insert = `@${item.id} `;
+    const next = before + insert + after;
+    setValue(next);
+    setAtOpen(false);
+    setAtStart(-1);
+    requestAnimationFrame(() => {
+      const pos = before.length + insert.length;
+      el.focus();
+      el.setSelectionRange(pos, pos);
+      grow(el);
+    });
   }
 
   async function add(list: FileList | File[]) {
@@ -112,8 +163,16 @@ export function Composer({
     setValue("");
     setFiles([]);
     setError(null);
+    setAtOpen(false);
     if (ref.current) ref.current.style.height = "auto";
   }
+
+  const filteredConnectors = connectors.filter(
+    (i) =>
+      !atQuery ||
+      i.name.toLowerCase().includes(atQuery.toLowerCase()) ||
+      i.id.toLowerCase().includes(atQuery.toLowerCase()),
+  );
 
   return (
     <div
@@ -133,11 +192,21 @@ export function Composer({
       data-disabled={disabled}
       data-focused={focused}
       className={cn(
-        "composer border bg-rail",
+        "composer relative border bg-rail",
         compact ? "rounded-[var(--r-panel)]" : "rounded-[var(--r-hero)] shadow-[var(--sh-2)]",
       )}
     >
-      {/* attached files */}
+      {atOpen ? (
+        <ConnectorMenu
+          items={connectors}
+          query={atQuery}
+          active={atIndex}
+          onHover={setAtIndex}
+          onPick={pickConnector}
+          className="left-3 right-3 w-auto sm:left-4 sm:right-auto sm:w-[280px]"
+        />
+      ) : null}
+
       {files.length > 0 ? (
         <div className="flex flex-wrap gap-2 px-3.5 pt-3.5">
           {files.map((a, i) => (
@@ -154,7 +223,11 @@ export function Composer({
                 />
               ) : (
                 <span className="grid h-8 w-8 place-items-center rounded-[var(--r-chip)] bg-sunk text-ink-3">
-                  {a.kind === "text" ? <Ico icon={FiFileText} motion="lift" size={14} /> : <Ico icon={FiFile} motion="lift" size={14} />}
+                  {a.kind === "text" ? (
+                    <Ico icon={FiFileText} motion="lift" size={14} />
+                  ) : (
+                    <Ico icon={FiFile} motion="lift" size={14} />
+                  )}
                 </span>
               )}
               <span className="min-w-0">
@@ -199,6 +272,7 @@ export function Composer({
         onChange={(e) => {
           setValue(e.target.value);
           grow(e.target);
+          detectAt(e.target.value, e.target.selectionStart ?? 0);
         }}
         onPaste={(e) => {
           if (!allowAttachments) return;
@@ -209,15 +283,47 @@ export function Composer({
           }
         }}
         onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onBlur={() => {
+          setFocused(false);
+          // Delay so menu click can register
+          setTimeout(() => setAtOpen(false), 180);
+        }}
         onKeyDown={(e) => {
+          if (atOpen && filteredConnectors.length) {
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setAtIndex((i) => (i + 1) % filteredConnectors.length);
+              return;
+            }
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setAtIndex((i) => (i - 1 + filteredConnectors.length) % filteredConnectors.length);
+              return;
+            }
+            if (e.key === "Enter" || e.key === "Tab") {
+              e.preventDefault();
+              pickConnector(filteredConnectors[atIndex] ?? filteredConnectors[0]);
+              return;
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setAtOpen(false);
+              return;
+            }
+          }
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             send();
           }
         }}
         placeholder={
-          dragging ? "Drop files here…" : disabled ? "Working…" : placeholder
+          dragging
+            ? "Drop files here…"
+            : disabled
+              ? "Working…"
+              : connectors.length
+                ? `${placeholder}  (@ for connectors)`
+                : placeholder
         }
         aria-label={placeholder}
         className={cn(
@@ -234,12 +340,6 @@ export function Composer({
           compact ? "gap-1.5 px-2 pb-2" : "gap-2 border-t border-line/70 px-3.5 py-3",
         )}
       >
-        {/* Controls are icons, not words.
-
-            "Attach" and "Voice" spelled out took most of the row and said
-            nothing a paperclip and a microphone do not. The mode picker keeps
-            its label on purpose — it is the one control whose current *value*
-            matters before you click it, and an icon cannot say "Balanced". */}
         {allowAttachments ? (
           <>
             <input
@@ -256,8 +356,6 @@ export function Composer({
               disabled={disabled}
               compact={compact}
               onPick={(accept) => {
-                // Set on the shared input rather than rendering four of them,
-                // so the picker opens filtered to what was chosen.
                 if (picker.current) {
                   if (accept) picker.current.accept = accept;
                   else picker.current.removeAttribute("accept");
@@ -310,11 +408,7 @@ export function Composer({
             "transition-[transform,box-shadow,opacity] duration-[var(--t-tap)] ease-[var(--ease-ui)]",
             compact ? "size-8" : "size-12",
             ready
-              ? // Hover lifts the glow rather than the size — growing a round
-                // button under the cursor makes it harder to hit, not easier.
-                // Press scales down, which is the only movement a pointer
-                // reads as "that registered".
-                "btn-grad hover:shadow-[0_6px_20px_-6px_var(--btn-glow)] active:scale-[0.94]"
+              ? "btn-grad hover:shadow-[0_6px_20px_-6px_var(--btn-glow)] active:scale-[0.94]"
               : "bg-raised text-ink-4 opacity-60",
           )}
         >
