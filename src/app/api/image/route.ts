@@ -9,10 +9,10 @@ export const maxDuration = 120;
  *
  * Order of attempts:
  *  1. Gemini native image (Nano Banana 2 / gemini-3.1-flash-image)
- *     — Imagen's :predict API was shut down 2026-08-17
- *  2. Puter OpenAI-compatible images endpoint (when PUTER_AUTH_TOKEN is set)
+ *  2. Puter OpenAI-compatible images (PUTER_AUTH_TOKEN)
  *
- * Returns { url } as a data URL or remote URL the client can render in chat.
+ * Client-side Puter.txt2img is preferred in the browser when available
+ * (see src/lib/use-chat-thread.ts) — this route is the server fallback.
  */
 export async function POST(req: NextRequest) {
   let prompt = "";
@@ -57,86 +57,83 @@ export async function POST(req: NextRequest) {
         : "1:1";
 
   // --- Gemini native image (Nano Banana 2) ---
-  // Imagen models (imagen-4.0-*) were shut down 2026-08-17.
-  // Use generateContent with responseModalities: ["IMAGE"] only.
-  // Do NOT send response_format.image — that field rejects aspect_ratio on v1/v1beta.
   const geminiKey = process.env.GEMINI_API_KEY?.trim();
   if (geminiKey) {
     try {
       const model =
         process.env.GEMINI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image";
 
-      const endpoints = [
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
-        `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiKey}`,
-      ];
-
-      // Try minimal body first (most compatible), then with imageConfig.
-      const bodies: Record<string, unknown>[] = [
-        {
+      // One endpoint + one body. On 429 do not burn the rest of the quota
+      // retrying alternate shapes — fall through to Puter immediately.
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             responseModalities: ["IMAGE"],
-          },
-        },
-        {
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseModalities: ["TEXT", "IMAGE"],
             imageConfig: {
               aspectRatio,
               imageSize: "1K",
             },
           },
-        },
-      ];
+        }),
+        signal: AbortSignal.timeout(90_000),
+      });
 
-      let succeeded = false;
-      outer: for (const url of endpoints) {
-        for (const body of bodies) {
-          const res = await fetch(url, {
+      if (res.status === 429) {
+        errors.push(
+          "Gemini image quota exceeded (429). Enable billing at https://aistudio.google.com/ or wait for the daily limit to reset. Falling back…",
+        );
+      } else if (!res.ok) {
+        // Retry once without imageConfig if the body was rejected.
+        if (res.status === 400) {
+          const res2 = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseModalities: ["IMAGE"] },
+            }),
             signal: AbortSignal.timeout(90_000),
           });
-
-          if (!res.ok) {
-            const detail = await res.text().catch(() => "");
-            errors.push(`Gemini ${res.status}: ${detail.slice(0, 180)}`);
-            continue;
-          }
-
-          const json = await res.json();
-          const parts = json?.candidates?.[0]?.content?.parts ?? [];
-          let b64: string | null = null;
-          let mime = "image/png";
-
-          for (const part of parts) {
-            const inline = part?.inlineData || part?.inline_data;
-            if (inline?.data) {
-              b64 = String(inline.data);
-              mime = String(inline.mimeType || inline.mime_type || "image/png");
-              break;
+          if (res2.ok) {
+            const json = await res2.json();
+            const extracted = extractGeminiImage(json);
+            if (extracted) {
+              if (account) await spend(account.userId, "image", 4000);
+              return Response.json({
+                url: extracted.url,
+                provider: "gemini",
+                model,
+              });
             }
+            errors.push("Gemini returned no image bytes.");
+          } else if (res2.status === 429) {
+            errors.push(
+              "Gemini image quota exceeded (429). Enable billing or wait for reset.",
+            );
+          } else {
+            const detail = await res2.text().catch(() => "");
+            errors.push(`Gemini ${res2.status}: ${detail.slice(0, 160)}`);
           }
-
-          if (b64) {
-            if (account) await spend(account.userId, "image", 4000);
-            succeeded = true;
-            return Response.json({
-              url: `data:${mime};base64,${b64}`,
-              provider: "gemini",
-              model,
-            });
-          }
-
-          errors.push("Gemini returned no image bytes.");
+        } else {
+          const detail = await res.text().catch(() => "");
+          errors.push(`Gemini ${res.status}: ${detail.slice(0, 160)}`);
         }
-      }
-
-      if (!succeeded && errors.length === 0) {
-        errors.push("Gemini image request failed with no detail.");
+      } else {
+        const json = await res.json();
+        const extracted = extractGeminiImage(json);
+        if (extracted) {
+          if (account) await spend(account.userId, "image", 4000);
+          return Response.json({
+            url: extracted.url,
+            provider: "gemini",
+            model,
+          });
+        }
+        errors.push("Gemini returned no image bytes.");
       }
     } catch (e) {
       errors.push(e instanceof Error ? e.message : String(e));
@@ -187,7 +184,13 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       errors.push(e instanceof Error ? e.message : String(e));
     }
+  } else {
+    errors.push(
+      "No PUTER_AUTH_TOKEN set for server-side image fallback. Client Puter.js may still work if the user is signed in to Puter.",
+    );
   }
+
+  const quotaHit = errors.some((e) => /\b429\b|quota exceeded/i.test(e));
 
   return Response.json(
     {
@@ -195,7 +198,31 @@ export async function POST(req: NextRequest) {
         errors.length > 0
           ? `Image generation failed. ${errors.join(" · ")}`
           : "No image provider configured. Set GEMINI_API_KEY or PUTER_AUTH_TOKEN.",
+      quota: quotaHit || undefined,
     },
-    { status: 502 },
+    { status: quotaHit ? 429 : 502 },
   );
+}
+
+function extractGeminiImage(
+  json: unknown,
+): { url: string } | null {
+  const parts =
+    (json as { candidates?: { content?: { parts?: unknown[] } }[] })
+      ?.candidates?.[0]?.content?.parts ?? [];
+  for (const part of parts) {
+    const p = part as {
+      inlineData?: { data?: string; mimeType?: string };
+      inline_data?: { data?: string; mime_type?: string };
+    };
+    const inline = p?.inlineData || p?.inline_data;
+    if (inline?.data) {
+      const mime =
+        ("mimeType" in inline ? inline.mimeType : undefined) ||
+        ("mime_type" in inline ? inline.mime_type : undefined) ||
+        "image/png";
+      return { url: `data:${mime};base64,${inline.data}` };
+    }
+  }
+  return null;
 }
