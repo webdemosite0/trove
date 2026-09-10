@@ -23,13 +23,14 @@ function isSimpleTurn(turns: Turn[]): boolean {
   const t = last.text.trim();
   if (t.length > 120) return false;
   if (/\b(https?:\/\/|www\.)/i.test(t)) return false;
-  if (\n    /^(hi|hello|hey|yo|sup|hola|thanks|thank you|thx|ok|okay|yes|no|bye|good morning|good evening|what(?:'s| is) (?:up|this|trove)|who are you)\b/i.test(
+  if (
+    /^(hi|hello|hey|yo|sup|hola|thanks|thank you|thx|ok|okay|yes|no|bye|good morning|good evening)\b/i.test(
       t,
-    )
+    ) ||
+    /^(what(?:'s| is) (?:up|this|trove)|who are you)\b/i.test(t)
   ) {
     return true;
   }
-  // Very short questions that don't need the web
   return t.length < 40 && !/\b(latest|today|news|price|stock|weather|who is|when did)\b/i.test(t);
 }
 
