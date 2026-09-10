@@ -14,15 +14,6 @@ export interface ProjectFile {
   content: string;
 }
 
-/**
- * Executes one step of a build plan and reports what it did as it happens.
- *
- * The response is a stream of newline-delimited JSON events rather than a
- * single blob, so the task feed and the console show real progress instead of
- * a spinner that guesses. Every event corresponds to something that actually
- * occurred — a skill whose prompt was really appended, a file really read for
- * context, a file really written. Nothing is emitted for effect.
- */
 type Event =
   | { t: "task"; id: string; kind: TaskKind; label: string; state: "run" | "ok" | "fail" }
   | { t: "log"; text: string; level?: "info" | "warn" | "ok" }
@@ -47,87 +38,34 @@ HARD RULES
 - Emit the COMPLETE contents of every file you write. Never "..." or
   "unchanged" or "rest of file here" — a partial file destroys the project.
 - Only emit files this step is responsible for. Leave everything else out.
-  Re-emitting an untouched file wastes the step and risks reverting it.
-- Use the paths the stack requires. Nested paths are fine where the stack
-  expects them; never write outside the project folder.
+- Use the paths the stack requires. Nested paths are fine where expected.
 - ZERO external network requests at runtime. No CDN, no web fonts, no remote
   images, no analytics, no third-party API.
 
-CONTINUITY — you are editing a real project, not starting over
-- The files you were given are the source of truth. Reuse their exact class
-  names, custom property names and data shapes. Do not rename or re-theme
-  anything an earlier step established.
-- If an earlier step defined --accent, use var(--accent). Never introduce a
-  second colour system alongside the first.
-- If an earlier step wrote a store module, go through it. Never read or write
-  localStorage directly from a second place.
-- New markup must slot into the existing document structure and keep its
-  heading order intact.
-
-QUALITY BAR — this ships as-is
-- Real, specific copy. No lorem ipsum, no "Product 1", no bracketed
-  placeholders, no empty href="#" on a link that should do something.
+FUNCTIONALITY BAR — dead UI is a failed step
+- If the idea is a game (tic-tac-toe, memory, quiz, etc.), implement the FULL
+  loop in script.js: board/state, legal moves, win/draw, restart. Clicks must
+  change the DOM from state. Incomplete games are incomplete builds.
+- Forms, calculators, todos, timers: read input, update UI, handle empty/error.
 - Every interactive element works. A button that does nothing is worse than no
   button — either wire it up or leave it out.
-- JavaScript is defensive: guard every querySelector result before using it,
-  wrap JSON.parse and localStorage in try/catch, and handle the empty state.
-  A null reference on line one stops the whole page.
+
+CONTINUITY — you are editing a real project, not starting over
+- Reuse exact class names, custom properties and data shapes from prior files.
+- If an earlier step defined --accent, use var(--accent).
+- New markup must slot into the existing structure.
+
+QUALITY BAR — this ships as-is
+- Real, specific copy. No lorem ipsum, no "Product 1", no empty href="#".
+- JavaScript is defensive: guard querySelector, try/catch JSON and localStorage.
 - Responsive to 360px with no horizontal scroll.
-- Write the code you would be happy to hand to another engineer: named
-  functions over deep nesting, and a short comment wherever the reason for
-  something is not obvious from reading it.
 
-VISUAL BAR — this is judged on how it looks, not only whether it runs
-The rules above make a page work. These make it worth looking at, and they
-apply to every step, not just the one that writes the stylesheet.
-
-IMAGERY — there is no network, so plan for that instead of ignoring it
-- Never write an <img> pointing at a remote URL, a stock photo service or a
-  placeholder service. It will not load, and an empty frame is the single
-  most common reason a generated page looks broken.
-- Draw instead: inline SVG for icons and marks, CSS gradients and shapes for
-  decorative areas. An SVG you wrote always renders.
-- Never use emoji as interface icons. Emoji render differently on every
-  platform, cannot be styled or coloured, and instantly read as unfinished.
-  Emoji in body copy is fine where a person would actually type one.
-
-LAYOUT
-- Content sits in a max-width container, roughly 1100px, centred, with real
-  gutters. Full-bleed text across a wide monitor is unreadable.
-- Body copy sits at a comfortable measure — around 60-75 characters. Set it
-  with max-width in ch, not by hoping.
-- Left-align body text and headings. Centre a short hero line if you like;
-  centring paragraphs, lists and cards makes everything look like a slide.
-- Give sections room. Vertical padding between major sections should be
-  several times the gap between elements inside one, or the page reads as one
-  undifferentiated column.
-
-COLOUR
-- One accent, used for the primary action, links and the focus ring. Not for
-  every heading, border and icon — an accent that is everywhere is not an
-  accent.
-- Neutrals carry the page. Do not use pure #000 on pure #fff; both are
-  harsher than any real material.
-- At most one gradient, and only where it is doing something. A gradient on
-  every card, button and heading is the clearest signal a page was generated.
-
-RESTRAINT — these are the things that make a page look machine-made
-- No glow, neon or coloured drop shadow behind ordinary elements.
-- Prefer a hairline border to a shadow. If you use a shadow, one soft shadow,
-  low opacity, and the same one everywhere.
-- One corner radius across the whole page. Not 4px here and 24px there.
-- No decorative blur layers, no floating translucent panels stacked over each
-  other, no animated background.
-- Motion is for feedback: a hover, a focus, a state change, 150-250ms. Nothing
-  should animate on load beyond a single quiet fade.
-
-TYPE
-- One family for the whole page unless the plan explicitly asks for a pairing.
-  A system stack is fine and loads instantly.
-- Headings are distinguished by size and weight, not by colour, letterspacing
-  tricks or all-caps everywhere.
-- Real hierarchy: a heading, a subheading and body should be obviously
-  different sizes, and the same size should always mean the same thing.`;
+VISUAL BAR
+- Inline SVG for icons; CSS gradients for decoration. No remote images.
+- One accent; neutrals carry the page. One corner radius.
+- Motion for feedback: hover, focus, state change, 150-280ms. Short enter
+  transitions are fine. No infinite decorative loops.
+- Type hierarchy by size and weight, not color tricks.`;
 
 function parseFiles(raw: string): { files: ProjectFile[]; summary: string } {
   const files: ProjectFile[] = [];
@@ -147,13 +85,6 @@ function parseFiles(raw: string): { files: ProjectFile[]; summary: string } {
   return { files, summary: summary ? summary[1].trim() : "Step complete." };
 }
 
-/**
- * Cheap static checks, reported to the console.
- *
- * These catch the mistakes that make a generated project fail on first run —
- * a package.json that will not install, Pydantic v1 syntax against v2, a
- * placeholder version — none of which are visible by reading the preview.
- */
 function checkFile(f: ProjectFile): string[] {
   const notes: string[] = [];
   const c = f.content;
@@ -176,8 +107,6 @@ function checkFile(f: ProjectFile): string[] {
         ...((pkg.dependencies as Record<string, string>) ?? {}),
         ...((pkg.devDependencies as Record<string, string>) ?? {}),
       };
-      // "*" and "latest" install whatever exists on the day, which is how a
-      // project that worked once stops working without anything changing.
       const loose = Object.entries(deps)
         .filter(([, v]) => v === "*" || v === "latest" || !v)
         .map(([k]) => k);
@@ -188,16 +117,10 @@ function checkFile(f: ProjectFile): string[] {
     }
   }
 
-  if (f.path.endsWith(".py")) {
-    // Pydantic v1 spellings raise on v2 rather than warning.
-    if (/@validator\b/.test(c)) notes.push("@validator is Pydantic v1 — use @field_validator");
-    if (/class\s+Config\b/.test(c)) notes.push("class Config is Pydantic v1 — use model_config");
-    if (/\.dict\(\)/.test(c)) notes.push(".dict() is Pydantic v1 — use .model_dump()");
-  }
-
-  if (f.path.endsWith(".jsx") || f.path.endsWith(".tsx")) {
-    if (/\bkey=\{(?:i|idx|index)\}/.test(c)) {
-      notes.push("list key is the array index — use a stable id");
+  if (f.path.endsWith(".js") || f.path.endsWith(".jsx")) {
+    // Heuristic: interactive pages should listen for clicks
+    if (c.length > 80 && !/addEventListener|onclick|=\s*function|=>\s*\{/.test(c)) {
+      notes.push("JS may lack event handlers — interactivity at risk");
     }
   }
 
@@ -242,9 +165,6 @@ export async function POST(req: NextRequest) {
         { status: 402 },
       );
     }
-    // Not a credit problem, so it is the database — the balance lookup is
-    // the first query these routes make. Rethrowing made an outage
-    // indistinguishable from a model failure, as a blank 500.
     const why = e instanceof Error ? e.message : String(e);
     console.error("builder/step: credit check failed —", why);
     return Response.json(
@@ -272,7 +192,6 @@ export async function POST(req: NextRequest) {
           text: `step ${index + 1}/${total} — ${step.title}`,
         });
 
-        // Skills: each one's prompt is genuinely appended below.
         const skills = Array.isArray(step.skills) ? step.skills : [];
         for (const s of skills) {
           const end = task(`skill-${s}`, "skill", skillLabel(s));
@@ -280,7 +199,6 @@ export async function POST(req: NextRequest) {
           end();
         }
 
-        // Context: the files this step will build on top of.
         const context = files.filter((f) => f.content);
         for (const f of context.slice(0, 8)) {
           const end = task(`read-${f.path}`, "read", f.path);
@@ -291,7 +209,11 @@ export async function POST(req: NextRequest) {
           end();
         }
 
-        const thinking = task("gen", "think", `Writing ${(step.files ?? []).join(", ") || "files"}`);
+        const thinking = task(
+          "gen",
+          "think",
+          `Writing ${(step.files ?? []).join(", ") || "files"}`,
+        );
 
         const system = [
           BASE,
@@ -312,14 +234,11 @@ export async function POST(req: NextRequest) {
           `${prior}Project idea: ${idea}\n\n` +
           `Now do step ${index + 1} of ${total}: ${step.title}\n` +
           `${step.detail ?? ""}\n` +
-          `Files to write in this step: ${(step.files ?? []).join(", ") || "as needed"}`;
+          `Files to write in this step: ${(step.files ?? []).join(", ") || "as needed"}\n` +
+          `Remember: interactive behaviour must work in the browser preview.`;
 
         const raw = await generateText({
           onUsage: (u) => account && spend(account.userId, "site", u.totalTokens),
-          // Google returns 503 under load and the fallback sweep can take
-          // minutes. Reporting each attempt turns an unexplained pause into a
-          // visible "still trying", which is the difference between waiting
-          // and assuming the app is broken.
           onAttempt: ({ model, status, pass }) =>
             send({
               t: "log",
@@ -331,7 +250,7 @@ export async function POST(req: NextRequest) {
             }),
           turns: [{ role: "user", text: prompt }],
           system,
-          temperature: 0.75,
+          temperature: 0.7,
           maxOutputTokens: 32768,
           extraParts: attachments.length ? toParts(attachments) : undefined,
         });
