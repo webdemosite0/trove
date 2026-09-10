@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Poppins } from "next/font/google";
+import Script from "next/script";
 import { site } from "@/lib/site";
 import { THEME_SCRIPT } from "@/components/shell/theme";
 import "./globals.css";
@@ -40,11 +41,6 @@ export const metadata: Metadata = {
   authors: [{ name: site.name }],
   creator: site.name,
   publisher: site.name,
-  // Deliberately no canonical here. Set on the root layout it is inherited
-  // by every page, so /login, /plans and each app route declared the landing
-  // page as their canonical — which tells Google they are all duplicates of
-  // it. A page that needs one declares its own; anything else self-canonicals
-  // to its own URL, which is the correct default.
   robots: {
     index: true,
     follow: true,
@@ -71,18 +67,9 @@ export const metadata: Metadata = {
     creator: site.twitter,
   },
   formatDetection: { telephone: false, address: false, email: false },
-  // No `verification` block here on purpose.
-  //
-  // Ownership of troveai.site is proved by public/google117c584ed0903345.html
-  // instead. A meta tag carrying a *different* property's token was left over
-  // from a previous domain: Search Console reads it, matches it against no
-  // property this site owns, and it does nothing but sit in the <head> of
-  // every page. One verification method, and one that corresponds to the
-  // domain actually being verified.
 };
 
 export const viewport: Viewport = {
-  // Two entries so the browser chrome matches whichever palette is showing.
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
@@ -90,16 +77,9 @@ export const viewport: Viewport = {
   colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
-  // The mobile UI paints its tab bar into the gesture area at the bottom of a
-  // phone, which only works if the page is allowed under the notch and home
-  // indicator. Without this, env(safe-area-inset-*) is always 0.
   viewportFit: "cover",
 };
 
-/**
- * Structured data. Search engines use it for rich results; LLM crawlers use it
- * to work out what this product actually is without parsing the app shell.
- */
 function StructuredData() {
   const graph = {
     "@context": "https://schema.org",
@@ -109,9 +89,6 @@ function StructuredData() {
         "@id": `${site.url}/#organization`,
         name: site.name,
         url: site.url,
-        // Google needs somewhere to find the mark before it can show one beside
-        // the result. Points at the icon route the app already renders, so it
-        // cannot drift from the favicon.
         logo: `${site.url}/icon`,
         description: site.shortDescription,
       },
@@ -120,8 +97,6 @@ function StructuredData() {
         "@id": `${site.url}/#website`,
         url: site.url,
         name: site.name,
-        // What Google reads to decide whether the result says "Trove" or
-        // "troveai.site". A hint, not an instruction, and it needs a recrawl.
         alternateName: "Trove AI",
         description: site.description,
         publisher: { "@id": `${site.url}/#organization` },
@@ -142,6 +117,7 @@ function StructuredData() {
           "Write documents and export them as Word .docx",
           "Build spreadsheets and export them as Excel .xlsx",
           "Generate runnable code, slide outlines, design specs and research",
+          "AI image generation via Puter.js (no API keys)",
           "Reminders with browser notifications",
         ],
         offers: [
@@ -176,18 +152,6 @@ function StructuredData() {
   );
 }
 
-/**
- * data-theme is rendered on the server, not only set by the script.
- *
- * Light became the default, so the script was stamping data-theme="light"
- * onto an element the server had rendered without it — a hydration
- * mismatch on every page, reported by React and unfixable by it ("this
- * won't be patched up").
- *
- * Rendering the default here makes the markup agree. The script still
- * overrides it: to "dark" for that preference, and removing it entirely
- * for "system", both of which happen before the first paint.
- */
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -195,21 +159,20 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="light"
-      // THEME_SCRIPT rewrites this attribute before the first paint, so on any
-      // machine set to dark the server's "light" and the client's "dark"
-      // disagree by design, and React logged a hydration error on every load
-      // for those people. Suppression is scoped to this element's own
-      // attributes and is exactly what it is for: a value deliberately changed
-      // before hydration. Children are unaffected.
       suppressHydrationWarning
       className={`${inter.variable} ${display.variable} ${mono.variable}`}
     >
       <head>
-        {/* Must run before the first paint — see THEME_SCRIPT. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <StructuredData />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {/* Puter.js — free serverless AI + storage, no developer API keys.
+            Users pay their own usage (User-Pays). Enables puter.ai.chat and
+            puter.ai.txt2img from the browser. */}
+        <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
+        {children}
+      </body>
     </html>
   );
 }
