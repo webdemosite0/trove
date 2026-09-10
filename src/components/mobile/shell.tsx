@@ -38,29 +38,29 @@ const GROUPS: { label: string; items: Dest[] }[] = [
     label: "Workspace",
     items: [
       { href: "/dashboard", label: "Home", icon: TbLayoutDashboard },
-      { href: "/chat", label: "AI Workspace", icon: TbMessageCircle },
-      { href: "/team", label: "AI Team", icon: TbUsers },
+      { href: "/chat", label: "Chat", icon: TbMessageCircle },
+      { href: "/team", label: "Team", icon: TbUsers },
     ],
   },
   {
     label: "Build",
     items: [
-      { href: "/websites", label: "Websites", icon: TbWorld },
+      { href: "/websites", label: "Sites", icon: TbWorld },
       { href: "/agents", label: "Agents", icon: TbRobot },
       { href: "/code", label: "Code", icon: TbCode },
       { href: "/documents", label: "Docs", icon: TbFileText },
       { href: "/spreadsheets", label: "Sheets", icon: TbTable },
-      { href: "/slides", label: "Slides", icon: TbPresentation },
+      { href: "/slides", label: "Decks", icon: TbPresentation },
       { href: "/design", label: "Design", icon: TbPalette },
     ],
   },
   {
-    label: "Explore",
+    label: "Connect",
     items: [
-      { href: "/research", label: "Deep Research", icon: TbSearch },
-      { href: "/reminders", label: "Reminders", icon: TbBell },
-      { href: "/workflows", label: "Workflows", icon: TbRefreshDot },
-      { href: "/integrations", label: "Integrations", icon: TbPlugConnected },
+      { href: "/research", label: "Research", icon: TbSearch },
+      { href: "/reminders", label: "Alerts", icon: TbBell },
+      { href: "/workflows", label: "Flows", icon: TbRefreshDot },
+      { href: "/integrations", label: "Apps", icon: TbPlugConnected },
     ],
   },
 ];

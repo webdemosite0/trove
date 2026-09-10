@@ -4,7 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { one, num } from "@/lib/db";
 import { Bot } from "@/components/agents/bot";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Home" };
 
 async function count(sql: string, id: string) {
   const row = await one(sql, [id]);

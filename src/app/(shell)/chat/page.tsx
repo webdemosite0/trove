@@ -5,6 +5,8 @@ import { loadConversation } from "@/lib/conversations";
 import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
 
+export const metadata = { title: "Chat" };
+
 export default async function HomePage({
   searchParams,
 }: {

@@ -2,7 +2,7 @@ import { DocumentView } from "./document-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 
-export const metadata = { title: "Documents" };
+export const metadata = { title: "Docs" };
 
 export default async function DocsPage({
   searchParams,

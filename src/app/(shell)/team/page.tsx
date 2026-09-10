@@ -2,7 +2,7 @@ import { TeamView } from "./team-view";
 import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 
-export const metadata = { title: "AI Team" };
+export const metadata = { title: "Team" };
 
 export default async function SwarmPage({
   searchParams,

@@ -27,10 +27,10 @@ const SECTIONS: Section[] = [
   { href: "/settings", label: "Profile", icon: FiUser },
   { href: "/settings/account", label: "Account", icon: FiShield },
   { href: "/settings/appearance", label: "Appearance", icon: FiSun },
-  { href: "/settings/usage", label: "Usage & credits", icon: FiActivity },
-  { href: "/plans", label: "Plan & billing", icon: FiCreditCard, away: true },
+  { href: "/settings/usage", label: "Usage", icon: FiActivity },
+  { href: "/plans", label: "Plan", icon: FiCreditCard, away: true },
   { href: "/team", label: "Team", icon: FiUsers, away: true },
-  { href: "/integrations", label: "Integrations", icon: FiGrid, away: true },
+  { href: "/integrations", label: "Apps", icon: FiGrid, away: true },
 ];
 
 export function SettingsNav() {

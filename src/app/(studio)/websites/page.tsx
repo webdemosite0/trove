@@ -1,7 +1,7 @@
 import { BuilderView } from "./builder-view";
 import { isMobile } from "@/lib/device";
 
-export const metadata = { title: "Website Builder" };
+export const metadata = { title: "Sites" };
 
 export default async function WebsitesPage({
   searchParams,

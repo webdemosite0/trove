@@ -29,7 +29,7 @@ interface Lane {
 const LANES: Lane[] = [
   {
     id: "site",
-    label: "Websites",
+    label: "Sites",
     icon: TbWorld,
     motion: "spin",
     placeholder: "Build a working tic-tac-toe game with score and restart…",
@@ -37,7 +37,7 @@ const LANES: Lane[] = [
   },
   {
     id: "docs",
-    label: "Documents",
+    label: "Docs",
     icon: TbFileText,
     motion: "stack",
     placeholder: "Write a project proposal for a six-week design retainer…",

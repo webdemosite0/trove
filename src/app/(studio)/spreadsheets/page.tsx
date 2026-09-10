@@ -2,7 +2,7 @@ import { SpreadsheetView } from "./spreadsheet-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 
-export const metadata = { title: "Spreadsheets" };
+export const metadata = { title: "Sheets" };
 
 export default async function SheetsPage({
   searchParams,

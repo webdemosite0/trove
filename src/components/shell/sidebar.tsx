@@ -48,9 +48,8 @@ const GROUPS: { label: string; items: Item[] }[] = [
     label: "Workspace",
     items: [
       { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "pop" },
-      // Route stays /chat — only the label changes, so nothing breaks.
-      { href: "/chat", label: "AI Workspace", icon: TbMessageCircle, motion: "lift" },
-      { href: "/team", label: "AI Team", icon: TbUsers, motion: "tilt" },
+      { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
+      { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
       { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
       { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
     ],
@@ -58,20 +57,20 @@ const GROUPS: { label: string; items: Item[] }[] = [
   {
     label: "Build",
     items: [
-      { href: "/websites", label: "Websites", icon: TbWorld, motion: "spin" },
+      { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
       { href: "/code", label: "Code", icon: TbCode, motion: "type" },
-      { href: "/documents", label: "Documents", icon: TbFileText, motion: "lift" },
-      { href: "/spreadsheets", label: "Spreadsheets", icon: TbTable, motion: "pop" },
-      { href: "/slides", label: "Slides", icon: TbPresentation, motion: "grow" },
+      { href: "/documents", label: "Docs", icon: TbFileText, motion: "lift" },
+      { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
+      { href: "/slides", label: "Decks", icon: TbPresentation, motion: "grow" },
       { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
     ],
   },
   {
     label: "Connect",
     items: [
-      { href: "/integrations", label: "Integrations", icon: TbPlugConnected, motion: "open" },
-      { href: "/workflows", label: "Automation", icon: TbRefreshDot, motion: "spin", badge: "Soon" },
-      { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring" },
+      { href: "/integrations", label: "Apps", icon: TbPlugConnected, motion: "open" },
+      { href: "/workflows", label: "Flows", icon: TbRefreshDot, motion: "spin", badge: "Soon" },
+      { href: "/reminders", label: "Alerts", icon: TbBell, motion: "ring" },
     ],
   },
 ];
@@ -81,8 +80,8 @@ const ALL = GROUPS.flatMap((g) => g.items);
 /** Reached rarely, so they get icons at the foot rather than nav rows. */
 const SECONDARY: { href: string; label: string; icon: IconType }[] = [
   { href: "/settings", label: "Settings", icon: FiSettings },
-  { href: "/integrations", label: "Integrations", icon: TbPlugConnected },
-  { href: "/plans", label: "Plan and usage", icon: FiCreditCard },
+  { href: "/integrations", label: "Apps", icon: TbPlugConnected },
+  { href: "/plans", label: "Plan", icon: FiCreditCard },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -144,8 +143,8 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
 
   const links = [
     { href: "/settings", label: "Settings", icon: FiSettings },
-    { href: "/plans", label: "Plan and usage", icon: FiCreditCard },
-    { href: "/dashboard", label: "Activity", icon: FiActivity },
+    { href: "/plans", label: "Plan", icon: FiCreditCard },
+    { href: "/dashboard", label: "Home", icon: FiActivity },
   ];
 
   return (

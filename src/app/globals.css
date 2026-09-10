@@ -569,9 +569,18 @@ select:focus-visible,
     background-color var(--t-hover) var(--ease-ui),
     color var(--t-hover) var(--ease-ui);
 
+  /* Icons sit a step lighter than the label so the word leads. */
+  .ico {
+    color: var(--color-ink-4);
+  }
+
   &:hover {
     background: var(--color-hover);
     color: var(--color-ink);
+  }
+
+  &:hover .ico {
+    color: var(--color-ink-3);
   }
 }
 
@@ -603,6 +612,10 @@ select:focus-visible,
   &.rail-item {
     color: var(--color-ink);
     font-weight: 550;
+  }
+
+  &.rail-item .ico {
+    color: var(--color-ink-3);
   }
 
   &::before {

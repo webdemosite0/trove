@@ -2,7 +2,7 @@ import { SlidesView } from "./slides-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 
-export const metadata = { title: "Slides" };
+export const metadata = { title: "Decks" };
 
 export default async function SlidesPage({
   searchParams,

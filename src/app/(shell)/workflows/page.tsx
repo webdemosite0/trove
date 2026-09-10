@@ -1,7 +1,7 @@
 import { TbRefreshDot } from "@/components/ui/icons";
 import { ComingSoon } from "@/components/ui/coming-soon";
 
-export const metadata = { title: "Workflows" };
+export const metadata = { title: "Flows" };
 
 /**
  * Workflows is in the navigation because the shape of the product needs it

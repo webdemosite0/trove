@@ -20,11 +20,11 @@ const RAIL_MAIN = [
 ];
 
 const RAIL_BUILD = [
-  { icon: TbWorld, label: "Websites" },
+  { icon: TbWorld, label: "Sites" },
   { icon: TbRobot, label: "Agents" },
-  { icon: TbFileText, label: "Documents" },
+  { icon: TbFileText, label: "Docs" },
   { icon: TbCode, label: "Code" },
-  { icon: TbTable, label: "Spreadsheets" },
+  { icon: TbTable, label: "Sheets" },
 ];
 
 const SUGGESTIONS = [
@@ -36,10 +36,10 @@ const SUGGESTIONS = [
 ];
 
 const CREATIONS = [
-  { title: "SaaS Landing Page", meta: "Website", tone: "#8b5cf6" },
-  { title: "Q2 Financial Model", meta: "Spreadsheet", tone: "#22c55e" },
-  { title: "Investor Pitch Deck", meta: "Presentation", tone: "#f97316" },
-  { title: "Support Agent", meta: "AI Agent", tone: "#a78bfa" },
+  { title: "SaaS Landing Page", meta: "Site", tone: "#8b5cf6" },
+  { title: "Q2 Financial Model", meta: "Sheet", tone: "#22c55e" },
+  { title: "Investor Pitch Deck", meta: "Deck", tone: "#f97316" },
+  { title: "Support Agent", meta: "Agent", tone: "#a78bfa" },
   { title: "Analytics API", meta: "Code", tone: "#64748b" },
 ];
 

@@ -25,16 +25,16 @@ const GROUPS: { label: string; actions: Action[] }[] = [
   {
     label: "Build",
     actions: [
-      { href: "/websites", label: "Website", icon: TbWorld, key: "1" },
-      { href: "/agents", label: "Agent", icon: TbRobot, key: "2" },
+      { href: "/websites", label: "Sites", icon: TbWorld, key: "1" },
+      { href: "/agents", label: "Agents", icon: TbRobot, key: "2" },
       { href: "/code", label: "Code", icon: TbCode, key: "3" },
     ],
   },
   {
     label: "Create",
     actions: [
-      { href: "/documents", label: "Document", icon: TbFileText, key: "4" },
-      { href: "/spreadsheets", label: "Spreadsheet", icon: TbTable, key: "5" },
+      { href: "/documents", label: "Docs", icon: TbFileText, key: "4" },
+      { href: "/spreadsheets", label: "Sheets", icon: TbTable, key: "5" },
     ],
   },
   {

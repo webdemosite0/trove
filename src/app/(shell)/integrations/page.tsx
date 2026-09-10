@@ -4,7 +4,7 @@ import { listConnections } from "@/lib/connections";
 import { PROVIDERS } from "@/lib/providers";
 import { nangoEnabled, NANGO_MAP } from "@/lib/nango";
 
-export const metadata = { title: "Integrations" };
+export const metadata = { title: "Apps" };
 export const dynamic = "force-dynamic";
 
 export default async function IntegrationsPage() {

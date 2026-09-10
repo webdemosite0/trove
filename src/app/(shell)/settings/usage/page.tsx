@@ -13,7 +13,7 @@ import { SignedOut } from "@/components/settings/signed-out";
 import { UsageChart } from "@/components/settings/usage-chart";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Usage & credits" };
+export const metadata = { title: "Usage" };
 
 const RANGES = [7, 14, 30] as const;
 

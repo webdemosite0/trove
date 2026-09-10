@@ -13,7 +13,7 @@ import { googleConfigured } from "@/lib/google";
  * has in the index. It has to be able to read the page to learn to drop it.
  */
 export const metadata = {
-  title: "Sign in",
+  title: "Log in",
   robots: { index: false, follow: true },
 };
 

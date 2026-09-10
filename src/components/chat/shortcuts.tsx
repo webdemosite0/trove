@@ -10,12 +10,12 @@ const ITEMS: {
   icon: typeof TbWorld;
   motion: Motion;
 }[] = [
-  { href: "/websites", label: "Website", icon: TbWorld, motion: "spin" },
+  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
-  { href: "/team", label: "AI Team", icon: TbUsers, motion: "tilt" },
+  { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
   { href: "/code", label: "Code", icon: TbCode, motion: "type" },
-  { href: "/documents", label: "Document", icon: TbFileText, motion: "lift" },
-  { href: "/spreadsheets", label: "Spreadsheet", icon: TbTable, motion: "pop" },
+  { href: "/documents", label: "Docs", icon: TbFileText, motion: "lift" },
+  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
 ];
 
 /** A single row under the composer. Nothing overlaps anything. */

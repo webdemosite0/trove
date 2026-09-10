@@ -24,6 +24,7 @@ const PUBLIC_PREFIXES = [
   "/api/auth/", // the sign-in and OAuth callback routes themselves
   "/api/health", // has to answer when the database is down
   "/api/billing/webhook", // Stripe calls this server-to-server; it has no cookie
+  "/auth/", // login-page product films in public/auth
 ];
 
 function isPublic(pathname: string) {
@@ -123,6 +124,6 @@ export const config = {
    * only to whoever already controls the Search Console property.
    */
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon|opengraph-image|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|google[0-9a-z]+\\.html).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon|opengraph-image|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|google[0-9a-z]+\\.html|auth/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|ico|woff2)$).*)",
   ],
 };

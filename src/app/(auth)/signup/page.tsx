@@ -4,7 +4,7 @@ import { googleConfigured } from "@/lib/google";
 
 /** Not indexed — see the note in the sign-in page. */
 export const metadata = {
-  title: "Sign up",
+  title: "Join",
   robots: { index: false, follow: true },
 };
 

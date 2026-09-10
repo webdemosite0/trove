@@ -10,13 +10,13 @@ import { cn } from "@/lib/utils";
 
 const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> = {
   chat: { label: "Chat", icon: TbMessageCircle, tone: "var(--color-accent)" },
-  site: { label: "Website", icon: TbWorld, tone: "#38bdf8" },
-  agent: { label: "AI Agent", icon: TbRobot, tone: "#a78bfa" },
-  team: { label: "AI Team", icon: TbUsers, tone: "#f472b6" },
+  site: { label: "Site", icon: TbWorld, tone: "#38bdf8" },
+  agent: { label: "Agent", icon: TbRobot, tone: "#a78bfa" },
+  team: { label: "Team", icon: TbUsers, tone: "#f472b6" },
   code: { label: "Code", icon: TbCode, tone: "#34d399" },
-  docs: { label: "Document", icon: TbFileText, tone: "#60a5fa" },
-  sheets: { label: "Spreadsheet", icon: TbTable, tone: "#4ade80" },
-  slides: { label: "Slides", icon: TbPresentation, tone: "#fbbf24" },
+  docs: { label: "Doc", icon: TbFileText, tone: "#60a5fa" },
+  sheets: { label: "Sheet", icon: TbTable, tone: "#4ade80" },
+  slides: { label: "Deck", icon: TbPresentation, tone: "#fbbf24" },
   design: { label: "Design", icon: TbPalette, tone: "#f472b6" },
   research: { label: "Research", icon: TbSearch, tone: "#22d3ee" },
 };

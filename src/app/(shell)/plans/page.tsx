@@ -4,7 +4,7 @@ import { PLANS, myBalance, usageByKind } from "@/lib/credits";
 import { subscriptionFor } from "@/lib/billing";
 import { purchasable, stripeConfigured } from "@/lib/stripe";
 
-export const metadata = { title: "Credits and plans" };
+export const metadata = { title: "Plan" };
 
 /**
  * Whether a plan can actually be bought is decided here, on the server, and

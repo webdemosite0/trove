@@ -100,7 +100,7 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   if (enforced) await sendVerification(user);
 
   await startSession(user.id);
-  redirect(enforced ? "/verify-email" : "/chat");
+  redirect(enforced ? "/verify-email" : `/launching?next=${encodeURIComponent("/chat")}`);
 }
 
 export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState> {
@@ -115,7 +115,7 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
   }
 
   await startSession(row.id);
-  redirect(row.emailVerified ? (next ?? "/chat") : "/verify-email");
+  redirect(row.emailVerified ? `/launching?next=${encodeURIComponent(next ?? "/chat")}` : "/verify-email");
 }
 
 export async function logOut() {

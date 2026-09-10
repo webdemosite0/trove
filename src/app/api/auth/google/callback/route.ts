@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
     await startSession(created.id);
   }
 
-  const res = NextResponse.redirect(`${site.url}/chat`);
+  const res = NextResponse.redirect(`${site.url}/launching?next=${encodeURIComponent("/chat")}`);
   res.cookies.delete("nx_oauth_state");
   return res;
 }
