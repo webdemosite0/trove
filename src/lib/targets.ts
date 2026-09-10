@@ -1,16 +1,5 @@
 /**
  * What the builder can produce.
- *
- * Only the static target renders in the preview pane, and that is a fact about
- * this app rather than a limitation of the code it writes. There is no sandbox
- * here: nothing can run `npm install`, start a dev server or execute Python.
- * React 19 also ships no UMD build, so even a JSX preview would need a bundler
- * at runtime.
- *
- * So the other targets produce a real project you download and run, and the
- * preview pane shows the commands instead of pretending to execute them. A
- * fake terminal printing "Server listening on :3000" would be the easiest
- * thing here to build and the most dishonest.
  */
 
 export type TargetId = "static" | "react" | "node" | "python";
@@ -19,15 +8,10 @@ export interface Target {
   id: TargetId;
   label: string;
   blurb: string;
-  /** Whether the preview pane can actually render the output. */
   previewable: boolean;
-  /** The file the preview or the reader should open first. */
   entry: string;
-  /** Shown in the run panel, in order. */
   commands: string[];
-  /** Where it will be serving, once running. */
   serves?: string;
-  /** Appended to the system prompt for every step of this target. */
   prompt: string;
 }
 
@@ -39,20 +23,50 @@ export const TARGETS: Record<TargetId, Target> = {
     previewable: true,
     entry: "index.html",
     commands: ["open index.html"],
-    prompt: `STACK — a static site.
+    prompt: `STACK — a static site that actually works in the browser.
 
-Flat files only: index.html, styles.css, script.js, plus extra .html pages when
-the plan calls for them. No build step, no bundler, no framework.
+Flat files: index.html, styles.css, script.js, plus extra pages/modules when
+needed. No build step, no bundler, no framework, no CDN, no remote assets.
 
-index.html links its siblings with plain relative paths:
+index.html must link siblings with relative paths:
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
 
-Zero external requests. No CDN, no web fonts, no remote images. System font
-stacks, CSS gradients, inline SVG and emoji only.
+════════════════════════════════════════
+FUNCTIONALITY — non-negotiable
+════════════════════════════════════════
+A pretty shell with dead buttons is a FAILED build. Every interactive control
+must do something the user can verify in the preview:
 
-JavaScript is plain ES2020 in one script, wrapped so it does not leak globals,
-and guards every querySelector before use.`,
+GAMES (tic-tac-toe, memory, quiz, snake, etc.)
+- Full game loop in script.js: state, legal moves, win/draw detection, reset.
+- Clicking a cell / button MUST update the board in the DOM.
+- Show whose turn it is, winner, or draw. Disable illegal moves.
+- Include a Restart control that clears state and re-renders.
+
+FORMS & TOOLS (todo, calculator, timer, converter, notes)
+- Read inputs, validate, update the UI. Persist with localStorage when useful.
+- Empty states, error messages, and success feedback are required.
+
+MULTI-PAGE / NAV
+- Real section switching or multi-page links that work offline.
+- No href="#" placeholders for primary actions.
+
+JS RULES
+- One IIFE or module pattern; no leaked globals.
+- Guard every querySelector / getElementById before use.
+- try/catch around JSON.parse and localStorage.
+- Prefer data attributes + event delegation over brittle per-node handlers.
+- Re-render from a single source of truth (state object), not scattered DOM edits.
+
+VISUAL
+- System fonts, CSS variables, inline SVG only. Responsive to 360px.
+- Motion: short CSS transitions on hover/focus/state (150–280ms). Optional
+  subtle enter animations. No endless decorative loops.
+
+QUALITY BAR
+- Specific copy, not lorem. Working controls only — if you cannot wire it, omit it.
+- The preview must be usable without opening the console.`,
   },
 
   react: {
@@ -68,29 +82,14 @@ and guards every querySelector before use.`,
 Produce a project that runs after exactly \`npm install && npm run dev\`.
 
 Required files:
-  package.json      name, type: "module", scripts (dev/build/preview),
-                    dependencies react + react-dom ^18, devDependencies
-                    vite ^5 and @vitejs/plugin-react ^4. Real versions, no "*".
-  vite.config.js    defineConfig with the react plugin
-  index.html        at the ROOT (not in public/), with
-                    <div id="root"></div> and
-                    <script type="module" src="/src/main.jsx"></script>
-  src/main.jsx      createRoot(document.getElementById('root')).render(<App />)
-  src/App.jsx       the application
-  src/index.css     imported from main.jsx
+  package.json, vite.config.js, index.html (root), src/main.jsx, src/App.jsx,
+  src/index.css. Real pinned versions — never "*".
 
-Component rules:
-- Function components with hooks. No class components.
-- One component per file under src/components/ once there is more than one.
-- Every list uses a stable key from the data, never the array index.
-- useEffect declares its full dependency array and cleans up what it starts.
-- Lift state only as far as it needs to go; do not put everything in App.
-- Derive values during render rather than mirroring props into state.
+FUNCTIONALITY: the app must be interactive. Games need full state + win logic.
+Forms need validation. Lists need add/edit/delete with stable keys.
+No dead buttons. No placeholder-only UI.
 
-Styling is plain CSS files imported by the component. No Tailwind, no CSS-in-JS,
-no UI library — those add install steps the user did not ask for.
-
-No external network calls. Seed any data as a local module under src/data/.`,
+Function components + hooks only. Plain CSS. No network calls at runtime.`,
   },
 
   node: {
@@ -102,34 +101,9 @@ No external network calls. Seed any data as a local module under src/data/.`,
     commands: ["npm install", "npm start"],
     serves: "http://localhost:3000",
     prompt: `STACK — Node.js with Express 4, ES modules.
-
-Produce a server that runs after exactly \`npm install && npm start\`.
-
-Required files:
-  package.json   type: "module", scripts.start "node server.js",
-                 dependencies express ^4. Real versions, never "*".
-  server.js      the app: middleware, routes, listen on
-                 process.env.PORT || 3000
-  routes/*.js    one router per resource once there is more than one
-  store.js       persistence
-  README.md      what it is, how to run it, and every endpoint with an example
-                 curl command
-
-Server rules:
-- express.json() before the routes, and a 404 handler plus a 4-argument error
-  handler AFTER them. Order matters; getting it wrong silently breaks both.
-- Every route wrapped so a thrown error reaches the error handler rather than
-  crashing the process. Async handlers need explicit try/catch — Express 4 does
-  not catch rejected promises.
-- Validate the request body before touching it. Reply 400 with a message
-  naming the offending field, never a stack trace.
-- Correct status codes: 201 with a Location header on create, 204 on delete,
-  404 when the id is unknown.
-- Persistence in a JSON file via fs/promises, read once at boot and written
-  after each mutation, with try/catch around both. Say in a comment that this
-  suits one process and is not safe for concurrent writers.
-- No database driver, no auth library, no dotenv — nothing that adds an
-  install step or a service that does not exist.`,
+Runs after \`npm install && npm start\`.
+Working CRUD routes, validation, JSON file store, README with curl examples.
+No fake endpoints.`,
   },
 
   python: {
@@ -145,34 +119,8 @@ Server rules:
       "uvicorn main:app --reload",
     ],
     serves: "http://127.0.0.1:8000  (docs at /docs)",
-    prompt: `STACK — Python 3.11 with FastAPI and Pydantic v2.
-
-Produce a service that runs after creating a venv, installing
-requirements.txt, and \`uvicorn main:app --reload\`.
-
-Required files:
-  requirements.txt   fastapi and uvicorn[standard], pinned with >= a real
-                     version. Nothing that needs a database or a compiler.
-  main.py            the FastAPI app, routers included
-  models.py          Pydantic v2 models
-  store.py           persistence
-  README.md          what it is, how to run it, and each endpoint with a curl
-                     example
-
-Python rules:
-- Type hints on every function signature and every model field.
-- Pydantic v2 syntax: model_config = ConfigDict(...), field_validator, and
-  model_dump() — never the v1 spellings (class Config, @validator, .dict()),
-  which fail outright on v2.
-- Separate request and response models. Never accept the id from the client on
-  create.
-- Raise HTTPException with a specific status and detail; never return a bare
-  dict for an error.
-- 201 on create, 204 on delete, 404 when the id is unknown.
-- Persistence in a JSON file through pathlib, read at import and written after
-  each change, wrapped in try/except with the file missing handled as empty.
-  Note in a comment that this is single-process only.
-- Standard library plus FastAPI. No SQLAlchemy, no database, no auth library.`,
+    prompt: `STACK — Python 3.11, FastAPI, Pydantic v2.
+Working endpoints, typed models, JSON persistence, README with curl examples.`,
   },
 };
 
