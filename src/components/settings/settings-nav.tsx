@@ -3,34 +3,35 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
-import { FiUser, FiShield, FiCreditCard, FiActivity, FiUsers, FiGrid, FiSun } from "@/components/ui/icons";
+import {
+  FiUser,
+  FiShield,
+  FiCreditCard,
+  FiActivity,
+  FiUsers,
+  FiGrid,
+  FiSun,
+  FiFileText,
+} from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 interface Section {
   href: string;
   label: string;
   icon: IconType;
-  /** Leaves settings for a page that already exists elsewhere. */
   away?: boolean;
 }
 
-/**
- * The sections of settings.
- *
- * Only things that exist. A settings screen is a list of promises — a
- * "Language" select on an app with one language, or an "Auto-save" switch
- * wired to nothing, is a control that lies every time someone flips it. Plan,
- * Team and Integrations are full pages of their own and are linked rather than
- * duplicated here.
- */
 const SECTIONS: Section[] = [
   { href: "/settings", label: "Profile", icon: FiUser },
+  { href: "/settings/instructions", label: "Instructions", icon: FiFileText },
   { href: "/settings/account", label: "Account", icon: FiShield },
   { href: "/settings/appearance", label: "Appearance", icon: FiSun },
   { href: "/settings/usage", label: "Usage", icon: FiActivity },
   { href: "/plans", label: "Plan", icon: FiCreditCard, away: true },
   { href: "/team", label: "Team", icon: FiUsers, away: true },
   { href: "/integrations", label: "Apps", icon: FiGrid, away: true },
+  { href: "/projects", label: "Projects", icon: FiGrid, away: true },
 ];
 
 export function SettingsNav() {
@@ -38,12 +39,8 @@ export function SettingsNav() {
 
   return (
     <nav aria-label="Settings sections" className="lg:w-[212px] lg:shrink-0">
-      {/* Scrolls sideways on a phone rather than stacking seven rows above the
-          content someone came to read. */}
       <ul className="flex gap-1 overflow-x-auto scrollbar-none lg:flex-col lg:overflow-visible">
         {SECTIONS.map((s) => {
-          // Exact match only: /settings is the profile screen, so a prefix
-          // test would light it up on every section below it.
           const active = pathname === s.href;
           return (
             <li key={s.href} className="shrink-0 lg:shrink">
