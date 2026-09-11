@@ -270,6 +270,7 @@ export const MIGRATIONS: string[] = [
   `CREATE TABLE IF NOT EXISTS builder_approvals (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, action TEXT NOT NULL, details TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, decided_at INTEGER)`,
   `CREATE TABLE IF NOT EXISTS builder_deployments (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, environment TEXT NOT NULL DEFAULT 'preview', status TEXT NOT NULL DEFAULT 'queued', url TEXT NOT NULL DEFAULT '', commit_ref TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, finished_at INTEGER)`,
   `CREATE TABLE IF NOT EXISTS builder_brand_profiles (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, colors TEXT NOT NULL DEFAULT '[]', typography TEXT NOT NULL DEFAULT '{}', rules TEXT NOT NULL DEFAULT '{}', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `ALTER TABLE users ADD COLUMN instructions TEXT NOT NULL DEFAULT ''`,
 ];
 
 export const REPAIRS = `
