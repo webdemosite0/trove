@@ -41,6 +41,69 @@ const PANES: { id: Pane; icon: typeof TbWorld; label: string; motion: Motion }[]
   { id: "console", icon: TbTerminal2, label: "Console", motion: "scan" },
 ];
 
+/** Premium inline process row — Grok-style Ran command timeline */
+function ProcessRow({
+  kind,
+  label,
+  active,
+}: {
+  kind: "cmd" | "file" | "think" | "tool" | "ok";
+  label: string;
+  active?: boolean;
+}) {
+  const icon =
+    kind === "cmd"
+      ? "▸"
+      : kind === "file"
+        ? "·"
+        : kind === "tool"
+          ? "⬡"
+          : kind === "ok"
+            ? "✓"
+            : "○";
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2.5 py-[3px] text-[13px] leading-snug",
+        active ? "text-ink-2" : "text-ink-4",
+      )}
+    >
+      <span
+        className={cn(
+          "grid size-[18px] shrink-0 place-items-center rounded-[5px] text-[11px]",
+          kind === "cmd" && "bg-white/[0.06] text-ink-3",
+          kind === "file" && "bg-white/[0.04] text-ink-3",
+          kind === "tool" && "bg-accent/15 text-accent",
+          kind === "ok" && "text-positive",
+          kind === "think" && (active ? "text-accent" : "text-ink-4"),
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0 truncate">
+        {kind === "cmd" ? (
+          <>
+            <span className="text-ink-3">Ran command</span>{" "}
+            <span className="text-ink-2">{label}</span>
+          </>
+        ) : kind === "file" ? (
+          <>
+            <span className="text-ink-3">Wrote</span>{" "}
+            <span className="font-mono text-[12.5px] text-ink-2">{label}</span>
+          </>
+        ) : kind === "tool" ? (
+          <>
+            <span className="text-ink-3">Used</span>{" "}
+            <span className="text-ink-2">{label}</span>
+          </>
+        ) : (
+          label
+        )}
+      </span>
+    </div>
+  );
+}
+
 function Thinking({ phase, logs }: { phase: "asking" | "planning"; logs: { text: string }[] }) {
   const [started] = useState(() => Date.now());
   const [secs, setSecs] = useState(0);
@@ -49,13 +112,14 @@ function Thinking({ phase, logs }: { phase: "asking" | "planning"; logs: { text:
     return () => clearInterval(t);
   }, [started]);
   const last = logs.length ? logs[logs.length - 1]?.text : null;
-  const headline = last || (phase === "asking" ? "Reading your idea" : "Designing the build plan");
+  const headline =
+    last || (phase === "asking" ? "Reading your idea…" : "Designing the build plan…");
   return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 grid place-items-center"><TroveOrb size={22} state="thinking" /></span>
-      <div className="min-w-0">
-        <p className="text-[13.5px] font-medium text-ink">{headline}</p>
-        <p className="mt-0.5 text-[12px] tabular-nums text-accent">Working for {secs}s</p>
+    <div className="space-y-1">
+      <ProcessRow kind="think" label={headline} active />
+      <div className="flex items-center gap-2 pl-[26px] pt-0.5">
+        <TroveOrb size={14} state="thinking" />
+        <span className="text-[12px] tabular-nums text-ink-4">Working for {secs}s</span>
       </div>
     </div>
   );
@@ -88,6 +152,10 @@ export function BuilderView({
   const [stepStates, setStepStates] = useState<Record<string, StepState>>({});
   const [currentStep, setCurrentStep] = useState(-1);
   const [error, setError] = useState<string | null>(null);
+  const [finalMsg, setFinalMsg] = useState<string | null>(null);
+  const [followUps, setFollowUps] = useState<string[]>([]);
+  const [workStarted, setWorkStarted] = useState<number | null>(null);
+  const [workSecs, setWorkSecs] = useState(0);
   const [pane, setPane] = useState<Pane>("preview");
   const [half, setHalf] = useState<"build" | "chat">("chat");
   const [device, setDevice] = useState<keyof typeof DEVICE>("desktop");
@@ -144,6 +212,10 @@ export function BuilderView({
           setPhase("ready");
           setHalf("build");
           setPane("preview");
+          setFinalMsg(
+            `Restored "${data.title || restored.title}" with ${data.files.length} files. Preview is on the right — ask for any change below.`,
+          );
+          setFollowUps(["Make it darker", "Add a contact form", "Improve mobile layout"]);
           return;
         }
       }
@@ -164,7 +236,20 @@ export function BuilderView({
 
   useEffect(() => {
     if (phase !== "building") feedEnd.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [phase, currentStep]);
+  }, [phase, currentStep, finalMsg, logs, tasks]);
+  useEffect(() => {
+    if (phase === "building" || phase === "asking" || phase === "planning") {
+      if (!workStarted) setWorkStarted(Date.now());
+    } else {
+      setWorkStarted(null);
+      setWorkSecs(0);
+    }
+  }, [phase, workStarted]);
+  useEffect(() => {
+    if (!workStarted) return;
+    const id = setInterval(() => setWorkSecs(Math.floor((Date.now() - workStarted) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [workStarted]);
   useEffect(() => () => { abort.current?.abort(); if (filesFlush.current) clearTimeout(filesFlush.current); }, []);
 
   const log = useCallback((text: string, level: LogLine["level"] = "info") => {
@@ -207,7 +292,7 @@ export function BuilderView({
 
   const ask = useCallback(async (text: string, attach?: Attachment[]) => {
     if ((!text.trim() && !attach?.length) || busy || paused) return;
-    setIdea(text); setError(null); setPhase("asking"); setLogs([]); setTasks([]); setFiles([]); setPlan(null); setSandboxUrl(null);
+    setIdea(text); setError(null); setPhase("asking"); setLogs([]); setTasks([]); setFiles([]); setPlan(null); setSandboxUrl(null); setFinalMsg(null); setFollowUps([]);
     log(`new project — "${text.slice(0, 60)}"`);
     try {
       const res = await fetch("/api/builder/questions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idea: text }) });
@@ -290,7 +375,7 @@ export function BuilderView({
 
   const generate = useCallback(async () => {
     if (!plan || busy || paused) return;
-    setPhase("building"); setError(null); setPane("preview"); setHalf("build");
+    setPhase("building"); setError(null); setFinalMsg(null); setFollowUps([]); setPane("preview"); setHalf("build");
     log(`building ${plan.title} — ${plan.steps.length} steps`);
     let current = files;
     for (let i = 0; i < plan.steps.length; i++) {
@@ -310,6 +395,37 @@ export function BuilderView({
     }
     setCurrentStep(-1); setPhase("ready"); setPane("preview"); setHalf("build");
     log("build complete", "ok");
+    const builtTitle = plan.title || idea.slice(0, 60) || "your project";
+    const paths = current.map((f) => f.path);
+    const missing: string[] = [];
+    if (!paths.some((p) => /readme/i.test(p))) missing.push("a README");
+    if (!paths.some((p) => /\.env/i.test(p))) missing.push("env example files");
+    if (paths.length < 8) missing.push("extra pages or components");
+    setFinalMsg(
+      `Built ${builtTitle} with ${current.length} files (${targetId}). ` +
+        `Preview is on the right` +
+        (current.some((f) => f.path.includes("package.json"))
+          ? " — sandbox is installing so the live URL can load."
+          : ".") +
+        (missing.length
+          ? `\n\nI didn't include ${missing.slice(0, 2).join(" or ")} yet. Want me to add those next?`
+          : "\n\nWant any changes — darker theme, more pages, or a form?"),
+    );
+    setFollowUps(
+      missing.length
+        ? [
+            `Add ${missing[0]}`,
+            "Improve the mobile layout",
+            "Make the design more premium",
+            "Add a contact form",
+          ]
+        : [
+            "Make it darker and more premium",
+            "Add a contact form",
+            "Improve mobile layout",
+            "Add more pages",
+          ],
+    );
     void bootSandbox(current);
     try {
       const title = plan.title || idea.slice(0, 80) || "Untitled site";
@@ -353,6 +469,7 @@ export function BuilderView({
       return;
     }
     setError(null);
+    setFinalMsg(null);
     setPhase("building");
     log(`edit — ${q.slice(0, 60)}`);
     try {
@@ -371,6 +488,8 @@ export function BuilderView({
       );
       setFiles(current);
       setPhase("ready");
+      setFinalMsg(`Updated the project (${current.length} files). Preview should refresh — anything else?`);
+      setFollowUps(["Make it darker", "Add animations", "Improve mobile", "Deploy to GitHub"]);
       if (siteId.current) {
         try {
           localStorage.setItem(
@@ -415,7 +534,7 @@ export function BuilderView({
     abort.current?.abort();
     setPhase("idle"); setPlan(null); setFiles([]); setTasks([]); setLogs([]);
     setStepStates({}); setCurrentStep(-1); setError(null); setIdea("");
-    setQuestions([]); setQuestionsOpen(false); setPaused(false);
+    setQuestions([]); setQuestionsOpen(false); setPaused(false); setFinalMsg(null); setFollowUps([]);
     siteId.current = null; setAnswers({}); setSandboxUrl(null);
     try {
       const url = new URL(window.location.href);
@@ -457,7 +576,6 @@ export function BuilderView({
             ))}
           </div>
           {error ? <FailureNote error={error} className="mt-6" /> : null}
-
           {recentSites.length > 0 ? (
             <div className="mt-12 border-t border-line pt-8">
               <h2 className="text-[13px] font-medium uppercase tracking-[0.08em] text-ink-4">Your sites</h2>
@@ -539,29 +657,60 @@ export function BuilderView({
                 </div>
               ) : null}
               {(phase === "building" || phase === "ready") && (
-                <div className="space-y-1.5">
-                  {plan?.steps.map((s) => {
-                    const st = stepStates[s.id] ?? "todo";
-                    if (st === "todo") return null;
-                    const mark = st === "ok" ? "✓" : st === "fail" ? "✕" : "…";
-                    const color = st === "ok" ? "text-positive" : st === "fail" ? "text-critical" : "text-accent";
-                    return (
-                      <p key={s.id} className="flex gap-2 text-[14px] leading-relaxed text-ink-2">
-                        <span className={cn("w-4 shrink-0 text-center text-[12px]", color)}>{mark}</span>
-                        <span>{st === "run" ? `Working on ${s.title}…` : s.title}</span>
-                      </p>
-                    );
-                  })}
-                  {tasks.filter((x) => x.state === "run").map((x) => (
-                    <p key={x.id} className="pl-6 text-[13px] text-ink-4">{x.label}…</p>
-                  ))}
-                  {logs.slice(-8).map((l) => (
-                    <p key={l.id} className="pl-6 font-mono text-[11.5px] text-ink-4">{l.text}</p>
-                  ))}
-                  {phase === "ready" && files.length ? (
-                    <p className="pt-2 text-[14px] leading-relaxed text-ink-2">
-                      Built with {files.length} files. Preview is on the right — ask for any change below.
-                    </p>
+                <div className="space-y-0.5">
+                  <div className="relative ml-1 space-y-0.5 border-l border-line/40 pl-3">
+                    {plan?.steps.map((s) => {
+                      const st = stepStates[s.id] ?? "todo";
+                      if (st === "todo") return null;
+                      return (
+                        <ProcessRow
+                          key={s.id}
+                          kind={st === "ok" ? "ok" : st === "fail" ? "think" : "cmd"}
+                          label={st === "run" ? s.title : st === "ok" ? s.title : `${s.title} failed`}
+                          active={st === "run"}
+                        />
+                      );
+                    })}
+                    {tasks
+                      .filter((x) => x.state === "run" || x.state === "ok")
+                      .slice(-10)
+                      .map((x) => (
+                        <ProcessRow
+                          key={x.id}
+                          kind={/file|write|path/i.test(String(x.kind) + x.label) ? "file" : "cmd"}
+                          label={x.label}
+                          active={x.state === "run"}
+                        />
+                      ))}
+                    {logs.slice(-6).map((l) => (
+                      <ProcessRow key={l.id} kind="think" label={l.text} />
+                    ))}
+                  </div>
+                  {phase === "building" ? (
+                    <div className="flex items-center gap-2 pl-2 pt-2">
+                      <TroveOrb size={14} state="thinking" />
+                      <span className="text-[12px] tabular-nums text-ink-4">Working for {workSecs}s</span>
+                    </div>
+                  ) : null}
+                  {phase === "ready" && finalMsg ? (
+                    <div className="mt-4 space-y-3">
+                      <p className="whitespace-pre-wrap text-[15px] leading-[1.65] text-ink">{finalMsg}</p>
+                      {followUps.length ? (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {followUps.map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              disabled={busy}
+                              onClick={() => void edit(s)}
+                              className="rounded-full border border-line/70 bg-transparent px-3.5 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:bg-hover/40 hover:text-ink disabled:opacity-40"
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
               )}
