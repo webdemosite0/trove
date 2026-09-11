@@ -1,19 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { FiTrash2 } from "@/components/ui/icons";
+import { FiTrash2, FiTerminal } from "@/components/ui/icons";
 import type { LogLine } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 
-/**
- * The build console.
- *
- * Every line here is something that genuinely happened during generation — a
- * skill loaded, a file read with its real byte count, a file written, a check
- * that found something. It is deliberately not a shell: there is no sandbox
- * behind this app, so printing invented commands like `npm install` would be
- * theatre. What it shows instead is the true log of the build.
- */
 export function BuildConsole({
   lines,
   onClear,
@@ -30,39 +21,52 @@ export function BuildConsole({
   }, [lines]);
 
   return (
-    <div className={cn("flex min-h-0 flex-col", className)}>
-      <div className="flex items-center gap-2 border-b border-line px-3 py-1.5">
-        <span className="meta">Console</span>
-        <span className="text-[11px] tabular-nums text-ink-4">{lines.length}</span>
+    <div className={cn("flex min-h-0 flex-col overflow-hidden bg-[#0c0c0e] text-[#e8e8ed]", className)}>
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/[0.08] bg-[#141416] px-3">
+        <FiTerminal size={13} className="text-white/45" />
+        <span className="text-[12px] font-medium tracking-tight text-white/80">Console</span>
+        <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10.5px] tabular-nums text-white/40">
+          {lines.length}
+        </span>
         <span className="flex-1" />
         {onClear && lines.length ? (
           <button
+            type="button"
             onClick={onClear}
-            className="grid h-6 w-6 place-items-center rounded-[var(--r-chip)] text-ink-4 transition-colors hover:bg-hover hover:text-ink-2"
+            className="grid size-7 place-items-center rounded-md text-white/40 hover:bg-white/[0.06] hover:text-white/80"
             aria-label="Clear console"
           >
-            <FiTrash2 size={12} />
+            <FiTrash2 size={13} />
           </button>
         ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto px-3 py-2 font-mono text-[11.5px] leading-[1.7]">
+      <div className="min-h-0 flex-1 overflow-auto px-3 py-2.5 font-mono text-[12px] leading-[1.65]">
         {lines.length === 0 ? (
-          <p className="text-ink-4">Waiting for the build to start.</p>
+          <p className="text-white/35">
+            <span className="text-emerald-400/80">$</span> waiting for build output…
+          </p>
         ) : (
           lines.map((l) => (
-            <div key={l.id} className="nx-line-in flex gap-2.5">
-              <span className="shrink-0 text-ink-4 tabular-nums">{l.at}</span>
+            <div key={l.id} className="flex gap-3">
+              <span className="shrink-0 select-none text-white/25 tabular-nums">{l.at}</span>
               <span
                 className={cn(
                   "min-w-0 flex-1 whitespace-pre-wrap break-words",
                   l.level === "warn"
-                    ? "text-caution"
+                    ? "text-amber-300/90"
                     : l.level === "ok"
-                      ? "text-positive"
-                      : "text-ink-3",
+                      ? "text-emerald-400/90"
+                      : "text-white/70",
                 )}
               >
+                {l.level === "ok" ? (
+                  <span className="mr-1.5 text-emerald-500/70">✓</span>
+                ) : l.level === "warn" ? (
+                  <span className="mr-1.5 text-amber-500/70">!</span>
+                ) : (
+                  <span className="mr-1.5 text-white/25">·</span>
+                )}
                 {l.text}
               </span>
             </div>
