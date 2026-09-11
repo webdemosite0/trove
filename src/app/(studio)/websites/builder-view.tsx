@@ -500,7 +500,7 @@ export function BuilderView({
             {questions.length && questionsOpen ? (
               <QuestionBox questions={questions} onSubmit={(a) => { setAnswers(a); void plan_(idea, a); }} onSkip={() => { setAnswers({}); void plan_(idea, {}); }} busy={busy} />
             ) : null}
-            {plan && phase !== "ready" ? <PlanPanel plan={plan} storage={storage} onStorage={setStorage} onGenerate={() => void generate()} busy={busy} /> : null}
+            {plan && phase === "review" ? <PlanPanel plan={plan} storage={storage} onStorage={setStorage} onGenerate={() => void generate()} busy={busy} /> : null}
             {plan && plan.steps.length ? <StepsBox steps={plan.steps} states={stepStates} current={currentStep} activity={activity} /> : null}
             <ActivityBox tasks={tasks} running={phase === "building"} />
             <div ref={feedEnd} />
