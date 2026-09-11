@@ -34,7 +34,8 @@ const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> 
 };
 
 const PATH_KINDS: { match: (p: string) => boolean; kinds: RecentKind[] | "hide" | "all" }[] = [
-  { match: (p) => p.startsWith("/websites"), kinds: "hide" },
+  // On the Sites front page, only list built sites — not chats
+  { match: (p) => p.startsWith("/websites"), kinds: ["site"] },
   { match: (p) => p.startsWith("/chat"), kinds: "hide" },
   { match: (p) => p.startsWith("/integrations"), kinds: "hide" },
   { match: (p) => p.startsWith("/plans"), kinds: "hide" },
@@ -76,6 +77,7 @@ export function YourWork({
   const search = useSearchParams();
   const hasThread = Boolean(search?.get("c"));
 
+  // Hide while a specific thread/site is open
   if (!force && hasThread) return null;
 
   const auto = kindsForPath(pathname);
@@ -106,6 +108,9 @@ export function YourWork({
     );
   }
 
+  const heading =
+    pathname.startsWith("/websites") ? "Your sites" : title;
+
   return (
     <section
       className={cn(
@@ -120,7 +125,7 @@ export function YourWork({
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">
               Your work
             </p>
-            <h2 className="mt-0.5 text-[15px] font-semibold text-ink">{title}</h2>
+            <h2 className="mt-0.5 text-[15px] font-semibold text-ink">{heading}</h2>
           </div>
           <Link
             href="/dashboard"
