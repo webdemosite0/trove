@@ -40,6 +40,7 @@ import {
   Files,
   Folder,
   Globe,
+  Home,
   Image,
   Info,
   Layers,
@@ -99,12 +100,6 @@ import {
   Zap,
 } from "lucide-react";
 
-/**
- * One icon family for the whole product.
- *
- * Lucide at 1.5px with round caps matches Grok's stroke — thin, even, never
- * the chunky Feather/Tabler mix we had before.
- */
 export type IconType = LucideIcon;
 
 function grok(Icon: LucideIcon): LucideIcon {
@@ -155,6 +150,7 @@ export const FiFileText = grok(FileText);
 export const FiFolder = grok(Folder);
 export const FiGlobe = grok(Globe);
 export const FiGrid = grok(LayoutGrid);
+export const FiHome = grok(Home);
 export const FiInfo = grok(Info);
 export const FiLayers = grok(Layers);
 export const FiLayout = grok(Layout);
@@ -210,6 +206,7 @@ export const TbFileText = grok(FileText);
 export const TbFiles = grok(Files);
 export const TbFolder = grok(Folder);
 export const TbHelpCircle = grok(CircleHelp);
+export const TbHome = grok(Home);
 export const TbLayoutDashboard = grok(LayoutDashboard);
 export const TbLayoutGrid = grok(LayoutGrid);
 export const TbLayoutSidebar = grok(PanelLeft);
