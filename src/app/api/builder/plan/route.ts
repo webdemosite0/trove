@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
-import { SKILL_LIST, SKILLS, type SkillId } from "@/lib/skills";
+import { SKILL_LIST, type SkillId } from "@/lib/skills";
 import { targetFor } from "@/lib/targets";
 import { safeProjectPath } from "@/lib/builder";
 
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
 
   if (!idea) return Response.json({ error: "Describe what to build." }, { status: 400 });
 
-  let account;
+  let account: Awaited<ReturnType<typeof requireCredits>> = null;
   try {
     account = await requireCredits();
   } catch (e) {
@@ -118,6 +118,9 @@ export async function POST(req: NextRequest) {
       );
     }
     throw e;
+  }
+  if (!account) {
+    return Response.json({ error: "Sign in to build." }, { status: 401 });
   }
 
   const minSteps = depth === "quick" ? 3 : 5;
@@ -138,20 +141,22 @@ export async function POST(req: NextRequest) {
     answerLines ? `Answers:\n${answerLines}` : "",
     `Depth: ${depth}`,
     `Target stack: ${stack.label}. ${stack.blurb}`,
-    stack.promptHint ?? "",
+    stack.prompt ? `Stack rules:\n${stack.prompt}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
 
   try {
-    const result = await generateText({
+    const raw = await generateText({
       system,
-      messages: [{ role: "user", content: user }],
-      parts: toParts(attachments),
+      turns: [{ role: "user", text: user }],
+      extraParts: attachments.length ? toParts(attachments) : undefined,
       maxOutputTokens: 4096,
+      onUsage: (u) => {
+        if (account) void spend(account.userId, "builder-plan", u.totalTokens);
+      },
     });
 
-    const raw = result.text ?? "";
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return Response.json({ error: "Planner returned no JSON." }, { status: 502 });
@@ -164,7 +169,6 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Planner JSON was invalid." }, { status: 502 });
     }
 
-    // Normalize steps
     const steps = (Array.isArray(parsed.steps) ? parsed.steps : []).map((s, i) => ({
       id: `s${i + 1}`,
       title: String(s.title ?? `Step ${i + 1}`).slice(0, 80),
@@ -180,8 +184,6 @@ export async function POST(req: NextRequest) {
     if (steps.length < 2) {
       return Response.json({ error: "Plan too short." }, { status: 502 });
     }
-
-    await spend(account, 1, "builder-plan");
 
     const plan: BuildPlan = {
       title: String(parsed.title ?? "Untitled").slice(0, 60),
