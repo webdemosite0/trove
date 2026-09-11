@@ -1,19 +1,12 @@
 "use client";
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
-import {
-  FiSearch,
-  FiCheck,
-  FiPlus,
-  FiExternalLink,
-} from "@/components/ui/icons";
+import Link from "next/link";
+import { FiSearch, FiCheck, FiPlus, FiExternalLink } from "@/components/ui/icons";
 import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
-import { CATEGORIES, SERVICES, type Category } from "@/lib/services";
-import { IntegrationsHero } from "@/components/integrations/hero";
-import { Ico } from "@/components/ui/ico";
+import { SERVICES } from "@/lib/services";
 import { ServiceMark } from "@/components/integrations/service-mark";
-import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 export interface ConnectedService {
@@ -35,10 +28,9 @@ export function IntegrationsView({
   nangoOn?: boolean;
   nangoServices?: string[];
 }) {
+  const [tab, setTab] = useState<"connectors" | "skills">("connectors");
   const [opening, setOpening] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<Category | "All">("All");
-  const [showAll, setShowAll] = useState(false);
   const [pending, startTransition] = useTransition();
   const [nangoBusy, setNangoBusy] = useState<string | null>(null);
   const [nangoError, setNangoError] = useState<string | null>(null);
@@ -55,33 +47,18 @@ export function IntegrationsView({
     [optimistic],
   );
 
-  const results = useMemo(() => {
+  const featured = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = SERVICES.filter((s) => {
-      if (category !== "All" && s.category !== category) return false;
+    return SERVICES.filter((s) => {
+      if (byId.has(s.id)) return false;
       if (!q) return true;
       return (
         s.name.toLowerCase().includes(q) ||
         s.blurb.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q)
       );
-    });
-
-    list = [...list].sort((a, b) => {
-      const ac = byId.has(a.id) ? 0 : 1;
-      const bc = byId.has(b.id) ? 0 : 1;
-      if (ac !== bc) return ac - bc;
-      return a.name.localeCompare(b.name);
-    });
-
-    if (!showAll && !q) {
-      const live = list.filter((s) => byId.has(s.id) || connectable[s.id] || nangoSet.has(s.id));
-      const rest = list.filter((s) => !byId.has(s.id) && !connectable[s.id] && !nangoSet.has(s.id));
-      list = [...live, ...rest.slice(0, 6)];
-    }
-
-    return list;
-  }, [query, category, byId, showAll, connectable, nangoSet]);
+    }).slice(0, q ? 40 : 16);
+  }, [query, byId]);
 
   function remove(id: string) {
     startTransition(async () => {
@@ -101,10 +78,8 @@ export function IntegrationsView({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
-
       const link = data.connectLink as string;
       const popup = window.open(link, "nango-connect", "width=520,height=720");
-
       const started = Date.now();
       await new Promise<void>((resolve) => {
         const t = setInterval(() => {
@@ -114,7 +89,6 @@ export function IntegrationsView({
           }
         }, 800);
       });
-
       const sync = await fetch("/api/nango/sync", { method: "POST" });
       const syncData = await sync.json().catch(() => null);
       if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync.");
@@ -126,166 +100,168 @@ export function IntegrationsView({
     }
   }
 
+  function startConnect(id: string) {
+    if (nangoOn && nangoSet.has(id)) void connectNango(id);
+    else if (connectable[id]) setOpening(id);
+  }
+
   return (
-    <div className="mx-auto min-h-screen w-full min-w-0 max-w-[1120px] px-5 py-8 lg:px-8">
-      <IntegrationsHero total={SERVICES.length} connected={optimistic.length} />
-
-      {nangoOn ? (
-        <p className="nx-rise mt-4 rounded-[14px] border border-accent/25 bg-accent/[0.06] px-4 py-3 text-[13px] leading-relaxed text-ink-2">
-          <span className="font-medium text-accent">Nango is on.</span> OAuth apps open Nango’s connect flow.{" "}
-          <a href="https://app.nango.dev" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
-            Dashboard <FiExternalLink size={11} />
-          </a>
-        </p>
-      ) : null}
-
-      {nangoError ? (
-        <p className="mt-3 rounded-[12px] border border-critical/30 bg-critical/10 px-3 py-2 text-[13px] text-critical">
-          {nangoError}
-        </p>
-      ) : null}
-
-      <div className="mb-5 mt-9 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-[19px] font-semibold text-ink">My integrations</h2>
-          <p className="mt-0.5 text-[12.5px] text-ink-4">
-            {optimistic.length} connected · type <kbd className="rounded bg-sunk px-1.5 py-0.5 text-[11px]">@</kbd> in chat to use them
-          </p>
-        </div>
-
-        <div className="relative w-full sm:w-[340px]">
-          <Ico
-            icon={FiSearch}
-            motion="scan"
-            size={16}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4"
-          />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search"
-            aria-label="Search integrations"
-            className="h-11 w-full rounded-[var(--r-panel)] border border-line bg-sunk pl-10 pr-4 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-accent"
-          />
-        </div>
-      </div>
-
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {(["All", ...CATEGORIES] as const).map((c) => (
+    <div className="mx-auto min-h-screen w-full max-w-[920px] px-4 py-8 sm:px-6">
+      <div className="overflow-hidden rounded-[24px] border border-line bg-rail shadow-[0_24px_80px_-40px_rgba(0,0,0,0.5)]">
+        <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3 sm:px-5">
+          <div className="flex rounded-full bg-sunk p-0.5">
             <button
-              key={c}
-              onClick={() => setCategory(c)}
+              type="button"
+              onClick={() => setTab("connectors")}
               className={cn(
-                "shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] transition-colors",
-                category === c
-                  ? "border-accent bg-accent-soft text-accent"
-                  : "border-line-strong text-ink-3 hover:bg-hover hover:text-ink",
+                "rounded-full px-3.5 py-1.5 text-[13px] font-medium",
+                tab === "connectors" ? "bg-raised text-ink shadow-sm" : "text-ink-4",
               )}
             >
-              {c}
+              Connectors
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => setTab("skills")}
+              className={cn(
+                "rounded-full px-3.5 py-1.5 text-[13px] font-medium",
+                tab === "skills" ? "bg-raised text-ink shadow-sm" : "text-ink-4",
+              )}
+            >
+              Skills
+            </button>
+          </div>
+          <div className="relative min-w-[160px] flex-1">
+            <FiSearch size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search…"
+              className="h-9 w-full rounded-full border border-line bg-sunk pl-9 pr-3 text-[13px] text-ink outline-none placeholder:text-ink-4 focus:border-accent"
+            />
+          </div>
+          <Link
+            href="/skills"
+            className="rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] font-medium text-ink-2 hover:bg-hover"
+          >
+            New Connector
+          </Link>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowAll((v) => !v)}
-          className="ml-auto shrink-0 rounded-full border border-line px-3 py-1.5 text-[12.5px] text-ink-3 transition hover:bg-hover hover:text-ink"
-        >
-          {showAll ? "Connected first" : "Show all"}
-        </button>
-      </div>
 
-      {results.length === 0 ? (
-        <EmptyState
-          icon={FiSearch}
-          title={`No integration matches “${query}”`}
-          body="Try a shorter word, or clear the filter."
-        />
-      ) : (
-        <div className="grid min-w-0 gap-x-8 gap-y-1 lg:grid-cols-2">
-          {results.map((s, i) => {
-            const conn = byId.get(s.id);
-            const on = Boolean(conn);
-            const spec = connectable[s.id];
-            const viaNango = nangoOn && nangoSet.has(s.id);
-            const canConnect = Boolean(spec || viaNango);
-            return (
-              <article
-                key={s.id}
-                className={cn(
-                  "nx-in flex flex-col rounded-[var(--r-panel)] border p-4 transition-all duration-[var(--t-hover)]",
-                  on
-                    ? "border-positive/30 bg-positive/6"
-                    : "border-line bg-rail hover:border-line-strong",
-                )}
-                style={{
-                  animationDelay: `${Math.min(i, 18) * 22}ms`,
-                  animationFillMode: "backwards",
-                }}
+        <div className="max-h-[min(72vh,720px)] overflow-y-auto p-4 sm:p-5">
+          {tab === "skills" ? (
+            <div className="space-y-3">
+              <p className="text-[13px] text-ink-3">
+                Skills are capabilities the AI uses while you chat or build. Open the full catalog for details.
+              </p>
+              <Link
+                href="/skills"
+                className="inline-flex rounded-full bg-accent px-4 py-2 text-[13px] font-medium text-white"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <ServiceMark id={s.id} name={s.name} size={36} />
-                    <div className="min-w-0">
-                      <h3 className="text-[14px] font-medium text-ink">{s.name}</h3>
-                      <p className="truncate text-[11.5px] text-ink-4">
-                        {conn
-                          ? `${conn.account || "connected"} · ${conn.hint}`
-                          : canConnect
-                            ? viaNango
-                              ? "OAuth via Nango"
-                              : s.category
-                            : "Coming soon"}
-                      </p>
-                    </div>
-                  </div>
-                  {on ? (
-                    <span className="rounded-full bg-positive/15 px-2 py-0.5 text-[10.5px] font-medium text-positive">
-                      Live
-                    </span>
-                  ) : null}
-                </div>
+                Open Skills
+              </Link>
+            </div>
+          ) : (
+            <>
+              {nangoError ? (
+                <p className="mb-4 rounded-xl border border-critical/30 bg-critical/10 px-3 py-2 text-[13px] text-critical">
+                  {nangoError}
+                </p>
+              ) : null}
 
-                <p className="mt-2.5 flex-1 text-[12.5px] leading-relaxed text-ink-3">{s.blurb}</p>
-
-                {on ? (
-                  <button
-                    onClick={() => remove(s.id)}
-                    disabled={pending}
-                    className="group mt-3.5 flex items-center justify-center gap-1.5 rounded-[var(--r-control)] border border-positive/35 py-2 text-[13px] text-positive transition-colors hover:border-critical/40 hover:bg-critical/10 hover:text-critical disabled:opacity-50"
-                  >
-                    <Ico icon={FiCheck} motion="check" size={13} />
-                    <span className="group-hover:hidden">Connected</span>
-                    <span className="hidden group-hover:inline">Disconnect</span>
-                  </button>
-                ) : viaNango ? (
-                  <button
-                    onClick={() => void connectNango(s.id)}
-                    disabled={!signedIn || nangoBusy !== null}
-                    className="group mt-3.5 flex items-center justify-center gap-1.5 rounded-[var(--r-control)] border border-accent/40 bg-accent/[0.08] py-2 text-[13px] text-accent transition-colors hover:bg-accent/15 disabled:opacity-50"
-                  >
-                    <Ico icon={FiPlus} motion="open" size={13} />
-                    {nangoBusy === s.id ? "Opening Nango…" : "Connect with Nango"}
-                  </button>
-                ) : spec ? (
-                  <button
-                    onClick={() => setOpening(s.id)}
-                    disabled={!signedIn || pending}
-                    className="group mt-3.5 flex items-center justify-center gap-1.5 rounded-[var(--r-control)] border border-line-strong py-2 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink disabled:opacity-50"
-                  >
-                    <Ico icon={FiPlus} motion="open" size={13} /> Connect
-                  </button>
+              <section>
+                <h2 className="text-[13px] font-semibold text-ink">Connected</h2>
+                {optimistic.length === 0 ? (
+                  <p className="mt-3 text-[13px] text-ink-4">
+                    Nothing connected yet. Add GitHub or Vercel below — then type{" "}
+                    <kbd className="rounded bg-sunk px-1.5 py-0.5 text-[11px]">@</kbd> in chat.
+                  </p>
                 ) : (
-                  <span className="mt-3.5 flex items-center justify-center gap-1.5 rounded-[var(--r-control)] border border-dashed border-line-strong py-2 text-[12.5px] text-ink-4">
-                    Coming soon
-                  </span>
+                  <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {optimistic.map((c) => {
+                      const meta = SERVICES.find((s) => s.id === c.service);
+                      return (
+                        <li
+                          key={c.service}
+                          className="flex items-center gap-3 rounded-2xl border border-line bg-raised/60 px-3.5 py-3"
+                        >
+                          <ServiceMark id={c.service} name={meta?.name ?? c.service} size={36} />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[14px] font-medium text-ink">
+                              {meta?.name ?? c.service}
+                            </p>
+                            <p className="truncate text-[12px] text-ink-4">
+                              {c.account || meta?.blurb || "Connected"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => remove(c.service)}
+                            className="rounded-full border border-line px-2.5 py-1 text-[12px] text-positive hover:border-critical/40 hover:text-critical"
+                          >
+                            <span className="inline-flex items-center gap-1">
+                              <FiCheck size={12} /> Added
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
-              </article>
-            );
-          })}
+              </section>
+
+              <section className="mt-8">
+                <h2 className="text-[13px] font-semibold text-ink">Featured</h2>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {featured.map((s) => {
+                    const can =
+                      Boolean(connectable[s.id]) || (nangoOn && nangoSet.has(s.id));
+                    return (
+                      <li
+                        key={s.id}
+                        className="flex items-center gap-3 rounded-2xl border border-line/80 bg-canvas/40 px-3.5 py-3 transition hover:bg-hover/50"
+                      >
+                        <ServiceMark id={s.id} name={s.name} size={36} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[14px] font-medium text-ink">{s.name}</p>
+                          <p className="truncate text-[12px] text-ink-4">{s.blurb}</p>
+                        </div>
+                        {can ? (
+                          <button
+                            type="button"
+                            disabled={!signedIn || nangoBusy !== null}
+                            onClick={() => startConnect(s.id)}
+                            className="shrink-0 rounded-full border border-line bg-raised px-3 py-1 text-[12.5px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50"
+                          >
+                            {nangoBusy === s.id ? "…" : "Add"}
+                          </button>
+                        ) : (
+                          <span className="shrink-0 text-[11.5px] text-ink-4">Soon</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+
+              {nangoOn ? (
+                <p className="mt-6 text-[12px] text-ink-4">
+                  OAuth runs through Nango.{" "}
+                  <a
+                    href="https://app.nango.dev"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-accent hover:underline"
+                  >
+                    Dashboard <FiExternalLink size={11} />
+                  </a>
+                </p>
+              ) : null}
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {opening && connectable[opening] ? (
         <ConnectDialog
