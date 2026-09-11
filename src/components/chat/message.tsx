@@ -246,14 +246,14 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
       <pre className="overflow-x-auto p-3.5 text-[12.5px] leading-relaxed">
         <code>
           {tokens.map((t, i) =>
-            t.type === "plain" ? (
+            t.kind === "plain" ? (
               <span key={i}>{t.text}</span>
             ) : (
               <span
                 key={i}
                 style={{
-                  color: TOKEN_VAR[t.type] ?? undefined,
-                  fontStyle: t.type === "comment" ? "italic" : undefined,
+                  color: TOKEN_VAR[t.kind] ?? undefined,
+                  fontStyle: t.kind === "comment" ? "italic" : undefined,
                 }}
               >
                 {t.text}
