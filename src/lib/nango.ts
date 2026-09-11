@@ -10,6 +10,8 @@ const NANGO_API = "https://api.nango.dev";
  * Trove service id → Nango integration unique key.
  * Create matching integrations in the Nango dashboard (same keys).
  * https://app.nango.dev → Integrations
+ *
+ * GitHub must exist as unique key `github` (or change this map to match yours).
  */
 export const NANGO_MAP: Record<string, string> = {
   gmail: "google-mail",
@@ -58,7 +60,35 @@ function secretKey(): string | null {
   return process.env.NANGO_SECRET_KEY?.trim() || null;
 }
 
-async function nangoFetch(path: string, init?: RequestInit) {
+function formatNangoError(status: number, body: unknown, integration?: string): string {
+  const b = body as Record<string, unknown> | null;
+  const err = (b?.error ?? b) as Record<string, unknown> | string | null;
+  const msg =
+    (typeof err === "object" && err
+      ? String(err.message ?? err.error ?? "")
+      : typeof err === "string"
+        ? err
+        : "") ||
+    (typeof b?.message === "string" ? b.message : "") ||
+    `Nango ${status}`;
+
+  if (status === 400 || status === 404) {
+    const id = integration ?? "this integration";
+    return (
+      `${msg} ` +
+      `(integration id “${id}”). In Nango: Integrations → Create “GitHub” ` +
+      `with Unique Key exactly “${id}”, add GitHub OAuth Client ID + Secret, ` +
+      `then use the same environment’s Secret Key as NANGO_SECRET_KEY. ` +
+      `Dashboard: https://app.nango.dev`
+    );
+  }
+  if (status === 401 || status === 403) {
+    return `${msg} — check NANGO_SECRET_KEY is the Environment Secret Key from app.nango.dev (not the public key).`;
+  }
+  return msg;
+}
+
+async function nangoFetch(path: string, init?: RequestInit, integrationHint?: string) {
   const key = secretKey();
   if (!key) throw new Error("NANGO_SECRET_KEY is not set.");
   const res = await fetch(`${NANGO_API}${path}`, {
@@ -71,11 +101,7 @@ async function nangoFetch(path: string, init?: RequestInit) {
   });
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    const msg =
-      body?.error?.message ||
-      body?.message ||
-      `Nango ${res.status}`;
-    throw new Error(msg);
+    throw new Error(formatNangoError(res.status, body, integrationHint));
   }
   return body;
 }
@@ -98,16 +124,20 @@ export async function createNangoSession(service: string): Promise<{
     throw new Error("This service is not wired to Nango yet.");
   }
 
-  const body = await nangoFetch("/connect/sessions", {
-    method: "POST",
-    body: JSON.stringify({
-      tags: {
-        end_user_id: user.id,
-        end_user_email: user.email ?? "",
-      },
-      allowed_integrations: [integration],
-    }),
-  });
+  const body = await nangoFetch(
+    "/connect/sessions",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        tags: {
+          end_user_id: user.id,
+          end_user_email: user.email ?? "",
+        },
+        allowed_integrations: [integration],
+      }),
+    },
+    integration,
+  );
 
   const data = body?.data ?? body;
   const token = data?.token;
@@ -133,7 +163,6 @@ export async function syncNangoConnections(): Promise<{ synced: string[] }> {
   if (!user) return { synced: [] };
   if (!nangoEnabled()) return { synced: [] };
 
-  // List connections; filter by end_user tag client-side for compatibility.
   const body = await nangoFetch("/connections");
   const list: unknown[] = Array.isArray(body)
     ? body
@@ -172,8 +201,6 @@ export async function syncNangoConnections(): Promise<{ synced: string[] }> {
         connectionId.slice(0, 12),
     );
 
-    // Store Nango connection id as the secret reference (not the OAuth token).
-    // Real API calls should go through Nango proxy; we never hold provider tokens.
     const payload = JSON.stringify({
       nango: true,
       connectionId,
@@ -181,7 +208,6 @@ export async function syncNangoConnections(): Promise<{ synced: string[] }> {
     });
 
     if (!canStoreSecrets()) {
-      // Still record presence without encrypting full payload if secrets off.
       await run(
         `INSERT INTO connections (user_id, service, kind, secret, account, hint, verified_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -190,15 +216,7 @@ export async function syncNangoConnections(): Promise<{ synced: string[] }> {
            account = excluded.account,
            hint = excluded.hint,
            verified_at = excluded.verified_at`,
-        [
-          user.id,
-          service,
-          "nango",
-          connectionId,
-          account,
-          "via Nango",
-          now,
-        ],
+        [user.id, service, "nango", connectionId, account, "via Nango", now],
       );
     } else {
       await run(
@@ -210,15 +228,7 @@ export async function syncNangoConnections(): Promise<{ synced: string[] }> {
            account = excluded.account,
            hint = excluded.hint,
            verified_at = excluded.verified_at`,
-        [
-          user.id,
-          service,
-          "nango",
-          encrypt(payload),
-          account,
-          hint(connectionId),
-          now,
-        ],
+        [user.id, service, "nango", encrypt(payload), account, hint(connectionId), now],
       );
     }
     synced.push(service);
