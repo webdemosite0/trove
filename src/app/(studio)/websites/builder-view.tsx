@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
-import { FiArrowLeft, FiDownload, FiExternalLink, FiMonitor, FiSmartphone, FiTablet, FiRotateCcw, FiFile, FiZap, FiLayers, TbWorld, TbTerminal2, TbCode, TbFiles, TbSparkles } from "@/components/ui/icons";
+import { FiArrowLeft, FiDownload, FiExternalLink, FiMonitor, FiSmartphone, FiTablet, FiFile, TbWorld, TbTerminal2, TbCode, TbFiles } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
 import { TroveOrb } from "@/components/brand/orb";
@@ -62,7 +62,17 @@ function Thinking({ phase, logs }: { phase: "asking" | "planning"; logs: { text:
   );
 }
 
-export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; draft?: string }) {
+export function BuilderView({
+  mobile = false,
+  draft = "",
+  restored = null,
+  recentSites = [],
+}: {
+  mobile?: boolean;
+  draft?: string;
+  restored?: { id: string; title: string; idea: string } | null;
+  recentSites?: { id: string; title: string; href: string }[];
+}) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [idea, setIdea] = useState(() => draft.trim());
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -99,8 +109,50 @@ export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; 
   }, []);
   const feedEnd = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
-  const siteId = useRef<string | null>(null);
+  const siteId = useRef<string | null>(restored?.id ?? null);
   const busy = phase === "asking" || phase === "planning" || phase === "building";
+
+  useEffect(() => {
+    if (!restored?.id) return;
+    siteId.current = restored.id;
+    try {
+      const raw = localStorage.getItem(`trove-site-${restored.id}`);
+      if (raw) {
+        const data = JSON.parse(raw) as {
+          title?: string;
+          idea?: string;
+          files?: ProjectFile[];
+          target?: TargetId;
+          answers?: Record<string, string>;
+        };
+        if (data.files?.length) {
+          setFiles(data.files);
+          setIdea(data.idea || restored.idea || restored.title);
+          if (data.target) setTargetId(data.target);
+          if (data.answers) setAnswers(data.answers);
+          setPlan({
+            title: data.title || restored.title,
+            summary: "Restored from Your work",
+            requirements: {
+              overview: data.idea || restored.idea || "",
+              features: [],
+              pages: [],
+              rules: [],
+            },
+            style: { name: "Restored", mood: "as saved", palette: ["#111"], type: "system" },
+            steps: [],
+          });
+          setPhase("ready");
+          setHalf("build");
+          setPane("preview");
+          return;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    setIdea(restored.idea || restored.title);
+  }, [restored]);
 
   useEffect(() => {
     if (phase !== "building") feedEnd.current?.scrollIntoView({ block: "end", behavior: "smooth" });
@@ -272,7 +324,15 @@ export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; 
         const data = await res.json().catch(() => null);
         if (data?.id) {
           siteId.current = data.id;
-          try { localStorage.setItem(`trove-site-${data.id}`, JSON.stringify({ title, idea, files: current, target: targetId, answers })); } catch { /* */ }
+          try {
+            localStorage.setItem(
+              `trove-site-${data.id}`,
+              JSON.stringify({ title, idea, files: current, target: targetId, answers }),
+            );
+            const url = new URL(window.location.href);
+            url.searchParams.set("c", data.id);
+            window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
+          } catch { /* */ }
         }
       }
     } catch { /* */ }
@@ -290,11 +350,19 @@ export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; 
         attach,
       );
       setFiles(current); setPhase("ready");
+      if (siteId.current) {
+        try {
+          localStorage.setItem(
+            `trove-site-${siteId.current}`,
+            JSON.stringify({ title: plan?.title, idea, files: current, target: targetId, answers }),
+          );
+        } catch { /* */ }
+      }
     } catch (e) {
       const m = e instanceof Error ? e.message : "Edit failed.";
       setError(m); log(m, "warn"); setPhase("ready");
     }
-  }, [busy, paused, plan, files, runStep, styleBrief, log]);
+  }, [busy, paused, plan, files, runStep, styleBrief, log, idea, targetId, answers]);
 
   async function download() {
     if (!files.length) return;
@@ -325,6 +393,11 @@ export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; 
     setStepStates({}); setCurrentStep(-1); setError(null); setIdea("");
     setQuestions([]); setQuestionsOpen(false); setPaused(false);
     siteId.current = null; setAnswers({}); setSandboxUrl(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("c");
+      window.history.replaceState({}, "", url.pathname + (url.search ? `?${url.searchParams}` : ""));
+    } catch { /* */ }
   }
 
   if (phase === "idle") {
@@ -337,7 +410,7 @@ export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; 
           <div className="mb-8 text-center">
             <h1 className="text-[clamp(1.9rem,1.2rem+2vw,2.65rem)] font-semibold tracking-[-0.04em] text-ink">What should we build?</h1>
             <p className="mx-auto mt-2 max-w-[48ch] text-[15px] text-ink-3">
-              For instant browser Preview (tic-tac-toe, shop, landing), pick <strong>Static site</strong>. React/Node use Preview via sandbox or local commands.
+              Builds are saved to <strong>Your sites</strong> below. Open one to continue where you left off.
             </p>
           </div>
           <div className="rounded-[28px] border border-line bg-raised/70 p-2">
@@ -354,17 +427,29 @@ export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; 
               </button>
             ))}
           </div>
-          <div className="mt-3 flex justify-center gap-1.5">
-            {([{ id: "quick" as const, label: "Quick" }, { id: "deep" as const, label: "Deep Build" }]).map((m) => (
-              <button key={m.id} type="button" onClick={() => setDepth(m.id)} className={cn("rounded-full border px-3 py-1.5 text-[12.5px]", depth === m.id ? "border-accent bg-accent/10 text-ink" : "border-line text-ink-3")}>{m.label}</button>
-            ))}
-          </div>
           <div className="mt-6 flex flex-wrap justify-center gap-2.5">
             {IDEAS.map((e) => (
               <button key={e} type="button" onClick={() => ask(e)} className="chip">{e}</button>
             ))}
           </div>
           {error ? <FailureNote error={error} className="mt-6" /> : null}
+
+          {recentSites.length > 0 ? (
+            <div className="mt-12 border-t border-line pt-8">
+              <h2 className="text-[13px] font-medium uppercase tracking-[0.08em] text-ink-4">Your sites</h2>
+              <ul className="mt-3 divide-y divide-line rounded-[18px] border border-line bg-rail">
+                {recentSites.map((s) => (
+                  <li key={s.id}>
+                    <a href={s.href} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-hover">
+                      <span className="grid size-9 place-items-center rounded-[10px] bg-accent/12 text-[12px] font-semibold text-accent">Web</span>
+                      <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink">{s.title}</span>
+                      <span className="text-[12px] text-ink-4">Open</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -406,8 +491,8 @@ export function BuilderView({ mobile = false, draft = "" }: { mobile?: boolean; 
             {questions.length && questionsOpen ? (
               <QuestionBox questions={questions} onSubmit={(a) => { setAnswers(a); void plan_(idea, a); }} onSkip={() => { setAnswers({}); void plan_(idea, {}); }} busy={busy} />
             ) : null}
-            {plan ? <PlanPanel plan={plan} storage={storage} onStorage={setStorage} onGenerate={() => void generate()} busy={busy} /> : null}
-            {plan ? <StepsBox steps={plan.steps} states={stepStates} current={currentStep} activity={activity} /> : null}
+            {plan && phase !== "ready" ? <PlanPanel plan={plan} storage={storage} onStorage={setStorage} onGenerate={() => void generate()} busy={busy} /> : null}
+            {plan && plan.steps.length ? <StepsBox steps={plan.steps} states={stepStates} current={currentStep} activity={activity} /> : null}
             <ActivityBox tasks={tasks} running={phase === "building"} />
             <div ref={feedEnd} />
           </div>
