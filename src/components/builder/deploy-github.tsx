@@ -2,102 +2,105 @@
 
 import { useState } from "react";
 import { ConnectorApproval } from "@/components/integrations/connector-menu";
+import type { ProjectFile } from "@/lib/builder";
 
 export function DeployGithubButton({
   files,
   title,
 }: {
-  files: { path: string; content: string }[];
+  files: ProjectFile[];
   title?: string;
 }) {
-  const [ask, setAsk] = useState<null | "github" | "vercel">(null);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ url?: string; error?: string } | null>(null);
+  const [phase, setPhase] = useState<"idle" | "ask-gh" | "ask-vercel" | "busy" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
 
-  async function deploy(kind: "github" | "vercel") {
-    setBusy(true);
-    setResult(null);
+  async function deployGithub() {
+    setPhase("busy");
+    setError(null);
     try {
-      const endpoint = kind === "github" ? "/api/github/deploy" : "/api/vercel/deploy";
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/github/deploy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: title || "trove-site",
-          description: "Built with Trove",
-          files,
-        }),
+        body: JSON.stringify({ files, title }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setResult({ error: data?.error ?? `Deploy failed (${res.status})` });
-      } else {
-        setResult({ url: data.url });
-        setAsk(null);
-      }
+      if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
+      setResultUrl(data.url ?? data.html_url ?? null);
+      setPhase("done");
     } catch (e) {
-      setResult({ error: e instanceof Error ? e.message : "Deploy failed" });
-    } finally {
-      setBusy(false);
+      setError(e instanceof Error ? e.message : "Deploy failed");
+      setPhase("idle");
+    }
+  }
+
+  async function deployVercel() {
+    setPhase("busy");
+    setError(null);
+    try {
+      const res = await fetch("/api/vercel/deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files, title }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
+      setResultUrl(data.url ?? null);
+      setPhase("done");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Deploy failed");
+      setPhase("idle");
     }
   }
 
   return (
-    <div className="space-y-2">
-      {ask === null ? (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setAsk("github")}
-            disabled={!files.length || busy}
-            className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-40"
-          >
-            Deploy to GitHub
-          </button>
-          <button
-            type="button"
-            onClick={() => setAsk("vercel")}
-            disabled={!files.length || busy}
-            className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-40"
-          >
-            Deploy to Vercel
-          </button>
-        </div>
-      ) : ask === "github" ? (
-        <ConnectorApproval
-          name="GitHub"
-          mark="GH"
-          tone="#e6edf3"
-          action={`Create a repository and upload ${files.length} files from this build.`}
-          detail={title ? `Repo name will be based on “${title}”.` : undefined}
-          busy={busy}
-          onAllow={() => void deploy("github")}
-          onDeny={() => setAsk(null)}
-        />
-      ) : (
-        <ConnectorApproval
-          name="Vercel"
-          mark="▲"
-          tone="#ffffff"
-          action={`Create a Vercel deployment with ${files.length} files.`}
-          detail="Uses your connected Vercel access token."
-          busy={busy}
-          onAllow={() => void deploy("vercel")}
-          onDeny={() => setAsk(null)}
-        />
-      )}
-      {result?.url ? (
-        <a
-          href={result.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-[13px] text-accent hover:underline"
-        >
-          Open {result.url.replace(/^https?:\/\//, "")}
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        disabled={!files.length || phase === "busy"}
+        onClick={() => setPhase("ask-gh")}
+        className="rounded-full border border-line px-3 py-1.5 text-[12.5px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40"
+      >
+        Deploy to GitHub
+      </button>
+      <button
+        type="button"
+        disabled={!files.length || phase === "busy"}
+        onClick={() => setPhase("ask-vercel")}
+        className="rounded-full border border-line px-3 py-1.5 text-[12.5px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40"
+      >
+        Deploy to Vercel
+      </button>
+      {resultUrl ? (
+        <a href={resultUrl} target="_blank" rel="noopener noreferrer" className="text-[12.5px] text-accent hover:underline">
+          Open deployment
         </a>
       ) : null}
-      {result?.error ? (
-        <p className="text-[12.5px] text-critical">{result.error}</p>
+      {error ? <p className="w-full text-[12.5px] text-critical">{error}</p> : null}
+
+      {phase === "ask-gh" ? (
+        <div className="w-full">
+          <ConnectorApproval
+            name="GitHub"
+            serviceId="github"
+            action="Create a repository and upload the built site files."
+            onAllow={() => void deployGithub()}
+            onDeny={() => setPhase("idle")}
+            busy={false}
+          />
+        </div>
+      ) : null}
+      {phase === "ask-vercel" ? (
+        <div className="w-full">
+          <ConnectorApproval
+            name="Vercel"
+            serviceId="vercel"
+            action="Deploy this project to a Vercel preview URL."
+            onAllow={() => void deployVercel()}
+            onDeny={() => setPhase("idle")}
+            busy={false}
+          />
+        </div>
       ) : null}
     </div>
   );
