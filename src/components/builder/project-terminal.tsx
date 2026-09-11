@@ -5,25 +5,29 @@ import type { ProjectFile } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 
 /**
- * Lightweight project shell — runs against the generated file tree in-browser.
- * Not a remote Node sandbox: no npm install, no real localhost server.
- * Useful commands: help, ls, cat, tree, download, preview, clear.
+ * Project shell: local file commands always work.
+ * With E2B_API_KEY on the server, `sandbox` boots a cloud VM for real npm/node.
  */
 export function ProjectTerminal({
   files,
   onPreview,
   onDownload,
+  onPreviewUrl,
   className,
 }: {
   files: ProjectFile[];
   onPreview?: () => void;
   onDownload?: () => void;
+  onPreviewUrl?: (url: string) => void;
   className?: string;
 }) {
   const [lines, setLines] = useState<string[]>([
     "Trove project shell — type help",
   ]);
   const [cmd, setCmd] = useState("");
+  const [sandboxId, setSandboxId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
@@ -35,40 +39,134 @@ export function ProjectTerminal({
     setLines((L) => [...L, ...extra]);
   }
 
-  function run(raw: string) {
+  async function bootSandbox() {
+    if (!files.length) {
+      print("sandbox: no project files yet — build a site first");
+      return;
+    }
+    setBusy(true);
+    print("sandbox: creating cloud VM and uploading files…");
+    try {
+      const res = await fetch("/api/sandbox/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files, serve: true }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        print(`sandbox: ${data?.error ?? `failed (${res.status})`}`);
+        if (data?.needKey) {
+          print("  → Add E2B_API_KEY on the server: https://e2b.dev/dashboard");
+        }
+        return;
+      }
+      setSandboxId(data.sandboxId);
+      if (data.previewUrl) {
+        setPreviewUrl(data.previewUrl);
+        onPreviewUrl?.(data.previewUrl);
+        print(`sandbox: ready  ${data.sandboxId}`);
+        print(`preview: ${data.previewUrl}`);
+      } else {
+        print(`sandbox: ready  ${data.sandboxId}`);
+      }
+      print("  remote commands (npm, node, …) now run in the VM");
+    } catch (e) {
+      print(`sandbox: ${e instanceof Error ? e.message : "failed"}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remoteExec(command: string, background = false) {
+    if (!sandboxId) {
+      print("no sandbox — run: sandbox");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/sandbox/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sandboxId, command, background }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        print(data?.error ?? `exec failed (${res.status})`);
+        return;
+      }
+      if (data.stdout) print(...String(data.stdout).split("\n").slice(0, 200));
+      if (data.stderr)
+        print(
+          ...String(data.stderr)
+            .split("\n")
+            .slice(0, 80)
+            .map((l: string) => `! ${l}`),
+        );
+      if (!background && data.exitCode !== 0) {
+        print(`[exit ${data.exitCode}]`);
+      }
+    } catch (e) {
+      print(e instanceof Error ? e.message : "exec failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function killSandbox() {
+    if (!sandboxId) {
+      print("no sandbox");
+      return;
+    }
+    setBusy(true);
+    try {
+      await fetch("/api/sandbox/kill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sandboxId }),
+      });
+      print("sandbox: stopped");
+      setSandboxId(null);
+      setPreviewUrl(null);
+    } catch (e) {
+      print(e instanceof Error ? e.message : "kill failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function run(raw: string) {
     const text = raw.trim();
-    if (!text) return;
+    if (!text || busy) return;
     print(`$ ${text}`);
     const [name, ...args] = text.split(/\s+/);
     const a0 = args[0] ?? "";
+    const rest = args.join(" ");
 
     switch (name.toLowerCase()) {
       case "help":
         print(
-          "help                 this list",
-          "ls                   list project files",
-          "tree                 file tree",
-          "cat <path>           show file contents",
-          "wc <path>            byte size",
-          "preview              open live preview",
-          "download | zip       download project zip",
-          "clear                clear screen",
+          "Local (always):",
+          "  help · ls · tree · cat <path> · wc <path>",
+          "  preview · download · clear",
           "",
-          "Note: this is an in-browser project shell, not a remote Node host.",
-          "npm / node / localhost need a secure sandbox (not available here).",
+          "Cloud sandbox (needs E2B_API_KEY on server):",
+          "  sandbox          start VM + upload project + HTTP server",
+          "  kill             stop sandbox",
+          "  url              show live preview URL",
+          "  run <cmd>        run any command in the VM (cwd=project)",
+          "  npm <args>       shorthand for run npm …",
+          "  node <args>      shorthand for run node …",
         );
         break;
       case "ls":
-      case "dir": {
+      case "dir":
         if (!files.length) print("(empty project)");
         else files.forEach((f) => print(`  ${f.path.padEnd(36)} ${f.content.length} B`));
         break;
-      }
-      case "tree": {
+      case "tree":
         if (!files.length) print("(empty)");
         else files.forEach((f) => print(`├── ${f.path}`));
         break;
-      }
       case "cat":
       case "type": {
         const f = files.find((x) => x.path === a0 || x.path.endsWith("/" + a0));
@@ -79,17 +177,20 @@ export function ProjectTerminal({
       case "wc": {
         const f = files.find((x) => x.path === a0 || x.path.endsWith("/" + a0));
         if (!f) print(`wc: ${a0}: no such file`);
-        else {
-          const linesN = f.content.split("\n").length;
-          print(`${linesN} lines  ${f.content.length} bytes  ${f.path}`);
-        }
+        else
+          print(
+            `${f.content.split("\n").length} lines  ${f.content.length} bytes  ${f.path}`,
+          );
         break;
       }
       case "preview":
       case "open":
-        if (onPreview) {
+        if (previewUrl) {
+          window.open(previewUrl, "_blank", "noopener");
+          print(previewUrl);
+        } else if (onPreview) {
           onPreview();
-          print("Opening preview…");
+          print("Opening local blob preview…");
         } else print("preview: not available");
         break;
       case "download":
@@ -103,28 +204,51 @@ export function ProjectTerminal({
       case "cls":
         setLines([]);
         break;
+      case "sandbox":
+      case "boot":
+        await bootSandbox();
+        break;
+      case "kill":
+      case "stop":
+        await killSandbox();
+        break;
+      case "url":
+        print(previewUrl ?? "no live URL — run: sandbox");
+        break;
+      case "run":
+        if (!rest) print("usage: run <command>");
+        else await remoteExec(rest);
+        break;
       case "npm":
-      case "node":
       case "npx":
+      case "node":
       case "yarn":
       case "pnpm":
-        print(
-          `${name}: not available in the browser shell.`,
-          "Static HTML/CSS/JS sites run in Preview. For real Node, download the zip and run locally.",
-        );
+        if (sandboxId) await remoteExec(`${name} ${rest}`.trim());
+        else {
+          print(`${name}: needs a cloud sandbox.`);
+          print("  1) Set E2B_API_KEY on the server");
+          print("  2) Type: sandbox");
+          print("  3) Then: npm install   /  node app.js");
+        }
         break;
       default:
-        print(`${name}: command not found. Type help.`);
+        if (sandboxId) await remoteExec(text);
+        else print(`${name}: command not found. Type help.`);
     }
   }
 
   return (
     <div
-      className={cn("flex min-h-0 flex-col bg-[#0c0c0e] font-mono text-[12px] text-[#c8c8d0]", className)}
+      className={cn(
+        "flex min-h-0 flex-col bg-[#0c0c0e] font-mono text-[12px] text-[#c8c8d0]",
+        className,
+      )}
       onClick={() => input.current?.focus()}
     >
       <div className="flex items-center gap-2 border-b border-white/10 px-3 py-1.5 text-[11px] text-white/40">
-        <span className="text-positive">●</span> project shell
+        <span className={sandboxId ? "text-positive" : "text-white/30"}>●</span>
+        {sandboxId ? `sandbox ${sandboxId.slice(0, 12)}…` : "project shell"}
         <span className="flex-1" />
         <span className="tabular-nums">{files.length} files</span>
       </div>
@@ -140,7 +264,7 @@ export function ProjectTerminal({
         className="flex items-center gap-2 border-t border-white/10 px-3 py-2"
         onSubmit={(e) => {
           e.preventDefault();
-          run(cmd);
+          void run(cmd);
           setCmd("");
         }}
       >
@@ -149,8 +273,11 @@ export function ProjectTerminal({
           ref={input}
           value={cmd}
           onChange={(e) => setCmd(e.target.value)}
-          className="min-w-0 flex-1 bg-transparent text-[#e8e8ef] outline-none placeholder:text-white/25"
-          placeholder="help · ls · cat index.html · preview · download"
+          disabled={busy}
+          className="min-w-0 flex-1 bg-transparent text-[#e8e8ef] outline-none placeholder:text-white/25 disabled:opacity-50"
+          placeholder={
+            sandboxId ? "npm install · node · ls · help" : "help · sandbox · ls · cat index.html"
+          }
           autoComplete="off"
           spellCheck={false}
         />
