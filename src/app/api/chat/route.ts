@@ -1,10 +1,11 @@
 import type { NextRequest } from "next/server";
 import { streamText, type Source, type Turn } from "@/lib/ai";
+import { instructionsBlock, connectedToolsBlock } from "@/lib/user-prefs";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { hintFor, temperatureFor } from "@/lib/modes";
-import { listConnections } from "@/lib/connections";
+import { listConnections, secretFor } from "@/lib/connections";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -17,12 +18,11 @@ Use fenced code blocks for code. Do not invent file contents or command output.
 
 CONNECTORS
 Users may mention tools with @github, @vercel, @slack, etc. Those appear as chips in the UI.
-When the user tags a connector, acknowledge it and explain what you can do with it in Trove:
-- @github — create repos, push site files (Website builder → Deploy to GitHub after connecting Integrations).
-- @vercel — deploy static sites (Website builder → Deploy to Vercel).
-- Token connectors (Notion, Linear, Slack webhook, Resend, …) are stored encrypted under Integrations.
-Do not claim you executed a deploy unless the user used the Deploy buttons in the builder.
-If they ask to deploy from chat, guide them: connect the app in Integrations, open Websites, build, then Deploy.`;
+When the user tags a connector, use LIVE DATA in the system context if provided — never invent repos or files.
+- @github — list repos from their token when data is supplied; deploy via Website builder Deploy to GitHub.
+- @vercel — deploy static sites from Website builder.
+- Token connectors are under Integrations.
+Do not claim you executed a deploy unless they used Deploy in the builder.`;
 
 const SYSTEM_FAST = `You are Trove. Answer briefly and naturally. No tools, no search, no long preambles.`;
 
@@ -111,10 +111,61 @@ async function handle(req: NextRequest) {
     /* ignore */
   }
 
+  const custom = await instructionsBlock().catch(() => "");
+  const toolsNote = await connectedToolsBlock().catch(() => "");
+
+  let liveToolContext = "";
+  const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
+  if (/@github\b|list (my )?repos|my github/i.test(lastUser)) {
+    try {
+      const tok = await secretFor("github");
+      if (tok && !tok.trim().startsWith("{")) {
+        const res = await fetch("https://api.github.com/user/repos?per_page=15&sort=updated", {
+          headers: {
+            Authorization: `Bearer ${tok.trim()}`,
+            Accept: "application/vnd.github+json",
+            "User-Agent": "Trove",
+          },
+        });
+        if (res.ok) {
+          const repos = (await res.json()) as {
+            full_name?: string;
+            private?: boolean;
+            html_url?: string;
+          }[];
+          liveToolContext =
+            "\n\nLIVE GITHUB DATA (from the user's connected token — use this, do not invent repos):\n" +
+            repos
+              .map(
+                (r) =>
+                  `- ${r.full_name}${r.private ? " (private)" : ""} ${r.html_url ?? ""}`,
+              )
+              .join("\n");
+        } else {
+          liveToolContext = `\n\nGitHub API returned ${res.status}. Ask the user to reconnect GitHub under Integrations.`;
+        }
+      } else if (tok?.trim().startsWith("{")) {
+        liveToolContext =
+          "\n\nGitHub is linked via Nango. The connection exists; for a full repo list use a PAT under Integrations or Nango proxy.";
+      } else {
+        liveToolContext =
+          "\n\nGitHub is not connected. Tell the user to open Integrations and connect GitHub.";
+      }
+    } catch (e) {
+      liveToolContext =
+        "\n\nCould not reach GitHub: " + (e instanceof Error ? e.message : String(e));
+    }
+  }
+
   const promptFor = (canSearch: boolean) =>
     simple
-      ? SYSTEM_FAST
-      : [SYSTEM + connectedNote, OBEY_FORMAT, situation({ timeZone, canSearch }), hintFor(mode)]
+      ? SYSTEM_FAST + custom
+      : [
+          SYSTEM + connectedNote + toolsNote + custom + liveToolContext,
+          OBEY_FORMAT,
+          situation({ timeZone, canSearch }),
+          hintFor(mode),
+        ]
           .filter(Boolean)
           .join("\n\n");
 
