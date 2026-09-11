@@ -4,7 +4,7 @@ import {
   createProjectSandbox,
   publicUrl,
   sandboxConfigured,
-  startStaticServer,
+  startPreviewServer,
   PREVIEW_PORT,
 } from "@/lib/sandbox";
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (serve) {
       try {
-        previewUrl = await startStaticServer(sandbox);
+        previewUrl = await startPreviewServer(sandbox, files);
       } catch (e) {
         console.error("sandbox serve", e);
         previewUrl = publicUrl(sandbox, PREVIEW_PORT);
