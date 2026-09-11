@@ -79,7 +79,13 @@ export function IntegrationsView({
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
       const link = data.connectLink as string;
+      if (!link || !link.startsWith("http")) {
+        throw new Error("Nango did not return a valid connect link. Check the integration key in app.nango.dev.");
+      }
       const popup = window.open(link, "nango-connect", "width=520,height=720");
+      if (!popup) {
+        throw new Error("Popup blocked — allow popups for this site, or open the link manually.");
+      }
       const started = Date.now();
       await new Promise<void>((resolve) => {
         const t = setInterval(() => {
@@ -101,6 +107,12 @@ export function IntegrationsView({
   }
 
   function startConnect(id: string) {
+    // GitHub / Vercel: PAT dialog — avoids blank Google page from misconfigured Nango OAuth
+    const preferToken = id === "github" || id === "vercel" || id === "resend";
+    if (preferToken && connectable[id]) {
+      setOpening(id);
+      return;
+    }
     if (nangoOn && nangoSet.has(id)) void connectNango(id);
     else if (connectable[id]) setOpening(id);
   }
@@ -173,8 +185,7 @@ export function IntegrationsView({
                 <h2 className="text-[13px] font-semibold text-ink">Connected</h2>
                 {optimistic.length === 0 ? (
                   <p className="mt-3 text-[13px] text-ink-4">
-                    Nothing connected yet. Add GitHub or Vercel below — then type{" "}
-                    <kbd className="rounded bg-sunk px-1.5 py-0.5 text-[11px]">@</kbd> in chat.
+                    Nothing connected yet. Add GitHub with a personal access token (repo scope), then deploy from Sites.
                   </p>
                 ) : (
                   <ul className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -247,14 +258,14 @@ export function IntegrationsView({
 
               {nangoOn ? (
                 <p className="mt-6 text-[12px] text-ink-4">
-                  OAuth runs through Nango.{" "}
+                  Other OAuth apps use Nango. GitHub uses a personal access token.{" "}
                   <a
                     href="https://app.nango.dev"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-accent hover:underline"
                   >
-                    Dashboard <FiExternalLink size={11} />
+                    Nango <FiExternalLink size={11} />
                   </a>
                 </p>
               ) : null}
