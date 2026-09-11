@@ -19,6 +19,7 @@ import { strip, type Attachment } from "@/lib/attachments";
 import { TARGET_LIST, targetFor, type TargetId } from "@/lib/targets";
 import { bundle, mergeFiles, projectSlug, type BuildPlan, type Depth, type LogLine, type PlanStep, type ProjectFile, type Question, type Task } from "@/lib/builder";
 import { cn } from "@/lib/utils";
+import { ProcessRow, WorkingTimer } from "@/components/builder/process-row";
 
 type Phase = "idle" | "asking" | "planning" | "review" | "building" | "ready";
 type Pane = "preview" | "files" | "code" | "console";
@@ -41,69 +42,6 @@ const PANES: { id: Pane; icon: typeof TbWorld; label: string; motion: Motion }[]
   { id: "console", icon: TbTerminal2, label: "Console", motion: "scan" },
 ];
 
-/** Premium inline process row — Grok-style Ran command timeline */
-function ProcessRow({
-  kind,
-  label,
-  active,
-}: {
-  kind: "cmd" | "file" | "think" | "tool" | "ok";
-  label: string;
-  active?: boolean;
-}) {
-  const icon =
-    kind === "cmd"
-      ? "▸"
-      : kind === "file"
-        ? "·"
-        : kind === "tool"
-          ? "⬡"
-          : kind === "ok"
-            ? "✓"
-            : "○";
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2.5 py-[3px] text-[13px] leading-snug",
-        active ? "text-ink-2" : "text-ink-4",
-      )}
-    >
-      <span
-        className={cn(
-          "grid size-[18px] shrink-0 place-items-center rounded-[5px] text-[11px]",
-          kind === "cmd" && "bg-white/[0.06] text-ink-3",
-          kind === "file" && "bg-white/[0.04] text-ink-3",
-          kind === "tool" && "bg-accent/15 text-accent",
-          kind === "ok" && "text-positive",
-          kind === "think" && (active ? "text-accent" : "text-ink-4"),
-        )}
-      >
-        {icon}
-      </span>
-      <span className="min-w-0 truncate">
-        {kind === "cmd" ? (
-          <>
-            <span className="text-ink-3">Ran command</span>{" "}
-            <span className="text-ink-2">{label}</span>
-          </>
-        ) : kind === "file" ? (
-          <>
-            <span className="text-ink-3">Wrote</span>{" "}
-            <span className="font-mono text-[12.5px] text-ink-2">{label}</span>
-          </>
-        ) : kind === "tool" ? (
-          <>
-            <span className="text-ink-3">Used</span>{" "}
-            <span className="text-ink-2">{label}</span>
-          </>
-        ) : (
-          label
-        )}
-      </span>
-    </div>
-  );
-}
-
 function Thinking({ phase, logs }: { phase: "asking" | "planning"; logs: { text: string }[] }) {
   const [started] = useState(() => Date.now());
   const [secs, setSecs] = useState(0);
@@ -117,10 +55,7 @@ function Thinking({ phase, logs }: { phase: "asking" | "planning"; logs: { text:
   return (
     <div className="space-y-1">
       <ProcessRow kind="think" label={headline} active />
-      <div className="flex items-center gap-2 pl-[26px] pt-0.5">
-        <TroveOrb size={14} state="thinking" />
-        <span className="text-[12px] tabular-nums text-ink-4">Working for {secs}s</span>
-      </div>
+      <WorkingTimer secs={secs} />
     </div>
   );
 }
@@ -413,18 +348,8 @@ export function BuilderView({
     );
     setFollowUps(
       missing.length
-        ? [
-            `Add ${missing[0]}`,
-            "Improve the mobile layout",
-            "Make the design more premium",
-            "Add a contact form",
-          ]
-        : [
-            "Make it darker and more premium",
-            "Add a contact form",
-            "Improve mobile layout",
-            "Add more pages",
-          ],
+        ? [`Add ${missing[0]}`, "Improve the mobile layout", "Make the design more premium", "Add a contact form"]
+        : ["Make it darker and more premium", "Add a contact form", "Improve mobile layout", "Add more pages"],
     );
     void bootSandbox(current);
     try {
@@ -557,7 +482,7 @@ export function BuilderView({
             </p>
           </div>
           <div className="rounded-[28px] border border-line bg-raised/70 p-2">
-            {mobile ? <MobileComposer onSend={ask} placeholder="Build a complete product for…" /> : <Composer onSend={ask} placeholder="Build a complete product for…" autoFocus />}
+            {mobile ? <MobileComposer onSend={ask} placeholder="Ask anything…" /> : <Composer onSend={ask} placeholder="Ask anything…" autoFocus />}
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {TARGET_LIST.map((t) => (
@@ -626,11 +551,12 @@ export function BuilderView({
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-        <div className={cn("flex min-h-0 w-full flex-col overflow-hidden border-b border-line lg:w-[400px] lg:border-b-0 lg:border-r", mobile && half === "build" && "hidden")}>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            <div className="mx-auto max-w-[42rem] space-y-3">
+        {/* Pure chat column — only chat, like Grok */}
+        <div className={cn("flex min-h-0 w-full flex-col overflow-hidden border-b border-line/50 bg-canvas lg:w-[min(440px,42%)] lg:border-b-0 lg:border-r lg:border-line/40", mobile && half === "build" && "hidden")}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
+            <div className="mx-auto max-w-[40rem] space-y-3">
               {idea && phase !== "idle" ? (
-                <p className="rounded-[18px] bg-hover/40 px-3.5 py-2.5 text-[14px] leading-relaxed text-ink">{idea}</p>
+                <p className="ml-auto max-w-[92%] rounded-[20px] bg-hover/50 px-4 py-2.5 text-[14px] leading-relaxed text-ink">{idea}</p>
               ) : null}
               {phase === "asking" || phase === "planning" ? (
                 <Thinking key={phase} phase={phase} logs={logs} />
@@ -658,7 +584,7 @@ export function BuilderView({
               ) : null}
               {(phase === "building" || phase === "ready") && (
                 <div className="space-y-0.5">
-                  <div className="relative ml-1 space-y-0.5 border-l border-line/40 pl-3">
+                  <div className="space-y-0.5">
                     {plan?.steps.map((s) => {
                       const st = stepStates[s.id] ?? "todo";
                       if (st === "todo") return null;
@@ -686,12 +612,7 @@ export function BuilderView({
                       <ProcessRow key={l.id} kind="think" label={l.text} />
                     ))}
                   </div>
-                  {phase === "building" ? (
-                    <div className="flex items-center gap-2 pl-2 pt-2">
-                      <TroveOrb size={14} state="thinking" />
-                      <span className="text-[12px] tabular-nums text-ink-4">Working for {workSecs}s</span>
-                    </div>
-                  ) : null}
+                  {phase === "building" ? <WorkingTimer secs={workSecs} /> : null}
                   {phase === "ready" && finalMsg ? (
                     <div className="mt-4 space-y-3">
                       <p className="whitespace-pre-wrap text-[15px] leading-[1.65] text-ink">{finalMsg}</p>
@@ -718,8 +639,8 @@ export function BuilderView({
             </div>
           </div>
           {(phase === "ready" || phase === "building") ? (
-            <div className="shrink-0 border-t border-line p-3">
-              <Composer onSend={edit} disabled={busy || paused || !files.length} placeholder={files.length ? "Ask Trove to change the site…" : "Waiting for files…"} />
+            <div className="shrink-0 border-t border-line/50 p-3">
+              <Composer onSend={edit} disabled={busy || paused || !files.length} placeholder={files.length ? "Ask anything…" : "Waiting for files…"} />
             </div>
           ) : null}
         </div>
@@ -802,7 +723,7 @@ export function BuilderView({
 
       {mobile ? (
         <div className="flex shrink-0 border-t border-line">
-          <button type="button" onClick={() => setHalf("chat")} className={cn("flex-1 py-2 text-[13px]", half === "chat" ? "text-accent" : "text-ink-4")}>Build</button>
+          <button type="button" onClick={() => setHalf("chat")} className={cn("flex-1 py-2 text-[13px]", half === "chat" ? "text-accent" : "text-ink-4")}>Chat</button>
           <button type="button" onClick={() => setHalf("build")} className={cn("flex-1 py-2 text-[13px]", half === "build" ? "text-accent" : "text-ink-4")}>Preview</button>
         </div>
       ) : null}
