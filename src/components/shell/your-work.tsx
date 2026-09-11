@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
@@ -34,7 +35,6 @@ const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> 
 };
 
 const PATH_KINDS: { match: (p: string) => boolean; kinds: RecentKind[] | "hide" | "all" }[] = [
-  // On the Sites front page, only list built sites — not chats
   { match: (p) => p.startsWith("/websites"), kinds: ["site"] },
   { match: (p) => p.startsWith("/chat"), kinds: "hide" },
   { match: (p) => p.startsWith("/integrations"), kinds: "hide" },
@@ -76,9 +76,28 @@ export function YourWork({
   const pathname = usePathname() || "/";
   const search = useSearchParams();
   const hasThread = Boolean(search?.get("c"));
+  const onSites = pathname.startsWith("/websites");
 
-  // Hide while a specific thread/site is open
+  // Hide while Sites builder is active (asking / planning / building / ready)
+  const [builderBusy, setBuilderBusy] = useState(false);
+  useEffect(() => {
+    if (!onSites) {
+      setBuilderBusy(false);
+      return;
+    }
+    const sync = () =>
+      setBuilderBusy(document.body.hasAttribute("data-builder-phase"));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-builder-phase"],
+    });
+    return () => obs.disconnect();
+  }, [onSites]);
+
   if (!force && hasThread) return null;
+  if (!force && onSites && builderBusy) return null;
 
   const auto = kindsForPath(pathname);
   if (!force && auto === "hide") return null;
@@ -108,8 +127,7 @@ export function YourWork({
     );
   }
 
-  const heading =
-    pathname.startsWith("/websites") ? "Your sites" : title;
+  const heading = onSites ? "Your sites" : title;
 
   return (
     <section
