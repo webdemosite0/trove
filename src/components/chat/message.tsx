@@ -5,7 +5,6 @@ import {
   FiCopy,
   FiCheck,
   FiRefreshCw,
-  FiShare2,
   FiThumbsUp,
   FiThumbsDown,
   FiFile,
@@ -17,8 +16,8 @@ import { highlight, TOKEN_VAR } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 import { ChatImage } from "@/components/chat/chat-image";
 import { withConnectorChips } from "@/components/chat/connector-chip";
+import { ThinkingLine } from "@/components/chat/thinking-line";
 
-/** Minimal markdown: fenced code, images, links, tables, lists, headings, bold, inline code. */
 function render(text: string) {
   const out: React.ReactNode[] = [];
   const parts = text.split(/```/);
@@ -350,19 +349,21 @@ export function Message({
     );
   }
 
+  if (pending && !text) {
+    return (
+      <div className="nx-in group/msg">
+        <ThinkingLine />
+      </div>
+    );
+  }
+
   return (
     <div className="nx-in group/msg">
       <div className="mb-2 flex items-center gap-2">
         <TroveOrb size={22} state={pending ? "thinking" : "idle"} />
         <span className="text-[12.5px] font-medium text-ink-3">Trove</span>
       </div>
-      <div className="space-y-3 pl-8 text-[15px] text-ink">
-        {pending && !text ? (
-          <p className="text-ink-3">Thinking…</p>
-        ) : (
-          render(text)
-        )}
-      </div>
+      <div className="space-y-3 pl-8 text-[15px] text-ink">{render(text)}</div>
       {!pending && text ? (
         <div className="mt-2 flex items-center gap-0.5 pl-8 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100">
           <Action
