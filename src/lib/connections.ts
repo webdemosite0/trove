@@ -4,6 +4,7 @@ import { one, all, run, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { encrypt, decrypt, hint, canStoreSecrets } from "@/lib/secrets";
 import { providerFor } from "@/lib/providers";
+import { resolveNangoAccessToken } from "@/lib/nango";
 
 export interface Connection {
   service: string;
@@ -15,10 +16,6 @@ export interface Connection {
 
 /**
  * Saves a credential only after proving it works.
- *
- * Verification is not decoration: a token that is wrong, expired or missing a
- * scope would otherwise sit there looking connected until the first real
- * request failed, somewhere far from the point of the mistake.
  */
 export async function connectService(
   service: string,
@@ -87,7 +84,6 @@ export async function disconnectService(service: string): Promise<void> {
   ]);
 }
 
-/** What the UI shows. Never includes the secret itself. */
 export async function listConnections(): Promise<Connection[]> {
   const user = await currentUser();
   if (!user) return [];
@@ -107,20 +103,38 @@ export async function listConnections(): Promise<Connection[]> {
 }
 
 /**
- * The decrypted credential, for code that is about to call the third party.
- *
- * Server-only and never returned to a component — the moment a token reaches
- * the browser it is effectively public.
+ * Decrypted credential for server-side API calls.
+ * If the row was synced from Nango, fetch a live access_token from Nango.
  */
 export async function secretFor(service: string): Promise<string | null> {
   const user = await currentUser();
   if (!user) return null;
 
   const row = await one(
-    `SELECT secret FROM connections WHERE user_id = ? AND service = ?`,
+    `SELECT secret, kind FROM connections WHERE user_id = ? AND service = ?`,
     [user.id, service],
   );
   if (!row) return null;
 
-  return decrypt(str(row.secret));
+  const raw = decrypt(str(row.secret));
+  if (!raw) return null;
+
+  // Nango-stored payload: { nango: true, connectionId, integration }
+  if (str(row.kind) === "nango" || raw.includes('"nango"')) {
+    try {
+      const p = JSON.parse(raw) as {
+        nango?: boolean;
+        connectionId?: string;
+        integration?: string;
+      };
+      if (p.nango && p.connectionId && p.integration) {
+        const token = await resolveNangoAccessToken(p.integration, p.connectionId);
+        if (token) return token;
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  return raw;
 }
