@@ -4,6 +4,7 @@ import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { hintFor, temperatureFor } from "@/lib/modes";
+import { listConnections } from "@/lib/connections";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -12,17 +13,26 @@ const SYSTEM = `You are Trove — a direct, concrete AI assistant with a senior-
 
 Keep answers tight. Prefer code and facts over filler. Never sycophantic.
 When ambiguous in a way that changes the answer, ask one clarifying question.
-Use fenced code blocks for code. Do not invent file contents or command output.`;
+Use fenced code blocks for code. Do not invent file contents or command output.
+
+CONNECTORS
+Users may mention tools with @github, @vercel, @slack, etc. Those appear as chips in the UI.
+When the user tags a connector, acknowledge it and explain what you can do with it in Trove:
+- @github — create repos, push site files (Website builder → Deploy to GitHub after connecting Integrations).
+- @vercel — deploy static sites (Website builder → Deploy to Vercel).
+- Token connectors (Notion, Linear, Slack webhook, Resend, …) are stored encrypted under Integrations.
+Do not claim you executed a deploy unless the user used the Deploy buttons in the builder.
+If they ask to deploy from chat, guide them: connect the app in Integrations, open Websites, build, then Deploy.`;
 
 const SYSTEM_FAST = `You are Trove. Answer briefly and naturally. No tools, no search, no long preambles.`;
 
-/** Short / social messages should not pay the full agent+search tax. */
 function isSimpleTurn(turns: Turn[]): boolean {
   const last = [...turns].reverse().find((t) => t.role === "user");
   if (!last) return false;
   const t = last.text.trim();
   if (t.length > 120) return false;
   if (/\b(https?:\/\/|www\.)/i.test(t)) return false;
+  if (/@[a-z]/i.test(t)) return false;
   if (
     /^(hi|hello|hey|yo|sup|hola|thanks|thank you|thx|ok|okay|yes|no|bye|good morning|good evening)\b/i.test(
       t,
@@ -88,10 +98,23 @@ async function handle(req: NextRequest) {
   const simple = isSimpleTurn(turns) && attachments.length === 0;
   const wantSearch = !simple;
 
+  let connectedNote = "";
+  try {
+    const conns = await listConnections();
+    if (conns.length) {
+      connectedNote =
+        "\n\nCurrently connected for this user: " +
+        conns.map((c) => `${c.service}${c.account ? ` (${c.account})` : ""}`).join(", ") +
+        ".";
+    }
+  } catch {
+    /* ignore */
+  }
+
   const promptFor = (canSearch: boolean) =>
     simple
       ? SYSTEM_FAST
-      : [SYSTEM, OBEY_FORMAT, situation({ timeZone, canSearch }), hintFor(mode)]
+      : [SYSTEM + connectedNote, OBEY_FORMAT, situation({ timeZone, canSearch }), hintFor(mode)]
           .filter(Boolean)
           .join("\n\n");
 
