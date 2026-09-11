@@ -4,7 +4,32 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
-import { FiPlus, FiSidebar, FiX, FiUser, FiLogOut, FiChevronRight, FiSettings, FiCreditCard, FiActivity, TbBell, TbUsers, TbRobot, TbWorld, TbLayoutDashboard, TbFileText, TbTable, TbPresentation, TbPalette, TbCode, TbSearch, TbMessageCircle, TbPlugConnected, TbRefreshDot } from "@/components/ui/icons";
+import {
+  FiPlus,
+  FiSidebar,
+  FiX,
+  FiUser,
+  FiLogOut,
+  FiChevronRight,
+  FiSettings,
+  FiCreditCard,
+  FiActivity,
+  FiHome,
+  TbBell,
+  TbUsers,
+  TbRobot,
+  TbWorld,
+  TbHome,
+  TbFileText,
+  TbTable,
+  TbPresentation,
+  TbPalette,
+  TbCode,
+  TbSearch,
+  TbMessageCircle,
+  TbPlugConnected,
+  TbRefreshDot,
+} from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { logOut } from "@/app/actions/auth";
@@ -22,32 +47,14 @@ interface Item {
   label: string;
   icon: IconType;
   motion: Motion;
-  /** A short tag, for something not finished yet. */
   badge?: string;
 }
 
-/**
- * Navigation, grouped by what the user is trying to do rather than by feature.
- *
- * Every entry points at a route that exists. Sections for Projects, Activity
- * and Workflows would read well here and land on a 404, so they are left out
- * until there is something behind them — a nav item is a promise.
- */
-/**
- * Navigation, grouped by what the user is trying to do rather than by
- * feature.
- *
- * Three labelled sections and nothing outside them. There used to be a
- * fourth, unlabelled block under a divider holding the routes that did not
- * fit — which is a sign the grouping was wrong, not that those routes were
- * special. Every entry points at a route that exists; a nav item is a
- * promise, and sections for Projects, Files or Knowledge would land on a 404.
- */
 const GROUPS: { label: string; items: Item[] }[] = [
   {
     label: "Workspace",
     items: [
-      { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "pop" },
+      { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
       { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
       { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
       { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
@@ -77,7 +84,6 @@ const GROUPS: { label: string; items: Item[] }[] = [
 
 const ALL = GROUPS.flatMap((g) => g.items);
 
-/** Reached rarely, so they get icons at the foot rather than nav rows. */
 const SECONDARY: { href: string; label: string; icon: IconType }[] = [
   { href: "/settings", label: "Settings", icon: FiSettings },
   { href: "/integrations", label: "Apps", icon: TbPlugConnected },
@@ -122,7 +128,6 @@ function NavRow({
   );
 }
 
-/** Account actions, as a popover rather than a row of loose icons. */
 function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -144,7 +149,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
   const links = [
     { href: "/settings", label: "Settings", icon: FiSettings },
     { href: "/plans", label: "Plan", icon: FiCreditCard },
-    { href: "/dashboard", label: "Home", icon: FiActivity },
+    { href: "/dashboard", label: "Home", icon: FiHome },
   ];
 
   return (
@@ -245,11 +250,6 @@ function RailBody({
         ) : null}
       </div>
 
-      {/* A 52px full-bleed gradient slab was the loudest thing in the rail,
-          competing with the page for attention every time you looked at the
-          navigation. It is a quiet surface now, on the same left edge and the
-          same 4px rhythm as the rows below it; the accent survives in the
-          icon, which is all the emphasis a always-available action needs. */}
       <div className="px-2.5 pt-3">
         <Link
           href="/chat"
@@ -277,7 +277,6 @@ function RailBody({
             </div>
           </div>
         ))}
-
       </nav>
 
       <div className="space-y-1 border-t border-line p-2.5">
@@ -298,12 +297,7 @@ function RailBody({
           </Link>
         )}
 
-        {/* Secondary actions, as icons — they are reached rarely and do not
-            deserve a row of their own each. */}
         <div className="flex items-center gap-0.5 border-t border-line pt-2">
-          {/* Icon-only, so the name has to come from somewhere. A Tooltip
-              rather than the native title attribute: title does not appear on
-              keyboard focus, which is the case that matters here. */}
           {SECONDARY.map((x) => (
             <Tooltip key={x.href} label={x.label} side="top">
               <Link
@@ -331,12 +325,9 @@ export function Sidebar({
   user: User | null;
   balance: Balance | null;
 }) {
-  // Collapse lives in the shared nav context so a page can ask for the room —
-  // the builder collapses the rail once a build starts.
   const { open, setOpen, collapsed, setCollapsed } = useNav();
   const pathname = usePathname();
 
-  // Cmd/Ctrl+B toggles the rail, the shortcut every editor already uses.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
@@ -357,9 +348,6 @@ export function Sidebar({
         )}
       >
         {collapsed ? (
-          // Labels sit under the icons rather than in tooltips: a rail you can
-          // read is worth more than four saved pixels, and a tooltip only
-          // helps someone who already hovered the right thing.
           <div className="flex h-full flex-col items-center gap-1 py-3.5">
             <Link href="/chat" aria-label="Trove home">
               <TroveOrb size={28} state="idle" />
@@ -417,7 +405,6 @@ export function Sidebar({
         )}
       </aside>
 
-      {/* Mobile drawer */}
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
@@ -438,8 +425,6 @@ export function Sidebar({
         </div>
       ) : null}
 
-      {/* Reserves the width the fixed rail occupies. It carries the print guard
-          too, or printing leaves an empty gutter where the rail was. */}
       <div
         className={cn(
           "nx-no-print hidden shrink-0 transition-[width] duration-[var(--t-hover)] lg:block",
