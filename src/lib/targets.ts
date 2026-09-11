@@ -1,5 +1,7 @@
 /**
  * What the builder can produce.
+ * Sites builder defaults to React — plain HTML static is kept for internal
+ * fallbacks only and is not offered in the UI.
  */
 
 export type TargetId = "static" | "react" | "node" | "python";
@@ -19,58 +21,52 @@ export const TARGETS: Record<TargetId, Target> = {
   static: {
     id: "static",
     label: "Static site",
-    blurb: "HTML, CSS and JavaScript. No build step, opens anywhere.",
+    blurb: "HTML, CSS and JavaScript (legacy).",
     previewable: true,
     entry: "index.html",
     commands: ["open index.html"],
-    prompt: `STACK — a static site that actually works in the browser preview.
-
-Flat files: index.html, styles.css, script.js, plus extra pages/modules when
-needed. No build step, no bundler, no framework, no CDN, no remote assets.
-NO STOCK PHOTOS or <img src="https://…"> — use CSS, SVG, and solid color blocks only.
-
-index.html must link siblings with relative paths:
-  <link rel="stylesheet" href="styles.css">
-  <script src="script.js" defer></script>
-
-FUNCTIONALITY — every idea must work in the Preview pane end-to-end.
-Primary CTAs, nav, forms, carts, games, tools — all wired with real JS.
-No href="#" primary actions. System fonts, CSS variables, inline SVG only.`,
+    prompt: `STACK — static HTML/CSS/JS only when explicitly requested. Prefer React for product UIs.`,
   },
 
   react: {
     id: "react",
     label: "React app",
-    blurb: "Vite + React. Use Preview after build (sandbox) or npm run dev.",
+    blurb: "Vite + React. Live Preview via sandbox after build.",
     previewable: true,
     entry: "src/App.jsx",
     commands: ["npm install", "npm run dev"],
     serves: "http://localhost:5173",
     prompt: `STACK — React 18 with Vite, plain JavaScript (.jsx, not TypeScript).
 
-Runs after npm install && npm run dev. Preview: Console → sandbox, or open the live URL in the Preview panel when E2B is configured.
+This is the DEFAULT for website products in Trove.
 
-Required: package.json, vite.config.js, index.html, src/main.jsx, src/App.jsx, src/index.css. Pinned versions only.
-Working state for the product. No dead buttons. No remote images — CSS/SVG only.`,
+Runs after npm install && npm run dev. Preview uses the E2B sandbox live URL.
+
+Required files (minimum):
+  package.json, vite.config.js, index.html, src/main.jsx, src/App.jsx, src/index.css
+  Plus pages/components as needed (Home, About, etc.).
+
+Pinned versions only. Fully working UI — no dead buttons.
+No remote stock photos — CSS gradients, SVG, solid color blocks only.
+Multi-page products use React Router or simple state routing.`,
   },
 
   node: {
     id: "node",
     label: "Node API",
-    blurb: "Express API. Preview shows how to run; sandbox can serve it.",
+    blurb: "Express API with sandbox Preview.",
     previewable: true,
     entry: "server.js",
     commands: ["npm install", "npm start"],
     serves: "http://localhost:3000",
     prompt: `STACK — Node.js Express 4, ES modules.
-Runs after npm install && npm start. Preview panel + Console sandbox for a live URL.
 Working CRUD, validation, JSON store, README with curl examples.`,
   },
 
   python: {
     id: "python",
     label: "Python API",
-    blurb: "FastAPI. Preview shows run steps; sandbox can serve it.",
+    blurb: "FastAPI with sandbox Preview.",
     previewable: true,
     entry: "main.py",
     commands: [
@@ -81,13 +77,20 @@ Working CRUD, validation, JSON store, README with curl examples.`,
     ],
     serves: "http://127.0.0.1:8000",
     prompt: `STACK — Python 3.11, FastAPI, Pydantic v2.
-Working endpoints, typed models, JSON persistence, README with curl examples.
-Preview via Console sandbox when available.`,
+Working endpoints, typed models, JSON persistence.`,
   },
 };
 
-export const TARGET_LIST = Object.values(TARGETS);
+/** Shown in the Sites builder — no plain HTML static. */
+export const TARGET_LIST: Target[] = [
+  TARGETS.react,
+  TARGETS.node,
+  TARGETS.python,
+];
 
 export function targetFor(id: unknown): Target {
-  return TARGETS[id as TargetId] ?? TARGETS.static;
+  if (id && typeof id === "string" && id in TARGETS) {
+    return TARGETS[id as TargetId];
+  }
+  return TARGETS.react;
 }
