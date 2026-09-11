@@ -12,7 +12,6 @@ const STEPS = [
 
 /**
  * Live thinking strip — open layout, not a card/box.
- * Matches the progressive "Working for Ns" timeline style.
  */
 export function ThinkingLine({ labels }: { labels?: string[] }) {
   const lines = labels?.length ? labels : STEPS;
@@ -33,7 +32,7 @@ export function ThinkingLine({ labels }: { labels?: string[] }) {
   }, [lines.length]);
 
   return (
-    <div className="nx-in flex items-start gap-3 pl-0">
+    <div className="nx-in flex items-start gap-3">
       <span className="nx-thinking relative mt-0.5 grid place-items-center">
         <TroveOrb size={24} state="thinking" />
       </span>
@@ -42,11 +41,7 @@ export function ThinkingLine({ labels }: { labels?: string[] }) {
         <p className="mt-0.5 text-[12px] tabular-nums text-accent">Working for {secs}s</p>
         <ul className="mt-2 space-y-1 border-l border-line pl-3">
           {lines.slice(0, step + 1).map((l, i) => (
-            <li
-              key={`${l}-${i}`}
-              className="text-[12.5px] text-ink-3"
-              style={{ animationDelay: `${i * 40}ms" }}
-            >
+            <li key={`${l}-${i}`} className="text-[12.5px] text-ink-3">
               {i < step ? (
                 <span className="text-positive">✓ </span>
               ) : (
