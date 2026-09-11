@@ -1,18 +1,11 @@
 import "server-only";
 
 import { currentUser } from "@/lib/auth";
-import { run, all, str, num } from "@/lib/db";
+import { run, all, str } from "@/lib/db";
 import { encrypt, canStoreSecrets, hint } from "@/lib/secrets";
 
 const NANGO_API = "https://api.nango.dev";
 
-/**
- * Trove service id → Nango integration unique key.
- * Create matching integrations in the Nango dashboard (same keys).
- * https://app.nango.dev → Integrations
- *
- * GitHub must exist as unique key `github` (or change this map to match yours).
- */
 export const NANGO_MAP: Record<string, string> = {
   gmail: "google-mail",
   "google-calendar": "google-calendar",
@@ -42,6 +35,9 @@ export const NANGO_MAP: Record<string, string> = {
   intercom: "intercom",
   zendesk: "zendesk",
 };
+
+/** Prefer personal-token UI for these (Nango OAuth often misconfigured → blank Google page). */
+export const PREFER_TOKEN_CONNECT = new Set(["github", "vercel", "resend", "telegram"]);
 
 export function nangoEnabled(): boolean {
   return Boolean(process.env.NANGO_SECRET_KEY?.trim());
@@ -76,14 +72,13 @@ function formatNangoError(status: number, body: unknown, integration?: string): 
     const id = integration ?? "this integration";
     return (
       `${msg} ` +
-      `(integration id “${id}”). In Nango: Integrations → Create “GitHub” ` +
-      `with Unique Key exactly “${id}”, add GitHub OAuth Client ID + Secret, ` +
-      `then use the same environment’s Secret Key as NANGO_SECRET_KEY. ` +
+      `(integration id “${id}”). In Nango: Integrations → create provider with Unique Key “${id}”, ` +
+      `paste the correct OAuth Client ID + Secret for that provider (GitHub ≠ Google). ` +
       `Dashboard: https://app.nango.dev`
     );
   }
   if (status === 401 || status === 403) {
-    return `${msg} — check NANGO_SECRET_KEY is the Environment Secret Key from app.nango.dev (not the public key).`;
+    return `${msg} — check NANGO_SECRET_KEY is the Environment Secret Key from app.nango.dev.`;
   }
   return msg;
 }
@@ -106,10 +101,6 @@ async function nangoFetch(path: string, init?: RequestInit, integrationHint?: st
   return body;
 }
 
-/**
- * Short-lived Connect session for one service.
- * Frontend opens `connect_link` (or uses the token with Nango Connect UI).
- */
 export async function createNangoSession(service: string): Promise<{
   token: string;
   connectLink: string;
@@ -154,10 +145,36 @@ export async function createNangoSession(service: string): Promise<{
   };
 }
 
-/**
- * Pull connections tagged with this user from Nango and mirror them locally
- * so the Integrations page shows Connected.
- */
+/** Live OAuth access_token from Nango for a stored connection. */
+export async function resolveNangoAccessToken(
+  integration: string,
+  connectionId: string,
+): Promise<string | null> {
+  if (!secretKey()) return null;
+  try {
+    const q = new URLSearchParams({
+      provider_config_key: integration,
+    });
+    const body = await nangoFetch(
+      `/connection/${encodeURIComponent(connectionId)}?${q}`,
+      undefined,
+      integration,
+    );
+    const creds = (body?.credentials ?? body?.data?.credentials ?? body) as Record<
+      string,
+      unknown
+    >;
+    const token =
+      (creds?.access_token as string) ||
+      (creds?.accessToken as string) ||
+      (typeof body?.access_token === "string" ? body.access_token : null);
+    return token || null;
+  } catch (e) {
+    console.error("nango access token", e);
+    return null;
+  }
+}
+
 export async function syncNangoConnections(): Promise<{ synced: string[] }> {
   const user = await currentUser();
   if (!user) return { synced: [] };
