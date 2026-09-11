@@ -56,6 +56,8 @@ CONTINUITY — you are editing a real project, not starting over
 - Reuse exact class names, custom properties and data shapes from prior files.
 - If an earlier step defined --accent, use var(--accent).
 - New markup must slot into the existing structure.
+- ANSWERED FACTS from the user (name, brand, tone, etc.) are LOCKED. Apply them
+  on every page and never invent different values or re-ask.
 
 QUALITY BAR — this ships as-is
 - Real, specific copy. No lorem ipsum, no "Product 1", no empty href="#".
@@ -133,6 +135,7 @@ export async function POST(req: NextRequest) {
   let files: ProjectFile[] = [];
   let idea = "";
   let styleNote = "";
+  let answers: Record<string, string> = {};
   let attachments: Attachment[] = [];
   let index = 0;
   let total = 0;
@@ -144,6 +147,15 @@ export async function POST(req: NextRequest) {
     files = Array.isArray(body?.files) ? body.files : [];
     idea = String(body?.idea ?? "").trim();
     styleNote = String(body?.style ?? "").trim();
+    answers =
+      body?.answers && typeof body.answers === "object" && !Array.isArray(body.answers)
+        ? Object.fromEntries(
+            Object.entries(body.answers as Record<string, unknown>).map(([k, v]) => [
+              k,
+              String(v ?? "").trim(),
+            ]),
+          )
+        : {};
     attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     index = Number(body?.index ?? 0);
     total = Number(body?.total ?? 0);
@@ -231,14 +243,25 @@ export async function POST(req: NextRequest) {
               .join("\n")}\n\n`
           : "";
 
+        const answered = Object.entries(answers)
+          .filter(([, v]) => v)
+          .map(([k, v]) => `- ${k}: ${v}`)
+          .join("\n");
+
         const prompt =
           `${prior}Project idea: ${idea}\n\n` +
+          (answered
+            ? `ANSWERED FACTS (locked — apply across the WHOLE site, every page and copy. ` +
+              `Do NOT invent different values. Do NOT ask again for these):\n${answered}\n\n`
+            : "") +
           `Now do step ${index + 1} of ${total}: ${step.title}\n` +
           `${step.detail ?? ""}\n` +
           `Files to write in this step: ${(step.files ?? []).join(", ") || "as needed"}\n\n` +
           `CRITICAL: Implement working behaviour for this idea (not a static mock). ` +
           `Buttons, forms, nav, cart, filters, games, tools — whatever the idea needs — ` +
-          `must function in the offline browser preview.`;
+          `must function in the offline browser preview. ` +
+          `Use the answered facts for brand name, owner name, tone, and any other locked choices ` +
+          `in headings, footer, meta, and UI copy — consistently on every page.`;
 
         const raw = await generateText({
           onUsage: (u) => account && spend(account.userId, "site", u.totalTokens),
