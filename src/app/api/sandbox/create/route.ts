@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { currentUser } from "@/lib/auth";
 import {
   createProjectSandbox,
   publicUrl,
@@ -12,11 +11,8 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
-  const user = await currentUser();
-  if (!user) {
-    return Response.json({ error: "Sign in to start a sandbox." }, { status: 401 });
-  }
-
+  // Auth optional: live Preview only needs E2B_API_KEY on the server.
+  // Guests can still boot a sandbox when the key is configured.
   if (!sandboxConfigured()) {
     return Response.json(
       {

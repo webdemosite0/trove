@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { currentUser } from "@/lib/auth";
 import {
   assertSafeCommand,
   connectSandbox,
@@ -11,11 +10,7 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
-  const user = await currentUser();
-  if (!user) {
-    return Response.json({ error: "Sign in required." }, { status: 401 });
-  }
-
+  // Auth optional — gated by E2B_API_KEY only.
   if (!sandboxConfigured()) {
     return Response.json(
       { error: "E2B_API_KEY is not set.", needKey: true },
