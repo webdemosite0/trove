@@ -49,7 +49,7 @@ HARD RULES
 
 SYNTAX — critical for Vite/React builds
 - CSS variables in JS strings must use matched quotes: 'var(--accent)' not
-  'var(--accent'). Same for template literals: \`1px solid ${x ? 'var(--a)' : 'var(--b)'}\`.
+  mismatched quotes. Same for template literals: \`1px solid \${on ? 'var(--a)' : 'var(--b)'}\`.
 - Never put the closing quote before the closing paren of var(--token).
 - Prefer style objects with string concatenation over nested template+ternary
   when borders depend on state, e.g. border: '1px solid ' + (on ? 'var(--accent)' : 'var(--line)').
