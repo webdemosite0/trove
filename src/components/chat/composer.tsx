@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_FAIL
+see /tmp/composer-ready.tsx
