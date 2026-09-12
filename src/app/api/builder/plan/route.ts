@@ -71,80 +71,70 @@ Rules for steps:
   that is not a pure single-purpose tool/game. e.g. Home + About/Features + Contact, or
   Home + Product + Cart. List each in requirements.pages. Never ship a one-file landing only
   when the idea implies a product.
-- IMAGE PLACEHOLDERS: use CSS gradients and inline SVG heroes; do not depend on remote
-  images. Optional: data-URI placeholders for product shots.
-- Include at least one step dedicated to INTERACTIVITY for this product type
-  (cart, forms, filters, game loop, tabs, booking flow, etc.) in script/JS.
-- Include a motion / micro-interaction pass.
+- VISUALS: rich SVG/CSS heroes; Unsplash or data-URI when photography is needed.
+- STORAGE: localStorage by default; if idea mentions Supabase/backend, plan client + .env.example.
+- Include interactivity (cart, forms, filters, game loop, tabs, booking) and motion.
+- Aim for a COMPLETE multi-page product, not a thin landing.
 - skills must be drawn from the allowed skill ids only.
 - files listed on a step are the ones that step will create or heavily edit.
-
-Allowed skill ids: SKILL_IDS
-
-Stack / target notes are appended by the server. Follow them.`;
+`;
 
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
 
 export async function POST(req: NextRequest) {
-  let idea = "";
-  let answers: Record<string, string> = {};
-  let depth = "deep";
-  let target = "static";
-  let attachments: Attachment[] = [];
-
+  let body: {
+    idea?: string;
+    answers?: Record<string, string>;
+    questions?: unknown;
+    depth?: string;
+    target?: string;
+    attachments?: Attachment[];
+  };
   try {
-    const body = await req.json();
-    idea = String(body?.idea ?? "").trim();
-    answers = body?.answers && typeof body.answers === "object" ? body.answers : {};
-    depth = body?.depth === "quick" ? "quick" : "deep";
-    target = String(body?.target ?? "static");
-    attachments = Array.isArray(body?.attachments) ? body.attachments : [];
+    body = await req.json();
   } catch {
     return Response.json({ error: "Invalid body." }, { status: 400 });
   }
 
+  const idea = String(body.idea ?? "").trim();
   if (!idea) return Response.json({ error: "Describe what to build." }, { status: 400 });
 
-  let account: Awaited<ReturnType<typeof requireCredits>> = null;
+  let account: { userId: string } | null = null;
   try {
     account = await requireCredits();
   } catch (e) {
     if (e instanceof OutOfCredits) {
-      return Response.json(
-        { error: e.message, outOfCredits: true, balance: e.balance },
-        { status: 402 },
-      );
+      return Response.json({ error: e.message }, { status: 402 });
     }
-    throw e;
-  }
-  if (!account) {
-    return Response.json({ error: "Sign in to build." }, { status: 401 });
+    return Response.json({ error: "Sign in to plan." }, { status: 401 });
   }
 
-  const minSteps = depth === "quick" ? 3 : 5;
-  const maxSteps = depth === "quick" ? 5 : 8;
-  const skillIds = SKILL_LIST.map((s) => s.id).join(", ");
-  const stack = targetFor(target as never);
+  const depth = body?.depth === "quick" ? "quick" : "deep";
+  const target = targetFor(body.target);
+  const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
+  const attachments = Array.isArray(body.attachments) ? body.attachments : [];
 
-  const system = SYSTEM.replace("MIN_STEPS", String(minSteps))
-    .replace("MAX_STEPS", String(maxSteps))
-    .replace("SKILL_IDS", skillIds);
+  const minSteps = depth === "quick" ? 4 : 6;
+  const maxSteps = depth === "quick" ? 6 : 10;
 
-  const answerLines = Object.entries(answers)
+  const system = SYSTEM.replace("MIN_STEPS", String(minSteps)).replace(
+    "MAX_STEPS",
+    String(maxSteps),
+  );
+
+  const answered = Object.entries(answers)
+    .filter(([, v]) => v)
     .map(([k, v]) => `- ${k}: ${v}`)
     .join("\n");
 
-  const user = [
-    `Idea: ${idea}`,
-    answerLines ? `Answers:\n${answerLines}` : "",
-    `Depth: ${depth}`,
-    `Target stack: ${stack.label}. ${stack.blurb}`,
-    stack.prompt ? `Stack rules:\n${stack.prompt}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const user =
+    `Idea: ${idea}\n` +
+    `Depth: ${depth}\n` +
+    `Stack: ${target.id}\n` +
+    (answered ? `Answers:\n${answered}\n` : "") +
+    `Plan a complete, interactive product for the browser preview.`;
 
   try {
     const raw = await generateText({
@@ -203,7 +193,7 @@ export async function POST(req: NextRequest) {
         palette: (parsed.style?.palette ?? []).map(String).slice(0, 8),
         type: String(parsed.style?.type ?? "system-ui").slice(0, 120),
       },
-      steps: steps.slice(0, clamp(maxSteps + 2, 3, 12)),
+      steps: steps.slice(0, clamp(maxSteps + 2, 4, 14)),
     };
 
     return Response.json({ plan });
