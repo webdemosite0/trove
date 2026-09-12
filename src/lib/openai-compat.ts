@@ -15,9 +15,23 @@ export interface CompatProvider {
  *
  * Puter's /puterai/openai/v1 endpoint requires a paid Puter plan
  * (402 on free accounts). Prefer Gemini + OpenRouter for free stacks.
+ * Experiential Labs is preferred when EXPLABS_API_KEY is set.
  */
 export function compatProviders(): CompatProvider[] {
   const out: CompatProvider[] = [];
+
+  // Experiential Labs — OpenAI-compatible gateway (task routing / primary free lane)
+  const explabs = process.env.EXPLABS_API_KEY?.trim();
+  if (explabs) {
+    out.push({
+      id: "explabs",
+      label: "Experiential Labs",
+      baseUrl: "https://api.experientiallabs.ai/v1",
+      apiKey: explabs,
+      // Override with EXPLABS_MODEL. Default: free promotional chat/code model.
+      model: process.env.EXPLABS_MODEL?.trim() || "qwen3.8-27b",
+    });
+  }
 
   const openrouter = process.env.OPENROUTER_API_KEY?.trim();
   if (openrouter) {
@@ -113,15 +127,21 @@ export async function compatGenerate({
   onUsage?: OnUsage;
 }): Promise<string> {
   const max_tokens = clampMaxTokens(provider, maxOutputTokens);
+  // Experiential Labs: some models reject sampling params (all_routes_failed).
+  // Send model + messages only for that gateway; others keep temperature/max_tokens.
+  const payload =
+    provider.id === "explabs"
+      ? { model: provider.model, messages: toMessages(turns, system) }
+      : {
+          model: provider.model,
+          messages: toMessages(turns, system),
+          temperature,
+          max_tokens,
+        };
   const res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: "POST",
     headers: headersFor(provider),
-    body: JSON.stringify({
-      model: provider.model,
-      messages: toMessages(turns, system),
-      temperature,
-      max_tokens,
-    }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(90_000),
   });
 
@@ -159,17 +179,21 @@ export async function compatStream({
   onUsage?: OnUsage;
 }): Promise<ReadableStream<Uint8Array>> {
   const max_tokens = clampMaxTokens(provider, maxOutputTokens);
+  const streamPayload =
+    provider.id === "explabs"
+      ? { model: provider.model, messages: toMessages(turns, system), stream: true }
+      : {
+          model: provider.model,
+          messages: toMessages(turns, system),
+          temperature,
+          max_tokens,
+          stream: true,
+          stream_options: { include_usage: true },
+        };
   const res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: "POST",
     headers: headersFor(provider),
-    body: JSON.stringify({
-      model: provider.model,
-      messages: toMessages(turns, system),
-      temperature,
-      max_tokens,
-      stream: true,
-      stream_options: { include_usage: true },
-    }),
+    body: JSON.stringify(streamPayload),
     signal: AbortSignal.timeout(90_000),
   });
 
