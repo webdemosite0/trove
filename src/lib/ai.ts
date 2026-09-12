@@ -177,6 +177,7 @@ export async function streamText(
     search?: boolean;
     systemWithoutSearch?: string;
     onSources?: OnSources;
+    onSearch?: (query: string, provider: string, count: number) => void;
   },
 ): Promise<ReadableStream<Uint8Array>> {
   const temperature = opts.temperature ?? 0.7;
@@ -190,7 +191,6 @@ export async function streamText(
     temperature,
     maxOutputTokens,
     onUsage: opts.onUsage,
-    onAttempt: opts.onAttempt,
     extraParts: opts.extraParts,
   };
 
@@ -199,7 +199,7 @@ export async function streamText(
       return await geminiSearchStream({
         ...ungrounded,
         system: opts.system,
-        onSources: opts.onSources,
+        onSearch: opts.onSearch,
       });
     } catch (e) {
       const msg = errText(e);
@@ -209,7 +209,20 @@ export async function streamText(
   }
 
   try {
-    return await geminiStream(tryGrounding ? { ...opts, search: true } : ungrounded);
+    return await geminiStream(
+      tryGrounding
+        ? {
+            turns: opts.turns,
+            system: opts.system,
+            temperature,
+            maxOutputTokens,
+            onUsage: opts.onUsage,
+            extraParts: opts.extraParts,
+            search: true,
+            onSources: opts.onSources,
+          }
+        : ungrounded,
+    );
   } catch (primary) {
     const msg = errText(primary);
     attempts.push({ label: "Gemini", reason: msg });
