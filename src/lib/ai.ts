@@ -21,8 +21,9 @@ export type { Turn, Usage, OnUsage, OnAttempt, Source, OnSources };
 
 /**
  * Provider chain (configured keys only):
- *   1. Gemini  — primary (search + chat)
- *   2. Experiential Labs → OpenRouter → Grok → Puter (compat fallbacks)
+ *   1. Experiential Labs gpt-6-astra (EXPLABS_API_KEY) — primary chat/code
+ *   2. Gemini — search + chat fallback
+ *   3. OpenRouter → Grok → Puter — further fallbacks
  *
  * Puter's OpenAI-compatible API often returns 402 on free accounts;
  * those errors fall through instead of stopping the chain.
@@ -73,12 +74,22 @@ function describe(p: CompatProvider) {
   return `${p.label} (${p.model})`;
 }
 
-/** Experiential Labs → OpenRouter → Grok → Puter. */
+/** Full compat list ranked: Explabs → OpenRouter → Grok → Puter. */
 function orderedCompat(): CompatProvider[] {
   const all = compatProviders();
   const rank = (id: string) =>
     id === "explabs" ? 0 : id === "openrouter" ? 1 : id === "xai" ? 2 : id === "puter" ? 3 : 9;
   return [...all].sort((a, b) => rank(a.id) - rank(b.id));
+}
+
+/** gpt-6-astra via Experiential Labs only (when EXPLABS_API_KEY is set). */
+function primaryGpt(): CompatProvider | null {
+  return orderedCompat().find((p) => p.id === "explabs") ?? null;
+}
+
+/** Compat fallbacks after Explabs + Gemini: OpenRouter → Grok → Puter. */
+function secondaryCompat(): CompatProvider[] {
+  return orderedCompat().filter((p) => p.id !== "explabs");
 }
 
 async function tryCompatGenerate(
@@ -125,7 +136,36 @@ export async function generateText(
   const temperature = opts.temperature ?? 0.7;
   const maxOutputTokens = opts.maxOutputTokens ?? 8192;
   const attempts: { label: string; reason: string }[] = [];
+  const compatOpts = {
+    turns: opts.turns,
+    system: opts.system,
+    temperature,
+    maxOutputTokens,
+    onUsage: opts.onUsage,
+  };
 
+  // 1) GPT-6 Astra (Experiential Labs) first when configured
+  const gpt = primaryGpt();
+  if (gpt) {
+    try {
+      console.warn(`ai: primary ${describe(gpt)}`);
+      return await compatGenerate({
+        provider: gpt,
+        turns: opts.turns,
+        system: opts.system,
+        temperature,
+        maxOutputTokens,
+        onUsage: opts.onUsage,
+      });
+    } catch (e) {
+      const reason = errText(e);
+      attempts.push({ label: describe(gpt), reason });
+      console.warn(`ai: ${describe(gpt)} failed —`, reason);
+      if (!shouldFallOver(reason)) throw e;
+    }
+  }
+
+  // 2) Gemini
   const grounded = {
     turns: opts.turns,
     system: opts.system,
@@ -159,11 +199,8 @@ export async function generateText(
       }
     }
 
-    const viaCompat = await tryCompatGenerate(
-      orderedCompat(),
-      { turns: opts.turns, system: opts.system, temperature, maxOutputTokens, onUsage: opts.onUsage },
-      attempts,
-    );
+    // 3) OpenRouter → Grok → Puter
+    const viaCompat = await tryCompatGenerate(secondaryCompat(), compatOpts, attempts);
     if (viaCompat != null) return viaCompat;
 
     throw chainFailure(primary, attempts);
@@ -185,6 +222,27 @@ export async function streamText(
   const attempts: { label: string; reason: string }[] = [];
   const tryGrounding = Boolean(opts.search) && groundingAvailable();
 
+  // 1) GPT-6 Astra first (non-search path; Gemini still used when search is required)
+  const gpt = primaryGpt();
+  if (gpt && !tryGrounding) {
+    try {
+      console.warn(`ai: stream primary ${describe(gpt)}`);
+      return await compatStream({
+        provider: gpt,
+        turns: opts.turns,
+        system: opts.system,
+        temperature,
+        maxOutputTokens,
+        onUsage: opts.onUsage,
+      });
+    } catch (e) {
+      const reason = errText(e);
+      attempts.push({ label: describe(gpt), reason });
+      console.warn(`ai: ${describe(gpt)} stream failed —`, reason);
+      if (!shouldFallOver(reason)) throw e;
+    }
+  }
+
   const ungrounded = {
     turns: opts.turns,
     system: opts.systemWithoutSearch ?? opts.system,
@@ -194,6 +252,7 @@ export async function streamText(
     extraParts: opts.extraParts,
   };
 
+  // 2) Gemini (search-aware)
   if (tryGrounding) {
     try {
       return await geminiSearchStream({
@@ -235,7 +294,27 @@ export async function streamText(
       }
     }
 
-    for (const provider of orderedCompat()) {
+    // If we skipped GPT because of search, try it now as a non-search fallback
+    if (gpt && tryGrounding) {
+      try {
+        console.warn(`ai: stream fallback ${describe(gpt)}`);
+        return await compatStream({
+          provider: gpt,
+          turns: opts.turns,
+          system: opts.system,
+          temperature,
+          maxOutputTokens,
+          onUsage: opts.onUsage,
+        });
+      } catch (e) {
+        const reason = errText(e);
+        attempts.push({ label: describe(gpt), reason });
+        if (!shouldFallOver(reason)) throw e;
+      }
+    }
+
+    // 3) OpenRouter → Grok → Puter
+    for (const provider of secondaryCompat()) {
       try {
         console.warn(`ai: stream via ${describe(provider)}`);
         return await compatStream({
@@ -258,10 +337,13 @@ export async function streamText(
   }
 }
 
-/** Labels of AI backends that are configured (for /api/health). */
+/** Labels of AI backends that are configured (for /api/health), in try order. */
 export function providerChain(): string[] {
   const labels: string[] = [];
+  for (const p of orderedCompat()) {
+    if (p.id === "explabs") labels.push(p.label); // GPT-6 Astra first
+  }
   if (process.env.GEMINI_API_KEY?.trim()) labels.push("Gemini");
-  for (const p of orderedCompat()) labels.push(p.label);
+  for (const p of secondaryCompat()) labels.push(p.label);
   return labels;
 }
