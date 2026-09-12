@@ -1,1 +1,481 @@
-PATCH
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { IconType } from "@/components/ui/icons";
+import {
+  FiPlus,
+  FiSidebar,
+  FiX,
+  FiUser,
+  FiLogOut,
+  FiChevronRight,
+  FiSettings,
+  FiCreditCard,
+  FiActivity,
+  FiHome,
+  TbBell,
+  TbUsers,
+  TbRobot,
+  TbWorld,
+  TbHome,
+  TbFileText,
+  TbTable,
+  TbPresentation,
+  TbPalette,
+  TbCode,
+  TbSearch,
+  TbMessageCircle,
+  TbPlugConnected,
+  TbRefreshDot,
+} from "@/components/ui/icons";
+import { TroveOrb } from "@/components/brand/orb";
+import { Wordmark } from "@/components/brand/logo";
+import { logOut } from "@/app/actions/auth";
+import { useNav } from "@/components/shell/nav-state";
+import { ThemeToggle } from "@/components/shell/theme";
+import { Ico, type Motion } from "@/components/ui/ico";
+import { cn } from "@/lib/utils";
+import type { User } from "@/lib/auth";
+import type { Balance } from "@/lib/credits";
+import { CreditMeter } from "@/components/shell/credit-meter";
+import { Tooltip } from "@/components/ui/tooltip";
+
+interface Item {
+  href: string;
+  label: string;
+  icon: IconType;
+  motion: Motion;
+  badge?: string;
+}
+
+const GROUPS: { label: string; items: Item[] }[] = [
+  {
+    label: "Workspace",
+    items: [
+      { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
+      { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
+      { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
+      { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
+      { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
+    ],
+  },
+  {
+    label: "Build",
+    items: [
+      { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
+      { href: "/code", label: "Code", icon: TbCode, motion: "type" },
+      { href: "/documents", label: "Docs", icon: TbFileText, motion: "lift" },
+      { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
+      { href: "/slides", label: "Decks", icon: TbPresentation, motion: "grow" },
+      { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
+    ],
+  },
+  {
+    label: "Connect",
+    items: [
+      { href: "/integrations", label: "Apps", icon: TbPlugConnected, motion: "open" },
+      { href: "/workflows", label: "Flows", icon: TbRefreshDot, motion: "spin", badge: "Soon" },
+      { href: "/reminders", label: "Alerts", icon: TbBell, motion: "ring" },
+    ],
+  },
+];
+
+const ALL = GROUPS.flatMap((g) => g.items);
+
+const SECONDARY: { href: string; label: string; icon: IconType }[] = [
+  { href: "/settings", label: "Settings", icon: FiSettings },
+  { href: "/admin", label: "Admin", icon: FiActivity },
+  { href: "/integrations", label: "Apps", icon: TbPlugConnected },
+  { href: "/plans", label: "Plan", icon: FiCreditCard },
+];
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+function NavRow({
+  item,
+  pathname,
+  onNavigate,
+}: {
+  item: Item;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const active = isActive(pathname, item.href);
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={cn("rail-item group", active && "rail-item-active")}
+    >
+      <Ico
+        icon={item.icon}
+        motion={item.motion}
+        active={active}
+        size={18}
+        className="shrink-0 transition-colors duration-[var(--t-hover)]"
+      />
+      <span className="truncate">{item.label}</span>
+      {item.badge ? (
+        <span className="ml-auto shrink-0 rounded-[var(--r-chip)] bg-accent-soft px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-[0.06em] text-accent">
+          {item.badge}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void }) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const links = [
+    { href: "/settings", label: "Settings", icon: FiSettings },
+    { href: "/admin", label: "Admin", icon: FiActivity },
+    { href: "/plans", label: "Plan", icon: FiCreditCard },
+    { href: "/dashboard", label: "Home", icon: FiHome },
+  ];
+
+  return (
+    <div ref={wrap} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="group flex w-full items-center gap-2.5 rounded-[var(--r-chip)] px-2 py-1.5 transition-colors hover:bg-hover"
+      >
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-raised text-[11.5px] font-semibold text-ink-2">
+          {user.name.slice(0, 1).toUpperCase()}
+        </span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-[13px] text-ink">{user.name}</span>
+          <span className="block truncate text-[11px] capitalize text-ink-4">
+            {user.plan} plan
+          </span>
+        </span>
+        <FiChevronRight
+          size={14}
+          className={cn(
+            "shrink-0 text-ink-4 transition-transform duration-[var(--t-hover)]",
+            open && "rotate-90",
+          )}
+        />
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
+          className="nx-in absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-[var(--r-control)] border border-line bg-raised shadow-[var(--sh-3)]"
+        >
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+            >
+              <l.icon size={14} className="shrink-0 text-ink-4" />
+              {l.label}
+            </Link>
+          ))}
+          <form action={logOut} className="border-t border-line">
+            <button
+              role="menuitem"
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+            >
+              <FiLogOut size={14} className="shrink-0 text-ink-4" />
+              Sign out
+            </button>
+          </form>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function RailBody({
+  user,
+  balance,
+  onNavigate,
+  onCollapse,
+}: {
+  user: User | null;
+  balance: Balance | null;
+  onNavigate?: () => void;
+  onCollapse?: () => void;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <>
+      <div className="flex items-center justify-between px-3.5 pt-3.5">
+        <Link
+          href="/chat"
+          onClick={onNavigate}
+          aria-label="Trove home"
+          className="group inline-flex items-center gap-2"
+        >
+          <TroveOrb size={24} state="idle" />
+          <Wordmark size={15} sweep={false} />
+        </Link>
+        {onCollapse ? (
+          <button
+            onClick={onCollapse}
+            aria-label="Collapse sidebar"
+            title="Toggle sidebar  ⌘B"
+            className="group grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+          >
+            <Ico icon={FiSidebar} motion="nudge" size={17} />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="px-2.5 pt-3">
+        <Link
+          href="/chat"
+          onClick={onNavigate}
+          className="group flex h-9 items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:bg-hover hover:border-line-strong"
+        >
+          <Ico icon={FiPlus} motion="open" size={15} className="text-accent" />
+          New chat
+        </Link>
+      </div>
+
+      <nav
+        aria-label="Workspace"
+        className="mt-4 flex-1 overflow-y-auto px-2.5 pb-3 scrollbar-none"
+      >
+        {GROUPS.map((g, i) => (
+          <div key={g.label} className={cn(i > 0 && "mt-6")}>
+            <div className="px-2.5 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+              {g.label}
+            </div>
+            <div className="space-y-0.5">
+              {g.items.map((it) => (
+                <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="space-y-1 border-t border-line p-2.5">
+        <CreditMeter balance={balance} />
+
+        {user ? (
+          <UserMenu user={user} onNavigate={onNavigate} />
+        ) : (
+          <Link
+            href="/login"
+            onClick={onNavigate}
+            className="group flex items-center gap-2.5 rounded-[var(--r-chip)] px-2 py-1.5 text-[13.5px] text-ink transition-colors hover:bg-hover"
+          >
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-raised text-ink-3">
+              <Ico icon={FiUser} motion="tilt" size={14} />
+            </span>
+            Log in
+          </Link>
+        )}
+
+        <div className="flex items-center gap-0.5 border-t border-line pt-2">
+          {SECONDARY.map((x) => (
+            <Tooltip key={x.href} label={x.label} side="top">
+              <Link
+                href={x.href}
+                onClick={onNavigate}
+                aria-label={x.label}
+                className="grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-4 transition-colors hover:bg-hover hover:text-ink"
+              >
+                <x.icon size={16} />
+              </Link>
+            </Tooltip>
+          ))}
+          <span className="flex-1" />
+          <ThemeToggle />
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function Sidebar({
+  user,
+  balance,
+}: {
+  user: User | null;
+  balance: Balance | null;
+}) {
+  const { open, setOpen, collapsed, setCollapsed } = useNav();
+  const pathname = usePathname();
+  const [peek, setPeek] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const expanded = !collapsed || peek;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setPeek(false);
+        setCollapsed(!collapsed);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [collapsed, setCollapsed]);
+
+  useEffect(() => {
+    if (!collapsed) setPeek(false);
+  }, [collapsed]);
+
+  useEffect(
+    () => () => {
+      if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    },
+    [],
+  );
+
+  function onRailEnter() {
+    if (!collapsed) return;
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+    setPeek(true);
+  }
+
+  function onRailLeave() {
+    if (!collapsed) return;
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    leaveTimer.current = setTimeout(() => setPeek(false), 160);
+  }
+
+  return (
+    <>
+      <aside
+        onMouseEnter={onRailEnter}
+        onMouseLeave={onRailLeave}
+        className={cn(
+          "nx-no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail lg:flex",
+          "transition-[width,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          expanded ? "w-[248px]" : "w-[64px]",
+          collapsed && peek && "z-40 border-line-strong shadow-[var(--sh-3)]",
+        )}
+      >
+        {expanded ? (
+          <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            <RailBody
+              user={user}
+              balance={balance}
+              onCollapse={() => {
+                setPeek(false);
+                setCollapsed(true);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex h-full flex-col items-center gap-1 py-3.5">
+            <Link href="/chat" aria-label="Trove home">
+              <TroveOrb size={28} state="idle" />
+            </Link>
+            <button
+              onClick={() => setCollapsed(false)}
+              aria-label="Expand sidebar"
+              title="Toggle sidebar  ⌘B"
+              className="group mb-2 mt-1 grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+            >
+              <Ico icon={FiSidebar} motion="nudge" size={17} />
+            </button>
+
+            <Link
+              href="/chat"
+              title="New"
+              aria-label="New"
+              className="btn-grad grid h-9 w-9 place-items-center rounded-[var(--r-control)]"
+            >
+              <FiPlus size={16} />
+            </Link>
+
+            <div className="mt-1 flex flex-col items-center gap-1 overflow-y-auto scrollbar-none">
+              {ALL.map((i) => {
+                const active = isActive(pathname, i.href);
+                return (
+                  <Link
+                    key={i.href}
+                    href={i.href}
+                    title={i.label}
+                    aria-label={i.label}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "group flex w-[52px] shrink-0 flex-col items-center gap-1 rounded-[var(--r-control)] px-1 py-2 transition-colors",
+                      active
+                        ? "bg-accent-soft text-accent"
+                        : "text-ink-4 hover:bg-hover hover:text-ink-2",
+                    )}
+                  >
+                    <Ico icon={i.icon} motion={i.motion} active={active} size={19} />
+                    <span className="w-full truncate text-center text-[9.5px] leading-none">
+                      {i.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="mt-auto">
+              <CreditMeter balance={balance} collapsed />
+            </div>
+          </div>
+        )}
+      </aside>
+
+      {open ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+          />
+          <div className="nx-in absolute inset-y-0 left-0 flex w-[276px] flex-col border-r border-line bg-rail">
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close menu"
+              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink"
+            >
+              <FiX size={17} />
+            </button>
+            <RailBody user={user} balance={balance} onNavigate={() => setOpen(false)} />
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        className={cn(
+          "nx-no-print hidden shrink-0 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:block",
+          collapsed ? "w-[64px]" : "w-[248px]",
+        )}
+      />
+    </>
+  );
+}
