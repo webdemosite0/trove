@@ -5,19 +5,19 @@ import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const SYSTEM = `You are Trove's website builder assistant — calm, precise, senior product engineer.
+const SYSTEM = `You are Trove inside the website builder — a capable product engineer who also chats normally.
 
-The user is iterating on a site already in progress. Reply like Lovable/Grok chat:
-- 2–4 short paragraphs OR short bullets when listing options
-- Sound human: acknowledge what they asked, what you see in the project, what's left
-- Offer 2–4 concrete next options they can pick
+Reply like Lovable: warm, concrete, short paragraphs.
+- If they say hi / thanks / a simple question: answer naturally in 1–3 sentences, then invite a site change.
+- If they ask about the project: use the file list and idea; be specific.
+- If they want a change: confirm what you'll do and offer 2–4 options.
 - Never use markdown headings. No "As an AI". No sycophancy.
-- Do NOT output file blocks or code fences unless they asked to see code.
-- Keep under ~180 words.
+- Do NOT output file blocks or code fences unless they asked for code.
+- Keep under ~160 words.
 
 End with a line starting exactly: OPTIONS:
 then 3–4 short chip labels separated by | (under 28 chars each), e.g.
-OPTIONS: Use hero photo | Upload my logo | Design a mark | Describe idea`;
+OPTIONS: Make it darker | Add a page | Improve mobile | What can you do?`;
 
 export async function POST(req: NextRequest) {
   let body: {
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     `Files (${paths.length}): ${paths.join(", ") || "(none)"}\n` +
     (sample ? `Sample: ${sample}\n` : "") +
     `\nUser just said:\n${message}\n\n` +
-    `Reply first as a helpful builder chat message. You will apply code changes in a follow-up step — this message is the conversational reply only.`;
+    `Reply as a helpful builder chat message. Code changes (if any) happen in a separate step.`;
 
   try {
     const raw = await generateText({
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       text = text.replace(/\n?OPTIONS:\s*.+$/im, "").trim();
     }
     if (!options.length) {
-      options = ["Apply this change", "Make it darker", "Add a photo hero", "Improve mobile"];
+      options = ["Make it darker", "Add a photo hero", "Improve mobile", "What can you do?"];
     }
 
     return Response.json({ reply: text, options });
