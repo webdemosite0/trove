@@ -22,10 +22,12 @@ export default async function WebsitesPage({
       const idea =
         convo.messages.find((m) => m.role === "user")?.text ?? convo.title;
       restored = { id: convo.id, title: convo.title, idea };
+    } else {
+      restored = { id, title: "Restored site", idea: "" };
     }
   }
 
-  const recentSites = await listRecents("site", 24);
+  const recentSites = await listRecents("site", 24).catch(() => []);
 
   return (
     <BuilderView
