@@ -1,11 +1,19 @@
 import { one, isRemote, ephemeral } from "@/lib/db";
-import { providerChain } from "@/lib/ai";
 import { searchProvider } from "@/lib/search";
 import { mailTransport, mailFallback } from "@/lib/mail";
 import { site } from "@/lib/site";
+import { compatProviders } from "@/lib/openai-compat";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Configured AI backend labels (kept local so /api/health does not depend on ai.ts exports). */
+function providerChain(): string[] {
+  const labels: string[] = [];
+  if (process.env.GEMINI_API_KEY?.trim()) labels.push("Gemini");
+  for (const p of compatProviders()) labels.push(p.label);
+  return labels;
+}
 
 /**
  * Says why the app is unhappy, without a dashboard login.
@@ -21,48 +29,22 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const configured = {
     gemini: Boolean(process.env.GEMINI_API_KEY?.trim()),
-    // Which providers could answer if the one in front of them is out. Worth
-    // reporting: a deployment running entirely on a fallback still looks
-    // healthy from the outside, and the bill arrives from somewhere else.
     aiProviders: providerChain(),
-    // Which index answers a "what is happening now" question. Wikipedia is
-    // the keyless floor, so this reporting "Wikipedia" means no real web
-    // search is configured — not that search is broken.
     searchProvider: searchProvider(),
-    // Which transport will send the confirmation email, or "none".
-    // Reported because verification enforces itself off when nothing can
-    // deliver — so "none" here means anyone can sign up with an address they
-    // do not own, and that is worth being able to check without guessing.
-    // The name of a transport is not a secret; the credentials are, and none
-    // of them are here.
     mail: mailTransport(),
     mailFallback: mailFallback(),
     tursoUrl: Boolean(process.env.TURSO_DATABASE_URL?.trim()),
     tursoToken: Boolean(process.env.TURSO_AUTH_TOKEN?.trim()),
-    // Both names, because the variable was renamed and the old one is still
-    // honoured. Checking only NEXT_PUBLIC_SITE_URL would report "not set" to
-    // someone who had just set SITE_URL correctly — a false alarm pointing at
-    // the one thing that was already right.
     siteUrl: Boolean(
       process.env.SITE_URL?.trim() || process.env.NEXT_PUBLIC_SITE_URL?.trim(),
     ),
-    // What canonical URLs, the sitemap, OAuth redirects and Stripe returns
-    // will actually use. Reported because "set" is not the same as "correct":
-    // an unset variable silently resolves to Vercel's own domain.
     resolvedSiteUrl: site.url,
   };
 
-  // "ephemeral" is the important one to surface: the app works, but every
-  // account and saved conversation disappears when the instance recycles.
-  // Resolved lazily, because `ephemeral` is only set once a connection has
-  // actually been attempted. Read eagerly, the first request after a cold
-  // start reported "local-file" for a database that had fallen back to /tmp
-  // — wrong on the one endpoint whose entire job is to be trusted.
   const modeNow = () =>
     isRemote ? "turso" : ephemeral ? "ephemeral-tmp" : "local-file";
 
   try {
-    // Cheapest possible round trip that still proves the schema applied.
     await one(`SELECT COUNT(*) AS n FROM users`);
     return Response.json({
       ok: true,
