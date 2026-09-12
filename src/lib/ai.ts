@@ -1,1 +1,246 @@
-PLACEHOLDER
+import "server-only";
+import {
+  streamText as geminiStream,
+  generateText as geminiGenerate,
+  streamWithSearch as geminiSearchStream,
+  type Turn,
+  type Usage,
+  type OnUsage,
+  type OnAttempt,
+  type Source,
+  type OnSources,
+} from "@/lib/gemini";
+import {
+  compatProviders,
+  compatGenerate,
+  compatStream,
+  type CompatProvider,
+} from "@/lib/openai-compat";
+
+export type { Turn, Usage, OnUsage, OnAttempt, Source, OnSources };
+
+/**
+ * Provider chain (configured keys only):
+ *   1. Gemini  — primary (search + chat)
+ *   2. Experiential Labs → OpenRouter → Grok → Puter (compat fallbacks)
+ *
+ * Puter's OpenAI-compatible API often returns 402 on free accounts;
+ * those errors fall through instead of stopping the chain.
+ */
+
+interface Common {
+  turns: Turn[];
+  system: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  onUsage?: OnUsage;
+}
+
+function errText(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+function shouldFallOver(message: string): boolean {
+  return /429|402|quota|rate.?limit|exhaust|billing|insufficient|subscription_required|401|403|invalid.?api.?key|incorrect api key|not available|404|503|overload|context.?length|maximum context/i.test(
+    message,
+  );
+}
+
+function groundingMayBeTheProblem(message: string): boolean {
+  return /429|quota|rate.?limit|exhaust|billing|insufficient|403/i.test(message);
+}
+
+const GROUNDING_COOLDOWN_MS = 10 * 60_000;
+let groundingRefusedAt = 0;
+
+function groundingAvailable(): boolean {
+  return Date.now() - groundingRefusedAt > GROUNDING_COOLDOWN_MS;
+}
+
+function noteGroundingRefused() {
+  groundingRefusedAt = Date.now();
+}
+
+function chainFailure(primary: unknown, attempts: { label: string; reason: string }[]): Error {
+  const first = primary instanceof Error ? primary.message : String(primary);
+  if (!attempts.length) return primary instanceof Error ? primary : new Error(first);
+
+  const tail = attempts.map((a) => `${a.label}: ${a.reason}`).join(" · ");
+  return new Error(`${first} Fallbacks were tried and also failed — ${tail}`);
+}
+
+function describe(p: CompatProvider) {
+  return `${p.label} (${p.model})`;
+}
+
+/** Experiential Labs → OpenRouter → Grok → Puter. */
+function orderedCompat(): CompatProvider[] {
+  const all = compatProviders();
+  const rank = (id: string) =>
+    id === "explabs" ? 0 : id === "openrouter" ? 1 : id === "xai" ? 2 : id === "puter" ? 3 : 9;
+  return [...all].sort((a, b) => rank(a.id) - rank(b.id));
+}
+
+async function tryCompatGenerate(
+  providers: CompatProvider[],
+  opts: {
+    turns: Turn[];
+    system: string;
+    temperature: number;
+    maxOutputTokens: number;
+    onUsage?: OnUsage;
+  },
+  attempts: { label: string; reason: string }[],
+): Promise<string | null> {
+  for (const provider of providers) {
+    try {
+      console.warn(`ai: trying ${describe(provider)}`);
+      return await compatGenerate({
+        provider,
+        turns: opts.turns,
+        system: opts.system,
+        temperature: opts.temperature,
+        maxOutputTokens: opts.maxOutputTokens,
+        onUsage: opts.onUsage,
+      });
+    } catch (e) {
+      const reason = errText(e);
+      attempts.push({ label: describe(provider), reason });
+      console.warn(`ai: ${describe(provider)} failed —`, reason);
+      if (!shouldFallOver(reason)) throw e;
+    }
+  }
+  return null;
+}
+
+export async function generateText(
+  opts: Common & {
+    extraParts?: ({ text: string } | { inlineData: { mimeType: string; data: string } })[];
+    onAttempt?: OnAttempt;
+    search?: boolean;
+    systemWithoutSearch?: string;
+    onSources?: OnSources;
+  },
+): Promise<string> {
+  const temperature = opts.temperature ?? 0.7;
+  const maxOutputTokens = opts.maxOutputTokens ?? 8192;
+  const attempts: { label: string; reason: string }[] = [];
+
+  const grounded = {
+    turns: opts.turns,
+    system: opts.system,
+    temperature,
+    maxOutputTokens,
+    onUsage: opts.onUsage,
+    onAttempt: opts.onAttempt,
+    search: opts.search,
+    extraParts: opts.extraParts,
+    onSources: opts.onSources,
+  };
+  const ungrounded = {
+    ...grounded,
+    search: false,
+    system: opts.systemWithoutSearch ?? opts.system,
+    onSources: undefined,
+  };
+
+  try {
+    return await geminiGenerate(grounded.search ? grounded : ungrounded);
+  } catch (primary) {
+    const msg = errText(primary);
+    attempts.push({ label: "Gemini", reason: msg });
+    if (groundingMayBeTheProblem(msg)) noteGroundingRefused();
+
+    if (grounded.search && shouldFallOver(msg)) {
+      try {
+        return await geminiGenerate(ungrounded);
+      } catch (e2) {
+        attempts.push({ label: "Gemini (no search)", reason: errText(e2) });
+      }
+    }
+
+    const viaCompat = await tryCompatGenerate(
+      orderedCompat(),
+      { turns: opts.turns, system: opts.system, temperature, maxOutputTokens, onUsage: opts.onUsage },
+      attempts,
+    );
+    if (viaCompat != null) return viaCompat;
+
+    throw chainFailure(primary, attempts);
+  }
+}
+
+export async function streamText(
+  opts: Common & {
+    extraParts?: ({ text: string } | { inlineData: { mimeType: string; data: string } })[];
+    onAttempt?: OnAttempt;
+    search?: boolean;
+    systemWithoutSearch?: string;
+    onSources?: OnSources;
+  },
+): Promise<ReadableStream<Uint8Array>> {
+  const temperature = opts.temperature ?? 0.7;
+  const maxOutputTokens = opts.maxOutputTokens ?? 8192;
+  const attempts: { label: string; reason: string }[] = [];
+  const tryGrounding = Boolean(opts.search) && groundingAvailable();
+
+  const ungrounded = {
+    turns: opts.turns,
+    system: opts.systemWithoutSearch ?? opts.system,
+    temperature,
+    maxOutputTokens,
+    onUsage: opts.onUsage,
+    onAttempt: opts.onAttempt,
+    extraParts: opts.extraParts,
+  };
+
+  if (tryGrounding) {
+    try {
+      return await geminiSearchStream({
+        ...ungrounded,
+        system: opts.system,
+        onSources: opts.onSources,
+      });
+    } catch (e) {
+      const msg = errText(e);
+      attempts.push({ label: "Gemini search", reason: msg });
+      if (groundingMayBeTheProblem(msg)) noteGroundingRefused();
+    }
+  }
+
+  try {
+    return await geminiStream(tryGrounding ? { ...opts, search: true } : ungrounded);
+  } catch (primary) {
+    const msg = errText(primary);
+    attempts.push({ label: "Gemini", reason: msg });
+
+    if (tryGrounding && shouldFallOver(msg)) {
+      try {
+        return await geminiStream(ungrounded);
+      } catch (e2) {
+        attempts.push({ label: "Gemini (no search)", reason: errText(e2) });
+      }
+    }
+
+    for (const provider of orderedCompat()) {
+      try {
+        console.warn(`ai: stream via ${describe(provider)}`);
+        return await compatStream({
+          provider,
+          turns: opts.turns,
+          system: opts.system,
+          temperature,
+          maxOutputTokens,
+          onUsage: opts.onUsage,
+        });
+      } catch (e) {
+        const reason = errText(e);
+        attempts.push({ label: describe(provider), reason });
+        console.warn(`ai: ${describe(provider)} stream failed —`, reason);
+        if (!shouldFallOver(reason)) throw e;
+      }
+    }
+
+    throw chainFailure(primary, attempts);
+  }
+}
