@@ -28,8 +28,8 @@ export function compatProviders(): CompatProvider[] {
       label: "Experiential Labs",
       baseUrl: "https://api.experientiallabs.ai/v1",
       apiKey: explabs,
-      // Override with EXPLABS_MODEL. Default: free promotional chat/code model.
-      model: process.env.EXPLABS_MODEL?.trim() || "qwen3.8-27b",
+      // Override with EXPLABS_MODEL. Default: gpt-6-astra
+      model: process.env.EXPLABS_MODEL?.trim() || "gpt-6-astra",
     });
   }
 
@@ -40,8 +40,6 @@ export function compatProviders(): CompatProvider[] {
       label: "OpenRouter",
       baseUrl: "https://openrouter.ai/api/v1",
       apiKey: openrouter,
-      // Auto-picks a free model that is actually available right now.
-      // Specific free models go offline often; the router is stable.
       model: process.env.OPENROUTER_MODEL?.trim() || "openrouter/free",
     });
   }
@@ -105,7 +103,6 @@ function readUsage(u: unknown): Usage | null {
 
 function clampMaxTokens(provider: CompatProvider, maxOutputTokens: number): number {
   if (provider.id === "openrouter") {
-    // Free router + free models: keep completion modest
     return Math.min(maxOutputTokens, 4096);
   }
   return maxOutputTokens;
@@ -127,8 +124,6 @@ export async function compatGenerate({
   onUsage?: OnUsage;
 }): Promise<string> {
   const max_tokens = clampMaxTokens(provider, maxOutputTokens);
-  // Experiential Labs: some models reject sampling params (all_routes_failed).
-  // Send model + messages only for that gateway; others keep temperature/max_tokens.
   const payload =
     provider.id === "explabs"
       ? { model: provider.model, messages: toMessages(turns, system) }
