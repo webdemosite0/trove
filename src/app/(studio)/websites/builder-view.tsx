@@ -1,1 +1,3 @@
-LOAD_FROM_TMP
+"use client";
+
+export { BuilderView } from "./builder-workspace";
