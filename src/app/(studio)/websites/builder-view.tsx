@@ -389,19 +389,44 @@ export function BuilderView({
     setMsgs((m) => [...m, { id: `u-${Date.now()}`, role: "user", text: q }]);
     setError(null);
     setFinalMsg(null);
+    setFollowUps([]);
     setPhase("building");
     lastSummary.current = "";
     log(`edit — ${q.slice(0, 60)}`);
+
+    // 1) First: Lovable-style chat reply (before file work)
+    try {
+      const rr = await fetch("/api/builder/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: q,
+          idea,
+          title: plan?.title,
+          files: files.map((f) => ({ path: f.path, content: f.content.slice(0, 400) })),
+        }),
+      });
+      const rd = await rr.json().catch(() => null);
+      if (rr.ok && rd?.reply) {
+        setMsgs((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", text: String(rd.reply) }]);
+        if (Array.isArray(rd.options) && rd.options.length) {
+          setFollowUps(rd.options.map(String));
+        }
+      }
+    } catch {
+      /* still apply change */
+    }
+
+    // 2) Then apply code changes
     try {
       const current = await runStep(
         {
           id: `edit-${Date.now()}`,
           title: q.slice(0, 48),
           detail:
-            `User chat request (respond in SUMMARY as a helpful chatbot): ${q}. ` +
-            `Apply the change to the existing ${targetId} project. Return every file you touch in full. ` +
-            `Keep localStorage / Supabase patterns if already present. ` +
-            `If they ask for images/photos, add SVG or Unsplash heroes where appropriate.`,
+            `User chat request: ${q}. Apply this to the existing ${targetId} project. ` +
+            `Return every file you touch in full. Keep localStorage/Supabase if present. ` +
+            `Photos: SVG or Unsplash when relevant. SUMMARY: one short line on what files changed.`,
           skills: ["ui-design"],
           files: files.map((f) => f.path),
         },
@@ -412,12 +437,14 @@ export function BuilderView({
       );
       setFiles(current);
       setPhase("ready");
-      const reply =
+      const done =
         lastSummary.current ||
-        `Updated the project (${current.length} files). Preview is on the right — tell me what to change next.`;
-      setFinalMsg(reply);
-      setMsgs((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", text: reply }]);
-      setFollowUps(["Make it darker", "Add a photo hero", "Improve mobile", "Add more pages"]);
+        `Updated ${current.length} files — Preview is on the right.`;
+      setMsgs((m) => [...m, { id: `d-${Date.now()}`, role: "assistant", text: done }]);
+      setFinalMsg(done);
+      if (!followUps.length) {
+        setFollowUps(["Make it darker", "Add a photo hero", "Improve mobile", "Add more pages"]);
+      }
       if (siteId.current) {
         try {
           localStorage.setItem(
@@ -437,12 +464,12 @@ export function BuilderView({
         {
           id: `e-${Date.now()}`,
           role: "assistant",
-          text: `I couldn't apply that change: ${m}. Try again or rephrase.`,
+          text: `I couldn't apply that change yet: ${m}. You can still pick an option above or try again.`,
         },
       ]);
       setFinalMsg(null);
     }
-  }, [busy, paused, plan, files, runStep, styleBrief, log, idea, targetId, answers]);
+  }, [busy, paused, plan, files, runStep, styleBrief, log, idea, targetId, answers, followUps.length]);
 
   async function download() {
     if (!files.length) return;
@@ -573,7 +600,7 @@ export function BuilderView({
                 m.role === "user" ? (
                   <p key={m.id} className="ml-auto max-w-[92%] rounded-[20px] bg-hover/50 px-4 py-2.5 text-[14px] leading-relaxed text-ink">{m.text}</p>
                 ) : (
-                  <p key={m.id} className="whitespace-pre-wrap text-[15px] leading-[1.65] text-ink">{m.text}</p>
+                  <div key={m.id} className="max-w-[40rem] space-y-3 whitespace-pre-wrap text-[15px] leading-[1.7] text-ink">{m.text}</div>
                 ),
               )}
               {phase === "asking" || phase === "planning" ? <Thinking key={phase} phase={phase} logs={logs} /> : null}
@@ -626,11 +653,6 @@ export function BuilderView({
                     ))}
                   </div>
                   {phase === "building" ? <WorkingTimer secs={workSecs} /> : null}
-                  {phase === "ready" && finalMsg && msgs.every((m) => m.text !== finalMsg) ? (
-                    <div className="mt-4 space-y-3">
-                      <p className="whitespace-pre-wrap text-[15px] leading-[1.65] text-ink">{finalMsg}</p>
-                    </div>
-                  ) : null}
                   {phase === "ready" && followUps.length ? (
                     <div className="flex flex-wrap gap-2 pt-2">
                       {followUps.map((s) => (
