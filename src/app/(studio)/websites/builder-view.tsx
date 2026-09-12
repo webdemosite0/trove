@@ -31,7 +31,9 @@ export function BuilderView({
   const [targetId, setTargetId] = useState<TargetId>("react");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [localSites, setLocalSites] = useState<{ id: string; title: string; href: string; when: string }[]>([]);
+  const [localSites, setLocalSites] = useState<
+    { id: string; title: string; href: string; when: string }[]
+  >([]);
   const { setCollapsed } = useNav();
 
   useEffect(() => {
@@ -59,7 +61,9 @@ export function BuilderView({
         });
       }
       out.sort((a, b) => b.at - a.at);
-      setLocalSites(out.slice(0, 12).map(({ id, title, href, when }) => ({ id, title, href, when })));
+      setLocalSites(
+        out.slice(0, 12).map(({ id, title, href, when }) => ({ id, title, href, when })),
+      );
     } catch {
       /* private mode */
     }
@@ -131,7 +135,9 @@ export function BuilderView({
     [busy, targetId],
   );
 
-  const sites = localSites.length ? localSites : recentSites.map((s) => ({ ...s, when: "recently" }));
+  const sites = localSites.length
+    ? localSites
+    : recentSites.map((s) => ({ ...s, when: "recently" }));
 
   return (
     <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col">
@@ -147,9 +153,18 @@ export function BuilderView({
 
         <div className="rounded-[28px] border border-line/70 bg-raised/80 p-2 shadow-[0_12px_40px_rgba(0,0,0,0.06)] backdrop-blur-sm">
           {mobile ? (
-            <MobileComposer onSend={ask} placeholder="Ask Trove to build a website that…" disabled={busy} />
+            <MobileComposer
+              onSend={ask}
+              placeholder="Ask Trove to build a website that…"
+              disabled={busy}
+            />
           ) : (
-            <Composer onSend={ask} placeholder="Ask Trove to build a website that…" autoFocus disabled={busy} />
+            <Composer
+              onSend={ask}
+              placeholder="Ask Trove to build a website that…"
+              autoFocus
+              disabled={busy}
+            />
           )}
         </div>
 
@@ -186,7 +201,9 @@ export function BuilderView({
         </div>
 
         {busy ? (
-          <p className="mt-6 text-center text-[13.5px] text-ink-3">Building your site… this can take a minute.</p>
+          <p className="mt-6 text-center text-[13.5px] text-ink-3">
+            Building your site… this can take a minute.
+          </p>
         ) : null}
         {error ? <FailureNote error={error} className="mt-6" /> : null}
       </div>
