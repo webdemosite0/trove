@@ -44,6 +44,19 @@ const PANES: { id: Pane; icon: typeof TbWorld; label: string; motion: Motion }[]
   { id: "console", icon: TbTerminal2, label: "Console", motion: "scan" },
 ];
 
+/** Pure chat — no file edit (hi, questions about the site, advice). */
+function isChatOnly(q: string): boolean {
+  const t = q.trim().toLowerCase();
+  if (t.length < 2) return true;
+  if (/^(hi|hello|hey|yo|sup|hola|thanks|thank you|thx|ok|okay|bye)\b/.test(t)) return true;
+  if (/\b(what is this|who are you|how does this work|explain|help me understand)\b/.test(t)) return true;
+  if (/\b(add|remove|change|fix|update|make|build|create|deploy|delete|redesign|rewrite|implement|connect|use supabase|localStorage|image|photo|favicon|page|button|color|darker|mobile)\b/i.test(q)) {
+    return false;
+  }
+  if (t.endsWith("?")) return true;
+  return false;
+}
+
 function Thinking({ phase, logs }: { phase: "asking" | "planning"; logs: { text: string }[] }) {
   const [started] = useState(() => Date.now());
   const [secs, setSecs] = useState(0);
@@ -151,7 +164,14 @@ export function BuilderView({
           setHalf("build");
           setPane("preview");
           setFinalMsg(`Restored "${data.title || restored.title}" with ${data.files.length} files. Ask for any change below.`);
-          setFollowUps(["Make it darker", "Add a photo hero", "Improve mobile layout"]);
+          setMsgs([
+            {
+              id: "restored",
+              role: "assistant",
+              text: `Restored "${data.title || restored.title}" (${data.files.length} files). Preview is on the right — say hi, ask about the site, or tell me what to change.`,
+            },
+          ]);
+          setFollowUps(["Make it darker", "Add a photo hero", "Improve mobile layout", "What pages exist?"]);
           return;
         }
       }
@@ -390,11 +410,13 @@ export function BuilderView({
     setError(null);
     setFinalMsg(null);
     setFollowUps([]);
-    setPhase("building");
     lastSummary.current = "";
-    log(`edit — ${q.slice(0, 60)}`);
+    log(`chat — ${q.slice(0, 60)}`);
 
-    // 1) First: Lovable-style chat reply (before file work)
+    const chatOnly = isChatOnly(q) && !(attach && attach.length);
+
+    setPhase("building");
+    let replied = false;
     try {
       const rr = await fetch("/api/builder/reply", {
         method: "POST",
@@ -403,30 +425,59 @@ export function BuilderView({
           message: q,
           idea,
           title: plan?.title,
-          files: files.map((f) => ({ path: f.path, content: f.content.slice(0, 400) })),
+          files: files.map((f) => ({ path: f.path, content: f.content.slice(0, 500) })),
         }),
       });
       const rd = await rr.json().catch(() => null);
       if (rr.ok && rd?.reply) {
         setMsgs((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", text: String(rd.reply) }]);
-        if (Array.isArray(rd.options) && rd.options.length) {
-          setFollowUps(rd.options.map(String));
-        }
+        replied = true;
+        if (Array.isArray(rd.options) && rd.options.length) setFollowUps(rd.options.map(String));
+      } else if (rd?.error) {
+        setMsgs((m) => [
+          ...m,
+          {
+            id: `e-${Date.now()}`,
+            role: "assistant",
+            text: `I couldn't reach the model (${rd.error}). Check API keys on Vercel, then try again.`,
+          },
+        ]);
       }
-    } catch {
-      /* still apply change */
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Network error";
+      setMsgs((m) => [
+        ...m,
+        { id: `e-${Date.now()}`, role: "assistant", text: `Reply failed: ${msg}. Try again in a moment.` },
+      ]);
     }
 
-    // 2) Then apply code changes
+    if (chatOnly) {
+      setPhase("ready");
+      if (!replied) {
+        setMsgs((m) => [
+          ...m,
+          {
+            id: `a-${Date.now()}`,
+            role: "assistant",
+            text: "Hey — I'm here. Ask me anything about this site, or tell me what to change (e.g. “make the hero darker” or “add a booking form”).",
+          },
+        ]);
+      }
+      if (!followUps.length) {
+        setFollowUps(["What can you change?", "Make it darker", "Add a contact form", "Improve mobile"]);
+      }
+      return;
+    }
+
     try {
       const current = await runStep(
         {
           id: `edit-${Date.now()}`,
           title: q.slice(0, 48),
           detail:
-            `User chat request: ${q}. Apply this to the existing ${targetId} project. ` +
+            `User request: ${q}. Apply to the existing ${targetId} project. ` +
             `Return every file you touch in full. Keep localStorage/Supabase if present. ` +
-            `Photos: SVG or Unsplash when relevant. SUMMARY: one short line on what files changed.`,
+            `Photos: SVG or Unsplash when relevant. SUMMARY: one short line on what changed.`,
           skills: ["ui-design"],
           files: files.map((f) => f.path),
         },
@@ -439,7 +490,7 @@ export function BuilderView({
       setPhase("ready");
       const done =
         lastSummary.current ||
-        `Updated ${current.length} files — Preview is on the right.`;
+        `Done — updated ${current.length} files. Preview is on the right.`;
       setMsgs((m) => [...m, { id: `d-${Date.now()}`, role: "assistant", text: done }]);
       setFinalMsg(done);
       if (!followUps.length) {
@@ -464,10 +515,9 @@ export function BuilderView({
         {
           id: `e-${Date.now()}`,
           role: "assistant",
-          text: `I couldn't apply that change yet: ${m}. You can still pick an option above or try again.`,
+          text: `I answered above but couldn't apply code yet: ${m}. Rephrase the change or try again.`,
         },
       ]);
-      setFinalMsg(null);
     }
   }, [busy, paused, plan, files, runStep, styleBrief, log, idea, targetId, answers, followUps.length]);
 
@@ -590,7 +640,7 @@ export function BuilderView({
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-        <div className={cn("flex min-h-0 w-full flex-col overflow-hidden border-b border-line/50 bg-canvas lg:w-[min(440px,42%)] lg:border-b-0 lg:border-r lg:border-line/40", mobile && half === "build" && "hidden")}>
+        <div className={cn("flex min-h-0 w-full flex-col overflow-hidden border-b border-line/50 bg-canvas lg:w-[min(380px,34%)] lg:border-b-0 lg:border-r lg:border-line/40", mobile && half === "build" && "hidden")}>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
             <div className="mx-auto max-w-[40rem] space-y-3">
               {idea && phase !== "idle" && msgs.length === 0 ? (
@@ -640,7 +690,7 @@ export function BuilderView({
                         />
                       );
                     })}
-                    {tasks.filter((x) => x.state === "run" || x.state === "ok").slice(-10).map((x) => (
+                    {tasks.filter((x) => x.state === "run" || x.state === "ok").slice(-8).map((x) => (
                       <ProcessRow
                         key={x.id}
                         kind={/file|write|path/i.test(String(x.kind) + x.label) ? "file" : "cmd"}
@@ -648,7 +698,7 @@ export function BuilderView({
                         active={x.state === "run"}
                       />
                     ))}
-                    {logs.slice(-6).map((l) => (
+                    {logs.slice(-4).map((l) => (
                       <ProcessRow key={l.id} kind="think" label={l.text} />
                     ))}
                   </div>
@@ -675,7 +725,11 @@ export function BuilderView({
           </div>
           {(phase === "ready" || phase === "building") ? (
             <div className="shrink-0 border-t border-line/50 p-3">
-              <Composer onSend={edit} disabled={busy || paused || !files.length} placeholder={files.length ? "Ask anything…" : "Waiting for files…"} />
+              <Composer
+                onSend={edit}
+                disabled={busy || paused || !files.length}
+                placeholder={files.length ? "Ask anything — hi, questions, or changes…" : "Waiting for files…"}
+              />
             </div>
           ) : null}
         </div>
@@ -693,9 +747,9 @@ export function BuilderView({
                   </button>
                 ) : null}
               </div>
-              <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto">
+              <div className="flex min-h-0 flex-1 items-stretch justify-center overflow-auto p-2">
                 {preview || sandboxUrl ? (
-                  <div className="m-3 flex h-full min-h-[420px] flex-col overflow-hidden rounded-[12px] border border-line bg-[#1a1a1c]" style={{ width: DEVICE[device].w, maxWidth: "100%" }}>
+                  <div className="flex h-full min-h-[480px] w-full flex-col overflow-hidden rounded-[12px] border border-line bg-[#1a1a1c]">
                     <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/8 bg-[#222] px-3">
                       <span className="size-2 rounded-full bg-[#ff5f57]" />
                       <span className="size-2 rounded-full bg-[#febc2e]" />
