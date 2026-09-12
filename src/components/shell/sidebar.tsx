@@ -327,11 +327,16 @@ export function Sidebar({
 }) {
   const { open, setOpen, collapsed, setCollapsed } = useNav();
   const pathname = usePathname();
+  /** Hover-peek: when the rail is pinned collapsed, mouse enter expands it over the page. */
+  const [peek, setPeek] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const expanded = !collapsed || peek;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
+        setPeek(false);
         setCollapsed(!collapsed);
       }
     };
@@ -339,15 +344,57 @@ export function Sidebar({
     return () => window.removeEventListener("keydown", onKey);
   }, [collapsed, setCollapsed]);
 
+  useEffect(() => {
+    if (!collapsed) setPeek(false);
+  }, [collapsed]);
+
+  useEffect(
+    () => () => {
+      if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    },
+    [],
+  );
+
+  function onRailEnter() {
+    if (!collapsed) return;
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+    setPeek(true);
+  }
+
+  function onRailLeave() {
+    if (!collapsed) return;
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    // Short delay so moving between icon rows doesn't flicker closed.
+    leaveTimer.current = setTimeout(() => setPeek(false), 160);
+  }
+
   return (
     <>
       <aside
+        onMouseEnter={onRailEnter}
+        onMouseLeave={onRailLeave}
         className={cn(
-          "nx-no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail transition-[width] duration-[var(--t-hover)] lg:flex",
-          collapsed ? "w-[64px]" : "w-[248px]",
+          "nx-no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail lg:flex",
+          "transition-[width,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          expanded ? "w-[248px]" : "w-[64px]",
+          collapsed && peek && "z-40 border-line-strong shadow-[var(--sh-3)]",
         )}
       >
-        {collapsed ? (
+        {expanded ? (
+          <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            <RailBody
+              user={user}
+              balance={balance}
+              onCollapse={() => {
+                setPeek(false);
+                setCollapsed(true);
+              }}
+            />
+          </div>
+        ) : (
           <div className="flex h-full flex-col items-center gap-1 py-3.5">
             <Link href="/chat" aria-label="Trove home">
               <TroveOrb size={28} state="idle" />
@@ -400,8 +447,6 @@ export function Sidebar({
               <CreditMeter balance={balance} collapsed />
             </div>
           </div>
-        ) : (
-          <RailBody user={user} balance={balance} onCollapse={() => setCollapsed(true)} />
         )}
       </aside>
 
@@ -425,9 +470,10 @@ export function Sidebar({
         </div>
       ) : null}
 
+      {/* Spacer follows pinned state only — hover-peek overlays content instead of shifting the page. */}
       <div
         className={cn(
-          "nx-no-print hidden shrink-0 transition-[width] duration-[var(--t-hover)] lg:block",
+          "nx-no-print hidden shrink-0 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:block",
           collapsed ? "w-[64px]" : "w-[248px]",
         )}
       />
