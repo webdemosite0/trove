@@ -1,9 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
-import { TbWorld } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
 import { TARGET_LIST, type TargetId } from "@/lib/targets";
@@ -28,46 +26,30 @@ export function BuilderView({
   restored?: { id: string; title: string; idea: string } | null;
   recentSites?: { id: string; title: string; href: string }[];
 }) {
+  // recentSites used by shell YourWork — keep prop for API compat
+  void recentSites;
   const [targetId, setTargetId] = useState<TargetId>("react");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [localSites, setLocalSites] = useState<
-    { id: string; title: string; href: string; when: string }[]
-  >([]);
   const { setCollapsed } = useNav();
 
   useEffect(() => {
     setCollapsed(false);
+    // Idle home: do NOT set data-builder-phase so shell YourWork can show once
+    document.body.removeAttribute("data-builder-phase");
   }, [setCollapsed]);
 
   useEffect(() => {
+    if (!restored?.id) return;
     try {
-      const out: { id: string; title: string; href: string; when: string; at: number }[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (!k?.startsWith("trove-site-")) continue;
-        const id = k.slice("trove-site-".length);
-        const raw = localStorage.getItem(k);
-        if (!raw) continue;
-        const data = JSON.parse(raw) as { title?: string; savedAt?: number };
-        const at = typeof data.savedAt === "number" ? data.savedAt : Date.now();
-        const ago = Math.max(0, Math.floor((Date.now() - at) / 3600000));
-        out.push({
-          id,
-          title: data.title || "Untitled site",
-          href: `/websites?c=${id}`,
-          when: ago < 1 ? "just now" : `${ago} hour${ago === 1 ? "" : "s"} ago`,
-          at,
-        });
+      const raw = localStorage.getItem(`trove-site-${restored.id}`);
+      if (raw) {
+        document.body.setAttribute("data-builder-phase", "ready");
       }
-      out.sort((a, b) => b.at - a.at);
-      setLocalSites(
-        out.slice(0, 12).map(({ id, title, href, when }) => ({ id, title, href, when })),
-      );
     } catch {
-      /* private mode */
+      /* */
     }
-  }, []);
+  }, [restored]);
 
   const ask = useCallback(
     async (text: string) => {
@@ -75,6 +57,7 @@ export function BuilderView({
       if (!q || busy) return;
       setBusy(true);
       setError(null);
+      document.body.setAttribute("data-builder-phase", "building");
       try {
         const res = await fetch("/api/builder/questions", {
           method: "POST",
@@ -130,18 +113,15 @@ export function BuilderView({
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not start build");
         setBusy(false);
+        document.body.removeAttribute("data-builder-phase");
       }
     },
     [busy, targetId],
   );
 
-  const sites = localSites.length
-    ? localSites
-    : recentSites.map((s) => ({ ...s, when: "recently" }));
-
   return (
-    <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col">
-      <div className="mx-auto flex w-full max-w-[820px] flex-1 flex-col justify-center px-5 pb-8 pt-12 sm:pt-16">
+    <div className="relative flex min-h-[calc(100dvh-8rem)] flex-col">
+      <div className="mx-auto flex w-full max-w-[820px] flex-1 flex-col justify-center px-5 pb-6 pt-10 sm:pt-14">
         <div className="mb-8 text-center">
           <h1 className="text-[clamp(2rem,1.4rem+2.2vw,2.85rem)] font-semibold tracking-[-0.045em] text-ink">
             Let&apos;s build something
@@ -155,13 +135,13 @@ export function BuilderView({
           {mobile ? (
             <MobileComposer
               onSend={ask}
-              placeholder="Ask Trove to build a website that…"
+              placeholder="Ask Trove to build a website that…  (@ for connectors)"
               disabled={busy}
             />
           ) : (
             <Composer
               onSend={ask}
-              placeholder="Ask Trove to build a website that…"
+              placeholder="Ask Trove to build a website that…  (@ for connectors)"
               autoFocus
               disabled={busy}
             />
@@ -206,50 +186,6 @@ export function BuilderView({
           </p>
         ) : null}
         {error ? <FailureNote error={error} className="mt-6" /> : null}
-      </div>
-
-      <div className="mx-auto w-full max-w-[1100px] px-4 pb-8 sm:px-6">
-        <div className="rounded-[24px] border border-line/70 bg-raised/90 p-5 shadow-[0_16px_48px_rgba(0,0,0,0.06)] backdrop-blur-md sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">Your work</p>
-              <h2 className="text-[16px] font-semibold tracking-tight text-ink">Your sites</h2>
-            </div>
-            <Link
-              href="/websites"
-              className="rounded-full border border-line bg-rail px-3 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
-            >
-              All work →
-            </Link>
-          </div>
-
-          {sites.length > 0 ? (
-            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sites.map((s) => (
-                <a
-                  key={s.id}
-                  href={s.href}
-                  className="group flex items-center gap-3 rounded-[16px] border border-line/80 bg-canvas/80 px-3.5 py-3 transition hover:-translate-y-0.5 hover:border-accent/30 hover:bg-hover/40"
-                >
-                  <span className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-sky-500/15 text-sky-500">
-                    <TbWorld size={18} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13.5px] font-medium text-ink">{s.title}</span>
-                    <span className="block text-[11.5px] text-ink-4">Site · {s.when}</span>
-                  </span>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-[16px] border border-dashed border-line/80 bg-canvas/50 px-5 py-10 text-center">
-              <p className="text-[14px] font-medium text-ink">No sites yet</p>
-              <p className="mx-auto mt-1.5 max-w-[36ch] text-[13px] text-ink-4">
-                Describe what you want above — your first site will show up here.
-              </p>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
