@@ -19,9 +19,11 @@ import { strip, type Attachment } from "@/lib/attachments";
 import { TARGET_LIST, targetFor, type TargetId } from "@/lib/targets";
 import { bundle, mergeFiles, projectSlug, type BuildPlan, type Depth, type LogLine, type PlanStep, type ProjectFile, type Question, type Task } from "@/lib/builder";
 import { cn } from "@/lib/utils";
+import { useNav } from "@/components/shell/nav-state";
 import { ProcessRow, WorkingTimer } from "@/components/builder/process-row";
 
 type Phase = "idle" | "asking" | "planning" | "review" | "building" | "ready";
+type ChatMsg = { id: string; role: "user" | "assistant"; text: string };
 type Pane = "preview" | "files" | "code" | "console";
 
 const IDEAS = [
@@ -88,6 +90,7 @@ export function BuilderView({
   const [currentStep, setCurrentStep] = useState(-1);
   const [error, setError] = useState<string | null>(null);
   const [finalMsg, setFinalMsg] = useState<string | null>(null);
+  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [workStarted, setWorkStarted] = useState<number | null>(null);
   const [workSecs, setWorkSecs] = useState(0);
@@ -111,8 +114,13 @@ export function BuilderView({
   }, []);
   const feedEnd = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
+  const lastSummary = useRef<string>("");
   const siteId = useRef<string | null>(restored?.id ?? null);
   const busy = phase === "asking" || phase === "planning" || phase === "building";
+  const { setCollapsed } = useNav();
+  useEffect(() => {
+    if (phase !== "idle") setCollapsed(true);
+  }, [phase, setCollapsed]);
 
   useEffect(() => {
     if (!restored?.id) return;
@@ -135,43 +143,31 @@ export function BuilderView({
           setPlan({
             title: data.title || restored.title,
             summary: "Restored from Your work",
-            requirements: {
-              overview: data.idea || restored.idea || "",
-              features: [],
-              pages: [],
-              rules: [],
-            },
+            requirements: { overview: data.idea || restored.idea || "", features: [], pages: [], rules: [] },
             style: { name: "Restored", mood: "as saved", palette: ["#111"], type: "system" },
             steps: [],
           });
           setPhase("ready");
           setHalf("build");
           setPane("preview");
-          setFinalMsg(
-            `Restored "${data.title || restored.title}" with ${data.files.length} files. Preview is on the right — ask for any change below.`,
-          );
-          setFollowUps(["Make it darker", "Add a contact form", "Improve mobile layout"]);
+          setFinalMsg(`Restored "${data.title || restored.title}" with ${data.files.length} files. Ask for any change below.`);
+          setFollowUps(["Make it darker", "Add a photo hero", "Improve mobile layout"]);
           return;
         }
       }
-    } catch {
-      /* ignore */
-    }
+    } catch { /* */ }
     setIdea(restored.idea || restored.title);
   }, [restored]);
 
   useEffect(() => {
-    if (phase === "idle") {
-      document.body.removeAttribute("data-builder-phase");
-    } else {
-      document.body.setAttribute("data-builder-phase", phase);
-    }
+    if (phase === "idle") document.body.removeAttribute("data-builder-phase");
+    else document.body.setAttribute("data-builder-phase", phase);
     return () => document.body.removeAttribute("data-builder-phase");
   }, [phase]);
 
   useEffect(() => {
     if (phase !== "building") feedEnd.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [phase, currentStep, finalMsg, logs, tasks]);
+  }, [phase, currentStep, finalMsg, logs, tasks, msgs]);
   useEffect(() => {
     if (phase === "building" || phase === "asking" || phase === "planning") {
       if (!workStarted) setWorkStarted(Date.now());
@@ -227,7 +223,7 @@ export function BuilderView({
 
   const ask = useCallback(async (text: string, attach?: Attachment[]) => {
     if ((!text.trim() && !attach?.length) || busy || paused) return;
-    setIdea(text); setError(null); setPhase("asking"); setLogs([]); setTasks([]); setFiles([]); setPlan(null); setSandboxUrl(null); setFinalMsg(null); setFollowUps([]);
+    setIdea(text); setError(null); setPhase("asking"); setLogs([]); setTasks([]); setFiles([]); setPlan(null); setSandboxUrl(null); setFinalMsg(null); setFollowUps([]); setMsgs([{ id: `u-${Date.now()}`, role: "user", text }]);
     log(`new project — "${text.slice(0, 60)}"`);
     try {
       const res = await fetch("/api/builder/questions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idea: text }) });
@@ -275,6 +271,8 @@ export function BuilderView({
         else if (e.t === "file") {
           acc = mergeFiles(acc, [{ path: String(e.path), content: String(e.content) }]);
           scheduleFiles(acc);
+        } else if (e.t === "done") {
+          lastSummary.current = String(e.summary ?? "");
         } else if (e.t === "error") throw new Error(String(e.message));
       }
     }
@@ -336,20 +334,18 @@ export function BuilderView({
     if (!paths.some((p) => /readme/i.test(p))) missing.push("a README");
     if (!paths.some((p) => /\.env/i.test(p))) missing.push("env example files");
     if (paths.length < 8) missing.push("extra pages or components");
-    setFinalMsg(
-      `Built ${builtTitle} with ${current.length} files (${targetId}). ` +
-        `Preview is on the right` +
-        (current.some((f) => f.path.includes("package.json"))
-          ? " — sandbox is installing so the live URL can load."
-          : ".") +
+    const reply =
+      lastSummary.current ||
+      (`Built ${builtTitle} with ${current.length} files (${targetId}). Preview is on the right.` +
         (missing.length
           ? `\n\nI didn't include ${missing.slice(0, 2).join(" or ")} yet. Want me to add those next?`
-          : "\n\nWant any changes — darker theme, more pages, or a form?"),
-    );
+          : "\n\nWant a darker theme, photo hero, more pages, or a form?"));
+    setFinalMsg(reply);
+    setMsgs((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", text: reply }]);
     setFollowUps(
       missing.length
-        ? [`Add ${missing[0]}`, "Improve the mobile layout", "Make the design more premium", "Add a contact form"]
-        : ["Make it darker and more premium", "Add a contact form", "Improve mobile layout", "Add more pages"],
+        ? [`Add ${missing[0]}`, "Add a photo hero", "Improve mobile", "Add more pages"]
+        : ["Make it darker and more premium", "Add a photo hero", "Improve mobile", "Add more pages"],
     );
     void bootSandbox(current);
     try {
@@ -373,10 +369,7 @@ export function BuilderView({
         if (data?.id) {
           siteId.current = data.id;
           try {
-            localStorage.setItem(
-              `trove-site-${data.id}`,
-              JSON.stringify({ title, idea, files: current, target: targetId, answers }),
-            );
+            localStorage.setItem(`trove-site-${data.id}`, JSON.stringify({ title, idea, files: current, target: targetId, answers }));
             const url = new URL(window.location.href);
             url.searchParams.set("c", data.id);
             window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
@@ -393,17 +386,23 @@ export function BuilderView({
       setError("No project files yet. Generate a site first.");
       return;
     }
+    setMsgs((m) => [...m, { id: `u-${Date.now()}`, role: "user", text: q }]);
     setError(null);
     setFinalMsg(null);
     setPhase("building");
+    lastSummary.current = "";
     log(`edit — ${q.slice(0, 60)}`);
     try {
       const current = await runStep(
         {
           id: `edit-${Date.now()}`,
-          title: q.slice(0, 40),
-          detail: `Apply this change and return ALL updated project files. Stack stays ${targetId}. Change: ${q}`,
-          skills: [],
+          title: q.slice(0, 48),
+          detail:
+            `User chat request (respond in SUMMARY as a helpful chatbot): ${q}. ` +
+            `Apply the change to the existing ${targetId} project. Return every file you touch in full. ` +
+            `Keep localStorage / Supabase patterns if already present. ` +
+            `If they ask for images/photos, add SVG or Unsplash heroes where appropriate.`,
+          skills: ["ui-design"],
           files: files.map((f) => f.path),
         },
         plan ? styleBrief(plan) : "Keep the existing visual language and stack.",
@@ -413,8 +412,12 @@ export function BuilderView({
       );
       setFiles(current);
       setPhase("ready");
-      setFinalMsg(`Updated the project (${current.length} files). Preview should refresh — anything else?`);
-      setFollowUps(["Make it darker", "Add animations", "Improve mobile", "Deploy to GitHub"]);
+      const reply =
+        lastSummary.current ||
+        `Updated the project (${current.length} files). Preview is on the right — tell me what to change next.`;
+      setFinalMsg(reply);
+      setMsgs((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", text: reply }]);
+      setFollowUps(["Make it darker", "Add a photo hero", "Improve mobile", "Add more pages"]);
       if (siteId.current) {
         try {
           localStorage.setItem(
@@ -429,6 +432,15 @@ export function BuilderView({
       setError(m);
       log(m, "warn");
       setPhase("ready");
+      setMsgs((m2) => [
+        ...m2,
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          text: `I couldn't apply that change: ${m}. Try again or rephrase.`,
+        },
+      ]);
+      setFinalMsg(null);
     }
   }, [busy, paused, plan, files, runStep, styleBrief, log, idea, targetId, answers]);
 
@@ -459,7 +471,7 @@ export function BuilderView({
     abort.current?.abort();
     setPhase("idle"); setPlan(null); setFiles([]); setTasks([]); setLogs([]);
     setStepStates({}); setCurrentStep(-1); setError(null); setIdea("");
-    setQuestions([]); setQuestionsOpen(false); setPaused(false); setFinalMsg(null); setFollowUps([]);
+    setQuestions([]); setQuestionsOpen(false); setPaused(false); setFinalMsg(null); setFollowUps([]); setMsgs([]);
     siteId.current = null; setAnswers({}); setSandboxUrl(null);
     try {
       const url = new URL(window.location.href);
@@ -478,7 +490,7 @@ export function BuilderView({
           <div className="mb-8 text-center">
             <h1 className="text-[clamp(1.9rem,1.2rem+2vw,2.65rem)] font-semibold tracking-[-0.04em] text-ink">What should we build?</h1>
             <p className="mx-auto mt-2 max-w-[48ch] text-[15px] text-ink-3">
-              Default is <strong>React</strong>. Preview runs in a cloud sandbox after the build.
+              Default is <strong>React</strong>. Full multi-page products with Preview in a cloud sandbox.
             </p>
           </div>
           <div className="rounded-[28px] border border-line bg-raised/70 p-2">
@@ -551,16 +563,20 @@ export function BuilderView({
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-        {/* Pure chat column — only chat, like Grok */}
         <div className={cn("flex min-h-0 w-full flex-col overflow-hidden border-b border-line/50 bg-canvas lg:w-[min(440px,42%)] lg:border-b-0 lg:border-r lg:border-line/40", mobile && half === "build" && "hidden")}>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
             <div className="mx-auto max-w-[40rem] space-y-3">
-              {idea && phase !== "idle" ? (
+              {idea && phase !== "idle" && msgs.length === 0 ? (
                 <p className="ml-auto max-w-[92%] rounded-[20px] bg-hover/50 px-4 py-2.5 text-[14px] leading-relaxed text-ink">{idea}</p>
               ) : null}
-              {phase === "asking" || phase === "planning" ? (
-                <Thinking key={phase} phase={phase} logs={logs} />
-              ) : null}
+              {msgs.map((m) =>
+                m.role === "user" ? (
+                  <p key={m.id} className="ml-auto max-w-[92%] rounded-[20px] bg-hover/50 px-4 py-2.5 text-[14px] leading-relaxed text-ink">{m.text}</p>
+                ) : (
+                  <p key={m.id} className="whitespace-pre-wrap text-[15px] leading-[1.65] text-ink">{m.text}</p>
+                ),
+              )}
+              {phase === "asking" || phase === "planning" ? <Thinking key={phase} phase={phase} logs={logs} /> : null}
               {error ? <FailureNote error={error} /> : null}
               {questions.length && questionsOpen ? (
                 <QuestionBox questions={questions} onSubmit={(a) => { setAnswers(a); void plan_(idea, a); }} onSkip={() => { setAnswers({}); void plan_(idea, {}); }} busy={busy} />
@@ -597,40 +613,37 @@ export function BuilderView({
                         />
                       );
                     })}
-                    {tasks
-                      .filter((x) => x.state === "run" || x.state === "ok")
-                      .slice(-10)
-                      .map((x) => (
-                        <ProcessRow
-                          key={x.id}
-                          kind={/file|write|path/i.test(String(x.kind) + x.label) ? "file" : "cmd"}
-                          label={x.label}
-                          active={x.state === "run"}
-                        />
-                      ))}
+                    {tasks.filter((x) => x.state === "run" || x.state === "ok").slice(-10).map((x) => (
+                      <ProcessRow
+                        key={x.id}
+                        kind={/file|write|path/i.test(String(x.kind) + x.label) ? "file" : "cmd"}
+                        label={x.label}
+                        active={x.state === "run"}
+                      />
+                    ))}
                     {logs.slice(-6).map((l) => (
                       <ProcessRow key={l.id} kind="think" label={l.text} />
                     ))}
                   </div>
                   {phase === "building" ? <WorkingTimer secs={workSecs} /> : null}
-                  {phase === "ready" && finalMsg ? (
+                  {phase === "ready" && finalMsg && msgs.every((m) => m.text !== finalMsg) ? (
                     <div className="mt-4 space-y-3">
                       <p className="whitespace-pre-wrap text-[15px] leading-[1.65] text-ink">{finalMsg}</p>
-                      {followUps.length ? (
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {followUps.map((s) => (
-                            <button
-                              key={s}
-                              type="button"
-                              disabled={busy}
-                              onClick={() => void edit(s)}
-                              className="rounded-full border border-line/70 bg-transparent px-3.5 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:bg-hover/40 hover:text-ink disabled:opacity-40"
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
+                    </div>
+                  ) : null}
+                  {phase === "ready" && followUps.length ? (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {followUps.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void edit(s)}
+                          className="rounded-full border border-line/70 bg-transparent px-3.5 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:bg-hover/40 hover:text-ink disabled:opacity-40"
+                        >
+                          {s}
+                        </button>
+                      ))}
                     </div>
                   ) : null}
                 </div>
@@ -672,15 +685,7 @@ export function BuilderView({
                     <iframe title="Preview" src={sandboxUrl ?? undefined} srcDoc={sandboxUrl ? undefined : preview} className="min-h-0 w-full flex-1 bg-white" sandbox="allow-scripts allow-same-origin allow-forms" />
                   </div>
                 ) : files.length ? (
-                  <RunPanel
-                    target={target}
-                    fileCount={files.length}
-                    onDownload={() => void download()}
-                    previewUrl={sandboxUrl}
-                    onOpenPreview={openTab}
-                    onBootSandbox={() => void bootSandbox(files)}
-                    booting={sandboxBooting}
-                  />
+                  <RunPanel target={target} fileCount={files.length} onDownload={() => void download()} previewUrl={sandboxUrl} onOpenPreview={openTab} onBootSandbox={() => void bootSandbox(files)} booting={sandboxBooting} />
                 ) : (
                   <div className="m-auto max-w-[40ch] p-6 text-center">
                     <p className="text-[14px] font-medium text-ink">Preview</p>
