@@ -1,1 +1,1 @@
-LOAD_FROM_FILE
+see file /tmp/ws_final.tsx
