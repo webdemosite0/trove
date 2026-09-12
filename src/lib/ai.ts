@@ -244,3 +244,11 @@ export async function streamText(
     throw chainFailure(primary, attempts);
   }
 }
+
+/** Labels of AI backends that are configured (for /api/health). */
+export function providerChain(): string[] {
+  const labels: string[] = [];
+  if (process.env.GEMINI_API_KEY?.trim()) labels.push("Gemini");
+  for (const p of orderedCompat()) labels.push(p.label);
+  return labels;
+}
