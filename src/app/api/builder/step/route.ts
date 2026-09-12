@@ -47,6 +47,13 @@ HARD RULES
   use https://images.unsplash.com/... or data:image URIs. No random broken links.
 - No analytics trackers. System fonts only (no Google Fonts CDN).
 
+SYNTAX — critical for Vite/React builds
+- CSS variables in JS strings must use matched quotes: 'var(--accent)' not
+  'var(--accent'). Same for template literals: \`1px solid ${x ? 'var(--a)' : 'var(--b)'}\`.
+- Never put the closing quote before the closing paren of var(--token).
+- Prefer style objects with string concatenation over nested template+ternary
+  when borders depend on state, e.g. border: '1px solid ' + (on ? 'var(--accent)' : 'var(--line)').
+
 FUNCTIONALITY BAR — every idea, not only games
 A pretty shell with dead controls is a FAILED step. Match the product type:
 - Any UI control you render must work in the browser preview.
@@ -76,6 +83,28 @@ VISUAL BAR
 - Motion for feedback: hover, focus, state change, 150-280ms.
 - Type hierarchy by size and weight. Responsive to 360px.`;
 
+/** Fix common LLM quote typos that break Babel (e.g. 'var(--line') → 'var(--line)'). */
+function sanitizeGeneratedSource(content: string, path: string): string {
+  if (!/\.(jsx?|tsx?|mjs|cjs)$/i.test(path) && !path.endsWith(".html")) {
+    return content;
+  }
+  // 'var(--token') or "var(--token")  → correct closing quote after )
+  let out = content.replace(
+    /(['"])var\(--([a-zA-Z0-9_-]+)\1\)/g,
+    (_, q, name) => `${q}var(--${name})${q}`,
+  );
+  // also: 'var(--token') where quote is before )
+  out = out.replace(
+    /(['"])var\(--([a-zA-Z0-9_-]+)'\)/g,
+    (_, q, name) => `${q}var(--${name})${q}`,
+  );
+  out = out.replace(
+    /(['"])var\(--([a-zA-Z0-9_-]+)"\)/g,
+    (_, q, name) => `${q}var(--${name})${q}`,
+  );
+  return out;
+}
+
 function parseFiles(raw: string): { files: ProjectFile[]; summary: string } {
   const files: ProjectFile[] = [];
   const re = /<<<FILE:\s*(.+?)\s*>>>\s*\n([\s\S]*?)<<<END>>>/g;
@@ -87,12 +116,14 @@ function parseFiles(raw: string): { files: ProjectFile[]; summary: string } {
     const fenced = content.match(/^\s*```[a-z]*\n([\s\S]*?)```\s*$/i);
     if (fenced) content = fenced[1];
     const safe = safeProjectPath(path);
-    if (safe) files.push({ path: safe, content: content.replace(/\s+$/, "") + "\n" });
+    if (safe) {
+      const body = sanitizeGeneratedSource(content.replace(/\s+$/, "") + "\n", safe);
+      files.push({ path: safe, content: body });
+    }
   }
 
   const summaryMatch = raw.match(/SUMMARY:\s*([\s\S]+?)(?=<<<FILE:|$)/i);
   let summary = summaryMatch ? summaryMatch[1].trim() : "Step complete.";
-  // Prefer last SUMMARY if multiple
   const all = [...raw.matchAll(/SUMMARY:\s*(.+)/gi)];
   if (all.length) summary = all[all.length - 1][1].trim();
   return { files, summary };
@@ -121,6 +152,12 @@ function checkFile(f: ProjectFile): string[] {
       JSON.parse(c);
     } catch {
       notes.push("invalid JSON");
+    }
+  }
+
+  if (/\.(jsx?|tsx?)$/i.test(f.path)) {
+    if (/var\(--[a-zA-Z0-9_-]+['"]\)/.test(c)) {
+      notes.push("possible mismatched quote in var(--token) string");
     }
   }
 
