@@ -52,7 +52,7 @@ export function TroveOrb({
     <span
       className={cn(
         "relative inline-grid shrink-0 place-items-center",
-        pulse && state !== "error" && "trove-orb-breathe",
+        pulse && "trove-orb-breathe",
         className,
       )}
       style={{ width: size, height: size }}
