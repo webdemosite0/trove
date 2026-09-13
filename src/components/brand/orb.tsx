@@ -34,7 +34,6 @@ export function TroveOrb({
   const orbit =
     state === "working" ? "4.5s" : state === "thinking" ? "10s" : undefined;
   const pulse = state === "idle" || state === "thinking";
-  const tinted = state === "error" || state === "done";
   const accent =
     state === "error" ? "#ef4444" : state === "done" ? "#22c55e" : undefined;
 
