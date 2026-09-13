@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import {
+  FiGlobe,
+  FiLayout,
+  FiCreditCard,
+  FiCalendar,
+  FiLayers,
+  FiGrid,
+} from "@/components/ui/icons";
 
 const PROMPTS = [
   "Build a portfolio site for a freelance motion designer…",
@@ -12,18 +20,18 @@ const PROMPTS = [
   "Build a case-study site for a design studio…",
 ];
 
-const CHIPS = [
-  "Portfolio",
-  "Landing page",
-  "Online shop",
-  "Booking site",
-  "SaaS marketing",
-  "Agency site",
+const CHIPS: { label: string; icon: typeof FiGlobe }[] = [
+  { label: "Portfolio", icon: FiLayout },
+  { label: "Landing page", icon: FiGlobe },
+  { label: "Online shop", icon: FiCreditCard },
+  { label: "Booking site", icon: FiCalendar },
+  { label: "SaaS marketing", icon: FiLayers },
+  { label: "Agency site", icon: FiGrid },
 ];
 
 /**
  * MagicSlides-inspired hero: centered headline, typing placeholder,
- * large prompt box, suggestion chips.
+ * large prompt box, suggestion chips with icons.
  */
 export function Hero({ freeCredits }: { freeCredits: number }) {
   const router = useRouter();
@@ -157,16 +165,20 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           </div>
 
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {CHIPS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => go(`Build a ${c.toLowerCase()} for my business`)}
-                className="rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-accent/40 hover:bg-hover hover:text-ink"
-              >
-                {c}
-              </button>
-            ))}
+            {CHIPS.map((chip) => {
+              const Icon = chip.icon;
+              return (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={() => go(`Build a ${chip.label.toLowerCase()} for my business`)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-accent/40 hover:bg-hover hover:text-ink"
+                >
+                  <Icon size={14} className="text-accent/80" aria-hidden />
+                  {chip.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
