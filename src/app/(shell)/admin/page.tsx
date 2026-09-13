@@ -30,5 +30,5 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  return <AdminView userEmail={user.email} />;
+  return <AdminView email={user.email} />;
 }
