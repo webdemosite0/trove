@@ -1,37 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 /**
- * Optional E2B cloud sandbox for live React/Vite preview.
- * Uses Function("return import(p)") so webpack/turbopack never see a static
- * module specifier — the app builds without e2b packages installed.
+ * Spin up an E2B sandbox, write project files, start the app, return the live URL.
+ * Requires E2B_API_KEY in the environment.
+ *
+ * Body: { files: { path, content }[], target?: "react" | "static" | "node" }
  */
-async function loadSandboxCtor(): Promise<any | null> {
-  // Opaque dynamic import: no string literal in import() for the bundler to resolve.
-  const dynImport = new Function("p", "return import(p)") as (p: string) => Promise<any>;
-  for (const pkg of ["@e2b/code-interpreter", "e2b"]) {
-    try {
-      const mod = await dynImport(pkg).catch(() => null);
-      if (!mod) continue;
-      const Ctor = mod.Sandbox ?? mod.default?.Sandbox ?? mod.default;
-      if (Ctor) return Ctor;
-    } catch {
-      /* package not installed */
-    }
-  }
-  return null;
-}
-
 export async function POST(req: NextRequest) {
-  const key = process.env.E2B_API_KEY?.trim();
+  const key = process.env.E2B_API_KEY;
   if (!key) {
-    return NextResponse.json({
-      ok: false,
-      needKey: true,
-      message: "Set E2B_API_KEY for live React sandbox preview",
-    });
+    return NextResponse.json(
+      {
+        error:
+          "Live Preview needs E2B_API_KEY. Add it in Vercel → Project → Settings → Environment Variables.",
+        needsKey: true,
+      },
+      { status: 503 },
+    );
   }
 
   try {
@@ -40,84 +28,124 @@ export async function POST(req: NextRequest) {
       ? (body.files as { path: string; content: string }[])
       : [];
     if (!files.length) {
-      return NextResponse.json({ error: "No files" }, { status: 400 });
+      return NextResponse.json({ error: "No files to run" }, { status: 400 });
     }
 
-    const Sandbox = await loadSandboxCtor();
-    if (!Sandbox) {
-      return NextResponse.json({
-        ok: false,
-        needKey: true,
-        message: "Install e2b or @e2b/code-interpreter and set E2B_API_KEY",
-      });
+    const target = String(body.target || "react");
+
+    let Sandbox: any;
+    try {
+      const mod = await import("@e2b/code-interpreter").catch(() => null);
+      if (mod) {
+        Sandbox = (mod as any).Sandbox ?? (mod as any).default?.Sandbox ?? (mod as any).default;
+      }
+      if (!Sandbox) {
+        const alt = await import("e2b").catch(() => null);
+        Sandbox = (alt as any)?.Sandbox ?? (alt as any)?.default?.Sandbox ?? (alt as any)?.default;
+      }
+    } catch {
+      Sandbox = null;
     }
 
-    const sandbox = await Sandbox.create({ apiKey: key, timeoutMs: 120_000 });
-    const root = "/home/user/project";
+    if (!Sandbox || typeof Sandbox.create !== "function") {
+      return NextResponse.json(
+        {
+          error:
+            "E2B SDK not installed. Add @e2b/code-interpreter to the project and redeploy.",
+          needsPackage: true,
+        },
+        { status: 503 },
+      );
+    }
+
+    const sandbox = await Sandbox.create({
+      apiKey: key,
+      timeoutMs: 600_000,
+    });
 
     for (const f of files) {
       const path = String(f.path || "").replace(/^\/+/, "");
       if (!path || path.includes("..")) continue;
-      const full = `${root}/${path}`;
-      const dir = full.split("/").slice(0, -1).join("/");
-      if (dir) {
-        await sandbox.commands.run(`mkdir -p ${JSON.stringify(dir)}`, { timeoutMs: 10_000 }).catch(() => null);
+      const content = String(f.content ?? "");
+      if (typeof sandbox.files?.write === "function") {
+        await sandbox.files.write(path, content);
+      } else if (typeof sandbox.filesystem?.write === "function") {
+        await sandbox.filesystem.write(path, content);
       }
-      await sandbox.files.write(full, f.content ?? "");
     }
 
-    const hasPkg = files.some((f) => f.path === "package.json" || f.path.endsWith("/package.json"));
-    const hasVite = files.some((f) => /vite\.config\.(js|ts|mjs)/.test(f.path));
-    const hasNext = files.some(
-      (f) => f.path === "next.config.js" || f.path === "next.config.mjs" || f.path === "next.config.ts",
-    );
+    let port = 5173;
+    let startCmd = "npm install && npm run dev -- --host 0.0.0.0 --port 5173";
 
-    if (hasPkg) {
-      await sandbox.commands.run(`cd ${root} && npm install --prefer-offline --no-audit --no-fund`, {
-        timeoutMs: 90_000,
-      });
+    if (target === "static") {
+      port = 8080;
+      startCmd = "npx --yes serve -l 8080 .";
+    } else if (target === "node") {
+      port = 3000;
+      startCmd = "npm install && npm start";
     }
 
-    let previewUrl: string | null = null;
-
-    if (hasNext) {
-      sandbox.commands
-        .run(`cd ${root} && npx next dev -H 0.0.0.0 -p 3000`, { background: true, timeoutMs: 0 })
-        .catch(() => null);
-      await new Promise((r) => setTimeout(r, 8000));
-      const host = await sandbox.getHost(3000);
-      previewUrl = `https://${host}`;
-    } else if (hasVite || hasPkg) {
-      const viteCfg = files.find((f) => /vite\.config\.(js|ts|mjs)/.test(f.path));
-      if (!viteCfg) {
-        await sandbox.files.write(
-          `${root}/vite.config.js`,
-          `import { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\nexport default defineConfig({ plugins: [react()], server: { host: true, port: 5173, allowedHosts: true } });\n`,
-        );
+    if (target === "react" && !files.some((f) => f.path === "package.json")) {
+      const pkg = JSON.stringify(
+        {
+          name: "trove-preview",
+          private: true,
+          type: "module",
+          scripts: { dev: "vite --host 0.0.0.0 --port 5173", build: "vite build" },
+          dependencies: { react: "^18.3.1", "react-dom": "^18.3.1" },
+          devDependencies: { vite: "^5.4.0", "@vitejs/plugin-react": "^4.3.0" },
+        },
+        null,
+        2,
+      );
+      if (typeof sandbox.files?.write === "function") {
+        await sandbox.files.write("package.json", pkg);
       }
-      sandbox.commands
-        .run(`cd ${root} && npx vite --host 0.0.0.0 --port 5173`, { background: true, timeoutMs: 0 })
-        .catch(() => null);
-      await new Promise((r) => setTimeout(r, 8000));
-      const host = await sandbox.getHost(5173);
-      previewUrl = `https://${host}`;
-    } else {
-      sandbox.commands
-        .run(`cd ${root} && npx --yes serve -l 3000`, { background: true, timeoutMs: 0 })
-        .catch(() => null);
-      await new Promise((r) => setTimeout(r, 4000));
-      const host = await sandbox.getHost(3000);
-      previewUrl = `https://${host}`;
     }
+
+    const run =
+      typeof sandbox.commands?.run === "function"
+        ? (cmd: string, opts?: object) => sandbox.commands.run(cmd, opts)
+        : typeof sandbox.process?.start === "function"
+          ? (cmd: string) => sandbox.process.start({ cmd })
+          : null;
+
+    if (run) {
+      try {
+        await run(startCmd, { background: true, timeoutMs: 180_000 });
+      } catch {
+        void run(startCmd).catch(() => null);
+      }
+    }
+
+    let host: string | null = null;
+    if (typeof sandbox.getHost === "function") {
+      host = sandbox.getHost(port);
+    } else if (typeof sandbox.getHostname === "function") {
+      host = sandbox.getHostname(port);
+    }
+
+    if (!host) {
+      return NextResponse.json(
+        {
+          error: "Sandbox started but no public host was returned.",
+          sandboxId: sandbox.sandboxId ?? sandbox.id,
+        },
+        { status: 502 },
+      );
+    }
+
+    const url = host.startsWith("http") ? host : `https://${host}`;
 
     return NextResponse.json({
       ok: true,
-      previewUrl,
-      sandboxId: sandbox.sandboxId ?? sandbox.id,
+      url,
+      port,
+      sandboxId: sandbox.sandboxId ?? sandbox.id ?? null,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Sandbox failed";
     console.error("sandbox/create", message);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
