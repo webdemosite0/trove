@@ -54,12 +54,8 @@ export interface BuildPlan {
 
 /**
  * Inlines siblings into index.html so the preview renders from a single
- * srcdoc string. The iframe has no origin of its own, so a relative
- * <link href="styles.css"> would resolve against the app and 404.
- *
- * Also builds a lightweight React CDN preview when the project is JSX and
- * has no static index.html — enough to show the UI in the pane without a
- * real Vite server.
+ * srcdoc string. Relative CSS/JS links are inlined (iframe has no real origin).
+ * Vite/React shells fall through to a CDN React preview of App.jsx.
  */
 export function bundle(files: ProjectFile[], entry = "index.html"): string {
   const index =
@@ -68,6 +64,17 @@ export function bundle(files: ProjectFile[], entry = "index.html"): string {
     files.find((f) => f.path.endsWith(".html"));
 
   if (index) {
+    // Vite shells only mount #root and load /src/main.jsx — blank in srcdoc.
+    const looksLikeViteShell =
+      /type=["']module["']/i.test(index.content) &&
+      (/src\/main\.(jsx|tsx|js)/i.test(index.content) || /\/src\//i.test(index.content)) &&
+      !/<h1|<section|<main|class=["'][^"']*hero/i.test(index.content);
+
+    if (looksLikeViteShell) {
+      const react = reactCdnPreview(files);
+      if (react) return react;
+    }
+
     let html = index.content;
     const basename = (p: string) => p.split("/").pop() || p;
     const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -114,7 +121,6 @@ export function bundle(files: ProjectFile[], entry = "index.html"): string {
     return html;
   }
 
-  // No HTML entry — try a React/JSX live preview via CDN
   return reactCdnPreview(files);
 }
 
@@ -130,7 +136,6 @@ function reactCdnPreview(files: ProjectFile[]): string {
     .map((f) => f.content)
     .join("\n");
 
-  // Strip import/export so Babel standalone can run a single component file
   let body = app.content
     .replace(/^import\s+.+?;?\s*$/gm, "")
     .replace(/export\s+default\s+function\s+/g, "function ")
@@ -181,18 +186,6 @@ export function mergeFiles(prev: ProjectFile[], next: ProjectFile[]): ProjectFil
   return out;
 }
 
-/**
- * Normalises a generated file path.
- *
- * Nested paths are required now that a React project needs src/App.jsx, so
- * slashes have to survive — the previous rule stripped every character outside
- * [A-Za-z0-9._-] and quietly turned src/App.jsx into srcApp.jsx.
- *
- * Traversal is still refused rather than sanitised: a path containing ".." or
- * an absolute root is rejected outright, because a "cleaned" traversal is the
- * kind of thing that looks handled and is not. These paths are written into a
- * zip the user extracts, so an escaping entry would land outside the folder.
- */
 export function safeProjectPath(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const p = raw.trim().replace(/\\/g, "/").replace(/^\.\//, "");
@@ -204,7 +197,6 @@ export function safeProjectPath(raw: unknown): string | null {
   return p;
 }
 
-/** A stable, filename-safe stem for downloads. */
 export function projectSlug(title: string): string {
   return (
     title
