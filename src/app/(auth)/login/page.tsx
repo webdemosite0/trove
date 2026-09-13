@@ -1,6 +1,4 @@
 import { AuthCard } from "@/components/auth/auth-card";
-import { SplitAuth } from "@/components/auth/split-auth";
-import { googleConfigured } from "@/lib/google";
 
 /**
  * Not indexed. Every route behind the sign-in wall redirects here, so Google
@@ -13,7 +11,7 @@ import { googleConfigured } from "@/lib/google";
  * has in the index. It has to be able to read the page to learn to drop it.
  */
 export const metadata = {
-  title: "Log in",
+  title: "Sign in",
   robots: { index: false, follow: true },
 };
 
@@ -25,14 +23,12 @@ export default async function LoginPage({
   const { error, next, verified } = await searchParams;
 
   return (
-    <SplitAuth>
-      <AuthCard
-        mode="login"
-        googleEnabled={googleConfigured()}
-        oauthError={error}
-        next={next}
-        justVerified={verified === "1"}
-      />
-    </SplitAuth>
+    <AuthCard
+      mode="login"
+      googleEnabled={true}
+      oauthError={error}
+      next={next}
+      justVerified={verified === "1"}
+    />
   );
 }
