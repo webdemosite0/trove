@@ -2,7 +2,7 @@
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
-import { FiSearch, FiCheck, FiPlus, FiExternalLink } from "@/components/ui/icons";
+import { FiSearch, FiCheck, FiExternalLink } from "@/components/ui/icons";
 import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
 import { SERVICES } from "@/lib/services";
@@ -86,14 +86,16 @@ export function IntegrationsView({
       if (!popup) {
         throw new Error("Popup blocked — allow popups for this site, or open the link manually.");
       }
-      const started = Date.now();
+
       await new Promise<void>((resolve) => {
         const t = setInterval(() => {
-          if (popup?.closed || Date.now() - started > 5 * 60_000) {
+          if (popup.closed) {
             clearInterval(t);
+            clearTimeout(timeout);
             resolve();
           }
         }, 800);
+        const timeout = setTimeout(() => { clearInterval(t); resolve(); }, 5 * 60_000);
       });
       const sync = await fetch("/api/nango/sync", { method: "POST" });
       const syncData = await sync.json().catch(() => null);

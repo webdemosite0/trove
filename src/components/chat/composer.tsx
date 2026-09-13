@@ -63,6 +63,8 @@ export function Composer({
   const [atStart, setAtStart] = useState(-1);
   const ref = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const readingFiles = useRef(false);
+  const [attaching, setAttaching] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,7 +83,11 @@ export function Composer({
     setValue((v) => (v ? `${v} ${text}` : text)),
   );
 
-  const ready = (value.trim().length > 0 || files.length > 0) && !disabled;
+  const ready = (value.trim().length > 0 || files.length > 0) && !disabled && !attaching && !!onSend;
+
+  useEffect(() => {
+    if (ref.current) grow(ref.current);
+  }, [value]);
 
   function grow(el: HTMLTextAreaElement) {
     el.style.height = "auto";
@@ -121,6 +127,7 @@ export function Composer({
   }
 
   async function add(list: FileList | File[]) {
+    if (disabled || readingFiles.current) return;
     setError(null);
     const incoming = Array.from(list);
 
@@ -130,22 +137,31 @@ export function Composer({
     }
 
     const next: Attachment[] = [];
-    for (const f of incoming) {
-      try {
-        next.push(await readAttachment(f));
-      } catch (e) {
-        setError(e instanceof Error ? e.message : `Could not read ${f.name}.`);
+    readingFiles.current = true;
+    setAttaching(true);
+    try {
+      for (const f of incoming) {
+        try {
+          next.push(await readAttachment(f));
+        } catch (e) {
+          next.forEach((a) => a.preview && URL.revokeObjectURL(a.preview));
+          setError(e instanceof Error ? e.message : `Could not read ${f.name}.`);
+          return;
+        }
+      }
+
+      const total = [...files, ...next].reduce((s, a) => s + a.size, 0);
+      if (total > MAX_TOTAL_BYTES) {
+        next.forEach((a) => a.preview && URL.revokeObjectURL(a.preview));
+        setError(`That is over the ${humanSize(MAX_TOTAL_BYTES)} total limit.`);
         return;
       }
-    }
 
-    const total = [...files, ...next].reduce((s, a) => s + a.size, 0);
-    if (total > MAX_TOTAL_BYTES) {
-      setError(`That is over the ${humanSize(MAX_TOTAL_BYTES)} total limit.`);
-      return;
+      setFiles((f) => [...f, ...next]);
+    } finally {
+      readingFiles.current = false;
+      setAttaching(false);
     }
-
-    setFiles((f) => [...f, ...next]);
   }
 
   function remove(i: number) {
@@ -157,7 +173,7 @@ export function Composer({
   }
 
   function send() {
-    if (!ready) return;
+    if (!ready || readingFiles.current) return;
     onSend?.(value.trim(), files.length ? files : undefined);
     files.forEach((a) => a.preview && URL.revokeObjectURL(a.preview));
     setValue("");
@@ -239,6 +255,8 @@ export function Composer({
                 </span>
               </span>
               <button
+                type="button"
+                disabled={disabled || attaching}
                 onClick={() => remove(i)}
                 aria-label={`Remove ${a.name}`}
                 className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-[var(--r-chip)] text-ink-4 transition-colors hover:bg-hover hover:text-ink"
@@ -251,10 +269,12 @@ export function Composer({
       ) : null}
 
       {error || voice.error ? (
-        <p className="flex items-center gap-1.5 px-4 pt-3 text-[12.5px] text-critical">
+        <p role="alert" className="flex items-center gap-1.5 px-4 pt-3 text-[12.5px] text-critical">
           <Ico icon={FiAlertCircle} motion="alert" size={12} /> {error ?? voice.error}
         </p>
       ) : null}
+
+      {attaching ? <p role="status" className="px-4 pt-3 text-[12.5px] text-ink-3">Preparing attachments…</p> : null}
 
       {voice.listening ? (
         <p className="flex items-center gap-2 px-5 pt-3 text-[12.5px] text-critical">
@@ -289,6 +309,12 @@ export function Composer({
           setTimeout(() => setAtOpen(false), 180);
         }}
         onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+          if (atOpen && e.key === "Escape") {
+            e.preventDefault();
+            setAtOpen(false);
+            return;
+          }
           if (atOpen && filteredConnectors.length) {
             if (e.key === "ArrowDown") {
               e.preventDefault();
@@ -303,11 +329,6 @@ export function Composer({
             if (e.key === "Enter" || e.key === "Tab") {
               e.preventDefault();
               pickConnector(filteredConnectors[atIndex] ?? filteredConnectors[0]);
-              return;
-            }
-            if (e.key === "Escape") {
-              e.preventDefault();
-              setAtOpen(false);
               return;
             }
           }
@@ -353,7 +374,7 @@ export function Composer({
               }}
             />
             <AttachMenu
-              disabled={disabled}
+              disabled={disabled || attaching}
               compact={compact}
               onPick={(accept) => {
                 if (picker.current) {
@@ -380,6 +401,7 @@ export function Composer({
         <span className="flex-1" />
 
         <button
+          type="button"
           onClick={voice.toggle}
           disabled={disabled}
           aria-label={voice.listening ? "Stop dictating" : "Dictate a message"}
@@ -400,6 +422,7 @@ export function Composer({
         </button>
 
         <button
+          type="button"
           onClick={send}
           disabled={!ready}
           aria-label="Send message"

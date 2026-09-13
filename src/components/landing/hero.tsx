@@ -1,244 +1,69 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import type { IconType } from "@/components/ui/icons";
-import {
-  FiArrowRight,
-  TbLayoutGrid,
-  TbWorld,
-  TbFileText,
-  TbRobot,
-  FiZap,
-  FiShield,
-  FiDownload,
-} from "@/components/ui/icons";
-import { Ico, type Motion } from "@/components/ui/ico";
+import { ArrowUpRight, ArrowRight, Globe2, FileText, Bot, Code2, Check, Sparkles, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface Lane {
-  id: string;
-  label: string;
-  icon: IconType;
-  motion: Motion;
-  placeholder: string;
-  examples: string[];
-  href?: string;
-}
-
-const LANES: Lane[] = [
-  {
-    id: "site",
-    label: "Sites",
-    icon: TbWorld,
-    motion: "spin",
-    placeholder: "Build a working tic-tac-toe game with score and restart…",
-    examples: ["Landing page", "Portfolio", "Online shop", "Tic-tac-toe"],
-  },
-  {
-    id: "docs",
-    label: "Docs",
-    icon: TbFileText,
-    motion: "stack",
-    placeholder: "Write a project proposal for a six-week design retainer…",
-    examples: ["Proposal", "Report", "Postmortem", "Spreadsheet"],
-  },
-  {
-    id: "agents",
-    label: "Agents",
-    icon: TbRobot,
-    motion: "scan",
-    placeholder: "Create an agent that answers questions about our pricing…",
-    examples: ["Support agent", "Researcher", "Editor", "Analyst"],
-  },
-  {
-    id: "code",
-    label: "Code",
-    icon: TbLayoutGrid,
-    motion: "type",
-    placeholder: "Write a TypeScript function that parses a CSV safely…",
-    examples: ["API endpoint", "Migration", "Test suite", "CLI tool"],
-  },
-];
-
-const PILLARS = [
-  {
-    icon: FiZap,
-    title: "Fast when it should be",
-    body: "Short chats skip the heavy path. Deep work still gets full tools.",
-  },
-  {
-    icon: FiShield,
-    title: "Real files, not chat sludge",
-    body: "Sites, docs and code you can download and keep running offline.",
-  },
-  {
-    icon: FiDownload,
-    title: "Preview that works",
-    body: "Interactive builds — games, forms, tools — not empty shells.",
-  },
-];
+const LANES = [
+  { id: "site", label: "Websites", icon: Globe2, placeholder: "A thoughtful website for my next big idea…", example: "Build a responsive portfolio for an independent designer with a project gallery, about section, and contact form.", file: "portfolio.html", type: "Website", title: "A little more considered.", description: "An independent design studio shaping brands, spaces, and digital experiences.", tags: ["Brand strategy", "Digital design", "Art direction"] },
+  { id: "docs", label: "Documents", icon: FileText, placeholder: "A clear, compelling proposal for my next project…", example: "Write a six-week brand design proposal with scope, milestones, deliverables, and a budget table.", file: "project-proposal.docx", type: "Document", title: "Good work starts with a clear plan.", description: "A six-week engagement. One shared direction. Every detail, accounted for.", tags: ["Discover", "Design", "Deliver"] },
+  { id: "agents", label: "Agents", icon: Bot, placeholder: "An assistant that knows my business inside out…", example: "Help me create a support agent with instructions for answering pricing questions, identifying missing information, and escalating to a human.", file: "support-agent.md", type: "Agent brief", title: "Make room for your best work.", description: "A focused assistant with clear instructions, thoughtful answers, and a human handoff.", tags: ["Understand", "Find an answer", "Escalate"] },
+  { id: "code", label: "Code", icon: Code2, placeholder: "A useful tool, built with clean, readable code…", example: "Write a TypeScript CSV parser with quoted-field handling, helpful error messages, and unit tests.", file: "parse-csv.ts", type: "Code", title: "Small tools. Real possibilities.", description: "Readable TypeScript, thoughtful edge cases, and tests that explain how it works.", tags: ["TypeScript", "Documented", "Testable"] },
+] as const;
 
 export function Hero({ freeCredits }: { freeCredits: number }) {
   const router = useRouter();
-  const [lane, setLane] = useState(LANES[0]);
+  const [selected, setSelected] = useState(0);
   const [value, setValue] = useState("");
+  const [pending, setPending] = useState(false);
+  const input = useRef<HTMLTextAreaElement>(null);
+  const lane = LANES[selected];
 
-  function go(text: string) {
-    const idea = text.trim();
-    if (!idea) return;
-    if (lane.id === "site") {
-      router.push(`/websites?q=${encodeURIComponent(idea.slice(0, 2000))}`);
-      return;
-    }
-    router.push(`/chat?q=${encodeURIComponent(idea.slice(0, 2000))}`);
+  function go() {
+    if (!value.trim() || pending) return;
+    setPending(true);
+    router.push(`${lane.id === "site" ? "/websites" : "/chat"}?q=${encodeURIComponent(value.trim())}`);
   }
 
   return (
-    <section className="relative px-5 pb-16 pt-14 lg:pb-24 lg:pt-20">
-      <div className="spotlight" />
-
-      <div className="relative mx-auto max-w-[920px] text-center">
-        <div
-          className="nx-rise mb-6 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1.5 text-[12.5px] font-medium text-accent"
-          style={{ animationFillMode: "backwards" }}
-        >
-          <span className="size-1.5 animate-pulse rounded-full bg-accent" />
-          AI workspace · websites, docs, agents, code
-        </div>
-
-        <h1 className="nx-rise-big text-[clamp(2.55rem,1.35rem+3.6vw,4.4rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-ink">
-          Build it.{" "}
-          <span className="bg-gradient-to-r from-accent to-[#60a5fa] bg-clip-text text-transparent">
-            Ship the file.
-          </span>
-        </h1>
-
-        <p
-          className="nx-rise mx-auto mt-5 max-w-[50ch] text-[17.5px] leading-relaxed text-ink-3"
-          style={{ animationDelay: "60ms", animationFillMode: "backwards" }}
-        >
-          Describe the outcome once. Trove plans, builds, and leaves you with
-          real working files — not a chat that disappears.
-        </p>
-
-        <div
-          className="nx-rise mt-8 flex flex-wrap items-center justify-center gap-2"
-          style={{ animationDelay: "110ms", animationFillMode: "backwards" }}
-          role="tablist"
-          aria-label="What to build"
-        >
-          {LANES.map((l) => {
-            const on = l.id === lane.id;
-            return (
-              <button
-                key={l.id}
-                role="tab"
-                aria-selected={on}
-                onClick={() => setLane(l)}
-                className={cn(
-                  "group flex h-10 items-center gap-2 rounded-[var(--r-panel)] border px-3.5 text-[13.5px] font-medium transition-all",
-                  on
-                    ? "border-accent/50 bg-accent/10 text-ink shadow-[0_0_24px_-8px_rgba(124,92,255,0.5)]"
-                    : "border-transparent text-ink-3 hover:bg-hover hover:text-ink",
-                )}
-              >
-                <Ico icon={l.icon} motion={l.motion} size={15} active={on} />
-                {l.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div
-          className="nx-rise mt-5 text-left"
-          style={{ animationDelay: "160ms", animationFillMode: "backwards" }}
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              go(value);
-            }}
-            className="composer rounded-[var(--r-hero)] border border-line-strong/80 bg-raised/90 shadow-[var(--sh-2)] ring-1 ring-accent/10"
-          >
-            <label className="sr-only" htmlFor="hero-idea">
-              Describe what to build
-            </label>
-            <textarea
-              id="hero-idea"
-              rows={2}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  go(value);
-                }
-              }}
-              placeholder={lane.placeholder}
-              className="block max-h-[180px] w-full resize-none bg-transparent px-5 pb-3 pt-5 text-[16.5px] leading-[1.6] text-ink outline-none placeholder:text-ink-4"
-            />
-            <div className="flex items-center gap-2 px-3.5 pb-3.5">
-              <span className="hidden text-[12px] text-ink-4 sm:inline">
-                Enter to start · Shift+Enter for newline
-              </span>
-              <span className="flex-1" />
-              <button
-                type="submit"
-                disabled={!value.trim()}
-                className={cn(
-                  "group flex h-11 items-center gap-2 rounded-[var(--r-panel)] px-5 text-[14.5px] font-semibold transition-all duration-[var(--t-hover)]",
-                  value.trim() ? "btn-grad hover:scale-[1.02]" : "bg-sunk text-ink-4",
-                )}
-              >
-                Build it
-                <Ico icon={FiArrowRight} motion="nudge" size={16} />
-              </button>
+    <section className="premium-hero" aria-labelledby="hero-title">
+      <div className="premium-hero-grid">
+        <div className="premium-intro">
+          <p className="premium-eyebrow nx-rise"><span /> YOUR IDEAS. IN GOOD HANDS.</p>
+          <h1 id="hero-title" className="premium-title nx-rise-big">Big ideas.<br />Beautifully <em>made.</em></h1>
+          <p className="premium-description nx-rise">A workspace for the work you imagine. Turn a few words into websites, documents, and useful tools you can make your own.</p>
+          <div className="premium-prompt nx-rise">
+            <div className="premium-lanes" role="group" aria-label="What would you like to create?">
+              {LANES.map((item, index) => (
+                <button key={item.id} type="button" aria-pressed={selected === index} onClick={() => setSelected(index)} className={cn("premium-lane", selected === index && "is-selected")}><item.icon size={15} />{item.label}</button>
+              ))}
             </div>
-          </form>
+            <form onSubmit={(event) => { event.preventDefault(); go(); }} className="premium-composer composer" aria-busy={pending}>
+              <label htmlFor="hero-idea" className="sr-only">Describe what you want to create</label>
+              <textarea ref={input} id="hero-idea" maxLength={2000} rows={3} value={value} disabled={pending} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); go(); } }} placeholder={lane.placeholder} />
+              <div className="premium-composer-footer"><span><Sparkles size={14} /> A little inspiration goes a long way</span><button className="premium-create" type="submit" disabled={!value.trim() || pending} aria-label={pending ? "Opening workspace" : "Create your project"}>{pending ? "Opening…" : "Create"}<ArrowUpRight size={18} /></button></div>
+            </form>
+            <button className="premium-example" type="button" onClick={() => { setValue(lane.example); input.current?.focus(); }}><Plus size={14} />Try a {lane.label === "Agents" ? "support agent" : lane.label === "Code" ? "CSV parser" : lane.label === "Documents" ? "project proposal" : "designer portfolio"} <ArrowRight size={13} /></button>
+          </div>
+          <p className="premium-free"><Check size={14} /> Free to start <span>·</span> {freeCredits.toLocaleString("en-US")} monthly credits <span>·</span> No card required</p>
         </div>
-
-        <div
-          className="nx-rise mt-5 flex flex-wrap items-center justify-center gap-2"
-          style={{ animationDelay: "210ms", animationFillMode: "backwards" }}
-        >
-          <span className="text-[13px] text-ink-4">Try</span>
-          {lane.examples.map((e) => (
-            <button
-              key={e}
-              onClick={() => setValue(`${e} — `)}
-              className="rounded-full border border-line bg-rail px-3 py-1.5 text-[13px] text-ink-2 transition-colors hover:border-accent/40 hover:bg-hover hover:text-ink"
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-
-        <div
-          className="nx-rise mx-auto mt-12 grid max-w-[820px] gap-3 sm:grid-cols-3"
-          style={{ animationDelay: "260ms", animationFillMode: "backwards" }}
-        >
-          {PILLARS.map((p) => (
-            <div
-              key={p.title}
-              className="rounded-[18px] border border-line bg-rail/50 px-4 py-4 text-left backdrop-blur-sm"
-            >
-              <p className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
-                <p.icon size={15} className="text-accent" />
-                {p.title}
-              </p>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-3">{p.body}</p>
+        <div className="premium-showcase nx-rise" aria-label={`${lane.type} example preview`}>
+          <div className="premium-showcase-label"><span>FROM THOUGHT TO THING</span><span>0{selected + 1} / 04</span></div>
+          <div className="premium-preview-window">
+            <div className="premium-window-bar"><div className="premium-window-dots" aria-hidden="true"><i /><i /><i /></div><span>{lane.file}</span><lane.icon size={14} /></div>
+            <div key={lane.id} className={cn("premium-preview-content", `preview-${lane.id}`)}>
+              <div className="premium-preview-brand"><span>FORM<span className="premium-brand-dot">®</span></span><span>{lane.type} / EXAMPLE</span></div>
+              <div className="premium-preview-body"><p className="premium-preview-kicker">THOUGHTFULLY PUT TOGETHER</p><h2>{lane.title}</h2><p>{lane.description}</p></div>
+              {lane.id === "code" ? <pre className="premium-code"><code>{'export function parseCSV(input: string) {\n  const rows: string[][] = [];\n  // Every detail has a purpose.\n  return rows;\n}'}</code></pre> : <div className="premium-preview-tags">{lane.tags.map((tag, index) => <span key={tag}><span>0{index + 1}</span>{tag}<ArrowUpRight size={13} /></span>)}</div>}
+              <div className="premium-preview-foot"><span>Made with intention.</span><ArrowUpRight size={24} /></div>
             </div>
-          ))}
+          </div>
+          <div className="premium-file-note"><span className="premium-file-icon"><FileText size={20} /></span><div><strong>Your next idea, made tangible.</strong><p>Create it. Refine it. Keep the file.</p></div><span className="premium-note-check"><Check size={15} /></span></div>
+          <p className="premium-preview-caption">An illustrative example. Your creation starts with your prompt.</p>
         </div>
-
-        <p
-          className="nx-rise mt-8 text-[13.5px] text-ink-4"
-          style={{ animationDelay: "300ms", animationFillMode: "backwards" }}
-        >
-          Free to start · {freeCredits.toLocaleString()} credits every month · no card required
-        </p>
       </div>
+      <div className="premium-hero-bottom"><span>ONE WORKSPACE. ENDLESS POSSIBILITIES.</span><a href="#capabilities">Explore what you can make <ArrowRight size={15} /></a></div>
     </section>
   );
 }

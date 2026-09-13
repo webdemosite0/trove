@@ -78,7 +78,7 @@ function canonicalHost(req: NextRequest): NextResponse | null {
   return NextResponse.redirect(url, 308);
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   const toApex = canonicalHost(req);

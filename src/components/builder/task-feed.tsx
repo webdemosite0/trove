@@ -44,8 +44,9 @@ const VERB: Record<TaskKind, string> = {
   think: "Run",
 };
 
-function LiveWorking({ startedAt }: { startedAt: number }) {
-  const [s, setS] = useState(() => Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+function LiveWorking() {
+  const [startedAt] = useState(() => Date.now());
+  const [s, setS] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setS(Math.max(0, Math.floor((Date.now() - startedAt) / 1000))), 1000);
     return () => clearInterval(t);
@@ -53,7 +54,7 @@ function LiveWorking({ startedAt }: { startedAt: number }) {
   return <span className="text-accent tabular-nums">Working for {s}s</span>;
 }
 
-function Row({ task, liveSince }: { task: Task; liveSince?: number }) {
+function Row({ task }: { task: Task }) {
   const Icon = ICON[task.kind];
   const running = task.state === "run";
   const failed = task.state === "fail";
@@ -89,9 +90,9 @@ function Row({ task, liveSince }: { task: Task; liveSince?: number }) {
           </span>
           {task.state === "ok" ? <FiCheck size={12} className="shrink-0 text-positive" /> : null}
         </span>
-        {running && liveSince ? (
+        {running ? (
           <span className="mt-0.5 block text-[11.5px]">
-            <LiveWorking startedAt={liveSince} />
+            <LiveWorking />
           </span>
         ) : null}
       </span>
@@ -112,18 +113,9 @@ export function ActivityBox({
 }) {
   const [choice, setChoice] = useState<boolean | null>(null);
   const open = choice ?? running;
-  const end = useRef<HTMLDivElement>(null);
-  const runStarted = useRef<number | null>(null);
+  const end = useRef<HTMLLIElement>(null);
 
   const active = tasks.find((t) => t.state === "run");
-  useEffect(() => {
-    if (active) {
-      if (runStarted.current === null) runStarted.current = Date.now();
-    } else {
-      runStarted.current = null;
-    }
-  }, [active?.id]);
-
   useEffect(() => {
     if (open && running) end.current?.scrollIntoView({ block: "end" });
   }, [tasks, open, running]);
@@ -131,7 +123,6 @@ export function ActivityBox({
   if (!tasks.length) return null;
 
   const done = tasks.filter((t) => t.state !== "run").length;
-  const liveSince = active ? runStarted.current ?? Date.now() : undefined;
 
   return (
     <div className="rounded-[var(--r-control)] border border-line bg-rail/60 px-3 py-2.5">
@@ -150,9 +141,9 @@ export function ActivityBox({
             <>
               <FiZap size={12} className="mr-1 inline text-accent" />
               {active ? active.label : "Working"}
-              {liveSince ? (
+              {active ? (
                 <span className="ml-2 font-normal text-ink-4">
-                  · <LiveWorking startedAt={liveSince} />
+                  · <LiveWorking key={active.id} />
                 </span>
               ) : null}
             </>
@@ -175,10 +166,9 @@ export function ActivityBox({
             <Row
               key={t.id}
               task={t}
-              liveSince={t.state === "run" ? liveSince : undefined}
             />
           ))}
-          <div ref={end} />
+          <li ref={end} aria-hidden="true" />
         </ul>
       ) : null}
     </div>

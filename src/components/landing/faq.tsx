@@ -20,7 +20,7 @@ const QA: { q: string; a: string }[] = [
   },
   {
     q: "Do I need an account?",
-    a: "No. You can start without one and everything works. An account is what makes your work persist across devices and browsers.",
+    a: "Yes. Create a free account to start building and keep your work across devices. No credit card is required for the free plan.",
   },
   {
     q: "How do credits work?",

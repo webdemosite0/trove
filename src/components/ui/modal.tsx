@@ -41,9 +41,12 @@ export function Modal({
   const panel = React.useRef<HTMLDivElement>(null);
   const restoreTo = React.useRef<HTMLElement | null>(null);
   const mounted = useMounted();
+  const titleId = React.useId();
+  const descriptionId = React.useId();
+  const close = React.useEffectEvent(onClose);
 
   React.useEffect(() => {
-    if (!open) return;
+    if (!open || !mounted) return;
 
     restoreTo.current = document.activeElement as HTMLElement | null;
 
@@ -59,7 +62,7 @@ export function Modal({
     const focusables = () =>
       Array.from(
         panel.current?.querySelectorAll<HTMLElement>(
-          'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])',
+          'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),[tabindex]:not([tabindex="-1"])',
         ) ?? [],
       ).filter((el) => el.offsetParent !== null);
 
@@ -69,7 +72,8 @@ export function Modal({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        e.preventDefault();
+        close();
         return;
       }
       if (e.key !== "Tab") return;
@@ -80,10 +84,10 @@ export function Modal({
       }
       const firstEl = items[0];
       const lastEl = items[items.length - 1];
-      if (e.shiftKey && document.activeElement === firstEl) {
+      if (e.shiftKey && (document.activeElement === firstEl || !items.includes(document.activeElement as HTMLElement))) {
         e.preventDefault();
         lastEl.focus();
-      } else if (!e.shiftKey && document.activeElement === lastEl) {
+      } else if (!e.shiftKey && (document.activeElement === lastEl || !items.includes(document.activeElement as HTMLElement))) {
         e.preventDefault();
         firstEl.focus();
       }
@@ -96,7 +100,7 @@ export function Modal({
       body.style.paddingRight = prevPad;
       restoreTo.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open, mounted]);
 
   if (!mounted || !open) return null;
 
@@ -116,7 +120,8 @@ export function Modal({
         ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
           // Column layout with a capped height so a tall body scrolls inside
@@ -128,9 +133,9 @@ export function Modal({
       >
         <div className="flex shrink-0 items-start gap-3 px-5 pb-3 pt-4">
           <div className="min-w-0 flex-1">
-            <h2 className="text-[16px] font-semibold text-ink">{title}</h2>
+            <h2 id={titleId} className="text-[16px] font-semibold text-ink">{title}</h2>
             {description ? (
-              <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
+              <p id={descriptionId} className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
                 {description}
               </p>
             ) : null}

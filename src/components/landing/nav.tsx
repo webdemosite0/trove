@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FiArrowRight, FiMenu, FiX } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
@@ -39,6 +39,7 @@ const LINKS = [
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -48,10 +49,15 @@ export function LandingNav() {
   }, []);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && open) {
+        setOpen(false);
+        menuButton.current?.focus();
+      }
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [open]);
 
   return (
     <header
@@ -73,7 +79,7 @@ export function LandingNav() {
           <Wordmark size={16} sweep={false} />
         </Link>
 
-        <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 md:flex">
+        <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 lg:flex">
           {LINKS.map((l) => (
             <a
               key={l.href}
@@ -87,7 +93,7 @@ export function LandingNav() {
 
         <span className="flex-1" />
 
-        <div className="hidden items-center gap-1.5 sm:flex">
+        <div className="hidden items-center gap-1.5 lg:flex">
           <ThemeToggle />
           <Link
             href="/login"
@@ -108,17 +114,20 @@ export function LandingNav() {
         </div>
 
         <button
+          ref={menuButton}
+          type="button"
+          aria-controls="landing-mobile-menu"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-label={open ? "Close menu" : "Open menu"}
-          className="grid h-9 w-9 place-items-center rounded-[var(--r-control)] text-ink-2 transition-colors hover:bg-hover sm:hidden"
+          className="grid h-9 w-9 place-items-center rounded-[var(--r-control)] text-ink-2 transition-colors hover:bg-hover lg:hidden"
         >
           {open ? <FiX size={19} /> : <FiMenu size={19} />}
         </button>
       </div>
 
       {open ? (
-        <div className="nx-in border-t border-line bg-canvas px-5 py-3 sm:hidden">
+        <div id="landing-mobile-menu" className="nx-in border-t border-line bg-canvas px-5 py-3 lg:hidden">
           <nav aria-label="Sections" className="flex flex-col">
             {LINKS.map((l) => (
               <a

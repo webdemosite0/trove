@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -78,43 +78,33 @@ function ProductStage() {
  */
 export function SplitAuth({ children }: { children: React.ReactNode }) {
   const [i, setI] = useState(0);
-  const [ready, setReady] = useState(false);
-  const video = useRef<HTMLVideoElement>(null);
+  const [readySrc, setReadySrc] = useState<string | null>(null);
   const slide = SLIDES[i];
+  const ready = readySrc === slide.src;
 
   useEffect(() => {
     const t = setInterval(() => setI((n) => (n + 1) % SLIDES.length), 9000);
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => {
-    setReady(false);
-    const el = video.current;
-    if (!el) return;
-    el.src = slide.src;
-    el.load();
-    const play = () => {
-      el.play().then(() => setReady(true)).catch(() => setReady(false));
-    };
-    el.addEventListener("canplay", play, { once: true });
-    return () => el.removeEventListener("canplay", play);
-  }, [slide.src]);
-
   return (
     <div className="grid min-h-dvh bg-canvas lg:grid-cols-2">
       <aside className="relative h-[42vh] min-h-[280px] overflow-hidden bg-sunk lg:h-auto lg:min-h-dvh">
         <ProductStage />
         <video
-          ref={video}
+          key={slide.src}
+          src={slide.src}
           className={cn(
             "absolute inset-0 h-full w-full object-cover transition-opacity duration-700",
             ready ? "opacity-100" : "opacity-0",
           )}
           muted
           loop
+          autoPlay
           playsInline
           preload="auto"
-          onError={() => setReady(false)}
+          onCanPlay={() => setReadySrc(slide.src)}
+          onError={() => setReadySrc(null)}
         />
 
         <div

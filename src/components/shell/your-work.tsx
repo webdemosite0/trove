@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
@@ -58,6 +58,20 @@ function kindsForPath(pathname: string): RecentKind[] | "all" | "hide" {
   return "all";
 }
 
+function subscribeBuilderPhase(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.body, { attributes: true, attributeFilter: ["data-builder-phase"] });
+  return () => observer.disconnect();
+}
+
+function getBuilderBusy() {
+  return document.body.hasAttribute("data-builder-phase");
+}
+
+function getServerBuilderBusy() {
+  return false;
+}
+
 export function YourWork({
   items,
   className,
@@ -79,22 +93,7 @@ export function YourWork({
   const onSites = pathname.startsWith("/websites");
 
   // Hide while Sites builder is active (asking / planning / building / ready)
-  const [builderBusy, setBuilderBusy] = useState(false);
-  useEffect(() => {
-    if (!onSites) {
-      setBuilderBusy(false);
-      return;
-    }
-    const sync = () =>
-      setBuilderBusy(document.body.hasAttribute("data-builder-phase"));
-    sync();
-    const obs = new MutationObserver(sync);
-    obs.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["data-builder-phase"],
-    });
-    return () => obs.disconnect();
-  }, [onSites]);
+  const builderBusy = useSyncExternalStore(subscribeBuilderPhase, getBuilderBusy, getServerBuilderBusy);
 
   if (!force && hasThread) return null;
   if (!force && onSites && builderBusy) return null;

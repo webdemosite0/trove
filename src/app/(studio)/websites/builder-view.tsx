@@ -78,7 +78,7 @@ export function BuilderView({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [sandboxUrl, setSandboxUrl] = useState<string | null>(null);
   const [sandboxBooting, setSandboxBooting] = useState(false);
-  const [depth, setDepth] = useState<Depth>("deep");
+  const [depth] = useState<Depth>("deep");
   const [targetId, setTargetId] = useState<TargetId>("static");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [plan, setPlan] = useState<BuildPlan | null>(null);
@@ -91,9 +91,9 @@ export function BuilderView({
   const [error, setError] = useState<string | null>(null);
   const [pane, setPane] = useState<Pane>("preview");
   const [half, setHalf] = useState<"build" | "chat">("chat");
-  const [device, setDevice] = useState<keyof typeof DEVICE>("desktop");
+  const [device] = useState<keyof typeof DEVICE>("desktop");
   const [openFile, setOpenFile] = useState("index.html");
-  const [page, setPage] = useState("index.html");
+  const [page] = useState("index.html");
   const [questionsOpen, setQuestionsOpen] = useState(false);
   const [paused, setPaused] = useState(false);
   const nextLog = useRef(0);
@@ -114,44 +114,47 @@ export function BuilderView({
 
   useEffect(() => {
     if (!restored?.id) return;
-    siteId.current = restored.id;
-    try {
-      const raw = localStorage.getItem(`trove-site-${restored.id}`);
-      if (raw) {
-        const data = JSON.parse(raw) as {
-          title?: string;
-          idea?: string;
-          files?: ProjectFile[];
-          target?: TargetId;
-          answers?: Record<string, string>;
-        };
-        if (data.files?.length) {
-          setFiles(data.files);
-          setIdea(data.idea || restored.idea || restored.title);
-          if (data.target) setTargetId(data.target);
-          if (data.answers) setAnswers(data.answers);
-          setPlan({
-            title: data.title || restored.title,
-            summary: "Restored from Your work",
-            requirements: {
-              overview: data.idea || restored.idea || "",
-              features: [],
-              pages: [],
-              rules: [],
-            },
-            style: { name: "Restored", mood: "as saved", palette: ["#111"], type: "system" },
-            steps: [],
-          });
-          setPhase("ready");
-          setHalf("build");
-          setPane("preview");
-          return;
+    const frame = requestAnimationFrame(() => {
+      siteId.current = restored.id;
+      try {
+        const raw = localStorage.getItem(`trove-site-${restored.id}`);
+        if (raw) {
+          const data = JSON.parse(raw) as {
+            title?: string;
+            idea?: string;
+            files?: ProjectFile[];
+            target?: TargetId;
+            answers?: Record<string, string>;
+          };
+          if (data.files?.length) {
+            setFiles(data.files);
+            setIdea(data.idea || restored.idea || restored.title);
+            if (data.target) setTargetId(data.target);
+            if (data.answers) setAnswers(data.answers);
+            setPlan({
+              title: data.title || restored.title,
+              summary: "Restored from Your work",
+              requirements: {
+                overview: data.idea || restored.idea || "",
+                features: [],
+                pages: [],
+                rules: [],
+              },
+              style: { name: "Restored", mood: "as saved", palette: ["#111"], type: "system" },
+              steps: [],
+            });
+            setPhase("ready");
+            setHalf("build");
+            setPane("preview");
+            return;
+          }
         }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
-    }
-    setIdea(restored.idea || restored.title);
+      setIdea(restored.idea || restored.title);
+    });
+    return () => cancelAnimationFrame(frame);
   }, [restored]);
 
   useEffect(() => {
@@ -267,7 +270,7 @@ export function BuilderView({
 
   const styleBrief = useCallback((p: BuildPlan) => `${p.style.name}. ${p.style.mood} Palette: ${p.style.palette.join(", ")}. Type: ${p.style.type}. Storage: ${storage === "local" ? "localStorage" : "none"}.`, [storage]);
 
-  async function bootSandbox(current: ProjectFile[]) {
+  const bootSandbox = useCallback(async (current: ProjectFile[]) => {
     setSandboxBooting(true);
     try {
       const res = await fetch("/api/sandbox/create", {
@@ -288,7 +291,7 @@ export function BuilderView({
     } finally {
       setSandboxBooting(false);
     }
-  }
+  }, [log]);
 
   const generate = useCallback(async () => {
     if (!plan || busy || paused) return;
@@ -345,7 +348,7 @@ export function BuilderView({
         }
       }
     } catch { /* */ }
-  }, [plan, busy, paused, files, runStep, styleBrief, log, idea, targetId, answers]);
+  }, [plan, busy, paused, files, runStep, styleBrief, log, idea, targetId, answers, bootSandbox]);
 
   const edit = useCallback(async (text: string, attach?: Attachment[]) => {
     if (!text.trim() || busy || !files.length || paused) return;

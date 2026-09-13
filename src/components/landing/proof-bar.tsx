@@ -1,9 +1,10 @@
+import { PLANS } from "@/lib/credits";
 import { TbDownload, TbCreditCardOff, TbSparkles, TbFiles } from "@/components/ui/icons";
 
 const STATS = [
   { icon: TbSparkles, value: "7", label: "tools in one workspace" },
   { icon: TbDownload, value: "5", label: "real file formats" },
-  { icon: TbFiles, value: "200", label: "free credits every month" },
+  { icon: TbFiles, value: PLANS[0].monthly.toLocaleString("en-US"), label: "free credits every month" },
   { icon: TbCreditCardOff, value: "0", label: "card required to start" },
 ];
 
@@ -20,7 +21,7 @@ export function ProofBar() {
         {STATS.map((s, i) => (
           <li
             key={s.label}
-            className={`flex items-center gap-3 px-5 py-4 ${i > 0 ? "border-t border-line sm:border-t-0 sm:border-l" : ""} ${i === 1 ? "sm:border-t-0" : ""}`}
+            className={`flex items-center gap-3 px-5 py-4 ${i >= 2 ? "border-t border-line sm:border-t-0" : ""} ${i % 2 === 1 ? "border-l border-line" : ""} ${i === 2 ? "sm:border-l" : ""}`}
           >
             <s.icon size={18} className="shrink-0 text-accent" />
             <div>

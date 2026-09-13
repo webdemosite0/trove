@@ -13,7 +13,6 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
-  FiActivity,
   FiHome,
   TbBell,
   TbUsers,
