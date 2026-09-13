@@ -23,7 +23,6 @@ import {
   TbTable,
   TbPresentation,
   TbPalette,
-  TbCode,
   TbSearch,
   TbMessageCircle,
   TbPlugConnected,
@@ -64,7 +63,6 @@ const GROUPS: { label: string; items: Item[] }[] = [
     label: "Build",
     items: [
       { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
-      { href: "/code", label: "Code", icon: TbCode, motion: "type" },
       { href: "/documents", label: "Docs", icon: TbFileText, motion: "lift" },
       { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
       { href: "/slides", label: "Decks", icon: TbPresentation, motion: "grow" },
