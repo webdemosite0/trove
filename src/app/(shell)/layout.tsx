@@ -13,6 +13,16 @@ import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import type { Recent } from "@/lib/recents";
 
+function isAdminEmail(email: string | null | undefined) {
+  if (!email) return false;
+  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+  const list = raw
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.toLowerCase());
+}
+
 function YourWorkSlot({ items, className }: { items: Recent[]; className?: string }) {
   return (
     <Suspense fallback={null}>
@@ -29,6 +39,7 @@ export default async function ShellLayout({
   const gate = await resolveShell();
   if (!gate.ok) return gate.screen;
   const { user, balance } = gate;
+  const isAdmin = isAdminEmail(user?.email);
 
   const [due, recents] = await Promise.all([
     countDueReminders(),
@@ -56,7 +67,7 @@ export default async function ShellLayout({
         <Backdrop />
         <CommandPalette recents={recents} />
         <div className="flex min-h-screen">
-          <Sidebar user={user} balance={balance} />
+          <Sidebar user={user} balance={balance} isAdmin={isAdmin} />
           <main className="flex min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
