@@ -5,7 +5,7 @@ export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
 /**
- * iOS home-screen icon — cyan planet + violet–sky ring.
+ * iOS icon — full vault monogram with orbital arc.
  */
 export default function AppleIcon() {
   return new ImageResponse(
@@ -17,49 +17,46 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #1e2438 0%, #0a0c12 55%, #06070a 100%)",
+          background: "linear-gradient(160deg, #1a1f32 0%, #0a0c14 70%)",
         }}
       >
-        <svg width="140" height="140" viewBox="0 0 48 48" fill="none">
+        <svg width="148" height="148" viewBox="0 0 48 48" fill="none">
           <defs>
-            <linearGradient id="ring" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0" stopColor="#a78bfa" />
-              <stop offset="0.4" stopColor="#6366f1" />
-              <stop offset="0.75" stopColor="#38bdf8" />
-              <stop offset="1" stopColor="#22d3ee" />
+            <linearGradient id="face" x1="0.15" y1="0" x2="0.9" y2="1">
+              <stop offset="0" stopColor="#2a2f45" />
+              <stop offset="0.55" stopColor="#151826" />
+              <stop offset="1" stopColor="#0a0c14" />
             </linearGradient>
-            <radialGradient id="body" cx="0.32" cy="0.28" r="0.88">
-              <stop offset="0" stopColor="#99f6e4" />
-              <stop offset="0.3" stopColor="#2dd4bf" />
-              <stop offset="0.55" stopColor="#0ea5e9" />
-              <stop offset="0.85" stopColor="#1e40af" />
-              <stop offset="1" stopColor="#0f172a" />
-            </radialGradient>
-            <radialGradient id="gloss" cx="0.3" cy="0.25" r="0.45">
-              <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
-              <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-            </radialGradient>
+            <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#c7d2fe" />
+              <stop offset="0.5" stopColor="#818cf8" />
+              <stop offset="1" stopColor="#4338ca" />
+            </linearGradient>
+            <linearGradient id="t" x1="0.5" y1="0" x2="0.5" y2="1">
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset="1" stopColor="#c7d2fe" />
+            </linearGradient>
+            <linearGradient id="arc" x1="0" y1="0.5" x2="1" y2="0.5">
+              <stop offset="0" stopColor="#818cf8" stopOpacity="0" />
+              <stop offset="0.4" stopColor="#818cf8" />
+              <stop offset="0.75" stopColor="#38bdf8" />
+              <stop offset="1" stopColor="#38bdf8" stopOpacity="0" />
+            </linearGradient>
           </defs>
-          <circle cx="24" cy="24" r="20" fill="#0f1420" opacity="0.5" />
-          <g transform="rotate(-28 24 24)">
-            <path
-              d="M5 24 A19 7 0 0 1 43 24"
-              stroke="url(#ring)"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-          </g>
-          <circle cx="24" cy="24" r="12.2" fill="url(#body)" />
-          <circle cx="24" cy="24" r="12.2" fill="url(#gloss)" />
-          <g transform="rotate(-28 24 24)">
-            <path
-              d="M43 24 A19 7 0 0 1 5 24"
-              stroke="url(#ring)"
-              strokeWidth="2.8"
-              strokeLinecap="round"
-            />
-          </g>
+          <rect x="5" y="5" width="38" height="38" rx="11" fill="url(#face)" />
+          <rect x="5" y="5" width="38" height="38" rx="11" fill="none" stroke="url(#edge)" strokeWidth="1.4" />
+          <path
+            d="M16.2 16.4h15.6c0.7 0 1.2 0.55 1.2 1.2v1.15c0 0.66-0.53 1.2-1.2 1.2H26.1v11.4c0 0.72-0.58 1.3-1.3 1.3h-1.6c-0.72 0-1.3-0.58-1.3-1.3V19.95H16.2c-0.66 0-1.2-0.54-1.2-1.2V17.6c0-0.65 0.54-1.2 1.2-1.2z"
+            fill="url(#t)"
+          />
+          <path
+            d="M8.5 24 A15.5 15.5 0 0 1 39.5 24"
+            stroke="url(#arc)"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <circle cx="39.5" cy="24" r="1.6" fill="#a5b4fc" />
         </svg>
       </div>
     ),

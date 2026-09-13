@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { TroveOrb, type OrbState } from "@/components/brand/orb";
 
 /**
- * TROVE wordmark — geometric display weight with a live gradient fill.
- * Pairs with TroveOrb as BrandLockup for nav / splash.
+ * TROVE wordmark — geometric display weight.
+ * Pairs with the vault monogram via BrandLockup.
  */
 export function Wordmark({
   className,
@@ -14,17 +14,20 @@ export function Wordmark({
 }: {
   className?: string;
   size?: number;
-  /** Slow light sweep across the letters. Off wherever something else moves. */
   sweep?: boolean;
 }) {
   return (
     <span
-      className={cn("wordmark-gradient block leading-none tracking-tight", sweep && "nx-sweep-text", className)}
+      className={cn(
+        "wordmark-gradient block leading-none",
+        sweep && "nx-sweep-text",
+        className,
+      )}
       style={{
         fontFamily: "var(--font-display)",
         fontSize: size,
-        fontWeight: 800,
-        letterSpacing: "0.02em",
+        fontWeight: 750,
+        letterSpacing: "0.04em",
       }}
     >
       TROVE
@@ -32,14 +35,11 @@ export function Wordmark({
   );
 }
 
-/**
- * Full brand lockup: animated orb + wordmark.
- * Use in nav, splash, auth cards, mobile header.
- */
+/** Orb + wordmark lockup for nav, splash, auth. */
 export function BrandLockup({
   className,
   orbSize = 28,
-  wordSize = 22,
+  wordSize = 20,
   state = "idle",
   showWord = true,
   sweep = false,

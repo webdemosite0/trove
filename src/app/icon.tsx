@@ -5,8 +5,7 @@ export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
 /**
- * Favicon — circular dark badge with cyan planet + tilted ring.
- * Matches the app-icon mark (readable at 16px).
+ * Favicon — Trove vault monogram. Built for 16px: solid T, clear frame.
  */
 export default function Icon() {
   return new ImageResponse(
@@ -18,45 +17,27 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #1a1f35 0%, #0b0d14 100%)",
-          borderRadius: 8,
+          background: "#0a0c14",
+          borderRadius: 7,
         }}
       >
         <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
           <defs>
-            <linearGradient id="ring" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0" stopColor="#7c6cff" />
-              <stop offset="0.5" stopColor="#5b8def" />
-              <stop offset="1" stopColor="#38bdf8" />
+            <linearGradient id="face" x1="0.15" y1="0" x2="0.9" y2="1">
+              <stop offset="0" stopColor="#2a2f45" />
+              <stop offset="1" stopColor="#0a0c14" />
             </linearGradient>
-            <radialGradient id="body" cx="0.35" cy="0.3" r="0.85">
-              <stop offset="0" stopColor="#5eead4" />
-              <stop offset="0.35" stopColor="#22d3ee" />
-              <stop offset="0.7" stopColor="#0ea5e9" />
-              <stop offset="1" stopColor="#1e3a5f" />
-            </radialGradient>
+            <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#a5b4fc" />
+              <stop offset="1" stopColor="#4f46e5" />
+            </linearGradient>
           </defs>
-          <g transform="rotate(-28 24 24)">
-            <ellipse
-              cx="24"
-              cy="24"
-              rx="20"
-              ry="7.2"
-              stroke="url(#ring)"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-              opacity="0.55"
-            />
-          </g>
-          <circle cx="24" cy="24" r="11.5" fill="url(#body)" />
-          <g transform="rotate(-28 24 24)">
-            <path
-              d="M4 24 A20 7.2 0 0 0 44 24"
-              stroke="url(#ring)"
-              strokeWidth="3.8"
-              strokeLinecap="round"
-            />
-          </g>
+          <rect x="4" y="4" width="40" height="40" rx="11" fill="url(#face)" />
+          <rect x="4" y="4" width="40" height="40" rx="11" fill="none" stroke="url(#edge)" strokeWidth="2" />
+          <path
+            d="M14 15h20v4.2H28.2v14.5h-8.4V19.2H14V15z"
+            fill="#f1f5f9"
+          />
         </svg>
       </div>
     ),
