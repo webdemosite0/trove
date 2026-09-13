@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 import {
   FiGlobe,
   FiLayout,
@@ -29,10 +28,6 @@ const CHIPS: { label: string; icon: typeof FiGlobe }[] = [
   { label: "Agency site", icon: FiGrid },
 ];
 
-/**
- * MagicSlides-inspired hero: centered headline, typing placeholder,
- * large prompt box, suggestion chips with icons.
- */
 export function Hero({ freeCredits }: { freeCredits: number }) {
   const router = useRouter();
   const [value, setValue] = useState("");
@@ -76,8 +71,23 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(99,102,241,0.12), transparent 60%), radial-gradient(ellipse 50% 40% at 80% 70%, rgba(236,72,153,0.08), transparent), radial-gradient(ellipse 40% 30% at 15% 80%, rgba(34,197,94,0.06), transparent)",
+            "radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99,102,241,0.22), transparent 55%), radial-gradient(ellipse 55% 45% at 90% 75%, rgba(236,72,153,0.12), transparent 50%), radial-gradient(ellipse 45% 35% at 5% 85%, rgba(34,197,94,0.10), transparent 50%), radial-gradient(ellipse 40% 30% at 50% 50%, rgba(59,130,246,0.06), transparent 60%)",
         }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.4]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(128,128,128,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.05) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+          maskImage: "radial-gradient(ellipse 75% 55% at 50% 25%, black, transparent)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-8 -z-10 h-[380px] w-[680px] -translate-x-1/2 rounded-full blur-[90px]"
+        style={{ background: "rgba(99,102,241,0.15)" }}
       />
 
       <div className="relative mx-auto max-w-[920px] text-center">
@@ -101,8 +111,8 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           className="nx-rise mx-auto mt-5 max-w-[54ch] text-[17px] leading-relaxed text-ink-3"
           style={{ animationDelay: "80ms", animationFillMode: "backwards" }}
         >
-          Describe any product, portfolio, or shop. Trove builds a full multi-page
-          site with live preview, refine chat, and one-click publish to{" "}
+          Describe any product, portfolio, or shop. Trove builds a full multi-page site with live
+          preview, refine chat, and one-click publish to{" "}
           <span className="font-medium text-ink-2">*.troveai.site</span>.
         </p>
 
@@ -185,7 +195,8 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         <p className="mt-6 text-[13px] text-ink-4">
           {freeCredits > 0 ? (
             <>
-              <span className="text-positive">{freeCredits} free credits</span> on signup · No card required
+              <span className="text-positive">{freeCredits} free credits</span> on signup · No card
+              required
             </>
           ) : (
             "Sign up free · No card required"
