@@ -13,7 +13,6 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
-  FiActivity,
   FiHome,
   TbBell,
   TbUsers,
@@ -90,8 +89,6 @@ const SECONDARY: { href: string; label: string; icon: IconType }[] = [
   { href: "/plans", label: "Plan", icon: FiCreditCard },
 ];
 
-const ADMIN_ITEM = { href: "/admin", label: "Admin", icon: FiActivity };
-
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
@@ -130,15 +127,7 @@ function NavRow({
   );
 }
 
-function UserMenu({
-  user,
-  onNavigate,
-  isAdmin = false,
-}: {
-  user: User;
-  onNavigate?: () => void;
-  isAdmin?: boolean;
-}) {
+function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
@@ -158,7 +147,6 @@ function UserMenu({
 
   const links = [
     { href: "/settings", label: "Settings", icon: FiSettings },
-    ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: FiActivity }] : []),
     { href: "/plans", label: "Plan", icon: FiCreditCard },
     { href: "/dashboard", label: "Home", icon: FiHome },
   ];
@@ -229,16 +217,13 @@ function RailBody({
   balance,
   onNavigate,
   onCollapse,
-  isAdmin = false,
 }: {
   user: User | null;
   balance: Balance | null;
   onNavigate?: () => void;
   onCollapse?: () => void;
-  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
-  const secondary = isAdmin ? [ADMIN_ITEM, ...SECONDARY] : SECONDARY;
 
   return (
     <>
@@ -297,7 +282,7 @@ function RailBody({
         <CreditMeter balance={balance} />
 
         {user ? (
-          <UserMenu user={user} isAdmin={isAdmin} onNavigate={onNavigate} />
+          <UserMenu user={user} onNavigate={onNavigate} />
         ) : (
           <Link
             href="/login"
@@ -312,7 +297,7 @@ function RailBody({
         )}
 
         <div className="flex items-center gap-0.5 border-t border-line pt-2">
-          {secondary.map((x) => (
+          {SECONDARY.map((x) => (
             <Tooltip key={x.href} label={x.label} side="top">
               <Link
                 href={x.href}
@@ -335,7 +320,6 @@ function RailBody({
 export function Sidebar({
   user,
   balance,
-  isAdmin = false,
 }: {
   user: User | null;
   balance: Balance | null;
@@ -402,7 +386,6 @@ export function Sidebar({
             <RailBody
               user={user}
               balance={balance}
-              isAdmin={isAdmin}
               onCollapse={() => {
                 setPeek(false);
                 setCollapsed(true);
@@ -480,12 +463,7 @@ export function Sidebar({
             >
               <FiX size={17} />
             </button>
-            <RailBody
-              user={user}
-              balance={balance}
-              isAdmin={isAdmin}
-              onNavigate={() => setOpen(false)}
-            />
+            <RailBody user={user} balance={balance} onNavigate={() => setOpen(false)} />
           </div>
         </div>
       ) : null}
