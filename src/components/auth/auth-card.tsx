@@ -12,7 +12,7 @@ const field =
   "h-12 w-full rounded-[var(--r-control)] border border-line-strong bg-sunk px-3.5 text-[16px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-4 focus:border-accent focus:shadow-[0_0_0_3px_var(--focus-ring)] sm:text-[15px]";
 
 const OAUTH_ERRORS: Record<string, string> = {
-  "google-unconfigured": "Google sign-in is not set up on this deployment yet.",
+  "google-unconfigured": "Google sign-in is not set up on this deployment yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on Vercel.",
   "google-cancelled": "Google sign-in was cancelled.",
   "google-state": "That sign-in attempt expired. Please try again.",
   "google-exchange": "Google could not complete the sign-in. Please try again.",
@@ -22,7 +22,7 @@ const OAUTH_ERRORS: Record<string, string> = {
 
 export function AuthCard({
   mode,
-  googleEnabled = false,
+  googleEnabled = true,
   oauthError,
   next,
   justVerified = false,
@@ -167,23 +167,12 @@ export function AuthCard({
         <span className="h-px flex-1 bg-line-strong" />
       </div>
 
-      {googleEnabled ? (
-        <a
-          href="/api/auth/google"
-          className="flex h-12 w-full items-center justify-center gap-2.5 rounded-full border border-line-strong bg-raised text-[14.5px] font-medium text-ink transition-colors hover:bg-hover"
-        >
-          <FcGoogle size={18} /> Continue with Google
-        </a>
-      ) : (
-        <button
-          type="button"
-          disabled
-          title="Google sign-in is not configured on this deployment"
-          className="flex h-12 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-full border border-line-strong bg-raised text-[14.5px] font-medium text-ink opacity-50"
-        >
-          <FcGoogle size={18} /> Continue with Google
-        </button>
-      )}
+      <a
+        href="/api/auth/google"
+        className="flex h-12 w-full items-center justify-center gap-2.5 rounded-full border border-line-strong bg-raised text-[14.5px] font-medium text-ink transition-colors hover:bg-hover"
+      >
+        <FcGoogle size={18} /> Continue with Google
+      </a>
 
       <p className="mt-8 text-center text-[13.5px] text-ink-3">
         {isLogin ? (
