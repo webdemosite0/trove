@@ -24,7 +24,7 @@ const PUBLIC_PREFIXES = [
   "/api/auth/", // the sign-in and OAuth callback routes themselves
   "/api/health", // has to answer when the database is down
   "/api/billing/webhook", // Stripe calls this server-to-server; it has no cookie
-  "/auth/", // login-page product films in public/auth
+  "/s/", // published sites ({slug}.troveai.site rewrites here)
 ];
 
 function isPublic(pathname: string) {
@@ -78,7 +78,30 @@ function canonicalHost(req: NextRequest): NextResponse | null {
   return NextResponse.redirect(url, 308);
 }
 
+
+/**
+ * Live deploy hosts: {slug}.troveai.site → /s/{slug}
+ * Store built sites under /s/[slug] (static export or edge config map).
+ * Apex and www stay the main app; only multi-level hostnames rewrite.
+ */
+function subdomainRewrite(req: NextRequest): NextResponse | null {
+  const host = (req.headers.get("host") || "").split(":")[0].toLowerCase();
+  if (!host.endsWith(".troveai.site")) return null;
+  const parts = host.split(".");
+  // slug.troveai.site → 3 parts; ignore apex (troveai.site) and www
+  if (parts.length < 3) return null;
+  const slug = parts[0];
+  if (!slug || slug === "www" || slug === "app" || slug === "api") return null;
+  const url = req.nextUrl.clone();
+  if (url.pathname.startsWith("/s/")) return null;
+  url.pathname = `/s/${slug}${url.pathname === "/" ? "" : url.pathname}`;
+  return NextResponse.rewrite(url);
+}
+
 export function middleware(req: NextRequest) {
+  const sub = subdomainRewrite(req);
+  if (sub) return sub;
+
   const { pathname, search } = req.nextUrl;
 
   const toApex = canonicalHost(req);
@@ -124,6 +147,6 @@ export const config = {
    * only to whoever already controls the Search Console property.
    */
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon|opengraph-image|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|google[0-9a-z]+\\.html|auth/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|ico|woff2)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon|opengraph-image|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|google[0-9a-z]+\\.html).*)",
   ],
 };
