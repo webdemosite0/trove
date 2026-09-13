@@ -2,19 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { TroveOrb } from "@/components/brand/orb";
+import { ProcessRow, WorkingTimer } from "@/components/builder/process-row";
 
-const STEPS = [
-  "Reading your message",
-  "Checking connected tools",
-  "Planning the reply",
-  "Writing the answer",
+type Step = {
+  kind: "think" | "cmd" | "connect" | "file" | "ok";
+  label: string;
+};
+
+const DEFAULT_STEPS: Step[] = [
+  { kind: "think", label: "Exploring your request" },
+  { kind: "cmd", label: "Planning the answer" },
+  { kind: "connect", label: "Checking connected tools" },
+  { kind: "think", label: "Writing the response" },
 ];
 
 /**
- * Live thinking strip — open layout, not a card/box.
+ * Live thinking strip — process rows + working timer (Grok-style).
+ * Shown while the model is pending and has not streamed text yet.
  */
 export function ThinkingLine({ labels }: { labels?: string[] }) {
-  const lines = labels?.length ? labels : STEPS;
+  const steps: Step[] = labels?.length
+    ? labels.map((label, i) => ({
+        kind: (i === 1 ? "cmd" : i === 2 ? "connect" : "think") as Step["kind"],
+        label,
+      }))
+    : DEFAULT_STEPS;
+
   const [started] = useState(() => Date.now());
   const [secs, setSecs] = useState(0);
   const [step, setStep] = useState(0);
@@ -26,31 +39,26 @@ export function ThinkingLine({ labels }: { labels?: string[] }) {
 
   useEffect(() => {
     const t = setInterval(() => {
-      setStep((s) => (s + 1) % lines.length);
-    }, 2200);
+      setStep((s) => Math.min(s + 1, steps.length - 1));
+    }, 2600);
     return () => clearInterval(t);
-  }, [lines.length]);
+  }, [steps.length]);
 
   return (
     <div className="nx-in flex items-start gap-3">
-      <span className="nx-thinking relative mt-0.5 grid place-items-center">
+      <span className="nx-thinking relative mt-0.5 grid shrink-0 place-items-center">
         <TroveOrb size={24} state="thinking" />
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium text-ink">{lines[step]}</p>
-        <p className="mt-0.5 text-[12px] tabular-nums text-accent">Working for {secs}s</p>
-        <ul className="mt-2 space-y-1 border-l border-line pl-3">
-          {lines.slice(0, step + 1).map((l, i) => (
-            <li key={`${l}-${i}`} className="text-[12.5px] text-ink-3">
-              {i < step ? (
-                <span className="text-positive">✓ </span>
-              ) : (
-                <span className="text-accent">● </span>
-              )}
-              {l}
-            </li>
-          ))}
-        </ul>
+      <div className="min-w-0 flex-1 space-y-0.5">
+        {steps.slice(0, step + 1).map((s, i) => (
+          <ProcessRow
+            key={`${s.label}-${i}`}
+            kind={s.kind}
+            label={s.label}
+            active={i === step}
+          />
+        ))}
+        <WorkingTimer secs={secs} />
       </div>
     </div>
   );
