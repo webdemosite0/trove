@@ -5,31 +5,21 @@ export const maxDuration = 120;
 
 /**
  * Optional E2B cloud sandbox for live React/Vite preview.
- * Packages are loaded only at runtime via opaque dynamic import so the app
- * builds without @e2b/code-interpreter or e2b installed.
+ * Uses Function("return import(p)") so webpack/turbopack never see a static
+ * module specifier — the app builds without e2b packages installed.
  */
 async function loadSandboxCtor(): Promise<any | null> {
-  // String variables + webpackIgnore stop Next/webpack from resolving these
-  // modules at build time (they are optional).
-  const pkgA = "@e2b/code-interpreter";
-  const pkgB = "e2b";
-  try {
-    // @ts-expect-error optional peer — may be absent
-    const mod = await import(/* webpackIgnore: true */ pkgA).catch(() => null);
-    if (mod) {
-      return (mod as any).Sandbox ?? (mod as any).default?.Sandbox ?? null;
+  // Opaque dynamic import: no string literal in import() for the bundler to resolve.
+  const dynImport = new Function("p", "return import(p)") as (p: string) => Promise<any>;
+  for (const pkg of ["@e2b/code-interpreter", "e2b"]) {
+    try {
+      const mod = await dynImport(pkg).catch(() => null);
+      if (!mod) continue;
+      const Ctor = mod.Sandbox ?? mod.default?.Sandbox ?? mod.default;
+      if (Ctor) return Ctor;
+    } catch {
+      /* package not installed */
     }
-  } catch {
-    /* not installed */
-  }
-  try {
-    // @ts-expect-error optional peer — may be absent
-    const alt = await import(/* webpackIgnore: true */ pkgB).catch(() => null);
-    if (alt) {
-      return (alt as any).Sandbox ?? (alt as any).default?.Sandbox ?? null;
-    }
-  } catch {
-    /* not installed */
   }
   return null;
 }
