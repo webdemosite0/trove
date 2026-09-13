@@ -296,7 +296,6 @@ export function BuilderView({
           let e: Record<string, unknown>;
           try { e = JSON.parse(line); } catch { continue; }
           if (e.t === "task") {
-            // API emits flat { t, id, kind, label, state } — not nested under .task
             const raw = (e.task && typeof e.task === "object" ? e.task : e) as Record<string, unknown>;
             const id = typeof raw.id === "string" ? raw.id : "";
             if (!id) continue;
@@ -312,9 +311,17 @@ export function BuilderView({
               return [...t, task];
             });
           }
+          // API sends one { t: "file", path, content } per write — also accept batch "files"
+          if (e.t === "file" && typeof e.path === "string" && typeof e.content === "string") {
+            acc = mergeFiles(acc, [{ path: e.path as string, content: e.content as string }]);
+            setFiles(acc);
+          }
           if (e.t === "files" && Array.isArray(e.files)) {
             acc = mergeFiles(acc, e.files as ProjectFile[]);
             setFiles(acc);
+          }
+          if (e.t === "error" && typeof e.message === "string") {
+            throw new Error(e.message);
           }
           if (e.t === "log" && typeof e.text === "string") {
             log(e.text, (e.level as LogLine["level"]) || "info");
@@ -354,6 +361,12 @@ export function BuilderView({
         });
       }
       setFiles(current);
+      if (!current.length) {
+        setError("Build finished but no files were written. Try Generate again or refine the plan.");
+        setPhase("review");
+        log("no files produced", "warn");
+        return;
+      }
       setPhase("ready");
       setFinalMsg(`Built ${current.length} files for "${plan.title}".`);
       const opts = ["Add a contact page", "Refine mobile layout", "Change the colors", "Add animations"];
