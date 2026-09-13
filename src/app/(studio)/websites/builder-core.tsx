@@ -465,21 +465,23 @@ export function BuilderView({
 
   if (phase === "idle" && !files.length) {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col items-center justify-center gap-6 px-4">
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-2xl flex-col items-center justify-center gap-5 px-4">
         <TroveOrb size={48} />
-        <h1 className="text-center text-[28px] font-semibold text-ink">What should we build?</h1>
-        {mobile ? (
-          <MobileComposer onSend={send} placeholder="Describe a site…" />
-        ) : (
-          <Composer onSend={send} placeholder="Describe a site…" />
-        )}
+        <h1 className="text-center text-[28px] font-semibold tracking-tight text-ink">What should we build?</h1>
+        <div className="w-full max-w-xl">
+          {mobile ? (
+            <MobileComposer onSend={send} placeholder="Describe a site…" />
+          ) : (
+            <Composer onSend={send} placeholder="Describe a site…" compact autoFocus />
+          )}
+        </div>
         <div className="flex flex-wrap justify-center gap-2">
           {IDEAS.map((x) => (
             <button
               key={x}
               type="button"
               onClick={() => void ask(x)}
-              className="rounded-full border border-line px-3 py-1.5 text-[12.5px] text-ink-3 hover:text-ink"
+              className="rounded-full border border-line bg-raised/80 px-3 py-1.5 text-[12.5px] text-ink-3 hover:border-line-strong hover:text-ink"
             >
               {x}
             </button>
@@ -599,7 +601,7 @@ export function BuilderView({
             {mobile ? (
               <MobileComposer onSend={send} placeholder={busy ? "Working…" : "Ask for changes…"} disabled={busy} />
             ) : (
-              <Composer onSend={send} placeholder={busy ? "Working…" : "Ask for changes…"} disabled={busy} />
+              <Composer onSend={send} placeholder={busy ? "Working…" : "Ask for changes…"} disabled={busy} compact />
             )}
           </div>
         </aside>
