@@ -5,10 +5,7 @@ import { AdminView } from "./admin-view";
 export const dynamic = "force-dynamic";
 
 /**
- * Admin is never "just a route". Access requires:
- * 1. Signed-in session
- * 2. emailVerified === true
- * 3. email listed in ADMIN_EMAILS (comma-separated env)
+ * Admin requires signed-in session + email in ADMIN_EMAILS env.
  */
 function isAdminEmail(email: string) {
   const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
@@ -23,12 +20,9 @@ function isAdminEmail(email: string) {
 export default async function AdminPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=/admin");
-  if (!user.emailVerified) {
-    redirect("/verify-email?next=/admin");
-  }
   if (!isAdminEmail(user.email)) {
     redirect("/dashboard");
   }
 
-  return <AdminView email={user.email} />;
+  return <AdminView userEmail={user.email} />;
 }
