@@ -516,7 +516,7 @@ export function BuilderView({
             {(phase === "asking" || phase === "planning") && <Thinking phase={phase} logs={logs} />}
             {phase === "building" && (
               <div className="space-y-1">
-                <ProcessRow kind="work" label="Writing files…" active />
+                <ProcessRow kind="cmd" label="Writing files…" active />
                 <WorkingTimer secs={workSecs} />
               </div>
             )}
