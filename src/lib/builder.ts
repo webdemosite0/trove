@@ -56,33 +56,118 @@ export interface BuildPlan {
  * Inlines siblings into index.html so the preview renders from a single
  * srcdoc string. The iframe has no origin of its own, so a relative
  * <link href="styles.css"> would resolve against the app and 404.
+ *
+ * Also builds a lightweight React CDN preview when the project is JSX and
+ * has no static index.html — enough to show the UI in the pane without a
+ * real Vite server.
  */
 export function bundle(files: ProjectFile[], entry = "index.html"): string {
-  const index = files.find((f) => f.path === entry) ?? files.find((f) => f.path.endsWith(".html"));
-  if (!index) return "";
-  let html = index.content;
+  const index =
+    files.find((f) => f.path === entry) ??
+    files.find((f) => f.path === "index.html" || f.path.endsWith("/index.html")) ??
+    files.find((f) => f.path.endsWith(".html"));
 
-  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (index) {
+    let html = index.content;
+    const basename = (p: string) => p.split("/").pop() || p;
+    const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-  for (const f of files) {
-    if (f === index) continue;
-    if (f.path.endsWith(".css")) {
-      html = html.replace(
-        new RegExp(`<link[^>]*href=["']\\.?/?${esc(f.path)}["'][^>]*>`, "gi"),
-        `<style>\n${f.content}\n</style>`,
-      );
-    }
-    if (f.path.endsWith(".js")) {
-      html = html.replace(
-        new RegExp(
-          `<script[^>]*src=["']\\.?/?${esc(f.path)}["'][^>]*>\\s*</script>`,
+    for (const f of files) {
+      if (f === index) continue;
+      const name = basename(f.path);
+      if (f.path.endsWith(".css") || name.endsWith(".css")) {
+        const re = new RegExp(
+          `<link[^>]*href=["'][^"']*${esc(name)}["'][^>]*>`,
           "gi",
-        ),
-        `<script>\n${f.content}\n</script>`,
-      );
+        );
+        if (re.test(html)) {
+          html = html.replace(re, `<style>\n${f.content}\n</style>`);
+        } else if (/<\/head>/i.test(html)) {
+          html = html.replace(
+            /<\/head>/i,
+            `<style data-trove="${name}">\n${f.content}\n</style>\n</head>`,
+          );
+        } else {
+          html = `<style>\n${f.content}\n</style>\n` + html;
+        }
+      }
+      if (
+        (f.path.endsWith(".js") && !f.path.endsWith(".jsx")) ||
+        (name.endsWith(".js") && !name.endsWith(".jsx"))
+      ) {
+        const re = new RegExp(
+          `<script[^>]*src=["'][^"']*${esc(name)}["'][^>]*>\s*</script>`,
+          "gi",
+        );
+        if (re.test(html)) {
+          html = html.replace(re, `<script>\n${f.content}\n</script>`);
+        } else if (/<\/body>/i.test(html)) {
+          html = html.replace(
+            /<\/body>/i,
+            `<script data-trove="${name}">\n${f.content}\n</script>\n</body>`,
+          );
+        } else {
+          html = html + `\n<script>\n${f.content}\n</script>`;
+        }
+      }
     }
+    return html;
   }
-  return html;
+
+  // No HTML entry — try a React/JSX live preview via CDN
+  return reactCdnPreview(files);
+}
+
+/** Best-effort in-browser preview for Vite/React file sets (no npm). */
+function reactCdnPreview(files: ProjectFile[]): string {
+  const app =
+    files.find((f) => /(?:^|\/)App\.(jsx|tsx|js)$/i.test(f.path)) ??
+    files.find((f) => /src\/main\.(jsx|tsx|js)$/i.test(f.path));
+  if (!app) return "";
+
+  const css = files
+    .filter((f) => f.path.endsWith(".css"))
+    .map((f) => f.content)
+    .join("\n");
+
+  // Strip import/export so Babel standalone can run a single component file
+  let body = app.content
+    .replace(/^import\s+.+?;?\s*$/gm, "")
+    .replace(/export\s+default\s+function\s+/g, "function ")
+    .replace(/export\s+default\s+/g, "const __App = ")
+    .replace(/export\s+\{[^}]+\};?/g, "");
+
+  if (!/const __App\s*=/.test(body) && /function\s+App\b/.test(body)) {
+    body += "\nconst __App = App;\n";
+  }
+  if (!/const __App\s*=/.test(body)) {
+    body += "\nconst __App = typeof App !== 'undefined' ? App : () => null;\n";
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Preview</title>
+<style>
+  html, body, #root { margin: 0; min-height: 100%; }
+  body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+${css}
+</style>
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"><\/script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"><\/script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+${body}
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(__App));
+<\/script>
+</body>
+</html>`;
 }
 
 /** Merges freshly written files over the existing set, preserving order. */
