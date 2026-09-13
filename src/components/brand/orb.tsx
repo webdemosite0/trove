@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/utils";
+import "./orb.css";
 
 export type OrbState = "idle" | "thinking" | "working" | "done" | "error";
 
