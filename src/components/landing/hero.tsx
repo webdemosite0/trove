@@ -1,242 +1,183 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import type { IconType } from "@/components/ui/icons";
-import {
-  FiArrowRight,
-  TbLayoutGrid,
-  TbWorld,
-  TbFileText,
-  TbRobot,
-  FiZap,
-  FiShield,
-  FiDownload,
-} from "@/components/ui/icons";
-import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 
-interface Lane {
-  id: string;
-  label: string;
-  icon: IconType;
-  motion: Motion;
-  placeholder: string;
-  examples: string[];
-  href?: string;
-}
-
-const LANES: Lane[] = [
-  {
-    id: "site",
-    label: "Sites",
-    icon: TbWorld,
-    motion: "spin",
-    placeholder: "Build a working tic-tac-toe game with score and restart…",
-    examples: ["Landing page", "Portfolio", "Online shop", "Tic-tac-toe"],
-  },
-  {
-    id: "docs",
-    label: "Docs",
-    icon: TbFileText,
-    motion: "stack",
-    placeholder: "Write a project proposal for a six-week design retainer…",
-    examples: ["Proposal", "Report", "Postmortem", "Spreadsheet"],
-  },
-  {
-    id: "agents",
-    label: "Agents",
-    icon: TbRobot,
-    motion: "scan",
-    placeholder: "Create an agent that answers questions about our pricing…",
-    examples: ["Support agent", "Researcher", "Editor", "Analyst"],
-  },
-  {
-    id: "code",
-    label: "Code",
-    icon: TbLayoutGrid,
-    motion: "type",
-    placeholder: "Write a TypeScript function that parses a CSV safely…",
-    examples: ["API endpoint", "Migration", "Test suite", "CLI tool"],
-  },
+const PROMPTS = [
+  "Build a portfolio site for a freelance motion designer…",
+  "Make a booking site for a specialty coffee roastery…",
+  "Create a landing page for an AI SaaS startup…",
+  "Design an online shop for handmade ceramics…",
+  "Build a case-study site for a design studio…",
 ];
 
-const PILLARS = [
-  {
-    icon: FiZap,
-    title: "Fast when it should be",
-    body: "Short chats skip the heavy path. Deep work still gets full tools.",
-  },
-  {
-    icon: FiShield,
-    title: "Real files, not chat sludge",
-    body: "Sites, docs and code you can download and keep running offline.",
-  },
-  {
-    icon: FiDownload,
-    title: "Preview that works",
-    body: "Interactive builds — games, forms, tools — not empty shells.",
-  },
+const CHIPS = [
+  "Portfolio",
+  "Landing page",
+  "Online shop",
+  "Booking site",
+  "SaaS marketing",
+  "Agency site",
 ];
 
+/**
+ * MagicSlides-inspired hero: centered headline, typing placeholder,
+ * large prompt box, suggestion chips.
+ */
 export function Hero({ freeCredits }: { freeCredits: number }) {
   const router = useRouter();
-  const [lane, setLane] = useState(LANES[0]);
   const [value, setValue] = useState("");
+  const [typed, setTyped] = useState("");
+  const [promptIndex, setPromptIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
-  function go(text: string) {
-    const idea = text.trim();
+  useEffect(() => {
+    if (value) return;
+    const full = PROMPTS[promptIndex];
+    const speed = deleting ? 28 : 42;
+    const t = setTimeout(() => {
+      if (!deleting) {
+        if (charIndex < full.length) {
+          setTyped(full.slice(0, charIndex + 1));
+          setCharIndex((c) => c + 1);
+        } else {
+          setTimeout(() => setDeleting(true), 1400);
+        }
+      } else if (charIndex > 0) {
+        setTyped(full.slice(0, charIndex - 1));
+        setCharIndex((c) => c - 1);
+      } else {
+        setDeleting(false);
+        setPromptIndex((i) => (i + 1) % PROMPTS.length);
+      }
+    }, speed);
+    return () => clearTimeout(t);
+  }, [charIndex, deleting, promptIndex, value]);
+
+  function go(text?: string) {
+    const idea = (text ?? value).trim();
     if (!idea) return;
-    if (lane.id === "site") {
-      router.push(`/websites?q=${encodeURIComponent(idea.slice(0, 2000))}`);
-      return;
-    }
-    router.push(`/chat?q=${encodeURIComponent(idea.slice(0, 2000))}`);
+    router.push(`/websites?q=${encodeURIComponent(idea.slice(0, 2000))}`);
   }
 
   return (
-    <section className="relative px-5 pb-16 pt-14 lg:pb-24 lg:pt-20">
-      <div className="spotlight" />
+    <section className="relative overflow-hidden px-5 pb-20 pt-16 lg:pb-28 lg:pt-24">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(99,102,241,0.12), transparent 60%), radial-gradient(ellipse 50% 40% at 80% 70%, rgba(236,72,153,0.08), transparent), radial-gradient(ellipse 40% 30% at 15% 80%, rgba(34,197,94,0.06), transparent)",
+        }}
+      />
 
       <div className="relative mx-auto max-w-[920px] text-center">
-        <div
-          className="nx-rise mb-6 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1.5 text-[12.5px] font-medium text-accent"
-          style={{ animationFillMode: "backwards" }}
-        >
-          <span className="size-1.5 animate-pulse rounded-full bg-accent" />
-          AI workspace · websites, docs, agents, code
+        <div className="nx-rise mb-6 inline-flex items-center gap-2 rounded-full border border-line bg-raised/80 px-4 py-1.5 text-[13px] text-ink-2 shadow-sm backdrop-blur">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-positive opacity-60" />
+            <span className="relative inline-flex size-2 rounded-full bg-positive" />
+          </span>
+          10,000+ sites built with Trove
         </div>
 
-        <h1 className="nx-rise-big text-[clamp(2.55rem,1.35rem+3.6vw,4.4rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-ink">
-          Build it.{" "}
-          <span className="bg-gradient-to-r from-accent to-[#60a5fa] bg-clip-text text-transparent">
-            Ship the file.
+        <h1 className="nx-rise-big text-[clamp(2.4rem,1.2rem+3.6vw,4.1rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-ink">
+          Trove AI Website Builder
+          <br />
+          <span className="bg-gradient-to-r from-accent via-indigo-400 to-pink-400 bg-clip-text text-transparent">
+            From Idea to Live Site in One Click
           </span>
         </h1>
 
         <p
-          className="nx-rise mx-auto mt-5 max-w-[50ch] text-[17.5px] leading-relaxed text-ink-3"
-          style={{ animationDelay: "60ms", animationFillMode: "backwards" }}
+          className="nx-rise mx-auto mt-5 max-w-[54ch] text-[17px] leading-relaxed text-ink-3"
+          style={{ animationDelay: "80ms", animationFillMode: "backwards" }}
         >
-          Describe the outcome once. Trove plans, builds, and leaves you with
-          real working files — not a chat that disappears.
+          Describe any product, portfolio, or shop. Trove builds a full multi-page
+          site with live preview, refine chat, and one-click publish to{" "}
+          <span className="font-medium text-ink-2">*.troveai.site</span>.
         </p>
 
         <div
-          className="nx-rise mt-8 flex flex-wrap items-center justify-center gap-2"
-          style={{ animationDelay: "110ms", animationFillMode: "backwards" }}
-          role="tablist"
-          aria-label="What to build"
+          className="nx-rise mx-auto mt-10 max-w-[720px]"
+          style={{ animationDelay: "140ms", animationFillMode: "backwards" }}
         >
-          {LANES.map((l) => {
-            const on = l.id === lane.id;
-            return (
-              <button
-                key={l.id}
-                role="tab"
-                aria-selected={on}
-                onClick={() => setLane(l)}
-                className={cn(
-                  "group flex h-10 items-center gap-2 rounded-[var(--r-panel)] border px-3.5 text-[13.5px] font-medium transition-all",
-                  on
-                    ? "border-accent/50 bg-accent/10 text-ink shadow-[0_0_24px_-8px_rgba(124,92,255,0.5)]"
-                    : "border-transparent text-ink-3 hover:bg-hover hover:text-ink",
-                )}
-              >
-                <Ico icon={l.icon} motion={l.motion} size={15} active={on} />
-                {l.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div
-          className="nx-rise mt-5 text-left"
-          style={{ animationDelay: "160ms", animationFillMode: "backwards" }}
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              go(value);
-            }}
-            className="composer rounded-[var(--r-hero)] border border-line-strong/80 bg-raised/90 shadow-[var(--sh-2)] ring-1 ring-accent/10"
-          >
-            <label className="sr-only" htmlFor="hero-idea">
-              Describe what to build
-            </label>
-            <textarea
-              id="hero-idea"
-              rows={2}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  go(value);
-                }
-              }}
-              placeholder={lane.placeholder}
-              className="block max-h-[180px] w-full resize-none bg-transparent px-5 pb-3 pt-5 text-[16.5px] leading-[1.6] text-ink outline-none placeholder:text-ink-4"
-            />
-            <div className="flex items-center gap-2 px-3.5 pb-3.5">
-              <span className="hidden text-[12px] text-ink-4 sm:inline">
-                Enter to start · Shift+Enter for newline
-              </span>
-              <span className="flex-1" />
-              <button
-                type="submit"
-                disabled={!value.trim()}
-                className={cn(
-                  "group flex h-11 items-center gap-2 rounded-[var(--r-panel)] px-5 text-[14.5px] font-semibold transition-all duration-[var(--t-hover)]",
-                  value.trim() ? "btn-grad hover:scale-[1.02]" : "bg-sunk text-ink-4",
-                )}
-              >
-                Build it
-                <Ico icon={FiArrowRight} motion="nudge" size={16} />
-              </button>
+          <div className="rounded-[28px] border border-line bg-raised/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-md">
+            <div className="relative flex min-h-[88px] flex-col rounded-[22px] bg-sunk/40 px-4 py-3">
+              <textarea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    go();
+                  }
+                }}
+                rows={2}
+                className="w-full resize-none bg-transparent text-[15.5px] leading-relaxed text-ink outline-none placeholder:text-ink-4"
+                placeholder=""
+                aria-label="Describe what to build"
+              />
+              {!value && (
+                <span className="pointer-events-none absolute left-4 top-3 max-w-[calc(100%-4rem)] truncate text-left text-[15.5px] text-ink-4">
+                  {typed}
+                  <span className="ml-0.5 inline-block h-[1.1em] w-[2px] animate-pulse bg-accent align-middle" />
+                </span>
+              )}
+              <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                <button
+                  type="button"
+                  className="grid size-9 place-items-center rounded-full text-ink-4 transition hover:bg-hover hover:text-ink"
+                  aria-label="Attach"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go()}
+                  className="grid size-10 place-items-center rounded-full bg-ink text-white transition hover:opacity-90"
+                  aria-label="Build"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </form>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-ink-4">
+            <span>HTML · React · Vite</span>
+            <span>·</span>
+            <span>JPG · PNG</span>
+            <span>·</span>
+            <span>URLs · Figma links</span>
+          </div>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            {CHIPS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => go(`Build a ${c.toLowerCase()} for my business`)}
+                className="rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-accent/40 hover:bg-hover hover:text-ink"
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div
-          className="nx-rise mt-5 flex flex-wrap items-center justify-center gap-2"
-          style={{ animationDelay: "210ms", animationFillMode: "backwards" }}
-        >
-          <span className="text-[13px] text-ink-4">Try</span>
-          {lane.examples.map((e) => (
-            <button
-              key={e}
-              onClick={() => setValue(`${e} — `)}
-              className="rounded-full border border-line bg-rail px-3 py-1.5 text-[13px] text-ink-2 transition-colors hover:border-accent/40 hover:bg-hover hover:text-ink"
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-
-        <div
-          className="nx-rise mx-auto mt-12 grid max-w-[820px] gap-3 sm:grid-cols-3"
-          style={{ animationDelay: "260ms", animationFillMode: "backwards" }}
-        >
-          {PILLARS.map((p) => (
-            <div
-              key={p.title}
-              className="rounded-[18px] border border-line bg-rail/50 px-4 py-4 text-left backdrop-blur-sm"
-            >
-              <p className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
-                <p.icon size={15} className="text-accent" />
-                {p.title}
-              </p>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-3">{p.body}</p>
-            </div>
-          ))}
-        </div>
-
-        <p
-          className="nx-rise mt-8 text-[13.5px] text-ink-4"
-          style={{ animationDelay: "300ms", animationFillMode: "backwards" }}
-        >
-          Free to start · {freeCredits.toLocaleString()} credits every month · no card required
+        <p className="mt-6 text-[13px] text-ink-4">
+          {freeCredits > 0 ? (
+            <>
+              <span className="text-positive">{freeCredits} free credits</span> on signup · No card required
+            </>
+          ) : (
+            "Sign up free · No card required"
+          )}
         </p>
       </div>
     </section>
