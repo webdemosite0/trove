@@ -7,15 +7,17 @@ import { bundle } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 
 function slugify(title: string) {
-  return (title || "site")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40) || `site-${Date.now().toString(36)}`;
+  return (
+    (title || "site")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40) || `site-${Date.now().toString(36)}`
+  );
 }
 
-/** Lovable-style Publish popover. One click → live at {slug}.troveai.site */
+/** Lovable-style Publish popover. Edit slug → live at {slug}.troveai.site */
 export function PublishPanel({
   files,
   title,
@@ -61,7 +63,9 @@ export function PublishPanel({
     setBusy(true);
     setError(null);
     try {
-      const htmlFile = files.find((f) => f.path === "index.html" || f.path.endsWith("/index.html"));
+      const htmlFile = files.find(
+        (f) => f.path === "index.html" || f.path.endsWith("/index.html"),
+      );
       let html = htmlFile?.content ?? "";
       if (!html) {
         try {
@@ -71,7 +75,7 @@ export function PublishPanel({
         }
       }
       if (!html) {
-        throw new Error("No HTML to publish yet. Build an HTML or React site first.");
+        throw new Error("No HTML to publish yet. Build a site first.");
       }
 
       const clean = slugify(slug || title || "site");
@@ -125,7 +129,16 @@ export function PublishPanel({
           !files.length && "opacity-40",
         )}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M12 19V5" />
           <path d="M5 12l7-7 7 7" />
         </svg>
@@ -143,46 +156,66 @@ export function PublishPanel({
 
           <div className="space-y-3 p-4">
             <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <p className="text-[12px] font-medium text-ink-3">Website URL</p>
+              <p className="mb-1.5 text-[12px] font-medium text-ink-3">Website URL</p>
+              <div className="flex items-center gap-2 rounded-[12px] border border-line bg-sunk px-3 py-2.5">
+                <FiLink size={13} className="shrink-0 text-ink-4" />
+                <input
+                  value={slug}
+                  onChange={(e) =>
+                    setSlug(
+                      e.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9-]/g, "-")
+                        .slice(0, 40),
+                    )
+                  }
+                  placeholder="your-site"
+                  className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-ink outline-none placeholder:text-ink-4"
+                  aria-label="Domain slug"
+                />
+                <span className="shrink-0 text-[12px] text-ink-4">.troveai.site</span>
               </div>
-
               {url ? (
-                <div className="flex items-center gap-2 rounded-[12px] border border-line bg-sunk px-3 py-2.5">
+                <div className="mt-2 flex items-center gap-2 rounded-[12px] border border-positive/25 bg-positive/10 px-3 py-2">
                   <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent/15 text-accent">
                     <FiGlobe size={12} />
                   </span>
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink hover:text-accent">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink hover:text-accent"
+                  >
                     {url.replace(/^https?:\/\//, "")}
                   </a>
-                  <button type="button" onClick={copy} className="grid size-7 shrink-0 place-items-center rounded-md text-ink-4 hover:bg-hover hover:text-ink" aria-label="Copy URL">
-                    {copied ? <FiCheck size={13} className="text-positive" /> : <FiCopy size={13} />}
+                  <button
+                    type="button"
+                    onClick={copy}
+                    className="grid size-7 shrink-0 place-items-center rounded-md text-ink-4 hover:bg-hover hover:text-ink"
+                    aria-label="Copy URL"
+                  >
+                    {copied ? (
+                      <FiCheck size={13} className="text-positive" />
+                    ) : (
+                      <FiCopy size={13} />
+                    )}
                   </button>
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="grid size-7 shrink-0 place-items-center rounded-md text-ink-4 hover:bg-hover hover:text-ink" aria-label="Open">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="grid size-7 shrink-0 place-items-center rounded-md text-ink-4 hover:bg-hover hover:text-ink"
+                    aria-label="Open"
+                  >
                     <FiExternalLink size={13} />
                   </a>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2 rounded-[12px] border border-dashed border-line bg-sunk/50 px-3 py-2.5">
-                  <FiLink size={13} className="text-ink-4" />
-                  <input
-                    value={slug}
-                    onChange={(e) =>
-                      setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 40))
-                    }
-                    placeholder="your-site"
-                    className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-4"
-                  />
-                  <span className="shrink-0 text-[12px] text-ink-4">.troveai.site</span>
-                </div>
-              )}
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2.5 rounded-[12px] border border-line bg-sunk/40 px-3 py-2.5">
               <FiGlobe size={14} className="text-ink-3" />
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] text-ink">Visible to anyone with the link</p>
-              </div>
+              <p className="text-[13px] text-ink">Visible to anyone with the link</p>
             </div>
 
             <div className="flex items-center gap-2 px-1">
@@ -191,7 +224,9 @@ export function PublishPanel({
             </div>
 
             {error ? (
-              <p className="rounded-[10px] border border-negative/30 bg-negative/10 px-3 py-2 text-[12.5px] text-negative">{error}</p>
+              <p className="rounded-[10px] border border-negative/30 bg-negative/10 px-3 py-2 text-[12.5px] text-negative">
+                {error}
+              </p>
             ) : null}
 
             <button
@@ -203,7 +238,7 @@ export function PublishPanel({
                 "bg-accent text-white hover:brightness-110 disabled:opacity-50",
               )}
             >
-              {busy ? "Publishing…" : url ? "Publish changes" : "Publish"}
+              {busy ? "Publishing…" : url ? "Update & publish" : "Publish"}
             </button>
           </div>
         </div>
