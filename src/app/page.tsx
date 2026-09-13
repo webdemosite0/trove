@@ -6,44 +6,30 @@ import { Footer } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
 import {
-  AgentFlow,
-  Files,
-  UseCases,
-  PricingPreview,
-  FinalCta,
-} from "@/components/landing/sections";
-import { CapabilityStrip, Outcomes } from "@/components/landing/proof-and-outcomes";
-import {
-  ConnectedWorkspace,
-  HowItWorks,
-  WhyTrust,
-} from "@/components/landing/workspace-and-steps";
-import { Testimonials } from "@/components/landing/testimonials";
+  TrustedBar,
+  FeatureGrid,
+  ProductMockup,
+  HubDiagram,
+  WhyGallery,
+} from "@/components/landing/showcase";
+import { PricingPreview, FinalCta } from "@/components/landing/sections";
 import { Faq } from "@/components/landing/faq";
-import { ProofBar } from "@/components/landing/proof-bar";
-import { Studio } from "@/components/landing/studio";
-import { About } from "@/components/landing/about";
 import { PLANS } from "@/lib/credits";
 
-
-/**
- * The landing page, for people who have not signed in.
- *
- * Deliberately outside the (shell) group so it carries no sidebar — this is a
- * page about the product, not a page of it. Anyone with a session is sent
- * straight to /chat instead; they have already read this.
- *
- * Every section is a component under components/landing, so this file stays a
- * running order rather than two thousand lines of markup.
- */
 /** The landing page is the site's canonical URL; nothing else claims it. */
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
+  title: "Trove — AI Website Builder",
+  description:
+    "From idea to live site in one click. Build, refine, and publish multi-page websites with AI.",
 };
 
+/**
+ * Landing for signed-out visitors.
+ * MagicSlides-inspired: hero prompt, brands + AI models, feature grid,
+ * product mockup, hub diagram, sliding gallery, pricing, FAQ, CTA.
+ */
 export default async function Landing() {
-  // The middleware hands everyone a guest id, so a session cookie — not the
-  // presence of an identity — is what distinguishes a returning user.
   const jar = await cookies();
   if (jar.has("nx_session")) redirect("/chat");
 
@@ -57,33 +43,15 @@ export default async function Landing() {
       <main>
         <Hero freeCredits={free.monthly} />
 
-        <ProofBar />
+        <TrustedBar />
 
-        <CapabilityStrip />
+        <FeatureGrid />
 
-        <div id="capabilities">
-          <Outcomes />
-        </div>
+        <ProductMockup />
 
-        <ConnectedWorkspace />
+        <HubDiagram />
 
-        <div id="agents">
-          <AgentFlow />
-        </div>
-
-        <div id="files">
-          <Files />
-        </div>
-
-        <HowItWorks />
-        <Studio />
-        <UseCases />
-        <WhyTrust />
-        <About />
-
-        {/* No real customers yet, so this renders nothing rather than showing
-            invented quotes. See components/landing/testimonials.tsx. */}
-        <Testimonials />
+        <WhyGallery />
 
         <div id="pricing">
           <PricingPreview plans={PLANS} />
