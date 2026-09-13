@@ -7,25 +7,35 @@ import { ProcessRow, WorkingTimer } from "@/components/builder/process-row";
 type Step = {
   kind: "think" | "cmd" | "connect" | "file" | "ok";
   label: string;
+  connectorId?: string;
 };
 
 const DEFAULT_STEPS: Step[] = [
   { kind: "think", label: "Exploring your request" },
   { kind: "cmd", label: "Planning the answer" },
-  { kind: "connect", label: "Checking connected tools" },
+  { kind: "connect", label: "", connectorId: "github" },
   { kind: "think", label: "Writing the response" },
 ];
 
 /**
  * Live thinking strip — process rows + working timer (Grok-style).
- * Shown while the model is pending and has not streamed text yet.
+ * Connector steps render as "Used GitHub Connector" with the service mark.
  */
 export function ThinkingLine({ labels }: { labels?: string[] }) {
   const steps: Step[] = labels?.length
-    ? labels.map((label, i) => ({
-        kind: (i === 1 ? "cmd" : i === 2 ? "connect" : "think") as Step["kind"],
-        label,
-      }))
+    ? labels.map((label, i) => {
+        const lower = label.toLowerCase();
+        if (lower.includes("github"))
+          return { kind: "connect" as const, label: "", connectorId: "github" };
+        if (lower.includes("vercel"))
+          return { kind: "connect" as const, label: "", connectorId: "vercel" };
+        if (lower.includes("command") || lower.includes("ran"))
+          return { kind: "cmd" as const, label };
+        return {
+          kind: (i === 1 ? "cmd" : "think") as Step["kind"],
+          label,
+        };
+      })
     : DEFAULT_STEPS;
 
   const [started] = useState(() => Date.now());
@@ -52,9 +62,10 @@ export function ThinkingLine({ labels }: { labels?: string[] }) {
       <div className="min-w-0 flex-1 space-y-0.5">
         {steps.slice(0, step + 1).map((s, i) => (
           <ProcessRow
-            key={`${s.label}-${i}`}
+            key={`${s.kind}-${s.label}-${s.connectorId ?? ""}-${i}`}
             kind={s.kind}
             label={s.label}
+            connectorId={s.connectorId}
             active={i === step}
           />
         ))}
