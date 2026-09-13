@@ -174,6 +174,9 @@ export default function RootLayout({
         <StructuredData />
       </head>
       <body className="antialiased">
+        <Script id="puter-quiet" strategy="beforeInteractive">
+          {`window.puter=window.puter||{};window.puter.quiet=true;`}
+        </Script>
         <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
         {children}
       </body>
