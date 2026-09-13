@@ -86,10 +86,11 @@ const ALL = GROUPS.flatMap((g) => g.items);
 
 const SECONDARY: { href: string; label: string; icon: IconType }[] = [
   { href: "/settings", label: "Settings", icon: FiSettings },
-  { href: "/admin", label: "Admin", icon: FiActivity },
   { href: "/integrations", label: "Apps", icon: TbPlugConnected },
   { href: "/plans", label: "Plan", icon: FiCreditCard },
 ];
+
+const ADMIN_ITEM = { href: "/admin", label: "Admin", icon: FiActivity };
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
@@ -129,7 +130,15 @@ function NavRow({
   );
 }
 
-function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void }) {
+function UserMenu({
+  user,
+  onNavigate,
+  isAdmin = false,
+}: {
+  user: User;
+  onNavigate?: () => void;
+  isAdmin?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
@@ -149,7 +158,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
 
   const links = [
     { href: "/settings", label: "Settings", icon: FiSettings },
-    { href: "/admin", label: "Admin", icon: FiActivity },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: FiActivity }] : []),
     { href: "/plans", label: "Plan", icon: FiCreditCard },
     { href: "/dashboard", label: "Home", icon: FiHome },
   ];
@@ -220,13 +229,16 @@ function RailBody({
   balance,
   onNavigate,
   onCollapse,
+  isAdmin = false,
 }: {
   user: User | null;
   balance: Balance | null;
   onNavigate?: () => void;
   onCollapse?: () => void;
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
+  const secondary = isAdmin ? [ADMIN_ITEM, ...SECONDARY] : SECONDARY;
 
   return (
     <>
@@ -285,7 +297,7 @@ function RailBody({
         <CreditMeter balance={balance} />
 
         {user ? (
-          <UserMenu user={user} onNavigate={onNavigate} />
+          <UserMenu user={user} isAdmin={isAdmin} onNavigate={onNavigate} />
         ) : (
           <Link
             href="/login"
@@ -300,7 +312,7 @@ function RailBody({
         )}
 
         <div className="flex items-center gap-0.5 border-t border-line pt-2">
-          {SECONDARY.map((x) => (
+          {secondary.map((x) => (
             <Tooltip key={x.href} label={x.label} side="top">
               <Link
                 href={x.href}
@@ -323,9 +335,11 @@ function RailBody({
 export function Sidebar({
   user,
   balance,
+  isAdmin = false,
 }: {
   user: User | null;
   balance: Balance | null;
+  isAdmin?: boolean;
 }) {
   const { open, setOpen, collapsed, setCollapsed } = useNav();
   const pathname = usePathname();
@@ -388,6 +402,7 @@ export function Sidebar({
             <RailBody
               user={user}
               balance={balance}
+              isAdmin={isAdmin}
               onCollapse={() => {
                 setPeek(false);
                 setCollapsed(true);
@@ -461,11 +476,16 @@ export function Sidebar({
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"
-              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink"
+              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
             >
               <FiX size={17} />
             </button>
-            <RailBody user={user} balance={balance} onNavigate={() => setOpen(false)} />
+            <RailBody
+              user={user}
+              balance={balance}
+              isAdmin={isAdmin}
+              onNavigate={() => setOpen(false)}
+            />
           </div>
         </div>
       ) : null}
