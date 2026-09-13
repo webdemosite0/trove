@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Optional sandbox SDKs — loaded only at runtime when E2B_API_KEY is set.
+  // Without this, Next still tries to resolve them during "Collecting page data".
+  serverExternalPackages: ["@e2b/code-interpreter", "e2b"],
+
   // Turbopack resolves the workspace root from the nearest lockfile; be explicit
   // so a stray lockfile above this folder cannot change the build.
   turbopack: { root: __dirname },
