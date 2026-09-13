@@ -11,9 +11,6 @@ const inter = Inter({
   display: "swap",
 });
 
-// The wordmark only. A geometric sans with near-circular bowls, matching the
-// supplied artwork — the earlier serif was a different brand direction and the
-// reference settles it. Heavy weights only: this face never sets body copy.
 const display = Poppins({
   variable: "--font-display-face",
   subsets: ["latin"],
@@ -37,6 +34,11 @@ export const metadata: Metadata = {
   description: site.metaDescription,
   keywords: [...site.keywords],
   applicationName: site.name,
+  icons: {
+    icon: [{ url: "/icon", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+    shortcut: "/icon",
+  },
   category: "technology",
   authors: [{ name: site.name }],
   creator: site.name,
@@ -89,7 +91,12 @@ function StructuredData() {
         "@id": `${site.url}/#organization`,
         name: site.name,
         url: site.url,
-        logo: `${site.url}/icon`,
+        logo: {
+          "@type": "ImageObject",
+          url: `${site.url}/apple-icon`,
+          width: 180,
+          height: 180,
+        },
         description: site.shortDescription,
       },
       {
@@ -167,9 +174,6 @@ export default function RootLayout({
         <StructuredData />
       </head>
       <body className="antialiased">
-        {/* Puter.js — free serverless AI + storage, no developer API keys.
-            Users pay their own usage (User-Pays). Enables puter.ai.chat and
-            puter.ai.txt2img from the browser. */}
         <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
         {children}
       </body>
