@@ -1,1 +1,3 @@
-see-tmp
+"use client";
+
+export { BuilderView } from "./builder-core";
