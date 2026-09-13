@@ -5,8 +5,7 @@ export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
 /**
- * iOS home-screen icon — full detail (moon + gloss).
- * System applies the rounded mask; we fill the square.
+ * iOS home-screen icon — cyan planet + violet–sky ring.
  */
 export default function AppleIcon() {
   return new ImageResponse(
@@ -18,54 +17,46 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #1a1640 0%, #08090d 55%, #05060a 100%)",
+          background: "linear-gradient(145deg, #1e2438 0%, #0a0c12 55%, #06070a 100%)",
         }}
       >
-        <svg width="148" height="148" viewBox="0 0 48 48" fill="none">
+        <svg width="140" height="140" viewBox="0 0 48 48" fill="none">
           <defs>
-            <linearGradient id="r" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0" stopColor="#f0abfc" />
-              <stop offset="0.35" stopColor="#a78bfa" />
-              <stop offset="0.7" stopColor="#38bdf8" />
-              <stop offset="1" stopColor="#2dd4bf" />
+            <linearGradient id="ring" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stopColor="#a78bfa" />
+              <stop offset="0.4" stopColor="#6366f1" />
+              <stop offset="0.75" stopColor="#38bdf8" />
+              <stop offset="1" stopColor="#22d3ee" />
             </linearGradient>
-            <radialGradient id="b" cx="0.34" cy="0.28" r="0.88">
-              <stop offset="0" stopColor="#3b2a7a" />
-              <stop offset="0.5" stopColor="#1a1140" />
-              <stop offset="1" stopColor="#06040f" />
+            <radialGradient id="body" cx="0.32" cy="0.28" r="0.88">
+              <stop offset="0" stopColor="#99f6e4" />
+              <stop offset="0.3" stopColor="#2dd4bf" />
+              <stop offset="0.55" stopColor="#0ea5e9" />
+              <stop offset="0.85" stopColor="#1e40af" />
+              <stop offset="1" stopColor="#0f172a" />
             </radialGradient>
-            <radialGradient id="g" cx="0.32" cy="0.26" r="0.5">
+            <radialGradient id="gloss" cx="0.3" cy="0.25" r="0.45">
               <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
               <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
             </radialGradient>
           </defs>
-          <g transform="rotate(16 24 24)">
-            <ellipse
-              cx="24"
-              cy="24"
-              rx="21"
-              ry="7.8"
-              stroke="#a5b4fc"
-              strokeWidth="1.1"
-              opacity="0.55"
-            />
-            <circle cx="24" cy="16.2" r="1.5" fill="#e9d5ff" />
-          </g>
-          <g transform="rotate(-24 24 24)">
+          <circle cx="24" cy="24" r="20" fill="#0f1420" opacity="0.5" />
+          <g transform="rotate(-28 24 24)">
             <path
               d="M5 24 A19 7 0 0 1 43 24"
-              stroke="url(#r)"
-              strokeWidth="1.7"
+              stroke="url(#ring)"
+              strokeWidth="2.2"
               strokeLinecap="round"
-              opacity="0.75"
+              opacity="0.7"
             />
-            <circle cx="24" cy="24" r="13.2" fill="url(#b)" />
-            <circle cx="24" cy="24" r="13.2" fill="url(#g)" />
-            <circle cx="24" cy="24" r="13.2" fill="none" stroke="url(#r)" strokeWidth="1.2" />
+          </g>
+          <circle cx="24" cy="24" r="12.2" fill="url(#body)" />
+          <circle cx="24" cy="24" r="12.2" fill="url(#gloss)" />
+          <g transform="rotate(-28 24 24)">
             <path
               d="M43 24 A19 7 0 0 1 5 24"
-              stroke="url(#r)"
-              strokeWidth="2.5"
+              stroke="url(#ring)"
+              strokeWidth="2.8"
               strokeLinecap="round"
             />
           </g>
