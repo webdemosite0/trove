@@ -5,9 +5,35 @@ export const maxDuration = 120;
 
 /**
  * Optional E2B cloud sandbox for live React/Vite preview.
- * Without E2B_API_KEY the builder falls back to srcdoc (HTML) or shows
- * the console/terminal path. Never hard-fail the whole product.
+ * Packages are loaded only at runtime via opaque dynamic import so the app
+ * builds without @e2b/code-interpreter or e2b installed.
  */
+async function loadSandboxCtor(): Promise<any | null> {
+  // String variables + webpackIgnore stop Next/webpack from resolving these
+  // modules at build time (they are optional).
+  const pkgA = "@e2b/code-interpreter";
+  const pkgB = "e2b";
+  try {
+    // @ts-expect-error optional peer — may be absent
+    const mod = await import(/* webpackIgnore: true */ pkgA).catch(() => null);
+    if (mod) {
+      return (mod as any).Sandbox ?? (mod as any).default?.Sandbox ?? null;
+    }
+  } catch {
+    /* not installed */
+  }
+  try {
+    // @ts-expect-error optional peer — may be absent
+    const alt = await import(/* webpackIgnore: true */ pkgB).catch(() => null);
+    if (alt) {
+      return (alt as any).Sandbox ?? (alt as any).default?.Sandbox ?? null;
+    }
+  } catch {
+    /* not installed */
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const key = process.env.E2B_API_KEY?.trim();
   if (!key) {
@@ -27,19 +53,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No files" }, { status: 400 });
     }
 
-    let Sandbox: any;
-    try {
-      const mod = await import("@e2b/code-interpreter").catch(() => null);
-      if (!mod) {
-        const alt = await import("e2b").catch(() => null);
-        Sandbox = (alt as any)?.Sandbox ?? (alt as any)?.default?.Sandbox;
-      } else {
-        Sandbox = (mod as any).Sandbox ?? (mod as any).default?.Sandbox;
-      }
-    } catch {
-      Sandbox = null;
-    }
-
+    const Sandbox = await loadSandboxCtor();
     if (!Sandbox) {
       return NextResponse.json({
         ok: false,
@@ -64,7 +78,9 @@ export async function POST(req: NextRequest) {
 
     const hasPkg = files.some((f) => f.path === "package.json" || f.path.endsWith("/package.json"));
     const hasVite = files.some((f) => /vite\.config\.(js|ts|mjs)/.test(f.path));
-    const hasNext = files.some((f) => f.path === "next.config.js" || f.path === "next.config.mjs" || f.path === "next.config.ts");
+    const hasNext = files.some(
+      (f) => f.path === "next.config.js" || f.path === "next.config.mjs" || f.path === "next.config.ts",
+    );
 
     if (hasPkg) {
       await sandbox.commands.run(`cd ${root} && npm install --prefer-offline --no-audit --no-fund`, {
@@ -75,7 +91,9 @@ export async function POST(req: NextRequest) {
     let previewUrl: string | null = null;
 
     if (hasNext) {
-      sandbox.commands.run(`cd ${root} && npx next dev -H 0.0.0.0 -p 3000`, { background: true, timeoutMs: 0 }).catch(() => null);
+      sandbox.commands
+        .run(`cd ${root} && npx next dev -H 0.0.0.0 -p 3000`, { background: true, timeoutMs: 0 })
+        .catch(() => null);
       await new Promise((r) => setTimeout(r, 8000));
       const host = await sandbox.getHost(3000);
       previewUrl = `https://${host}`;
@@ -94,7 +112,9 @@ export async function POST(req: NextRequest) {
       const host = await sandbox.getHost(5173);
       previewUrl = `https://${host}`;
     } else {
-      sandbox.commands.run(`cd ${root} && npx --yes serve -l 3000`, { background: true, timeoutMs: 0 }).catch(() => null);
+      sandbox.commands
+        .run(`cd ${root} && npx --yes serve -l 3000`, { background: true, timeoutMs: 0 })
+        .catch(() => null);
       await new Promise((r) => setTimeout(r, 4000));
       const host = await sandbox.getHost(3000);
       previewUrl = `https://${host}`;
