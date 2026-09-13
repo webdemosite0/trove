@@ -2,22 +2,33 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { AdminView } from "./admin-view";
 
-export const metadata = { title: "Admin · Trove" };
+export const dynamic = "force-dynamic";
 
-function isAdmin(email: string, plan: string) {
-  const allow = (process.env.ADMIN_EMAILS || "")
+/**
+ * Admin is never "just a route". Access requires:
+ * 1. Signed-in session
+ * 2. emailVerified === true
+ * 3. email listed in ADMIN_EMAILS (comma-separated env)
+ */
+function isAdminEmail(email: string) {
+  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+  const list = raw
     .split(",")
-    .map((s) => s.trim().toLowerCase())
+    .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  if (plan === "admin") return true;
-  if (allow.length && allow.includes(email.toLowerCase())) return true;
-  return false;
+  if (!list.length) return false;
+  return list.includes(email.toLowerCase());
 }
 
 export default async function AdminPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=/admin");
-  if (!user.emailVerified) redirect("/verify-email?next=/admin");
-  if (!isAdmin(user.email, user.plan)) redirect("/dashboard");
-  return <AdminView email={user.email} />;
+  if (!user.emailVerified) {
+    redirect("/verify-email?next=/admin");
+  }
+  if (!isAdminEmail(user.email)) {
+    redirect("/dashboard");
+  }
+
+  return <AdminView userEmail={user.email} />;
 }
