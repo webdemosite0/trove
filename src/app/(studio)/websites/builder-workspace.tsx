@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
 import { FiArrowLeft, FiFile, TbWorld, TbTerminal2, TbCode, TbFiles } from "@/components/ui/icons";
@@ -39,6 +39,63 @@ const PANES: { id: Pane; icon: typeof TbWorld; label: string; motion: Motion }[]
   { id: "code", icon: TbCode, label: "Code", motion: "type" },
   { id: "console", icon: TbTerminal2, label: "Console", motion: "scan" },
 ];
+
+/** Lightweight markdown for builder chat bubbles — bold, lists, paragraphs. */
+function formatChat(text: string) {
+  const blocks = text.split(/\n{2,}/).filter(Boolean);
+  return blocks.map((block, bi) => {
+    const lines = block.split("\n");
+    if (lines.every((l) => /^\s*[-•*]\s+/.test(l))) {
+      return (
+        <ul key={bi} className="list-disc space-y-1 pl-4">
+          {lines.map((l, i) => (
+            <li key={i}>{inlineFmt(l.replace(/^\s*[-•*]\s+/, ""))}</li>
+          ))}
+        </ul>
+      );
+    }
+    return (
+      <p key={bi} className="whitespace-pre-wrap leading-relaxed">
+        {lines.map((l, i) => (
+          <span key={i}>
+            {i > 0 ? <br /> : null}
+            {inlineFmt(l)}
+          </span>
+        ))}
+      </p>
+    );
+  });
+}
+
+function inlineFmt(text: string) {
+  const parts: ReactNode[] = [];
+  const re = /\*\*([^*]+)\*\*|`([^`]+)`/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let k = 0;
+  while ((m = re.exec(text))) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    if (m[1]) {
+      parts.push(
+        <strong key={k++} className="font-semibold text-ink">
+          {m[1]}
+        </strong>,
+      );
+    } else if (m[2]) {
+      parts.push(
+        <code
+          key={k++}
+          className="rounded bg-sunk px-1 py-0.5 font-mono text-[0.9em] text-ink-2"
+        >
+          {m[2]}
+        </code>,
+      );
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length ? parts : text;
+}
 
 function Thinking({ phase, logs }: { phase: "asking" | "planning"; logs: { text: string }[] }) {
   const [started] = useState(() => Date.now());
@@ -311,7 +368,6 @@ export function BuilderView({
               return [...t, task];
             });
           }
-          // API sends one { t: "file", path, content } per write — also accept batch "files"
           if (e.t === "file" && typeof e.path === "string" && typeof e.content === "string") {
             acc = mergeFiles(acc, [{ path: e.path as string, content: e.content as string }]);
             setFiles(acc);
@@ -543,9 +599,20 @@ export function BuilderView({
         <aside className="flex w-full max-w-[380px] shrink-0 flex-col border-r border-line bg-raised">
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
             {messages.map((m) => (
-              <div key={m.id} className={cn("rounded-[12px] px-3 py-2 text-[13.5px] leading-relaxed",
-                m.role === "user" ? "ml-6 bg-accent/15 text-ink" : "mr-2 border border-line bg-sunk text-ink-2")}>
-                {m.text}
+              <div
+                key={m.id}
+                className={cn(
+                  "rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-[1.65]",
+                  m.role === "user"
+                    ? "ml-6 bg-accent/15 text-ink"
+                    : "mr-1 space-y-2 border border-line/80 bg-sunk/80 text-ink-2",
+                )}
+              >
+                {m.role === "user" ? (
+                  <span className="whitespace-pre-wrap">{m.text}</span>
+                ) : (
+                  formatChat(m.text)
+                )}
               </div>
             ))}
             {(phase === "asking" || phase === "planning") && <Thinking phase={phase} logs={logs} />}
