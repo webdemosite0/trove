@@ -1,39 +1,6 @@
 import "server-only";
 import { site } from "@/lib/site";
 
-/**
- * Outbound email, over whichever transport is configured.
- *
- * Two are supported, and they suit different situations:
- *
- *   Resend — an HTTP API. Nothing to keep open, which is the right shape for
- *   serverless: a function that runs for two seconds cannot usefully hold a
- *   socket to a mail server.
- *
- *     RESEND_API_KEY=re_...
- *     MAIL_FROM="Trove <official@troveai.site>"
- *
- *   SMTP — an ordinary mailbox, the kind that comes with a domain. Slower,
- *   because it opens a TLS connection and speaks a conversation before it can
- *   send anything, but it means the mailbox already paid for is the one that
- *   sends, rather than signing up to a second service to send from the same
- *   address.
- *
- *     SMTP_HOST=mail.spacemail.com
- *     SMTP_PORT=465
- *     SMTP_USER=official@troveai.site
- *     SMTP_PASSWORD=...
- *     MAIL_FROM="Trove <official@troveai.site>"
- *
- * Resend wins when both are set — it is the faster path and the one that does
- * not hold a connection open.
- *
- * Whichever is used, the from-address must belong to a domain that transport
- * is allowed to send for. Resend's sandbox sender only delivers to the account
- * owner, and an SMTP server will refuse a From it does not own; both look like
- * "verification is broken" to everyone except the person testing it.
- */
-
 type Transport = "resend" | "smtp" | "none";
 
 function smtpConfigured(): boolean {
@@ -46,7 +13,6 @@ function smtpConfigured(): boolean {
 
 function transport(): Transport {
   const from = process.env.MAIL_FROM?.trim();
-  // MAIL_FROM is required either way: a message with no From is not a message.
   if (!from) return "none";
   if (process.env.RESEND_API_KEY?.trim()) return "resend";
   if (smtpConfigured()) return "smtp";
@@ -57,24 +23,16 @@ export function mailerConfigured(): boolean {
   return transport() !== "none";
 }
 
-/** Which one is live, for the setup screen and /api/health. */
 export function mailTransport(): Transport {
   return transport();
 }
 
-/**
- * Whether a second transport is standing by if the first one fails.
- *
- * Surfaced so "resend" in the health output can be read correctly: with a
- * backup present a stale key costs a retry, without one it costs the signup.
- */
 export function mailFallback(): Transport | null {
   return transport() === "resend" && smtpConfigured() ? "smtp" : null;
 }
 
 export interface MailResult {
   sent: boolean;
-  /** Why not, when sent is false. Never shown to the person signing up. */
   reason?: string;
 }
 
@@ -89,8 +47,6 @@ export async function sendMail(opts: MailOptions): Promise<MailResult> {
   const via = transport();
 
   if (via === "none") {
-    // Development, and any deploy where mail was never set up. The link is
-    // logged so the flow is still walkable; see verificationEnforced().
     console.warn(
       `mail: not configured, so nothing was sent to ${opts.to}.\n` +
         `      Subject: ${opts.subject}\n` +
@@ -104,16 +60,6 @@ export async function sendMail(opts: MailOptions): Promise<MailResult> {
   const first = await sendViaResend(opts);
   if (first.sent) return first;
 
-  /**
-   * Resend was chosen, Resend failed, and SMTP is also configured — so send it
-   * the other way rather than dropping the message.
-   *
-   * This is not theoretical. Setting up a mailbox while an older RESEND_API_KEY
-   * is still in the environment gives you a deployment that reports "resend",
-   * uses a key that may be stale or for an unverified domain, and silently
-   * fails to deliver the one email that lets people finish signing up. The
-   * working transport is sitting right there.
-   */
   if (smtpConfigured()) {
     console.warn("mail: resend failed, falling back to SMTP");
     const second = await sendViaSmtp(opts);
@@ -155,26 +101,16 @@ async function sendViaResend(opts: MailOptions): Promise<MailResult> {
 
 async function sendViaSmtp(opts: MailOptions): Promise<MailResult> {
   try {
-    // Imported here, not at module scope: nodemailer is a Node-only package
-    // and this module is reached from code that is otherwise happy to be
-    // bundled anywhere.
     const nodemailer = (await import("nodemailer")).default;
-
     const port = Number(process.env.SMTP_PORT?.trim() || 465);
-
     const mailer = nodemailer.createTransport({
       host: process.env.SMTP_HOST!.trim(),
       port,
-      // 465 is implicit TLS; 587 starts plain and upgrades with STARTTLS.
-      // Getting this backwards is the usual cause of a hang rather than an
-      // error, because the client waits for a greeting that never comes.
       secure: port === 465,
       auth: {
         user: process.env.SMTP_USER!.trim(),
         pass: process.env.SMTP_PASSWORD!.trim(),
       },
-      // A serverless function has a hard ceiling on how long it may run. Fail
-      // in ten seconds with a reason rather than being killed at 60 with none.
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 15_000,
@@ -196,16 +132,9 @@ async function sendViaSmtp(opts: MailOptions): Promise<MailResult> {
   }
 }
 
-/**
- * Whether an unverified account is actually blocked.
- *
- * Tied to the mailer being configured, deliberately. Enforcing verification
- * with no way to send the email would brick the app for everyone including its
- * owner, so without a mailer new accounts are marked verified on creation and
- * a warning is logged instead.
- */
+/** Email verification is disabled — accounts work immediately after signup. */
 export function verificationEnforced(): boolean {
-  return mailerConfigured();
+  return false;
 }
 
 export function verificationEmail(name: string, link: string) {
