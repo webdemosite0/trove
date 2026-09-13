@@ -68,14 +68,12 @@ export function Composer({
   );
 
   function grow(el: HTMLTextAreaElement) {
-    // Collapse first so clearing the field does not leave a tall empty box
     el.style.height = "0px";
-    const min = compact ? 40 : 52;
-    const next = Math.min(Math.max(el.scrollHeight, min), compact ? 148 : 160);
+    const min = compact ? 40 : 84;
+    const next = Math.min(Math.max(el.scrollHeight, min), compact ? 148 : 220);
     el.style.height = `${next}px`;
   }
 
-  // Keep height in sync when value is cleared programmatically
   useEffect(() => {
     if (ref.current) grow(ref.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,7 +119,7 @@ export function Composer({
     setFiles([]);
     setError(null);
     if (ref.current) {
-      ref.current.style.height = compact ? "40px" : "52px";
+      ref.current.style.height = compact ? "40px" : "84px";
     }
   }
 
@@ -146,11 +144,11 @@ export function Composer({
         "composer relative overflow-hidden border bg-rail",
         compact
           ? "rounded-[var(--r-panel)]"
-          : "rounded-[20px] shadow-[var(--sh-2)]",
+          : "rounded-[24px] shadow-[var(--sh-2)]",
       )}
     >
       {files.length > 0 ? (
-        <div className="flex flex-wrap gap-2 px-3.5 pt-3">
+        <div className="flex flex-wrap gap-2 px-3.5 pt-3.5">
           {files.map((a, i) => (
             <div
               key={`${a.name}-${i}`}
@@ -215,7 +213,7 @@ export function Composer({
 
       <textarea
         ref={ref}
-        rows={1}
+        rows={compact ? 1 : 3}
         value={value}
         autoFocus={autoFocus}
         disabled={disabled}
@@ -245,14 +243,14 @@ export function Composer({
           "block w-full resize-none overflow-y-auto bg-transparent text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed",
           compact
             ? "min-h-[40px] max-h-[148px] px-3.5 pb-1.5 pt-3 text-[16px] leading-[1.45] sm:text-[13.5px]"
-            : "min-h-[52px] max-h-[160px] px-4 pb-2 pt-3.5 text-[15px] leading-[1.5]",
+            : "min-h-[84px] max-h-[220px] px-5 pb-3 pt-5 text-[16px] leading-[1.6]",
         )}
       />
 
       <div
         className={cn(
           "flex items-center",
-          compact ? "gap-1.5 px-2 pb-2" : "gap-2 border-t border-line/60 px-3 py-2.5",
+          compact ? "gap-1.5 px-2 pb-2" : "gap-2 border-t border-line/70 px-3.5 py-3",
         )}
       >
         {allowAttachments ? (
@@ -296,7 +294,7 @@ export function Composer({
           aria-pressed={voice.listening}
           className={cn(
             "tap-44 group relative grid shrink-0 place-items-center rounded-full transition-colors disabled:opacity-40",
-            compact ? "size-7" : "size-8",
+            compact ? "size-7" : "size-9",
             voice.listening
               ? "bg-critical/15 text-critical"
               : "text-ink-3 hover:bg-hover hover:text-ink",
@@ -305,7 +303,7 @@ export function Composer({
           {voice.listening ? (
             <span className="nx-pulse absolute inset-0 rounded-full bg-critical/20" />
           ) : null}
-          <Ico icon={FiMic} motion="pop" size={compact ? 14 : 16} live={voice.listening} />
+          <Ico icon={FiMic} motion="pop" size={compact ? 14 : 17} live={voice.listening} />
         </button>
 
         <button
@@ -315,7 +313,7 @@ export function Composer({
           className={cn(
             "group grid shrink-0 place-items-center rounded-full",
             "transition-[transform,box-shadow,opacity] duration-[var(--t-tap)] ease-[var(--ease-ui)]",
-            compact ? "size-8" : "size-9",
+            compact ? "size-8" : "size-12",
             ready
               ? "btn-grad hover:shadow-[0_6px_20px_-6px_var(--btn-glow)] active:scale-[0.94]"
               : "bg-raised text-ink-4 opacity-60",
@@ -324,7 +322,7 @@ export function Composer({
           {disabled ? (
             <Ico icon={FiLoader} motion="spin" size={compact ? 14 : 16} live />
           ) : (
-            <Ico icon={FiArrowUp} motion="launch" size={compact ? 15 : 17} />
+            <Ico icon={FiArrowUp} motion="launch" size={compact ? 15 : 19} />
           )}
         </button>
       </div>
