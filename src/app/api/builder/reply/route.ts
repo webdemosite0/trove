@@ -1,93 +1,71 @@
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "@/lib/ai";
-import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const SYSTEM = `You are Trove inside the website builder — a capable product engineer who also chats normally.
-
-Reply like Lovable: warm, concrete, short paragraphs.
-- If they say hi / thanks / a simple question: answer naturally in 1–3 sentences, then invite a site change.
-- If they ask about the project: use the file list and idea; be specific.
-- If they want a change: confirm what you'll do and offer 2–4 options.
-- Never use markdown headings. No "As an AI". No sycophancy.
-- Do NOT output file blocks or code fences unless they asked for code.
-- Keep under ~160 words.
-
-End with a line starting exactly: OPTIONS:
-then 3–4 short chip labels separated by | (under 28 chars each), e.g.
-OPTIONS: Make it darker | Add a page | Improve mobile | What can you do?`;
-
+/**
+ * Lightweight chat for the builder workspace.
+ * Answers generic questions about the current project without rewriting files.
+ * Code-change requests are handled client-side via the step route (refine).
+ */
 export async function POST(req: NextRequest) {
-  let body: {
-    message?: string;
-    idea?: string;
-    title?: string;
-    files?: { path: string; content?: string }[];
-  };
   try {
-    body = await req.json();
-  } catch {
-    return Response.json({ error: "Invalid body." }, { status: 400 });
-  }
-
-  const message = String(body.message ?? "").trim();
-  if (!message) return Response.json({ error: "Empty message." }, { status: 400 });
-
-  let account: { userId: string } | null = null;
-  try {
-    account = await requireCredits();
-  } catch (e) {
-    if (e instanceof OutOfCredits) {
-      return Response.json({ error: e.message }, { status: 402 });
+    const body = await req.json();
+    const message = String(body.message || "").trim();
+    if (!message) {
+      return NextResponse.json({ error: "Empty message" }, { status: 400 });
     }
-    return Response.json({ error: "Sign in to chat." }, { status: 401 });
-  }
 
-  const paths = (body.files ?? []).map((f) => f.path).slice(0, 40);
-  const sample = (body.files ?? [])
-    .slice(0, 6)
-    .map((f) => `${f.path} (${(f.content ?? "").length} chars)`)
-    .join(", ");
+    const idea = String(body.idea || "");
+    const title = String(body.title || idea || "project");
+    const files = Array.isArray(body.files)
+      ? (body.files as { path: string; content: string }[]).slice(0, 24)
+      : [];
 
-  const user =
-    `Project: ${body.title || "Untitled"}\n` +
-    `Original idea: ${body.idea || "(none)"}\n` +
-    `Files (${paths.length}): ${paths.join(", ") || "(none)"}\n` +
-    (sample ? `Sample: ${sample}\n` : "") +
-    `\nUser just said:\n${message}\n\n` +
-    `Reply as a helpful builder chat message. Code changes (if any) happen in a separate step.`;
+    const fileList = files.map((f) => `- ${f.path}`).join("\n") || "(no files yet)";
+    const snippets = files
+      .slice(0, 8)
+      .map((f) => `### ${f.path}\n${(f.content || "").slice(0, 500)}`)
+      .join("\n\n");
 
-  try {
-    const raw = await generateText({
-      system: SYSTEM,
-      turns: [{ role: "user", text: user }],
-      temperature: 0.7,
-      maxOutputTokens: 800,
-      onUsage: (u) => {
-        if (account) void spend(account.userId, "builder-reply", Math.min(u.totalTokens, 2000));
-      },
+    const system = `You are Trove, a calm expert AI website builder assistant.
+You are in an existing project titled "${title}".
+Original idea: ${idea || "(none)"}
+Files in the project:
+${fileList}
+
+Answer clearly and briefly. Help with design advice, structure, next steps, and what the site already does.
+If the user is asking for a code change, say you can apply it — suggest they phrase it as "add …" or "implement …" and the builder will update files.
+Never invent remote image URLs or CDN assets.
+Do not dump full source code unless asked.
+End with 2–4 short follow-up chip suggestions when useful.`;
+
+    const text = await generateText({
+      turns: [{ role: "user", text: message }],
+      system: system + (snippets ? `\n\nPartial file context:\n${snippets}` : ""),
+      temperature: 0.5,
+      maxOutputTokens: 900,
     });
 
-    let text = raw.trim();
-    let options: string[] = [];
-    const optLine = text.match(/OPTIONS:\s*(.+)$/im);
-    if (optLine) {
-      options = optLine[1]
-        .split("|")
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .slice(0, 5);
-      text = text.replace(/\n?OPTIONS:\s*.+$/im, "").trim();
-    }
-    if (!options.length) {
-      options = ["Make it darker", "Add a photo hero", "Improve mobile", "What can you do?"];
+    const reply = (text || "Got it.").trim();
+    const options: string[] = [];
+    const lines = reply.split("\n");
+    for (const line of lines.slice(-6)) {
+      const m = line.match(/^[-•*]\s+(.{8,48})$/);
+      if (m) options.push(m[1].trim());
     }
 
-    return Response.json({ reply: text, options });
+    return NextResponse.json({
+      reply,
+      options:
+        options.length >= 2
+          ? options.slice(0, 4)
+          : ["Add a page", "Refine mobile layout", "What can you change?", "Explain the structure"],
+    });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Reply failed.";
-    return Response.json({ error: message }, { status: 500 });
+    const message = e instanceof Error ? e.message : "Chat failed";
+    console.error("builder/reply", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
