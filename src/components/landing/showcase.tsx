@@ -195,6 +195,7 @@ const GALLERY = [
 export function WhyGallery() {
   return (
     <section className="overflow-hidden px-5 py-20 lg:py-28">
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes trove-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }` }} />
       <div className="mx-auto max-w-[720px] text-center">
         <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-accent">Why Trove</p>
         <h2 className="mt-3 text-[clamp(1.9rem,1.2rem+2vw,3rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink">
