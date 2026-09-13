@@ -3,17 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
-import { FiArrowLeft, FiExternalLink, FiFile, TbWorld, TbTerminal2, TbCode, TbFiles } from "@/components/ui/icons";
+import { FiArrowLeft, FiFile, TbWorld, TbTerminal2, TbCode, TbFiles } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
 import { TroveOrb } from "@/components/brand/orb";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { PlanPanel } from "@/components/builder/plan-panel";
 import { QuestionBox } from "@/components/builder/question-box";
-import { RunPanel } from "@/components/builder/run-panel";
-import { DeployGithubButton } from "@/components/builder/deploy-github";
 import { PublishPanel } from "@/components/builder/publish-panel";
-import { TARGET_LIST, targetFor, type TargetId } from "@/lib/targets";
+import { targetFor, type TargetId } from "@/lib/targets";
 import {
   bundle, mergeFiles, type BuildPlan, type Depth, type LogLine, type PlanStep,
   type ProjectFile, type Question, type Task,
@@ -77,6 +75,7 @@ export function BuilderView({
   const [targetId, setTargetId] = useState<TargetId>("react");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [plan, setPlan] = useState<BuildPlan | null>(null);
+  const [storage, setStorage] = useState<"local" | "none">("local");
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [logs, setLogs] = useState<LogLine[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -377,6 +376,7 @@ export function BuilderView({
             id: `refine-${Date.now()}`,
             title: t.slice(0, 80),
             detail: t,
+            skills: [],
             files: files.map((f) => f.path).slice(0, 12),
           };
           const next = await runStep(step, plan?.style?.name || "clean", files, { index: 0, total: 1 });
@@ -390,7 +390,7 @@ export function BuilderView({
             ...m,
             { id: `a${++msgId.current}`, role: "assistant", text: summary + " Preview refreshed.", options: opts, at: Date.now() },
           ]);
-          persist({ files: next, messages: undefined });
+          persist({ files: next });
         } catch (e) {
           if ((e as Error).name === "AbortError") return;
           const m = e instanceof Error ? e.message : "Update failed.";
@@ -516,19 +516,25 @@ export function BuilderView({
             {(phase === "asking" || phase === "planning") && <Thinking phase={phase} logs={logs} />}
             {phase === "building" && (
               <div className="space-y-1">
-                <ProcessRow kind="build" label="Writing files…" active />
+                <ProcessRow kind="work" label="Writing files…" active />
                 <WorkingTimer secs={workSecs} />
               </div>
             )}
             {finalMsg && phase === "ready" && (
               <div className="rounded-[12px] border border-positive/25 bg-positive/10 px-3 py-2 text-[13px] text-ink-2">{finalMsg}</div>
             )}
-            {error && <FailureNote message={error} onRetry={() => setError(null)} />}
+            {error && <FailureNote error={error} onRetry={() => setError(null)} />}
             {questionsOpen && questions.length > 0 && (
-              <QuestionBox questions={questions} onSubmit={(a) => { setAnswers(a); void plan_(idea, a); }} onSkip={() => void plan_(idea, {})} />
+              <QuestionBox questions={questions} onSubmit={(a) => { setAnswers(a); void plan_(idea, a); }} onSkip={() => void plan_(idea, {})} busy={busy} />
             )}
             {phase === "review" && plan && !questionsOpen && (
-              <PlanPanel plan={plan} onBuild={() => void generate()} onBack={() => setPhase("idle")} />
+              <PlanPanel
+                plan={plan}
+                storage={storage}
+                onStorage={setStorage}
+                onGenerate={() => void generate()}
+                busy={busy}
+              />
             )}
             {chips.length > 0 && phase === "ready" && (
               <div className="flex flex-wrap gap-1.5">
@@ -552,7 +558,7 @@ export function BuilderView({
 
         <main className="min-w-0 flex-1 bg-sunk">
           {pane === "preview" && (
-            <BrowserFrame url={sandboxUrl || (preview ? "localhost:preview" : "about:blank")} loading={phase === "building"}>
+            <BrowserFrame url={sandboxUrl || (preview ? "localhost:preview" : "about:blank")}>
               {preview ? (
                 <iframe title="Preview" srcDoc={preview} className="h-full w-full border-0 bg-white"
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
@@ -583,7 +589,7 @@ export function BuilderView({
           )}
           {pane === "console" && (
             <div className="flex h-full flex-col">
-              <BuildConsole logs={logs} className="min-h-0 flex-1" />
+              <BuildConsole lines={logs} className="min-h-0 flex-1" />
               <ProjectTerminal files={files} className="h-40 shrink-0 border-t border-line" />
             </div>
           )}
