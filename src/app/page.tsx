@@ -5,6 +5,7 @@ import { Backdrop } from "@/components/shell/backdrop";
 import { Footer } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
+import { LandingScene } from "@/components/landing/scene";
 import {
   TrustedBar,
   FeatureGrid,
@@ -33,10 +34,11 @@ export default async function Landing() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      <LandingScene />
       <Backdrop />
       <LandingNav />
 
-      <main>
+      <main className="relative z-10">
         <Hero freeCredits={free.monthly} />
 
         <TrustedBar />
