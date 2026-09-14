@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiX, FiSparkles } from "@/components/ui/icons";
+import { FiX, TbSparkles } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 type Item = {
@@ -78,7 +78,7 @@ export function AnnouncementBanner() {
             </div>
           ) : (
             <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-600 dark:text-indigo-300">
-              <FiSparkles size={18} />
+              <TbSparkles size={18} />
             </span>
           )}
 
