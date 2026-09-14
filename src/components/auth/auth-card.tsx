@@ -9,7 +9,7 @@ import { Ico } from "@/components/ui/ico";
 import { PasswordField } from "@/components/auth/password-field";
 
 const field =
-  "h-11 w-full rounded-[10px] border border-zinc-200 bg-white px-3.5 text-[14.5px] text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20";
+  "h-11 w-full rounded-[12px] border border-zinc-200 bg-white px-3.5 text-[14.5px] text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/5";
 
 const OAUTH_ERRORS: Record<string, string> = {
   "google-unconfigured":
@@ -51,12 +51,12 @@ export function AuthCard({
       </h1>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-zinc-500">
         {isLogin
-          ? "Sign in to continue building on Trove."
-          : "Easily manage sites, agents, and publish live in one place."}
+          ? "Sign in to keep building where you left off."
+          : "Describe the work. Trove builds it — and keeps the files."}
       </p>
 
       {justVerified ? (
-        <div className="mt-5 flex items-start gap-2 rounded-[10px] border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+        <div className="mt-5 flex items-start gap-2 rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-2.5">
           <Ico icon={FiCheck} motion="check" size={14} className="mt-0.5 shrink-0 text-emerald-600" />
           <p className="text-[13px] text-emerald-800">Email confirmed. Sign in to get started.</p>
         </div>
@@ -66,16 +66,16 @@ export function AuthCard({
         <div className="mt-6">
           <a
             href="/api/auth/google"
-            className="flex h-11 items-center justify-center gap-2 rounded-[10px] border border-zinc-200 bg-white text-[13.5px] font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50"
+            className="flex h-11 items-center justify-center gap-2 rounded-[12px] border border-zinc-200 bg-white text-[13.5px] font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50"
           >
-            <FcGoogle size={18} /> Google
+            <FcGoogle size={18} /> Continue with Google
           </a>
         </div>
       ) : null}
 
       <div className="my-5 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-400">
         <span className="h-px flex-1 bg-zinc-200" />
-        or {isLogin ? "sign in" : "sign up"} with
+        or
         <span className="h-px flex-1 bg-zinc-200" />
       </div>
 
@@ -90,12 +90,12 @@ export function AuthCard({
         ) : null}
 
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-medium text-zinc-700">Work Email</span>
+          <span className="mb-1.5 block text-[13px] font-medium text-zinc-700">Email</span>
           <input
             className={field}
             name="email"
             type="email"
-            placeholder="Your email address"
+            placeholder="you@company.com"
             autoComplete="email"
             required
           />
@@ -112,7 +112,7 @@ export function AuthCard({
         </label>
 
         {error ? (
-          <div className="flex items-start gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5">
+          <div className="flex items-start gap-2 rounded-[12px] border border-red-200 bg-red-50 px-3 py-2.5">
             <Ico icon={FiAlertCircle} motion="alert" size={14} className="mt-0.5 shrink-0 text-red-500" />
             <p className="text-[13px] text-red-700">{error}</p>
           </div>
@@ -121,10 +121,10 @@ export function AuthCard({
         <button
           type="submit"
           disabled={pending}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-emerald-500 text-[14.5px] font-semibold text-white shadow-[0_8px_20px_-6px_rgba(16,185,129,0.45)] transition hover:bg-emerald-400 active:scale-[0.99] disabled:opacity-60"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-zinc-900 text-[14.5px] font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.99] disabled:opacity-60"
         >
           {pending ? <Ico icon={FiLoader} motion="spin" size={16} className="animate-spin" /> : null}
-          {isLogin ? "Sign in" : "Sign Up"}
+          {isLogin ? "Sign in" : "Create account"}
         </button>
       </form>
 
