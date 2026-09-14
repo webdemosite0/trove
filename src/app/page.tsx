@@ -13,22 +13,18 @@ import {
   WhyGallery,
 } from "@/components/landing/showcase";
 import { PricingPreview, FinalCta } from "@/components/landing/sections";
+import { ProductProof } from "@/components/landing/product-proof";
+import { TrustSection } from "@/components/landing/trust";
 import { Faq } from "@/components/landing/faq";
 import { PLANS } from "@/lib/credits";
 
-/** The landing page is the site's canonical URL; nothing else claims it. */
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
-  title: "Trove — AI Website Builder",
+  title: "Trove — Turn Prompts Into Real Files",
   description:
-    "From idea to live site in one click. Build, refine, and publish multi-page websites with AI.",
+    "Build websites, documents, spreadsheets, presentations, code, research and AI agents with Trove — then download the actual files. Describe it once. Keep the file.",
 };
 
-/**
- * Landing for signed-out visitors.
- * MagicSlides-inspired: hero prompt, brands + AI models, feature grid,
- * product mockup, hub diagram, sliding gallery, pricing, FAQ, CTA.
- */
 export default async function Landing() {
   const jar = await cookies();
   if (jar.has("nx_session")) redirect("/chat");
@@ -45,9 +41,13 @@ export default async function Landing() {
 
         <TrustedBar />
 
+        <ProductProof />
+
         <FeatureGrid />
 
         <ProductMockup />
+
+        <TrustSection />
 
         <HubDiagram />
 
