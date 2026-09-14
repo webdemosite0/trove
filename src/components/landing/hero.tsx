@@ -28,10 +28,6 @@ const CHIPS: { label: string; icon: typeof FiGlobe }[] = [
   { label: "Agency site", icon: FiGrid },
 ];
 
-/**
- * Large MagicSlides-style prompt box (as before) +
- * brand lines: Describe it once. Keep the file.
- */
 export function Hero({ freeCredits }: { freeCredits: number }) {
   const router = useRouter();
   const [value, setValue] = useState("");
@@ -71,29 +67,6 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
   return (
     <section className="relative overflow-hidden px-5 pb-20 pt-16 lg:pb-28 lg:pt-24">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99,102,241,0.22), transparent 55%), radial-gradient(ellipse 55% 45% at 90% 75%, rgba(236,72,153,0.12), transparent 50%), radial-gradient(ellipse 45% 35% at 5% 85%, rgba(34,197,94,0.10), transparent 50%), radial-gradient(ellipse 40% 30% at 50% 50%, rgba(59,130,246,0.06), transparent 60%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.4]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(128,128,128,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.05) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-          maskImage: "radial-gradient(ellipse 75% 55% at 50% 25%, black, transparent)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-8 -z-10 h-[380px] w-[680px] -translate-x-1/2 rounded-full blur-[90px]"
-        style={{ background: "rgba(99,102,241,0.15)" }}
-      />
-
       <div className="relative mx-auto max-w-[920px] text-center">
         <div className="nx-rise mb-6 inline-flex items-center gap-2 rounded-full border border-line bg-raised/80 px-4 py-1.5 text-[13px] text-ink-2 shadow-sm backdrop-blur">
           <span className="relative flex size-2">
@@ -119,12 +92,11 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           then download the actual files. Refine in the same project.
         </p>
 
-        {/* Large prompt box — same structure as before */}
         <div
           className="nx-rise mx-auto mt-10 max-w-[720px]"
           style={{ animationDelay: "140ms", animationFillMode: "backwards" }}
         >
-          <div className="rounded-[28px] border border-line bg-raised/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-md">
+          <div className="nx-border-glow rounded-[28px] border border-line bg-raised/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-md">
             <div className="relative flex min-h-[88px] flex-col rounded-[22px] bg-sunk/40 px-4 py-3">
               <textarea
                 value={value}
@@ -178,7 +150,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
             <span>URLs · Figma links</span>
           </div>
 
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <div className="nx-stagger-kids mt-5 flex flex-wrap justify-center gap-2">
             {CHIPS.map((chip) => {
               const Icon = chip.icon;
               return (
