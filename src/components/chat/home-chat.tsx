@@ -10,7 +10,7 @@ import { StarterCards } from "@/components/home/starter-cards";
 import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
 import { useChatThread } from "@/lib/use-chat-thread";
 import { ContinuePanel } from "@/components/home/recent-panels";
-import { Aurora } from "@/components/shell/aurora";
+import { SceneDecor } from "@/components/shell/scene-decor";
 import type { Recent } from "@/lib/recents";
 
 export function HomeChat({
@@ -19,60 +19,44 @@ export function HomeChat({
   activity = [],
   draft: initialDraft = "",
 }: {
-  /** A saved thread, when the URL carries ?c=<id>. */
   restored?: { id: string; title: string; messages: { role: "user" | "model"; text: string }[] } | null;
-  /** First name, for the greeting. */
   name?: string;
-  /** Everything recent, across kinds, for the two panels below. */
   activity?: Recent[];
-  /** Prefills the composer, e.g. an idea typed before signing in. */
   draft?: string;
 }) {
   const [draft, setDraft] = useState(initialDraft);
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
 
-  // Transcript, streaming and saving live in the hook, shared with the
-  // mobile chat screen. Only the layout below is desktop-specific.
   const { turns, busy, error, send, retry, regenerate, clear, bottom } = useChatThread({
     restored,
     mode,
   });
 
-  /* ------------------- landing ------------------- */
-
   if (turns.length === 0) {
     return (
-      <div className="relative flex min-h-screen flex-col overflow-hidden">
-        <Aurora />
+      <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
+        <SceneDecor />
 
-        {/* No upsell banner here: /plans has no payment processor wired up, so
-            "Unlock unlimited builds" would promise something it cannot do. */}
-
-        {/* Centred, and vertically weighted around the composer.
-
-            Left-aligned, the hero read as the top of a document with a form
-            under it — the eye started at the corner and had to find the box.
-            Centring puts the one thing worth doing at the optical middle of an
-            empty screen, which is what every tool of this kind does and why
-            they all feel like they are waiting for you. */}
-        <div className="relative flex flex-1 flex-col items-center px-5 pb-14 pt-[8vh] lg:pt-[11vh]">
-          <div className="w-full max-w-[940px] text-center">
+        <div className="relative z-[1] flex flex-1 flex-col items-center px-5 pb-14 pt-[6vh] lg:pt-[9vh]">
+          <div className="w-full max-w-[720px] text-center">
             <div className="nx-rise">
+              <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-indigo-200/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-indigo-600 shadow-sm backdrop-blur-sm">
+                <span className="text-[13px]">✦</span>
+                Powered by Trove AI
+              </div>
               <Greeting name={name} />
-              <h1 className="mt-2.5 text-[clamp(2.25rem,1.15rem+3vw,3.75rem)] font-semibold leading-[1.03] tracking-[-0.02em] text-ink">
+              <h1 className="mt-2.5 text-[clamp(2.1rem,1.1rem+2.8vw,3.35rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">
                 What will you build today?
               </h1>
-              <p className="mx-auto mt-3.5 max-w-[46ch] text-[16.5px] leading-relaxed text-ink-3">
+              <p className="mx-auto mt-3 max-w-[42ch] text-[15.5px] leading-relaxed text-ink-3">
                 Describe an idea, automate a task, or create something new.
               </p>
             </div>
 
             <div
-              className="nx-rise mt-8 text-left"
+              className="nx-rise mt-7 text-left"
               style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
             >
-              {/* Keyed by the draft so a starter card refills an existing
-                  box, rather than an effect syncing a prop into state. */}
               <Composer
                 key={draft}
                 initialValue={draft}
@@ -84,18 +68,13 @@ export function HomeChat({
               />
             </div>
 
-            {/* Starters fill the composer rather than navigating away, so the
-                next thing you do is still typing. */}
-            <StarterCards className="mt-7" onPick={setDraft} />
+            <StarterCards className="mt-6" onPick={setDraft} />
 
             {error ? <ErrorNote message={error} onRetry={retry} /> : null}
 
-            {/* Recent work sits directly under the composer and shares its
-                column width, so the page reads as one centred stack rather
-                than a hero with a separate wide section bolted beneath it. */}
             {activity.length ? (
               <div
-                className="nx-rise mt-11 text-left"
+                className="nx-rise mt-10 text-left"
                 style={{ animationDelay: "220ms", animationFillMode: "backwards" }}
               >
                 <ContinuePanel items={activity} />
@@ -103,12 +82,9 @@ export function HomeChat({
             ) : null}
           </div>
         </div>
-
       </div>
     );
   }
-
-  /* ------------------- conversation ------------------- */
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -156,11 +132,6 @@ export function HomeChat({
   );
 }
 
-/**
- * Kept as a named export because several screens render it; the body now
- * delegates to the shared component so every surface classifies a failure
- * the same way instead of each one printing the raw message.
- */
 export function ErrorNote({
   message,
   onRetry,
