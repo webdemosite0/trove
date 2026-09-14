@@ -33,7 +33,7 @@ const START = [
     href: "/websites",
     Icon: TbWorld,
     tint: "bg-sky-50 border-sky-100 hover:border-sky-300/60 dark:bg-sky-500/10 dark:border-sky-500/20",
-    iconBg: "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
+    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
   {
     label: "Create an AI agent",
@@ -41,7 +41,7 @@ const START = [
     href: "/agents",
     Icon: TbRobot,
     tint: "bg-violet-50 border-violet-100 hover:border-violet-300/60 dark:bg-violet-500/10 dark:border-violet-500/20",
-    iconBg: "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300",
+    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
   {
     label: "Research something",
@@ -49,7 +49,7 @@ const START = [
     href: "/research",
     Icon: TbSearch,
     tint: "bg-cyan-50 border-cyan-100 hover:border-cyan-300/60 dark:bg-cyan-500/10 dark:border-cyan-500/20",
-    iconBg: "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300",
+    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
   {
     label: "Write a document",
@@ -57,7 +57,7 @@ const START = [
     href: "/documents",
     Icon: TbFileText,
     tint: "bg-amber-50 border-amber-100 hover:border-amber-300/60 dark:bg-amber-500/10 dark:border-amber-500/20",
-    iconBg: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
+    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
 ];
 
@@ -185,7 +185,7 @@ export default async function MePage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span className={`grid size-10 place-items-center rounded-xl ${a.iconBg}`}>
-                      <Icon size={20} />
+                      <Icon size={20} strokeWidth={1.75} />
                     </span>
                     <FiArrowRight
                       size={16}
@@ -209,7 +209,7 @@ export default async function MePage() {
                 href={m.href}
                 className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-line-strong hover:text-ink"
               >
-                <Icon size={14} className="text-ink-4" />
+                <Icon size={14} className="text-ink" />
                 {m.label}
               </Link>
             );
