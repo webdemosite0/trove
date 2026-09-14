@@ -24,8 +24,7 @@
   50% { opacity: 0.85; transform: scale(1.06); }
 }
 @keyframes nx-glow-breathe {
-  0%, 100% { opacity: 0.35; filter: blur(40px); }
-  50% { opacity: 0.7; filter: blur(52px); }
+  0%, 100% { opacity: 0.35; filter: blur(40px);n  50% { opacity: 0.7; filter: blur(52px); }
 }
 @keyframes nx-fade-up {
   from { opacity: 0; transform: translateY(18px); }
@@ -120,8 +119,9 @@
 .nx-stagger-kids > *:nth-child(11) { animation-delay: 540ms; }
 .nx-stagger-kids > *:nth-child(12) { animation-delay: 590ms; }
 
+/* Fixed so the hero wash does not scroll/jump with the page */
 .landing-scene {
-  position: absolute;
+  position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
@@ -134,8 +134,9 @@
   height: 116%;
   object-fit: cover;
   opacity: 0.28;
-  animation: nx-photo-ken 28s ease-in-out infinite;
+  animation: none;
   filter: saturate(1.05) contrast(1.02);
+  transform: scale(1.04);
 }
 .dark .landing-scene__img {
   opacity: 0.22;
@@ -195,6 +196,12 @@
 .ann-card {
   animation: nx-announce-in 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
   backdrop-filter: blur(16px);
+}
+
+@media (max-width: 768px) {
+  .landing-orb, .landing-grid {
+    animation: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
