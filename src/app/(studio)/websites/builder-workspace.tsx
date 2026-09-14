@@ -123,17 +123,30 @@ export function BuilderView({
     async (projectFiles: ProjectFile[]) => {
       if (!projectFiles.length) return;
       try {
-        log("starting live preview…");
+        setTasks((t) => [
+          ...t,
+          { id: "sb-write", kind: "write", label: `${projectFiles.length} project files`, state: "ok" },
+          { id: "sb-npm", kind: "skill", label: "npm install", state: "run" },
+        ]);
+        log("Ran command npm install");
         const res = await fetch("/api/sandbox/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ files: projectFiles, target: targetId }),
         });
         const data = await res.json().catch(() => null);
+        setTasks((t) =>
+          t.map((x) => (x.id === "sb-npm" ? { ...x, state: res.ok ? "ok" : "fail" } : x)).concat(
+            res.ok
+              ? [{ id: "sb-vite", kind: "skill", label: "npx vite --host 0.0.0.0 --port 5173", state: "ok" as const }]
+              : [{ id: "sb-vite", kind: "skill", label: "npx vite --host 0.0.0.0 --port 5173", state: "fail" as const }],
+          ),
+        );
         if (!res.ok) {
           log(data?.error || `Preview sandbox unavailable (${res.status})`, "warn");
           return;
         }
+        log("Ran command npx vite --host 0.0.0.0 --port 5173", "ok");
         if (data?.url) {
           setSandboxUrl(data.url);
           if (data.warning) log(String(data.warning), "warn");
@@ -143,6 +156,7 @@ export function BuilderView({
         }
       } catch (e) {
         log(e instanceof Error ? e.message : "Sandbox failed", "warn");
+        setTasks((t) => t.map((x) => (x.id === "sb-npm" || x.id === "sb-vite" ? { ...x, state: "fail" } : x)));
       }
     },
     [targetId, log],
@@ -267,6 +281,7 @@ export function BuilderView({
       setPhase("planning");
       setError(null);
       setQuestionsOpen(false);
+      setTasks((prev) => [...prev, { id: "plan", kind: "think", label: "Designing the plan…", state: "run" }]);
       log("planning");
       try {
         const res = await fetch("/api/builder/plan", {
@@ -282,6 +297,7 @@ export function BuilderView({
           setPhase("review");
           return;
         }
+        setTasks((prev) => prev.map((x) => (x.id === "plan" ? { ...x, state: "ok", label: "Designed the plan" } : x)));
         setPlan(data.plan);
         setPhase("review");
         setMessages((m) => [
@@ -307,6 +323,7 @@ export function BuilderView({
       if (!t || busy) return;
       setIdea(t);
       setPhase("asking");
+      setTasks([{ id: "ask", kind: "think", label: "Reading your idea…", state: "run" }]);
       setMessages((m) => [...m, { id: `u${++msgId.current}`, role: "user", text: t, at: Date.now() }]);
       setCollapsed(true);
       await plan_(t, {});
@@ -444,15 +461,29 @@ export function BuilderView({
                 {m.role === "user" ? <span className="whitespace-pre-wrap">{m.text}</span> : formatChat(m.text)}
               </div>
             ))}
-            {(phase === "asking" || phase === "planning") && <Thinking phase={phase} logs={logs} />}
-            {phase === "building" && (
-              <div className="space-y-0.5">
-                {tasks.slice(-8).map((task) => (
-                  <ProcessRow key={task.id} kind={task.kind === "write" || task.kind === "read" ? "file" : task.kind === "skill" ? "cmd" : "think"} label={task.label || task.kind} active={task.state === "run"} />
+            {tasks.length > 0 && (
+              <div className="space-y-[1px] py-1">
+                {tasks.map((task) => (
+                  <ProcessRow
+                    key={task.id}
+                    kind={
+                      task.kind === "write" || task.kind === "read"
+                        ? "file"
+                        : task.kind === "skill" || task.kind === "check"
+                          ? "cmd"
+                          : "think"
+                    }
+                    label={task.label || task.kind}
+                    active={task.state === "run"}
+                  />
                 ))}
-                {!tasks.length ? <ProcessRow kind="cmd" label="Writing files…" active /> : null}
-                <WorkingTimer secs={workSecs} />
+                {(phase === "building" || phase === "asking" || phase === "planning") && (
+                  <WorkingTimer secs={workSecs} />
+                )}
               </div>
+            )}
+            {(phase === "asking" || phase === "planning") && !tasks.length && (
+              <Thinking phase={phase} logs={logs} />
             )}
             {finalMsg && phase === "ready" && <div className="rounded-[12px] border border-positive/25 bg-positive/10 px-3 py-2 text-[13px] text-ink-2">{finalMsg}</div>}
             {error && <FailureNote error={error} onRetry={() => setError(null)} />}
