@@ -10,6 +10,7 @@ import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { AnnouncementBanner } from "@/components/shell/announcement-banner";
+import { FloatingChat } from "@/components/shell/floating-chat";
 
 function isAdminEmail(email: string | null | undefined) {
   if (!email) return false;
@@ -42,6 +43,7 @@ export default async function ShellLayout({
         >
           {children}
         </MobileShell>
+        <FloatingChat />
       </ToastProvider>
     );
   }
@@ -52,13 +54,14 @@ export default async function ShellLayout({
         <Backdrop />
         <CommandPalette recents={recents} />
         <div className="flex min-h-screen">
-          <Sidebar user={user} balance={balance} />
+          <Sidebar user={user} balance={balance} isAdmin={isAdminEmail(user?.email)} />
           <main className="flex min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <AnnouncementBanner />
             {children}
           </main>
         </div>
+        <FloatingChat />
       </ToastProvider>
     </NavProvider>
   );
