@@ -12,15 +12,22 @@ export interface CompatProvider {
 
 /**
  * Configured OpenAI-compatible providers.
- *
- * Puter's /puterai/openai/v1 endpoint requires a paid Puter plan
- * (402 on free accounts). Prefer Gemini + OpenRouter for free stacks.
- * Experiential Labs is preferred when EXPLABS_API_KEY is set.
+ * Bytez first when BYTEZ_API_KEY is set, then Experiential Labs, OpenRouter, xAI, Puter.
  */
 export function compatProviders(): CompatProvider[] {
   const out: CompatProvider[] = [];
 
-  // Experiential Labs — OpenAI-compatible gateway (task routing / primary free lane)
+  const bytez = process.env.BYTEZ_API_KEY?.trim();
+  if (bytez) {
+    out.push({
+      id: "bytez",
+      label: "Bytez",
+      baseUrl: "https://api.bytez.com/models/v2/openai/v1",
+      apiKey: bytez,
+      model: process.env.BYTEZ_MODEL?.trim() || "Qwen/Qwen3-4B",
+    });
+  }
+
   const explabs = process.env.EXPLABS_API_KEY?.trim();
   if (explabs) {
     out.push({
@@ -28,7 +35,6 @@ export function compatProviders(): CompatProvider[] {
       label: "Experiential Labs",
       baseUrl: "https://api.experientiallabs.ai/v1",
       apiKey: explabs,
-      // Override with EXPLABS_MODEL. Default: gpt-6-astra
       model: process.env.EXPLABS_MODEL?.trim() || "gpt-6-astra",
     });
   }
