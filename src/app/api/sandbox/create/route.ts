@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
     for (const f of files) {
       const path = String(f.path || "").replace(/^\/+/, "");
       if (!path || path.includes("..")) continue;
+      if (/vite\.config\.(js|ts|mjs|cjs)$/i.test(path)) continue;
       await writeFile(path, String(f.content ?? ""));
     }
 
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest) {
                 "react-router-dom": "^6.26.0",
               },
               devDependencies: {
-                vite: "^5.4.0",
+                vite: "^6.0.11",
                 "@vitejs/plugin-react": "^4.3.1",
               },
             },
@@ -135,12 +136,38 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const hasVite = files.some((f) => f.path.includes("vite.config"));
-      if (!hasVite) {
-        await writeFile(
-          "vite.config.js",
-          `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({\n  plugins: [react()],\n  server: { host: "0.0.0.0", port: 5173, strictPort: true },\n});\n`,
-        );
+      await writeFile(
+        "vite.config.js",
+        `import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: true,
+    allowedHosts: true,
+    hmr: { clientPort: 443, protocol: "wss" },
+  },
+  preview: {
+    host: "0.0.0.0",
+    port: 5173,
+    allowedHosts: true,
+  },
+});
+`,
+      );
+
+      const pkgFile = files.find((f) => f.path === "package.json" || f.path.endsWith("/package.json"));
+      if (pkgFile) {
+        try {
+          const pkg = JSON.parse(pkgFile.content);
+          pkg.devDependencies = { ...(pkg.devDependencies || {}), vite: "^6.0.11" };
+          pkg.scripts = { ...(pkg.scripts || {}), dev: "vite --host 0.0.0.0 --port 5173" };
+          await writeFile("package.json", JSON.stringify(pkg, null, 2) + "\n");
+        } catch {
+          /* keep generated package.json */
+        }
       }
 
       const hasIndex = files.some(
