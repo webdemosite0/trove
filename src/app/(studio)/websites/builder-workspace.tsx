@@ -29,9 +29,9 @@ type ChatMsg = { id: string; role: "user" | "assistant" | "system"; text: string
 
 const steas = [
   { id: "preview" as const, icon: TbWorld, motion: "spin" as Motion },
-  { id: "files" as const, icon: TbFiles, motion: "pulse" as Motion },
-  { id: "code" as const, icon: TbCode, motion: "bounce" as Motion },
-  { id: "console" as const, icon: TbTerminal2, motion: "blink" as Motion },
+  { id: "files" as const, icon: TbFiles, motion: "lift" as Motion },
+  { id: "code" as const, icon: TbCode, motion: "type" as Motion },
+  { id: "console" as const, icon: TbTerminal2, motion: "scan" as Motion },
 ];
 
 const IDEAS = [
@@ -93,7 +93,7 @@ export function BuilderView({
   const [openFile, setOpenFile] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [targetId] = useState<TargetId>("react");
-  const [storage, setStorage] = useState("local");
+  const [storage, setStorage] = useState<"local" | "none">("local");
   const [workSecs, setWorkSecs] = useState(0);
   const [chips, setChips] = useState<string[]>([]);
   const msgId = useRef(0);
@@ -118,7 +118,7 @@ export function BuilderView({
   }, [phase]);
 
   const log = useCallback((text: string, level: LogLine["level"] = "info") => {
-    setLogs((prev) => [...prev.slice(-80), { text, level, at: Date.now() }]);
+    setLogs((prev) => [...prev.slice(-80), { text, level, at: Date.now() } as LogLine]);
   }, []);
 
   const persist = useCallback((patch: Record<string, unknown>) => {
@@ -185,7 +185,7 @@ export function BuilderView({
         }
       }
       setTasks((t) =>
-        t.map((x) => (x.id === `t${meta.index}` ? { ...x, state: "done" as const } : x)),
+        t.map((x) => (x.id === `t${meta.index}` ? { ...x, state: "ok" as const } : x)),
       );
       return next;
     },
@@ -471,7 +471,7 @@ export function BuilderView({
             <pre className="h-full overflow-auto p-4 font-mono text-[12px] text-ink-2">{files.find((f) => f.path === openFile)?.content || "// select a file"}</pre>
           )}
           {pane === "console" && (
-          <div className="flex h-full flex-col">
+            <div className="flex h-full flex-col">
               <BuildConsole lines={logs} className="min-h-0 flex-1" />
               <ProjectTerminal files={files} className="h-40 shrink-0 border-t border-line" />
             </div>
