@@ -4,15 +4,15 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 /**
- * E2B live preview: write files → npm install → start server → wait until port is open.
+ * E2B live preview: write files → npm install → start server → public URL.
  */
 export async function POST(req: NextRequest) {
-  const key = process.env.E2B_API_KEY;
+  const key = process.env.E2B_API_KEY?.trim();
   if (!key) {
     return NextResponse.json(
       {
         error:
-          "Live Preview needs E2B_API_KEY. Add it in Vercel → Environment Variables.",
+          "Live Preview needs E2B_API_KEY. Add it in Vercel → Settings → Environment Variables (Production + Preview), then redeploy.",
         needsKey: true,
       },
       { status: 503 },
@@ -48,17 +48,35 @@ export async function POST(req: NextRequest) {
     if (!Sandbox || typeof Sandbox.create !== "function") {
       return NextResponse.json(
         {
-          error: "E2B SDK missing. Install @e2b/code-interpreter and redeploy.",
+          error: "E2B SDK missing. Ensure @e2b/code-interpreter is in package.json and redeploy.",
           needsPackage: true,
         },
         { status: 503 },
       );
     }
 
-    const sandbox = await Sandbox.create({
-      apiKey: key,
-      timeoutMs: 900_000,
-    });
+    process.env.E2B_API_KEY = key;
+
+    let sandbox: any;
+    try {
+      sandbox = await Sandbox.create({
+        apiKey: key,
+        timeoutMs: 900_000,
+      });
+    } catch (createErr) {
+      const msg = createErr instanceof Error ? createErr.message : String(createErr);
+      console.error("E2B Sandbox.create failed", msg);
+      return NextResponse.json(
+        {
+          error:
+            /401|invalid|unauthorized|api.?key/i.test(msg)
+              ? "E2B rejected the API key. Check E2B_API_KEY in Vercel (Production + Preview) and that the key is active in the E2B dashboard."
+              : `E2B could not start a sandbox: ${msg}`,
+          needsKey: /401|invalid|unauthorized|api.?key/i.test(msg),
+        },
+        { status: 502 },
+      );
+    }
 
     async function writeFile(path: string, content: string) {
       if (typeof sandbox.files?.write === "function") {
@@ -121,13 +139,7 @@ export async function POST(req: NextRequest) {
       if (!hasVite) {
         await writeFile(
           "vite.config.js",
-          `import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-export default defineConfig({
-  plugins: [react()],
-  server: { host: "0.0.0.0", port: 5173, strictPort: true },
-});
-`,
+          `import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\nexport default defineConfig({\n  plugins: [react()],\n  server: { host: "0.0.0.0", port: 5173, strictPort: true },\n});\n`,
         );
       }
 
@@ -137,19 +149,7 @@ export default defineConfig({
       if (!hasIndex) {
         await writeFile(
           "index.html",
-          `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Preview</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
-`,
+          `<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>Preview</title>\n  </head>\n  <body>\n    <div id="root"></div>\n    <script type="module" src="/src/main.jsx"></script>\n  </body>\n</html>\n`,
         );
       }
 
@@ -157,25 +157,12 @@ export default defineConfig({
       if (!hasMain && files.some((f) => /App\.(jsx|tsx|js)$/i.test(f.path))) {
         await writeFile(
           "src/main.jsx",
-          `import React from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App.jsx";
-import "./index.css";
-
-createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-`,
+          `import React from "react";\nimport { createRoot } from "react-dom/client";\nimport App from "./App.jsx";\nimport "./index.css";\n\ncreateRoot(document.getElementById("root")).render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>\n);\n`,
         );
         if (!files.some((f) => f.path.endsWith("index.css") || f.path.endsWith("App.css"))) {
           await writeFile(
             "src/index.css",
-            `* { box-sizing: border-box; }
-html, body, #root { margin: 0; min-height: 100%; }
-body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
-`,
+            `* { box-sizing: border-box; }\nhtml, body, #root { margin: 0; min-height: 100%; }\nbody { font-family: system-ui, -apple-system, Segoe UI, sans-serif; }\n`,
           );
         }
       }
@@ -256,7 +243,7 @@ body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
     if (!host) {
       return NextResponse.json(
         {
-          error: "Sandbox started but no public host was returned.",
+          error: "Sandbox started but no public host was returned. Check E2B template/network settings.",
           sandboxId: sandbox.sandboxId ?? sandbox.id,
         },
         { status: 502 },
