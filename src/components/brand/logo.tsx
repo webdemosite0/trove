@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 import { TroveOrb, type OrbState } from "@/components/brand/orb";
 
 /**
- * TROVE wordmark — geometric display weight.
- * Pairs with the vault monogram via BrandLockup.
+ * Trove wordmark — geometric display weight, soft gradient, unique spacing.
  */
 export function Wordmark({
   className,
@@ -26,11 +25,11 @@ export function Wordmark({
       style={{
         fontFamily: "var(--font-display)",
         fontSize: size,
-        fontWeight: 750,
-        letterSpacing: "0.04em",
+        fontWeight: 700,
+        letterSpacing: "0.02em",
       }}
     >
-      TROVE
+      Trove
     </span>
   );
 }
