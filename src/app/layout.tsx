@@ -4,6 +4,7 @@ import Script from "next/script";
 import { site } from "@/lib/site";
 import { THEME_SCRIPT } from "@/components/shell/theme";
 import "./globals.css";
+import "./landing-motion.css";
 
 const inter = Inter({
   variable: "--font-inter",
