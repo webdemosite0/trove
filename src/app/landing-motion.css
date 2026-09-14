@@ -1,0 +1,212 @@
+/* ============================================================
+   Landing motion system — many small, deliberate animations
+   ============================================================ */
+
+@keyframes nx-float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes nx-float-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}
+@keyframes nx-drift {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+  33% { transform: translate(18px, -14px) scale(1.05); opacity: 0.8; }
+  66% { transform: translate(-12px, 10px) scale(0.96); opacity: 0.65; }
+  100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+}
+@keyframes nx-spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes nx-pulse-soft {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.06); }
+}
+@keyframes nx-glow-breathe {
+  0%, 100% { opacity: 0.35; filter: blur(40px); }
+  50% { opacity: 0.7; filter: blur(52px); }
+}
+@keyframes nx-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes nx-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes nx-scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes nx-slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes nx-slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes nx-blur-in {
+  from { opacity: 0; filter: blur(8px); }
+  to { opacity: 1; filter: blur(0); }
+}
+@keyframes nx-shimmer-line {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+@keyframes nx-border-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(99,102,241,0.15), 0 12px 40px -20px rgba(99,102,241,0.2); }
+  50% { box-shadow: 0 0 0 1px rgba(99,102,241,0.35), 0 16px 48px -16px rgba(167,139,250,0.35); }
+}
+@keyframes nx-chip-pop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes nx-word-shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes nx-orb-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+@keyframes nx-grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 64px 64px; }
+}
+@keyframes nx-announce-in {
+  from { opacity: 0; transform: translateY(-100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes nx-photo-ken {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.06) translate(-1%, -0.5%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+.nx-float-y { animation: nx-float-y 6s ease-in-out infinite; }
+.nx-float-y-slow { animation: nx-float-y 9s ease-in-out infinite; }
+.nx-float-x { animation: nx-float-x 8s ease-in-out infinite; }
+.nx-drift { animation: nx-drift 14s ease-in-out infinite; }
+.nx-spin-slow { animation: nx-spin-slow 40s linear infinite; }
+.nx-pulse-soft { animation: nx-pulse-soft 4s ease-in-out infinite; }
+.nx-glow-breathe { animation: nx-glow-breathe 5s ease-in-out infinite; }
+.nx-fade-up { animation: nx-fade-up 0.7s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+.nx-fade-in { animation: nx-fade-in 0.6s ease both; }
+.nx-scale-in { animation: nx-scale-in 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+.nx-slide-left { animation: nx-slide-in-left 0.6s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+.nx-slide-right { animation: nx-slide-in-right 0.6s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+.nx-blur-in { animation: nx-blur-in 0.8s ease both; }
+.nx-border-glow { animation: nx-border-glow 4s ease-in-out infinite; }
+.nx-chip-pop { animation: nx-chip-pop 0.45s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+.nx-word-shine {
+  background-size: 200% auto;
+  animation: nx-word-shine 6s linear infinite;
+}
+.nx-announce-in { animation: nx-announce-in 0.5s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+
+.nx-stagger-kids > * { animation: nx-fade-up 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+.nx-stagger-kids > *:nth-child(1) { animation-delay: 40ms; }
+.nx-stagger-kids > *:nth-child(2) { animation-delay: 90ms; }
+.nx-stagger-kids > *:nth-child(3) { animation-delay: 140ms; }
+.nx-stagger-kids > *:nth-child(4) { animation-delay: 190ms; }
+.nx-stagger-kids > *:nth-child(5) { animation-delay: 240ms; }
+.nx-stagger-kids > *:nth-child(6) { animation-delay: 290ms; }
+.nx-stagger-kids > *:nth-child(7) { animation-delay: 340ms; }
+.nx-stagger-kids > *:nth-child(8) { animation-delay: 390ms; }
+.nx-stagger-kids > *:nth-child(9) { animation-delay: 440ms; }
+.nx-stagger-kids > *:nth-child(10) { animation-delay: 490ms; }
+.nx-stagger-kids > *:nth-child(11) { animation-delay: 540ms; }
+.nx-stagger-kids > *:nth-child(12) { animation-delay: 590ms; }
+
+.landing-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.landing-scene__img {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  opacity: 0.28;
+  animation: nx-photo-ken 28s ease-in-out infinite;
+  filter: saturate(1.05) contrast(1.02);
+}
+.dark .landing-scene__img {
+  opacity: 0.22;
+  filter: saturate(0.95) brightness(0.7);
+}
+.landing-scene__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.22), transparent 55%),
+    radial-gradient(ellipse 45% 40% at 90% 60%, rgba(244,114,182,0.12), transparent 50%),
+    radial-gradient(ellipse 40% 35% at 5% 80%, rgba(52,211,153,0.1), transparent 50%),
+    linear-gradient(to bottom, transparent 40%, var(--color-canvas, #fafafa) 95%);
+}
+.dark .landing-scene__veil {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.28), transparent 55%),
+    radial-gradient(ellipse 45% 40% at 90% 60%, rgba(244,114,182,0.14), transparent 50%),
+    radial-gradient(ellipse 40% 35% at 5% 80%, rgba(52,211,153,0.1), transparent 50%),
+    linear-gradient(to bottom, transparent 35%, var(--color-canvas, #0a0a0b) 95%);
+}
+.landing-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  animation: nx-drift 16s ease-in-out infinite;
+}
+.landing-orb--1 {
+  width: 280px; height: 280px;
+  top: 8%; left: 12%;
+  background: rgba(99,102,241,0.35);
+}
+.landing-orb--2 {
+  width: 220px; height: 220px;
+  top: 35%; right: 8%;
+  background: rgba(236,72,153,0.28);
+  animation-delay: -4s;
+}
+.landing-orb--3 {
+  width: 180px; height: 180px;
+  bottom: 20%; left: 30%;
+  background: rgba(52,211,153,0.22);
+  animation-delay: -8s;
+}
+.landing-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  background-image:
+    linear-gradient(rgba(128,128,128,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(128,128,128,0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  animation: nx-grid-pan 40s linear infinite;
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 20%, black, transparent);
+}
+
+.ann-card {
+  animation: nx-announce-in 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+  backdrop-filter: blur(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-float-y, .nx-float-y-slow, .nx-float-x, .nx-drift, .nx-spin-slow,
+  .nx-pulse-soft, .nx-glow-breathe, .nx-border-glow, .nx-word-shine,
+  .landing-scene__img, .landing-grid, .landing-orb {
+    animation: none !important;
+  }
+  .nx-fade-up, .nx-fade-in, .nx-scale-in, .nx-slide-left, .nx-slide-right,
+  .nx-blur-in, .nx-chip-pop, .nx-stagger-kids > *, .ann-card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
