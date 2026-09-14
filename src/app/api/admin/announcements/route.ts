@@ -41,6 +41,19 @@ async function ensureTable() {
   }
 }
 
+function normalizeImage(raw: unknown): string | null {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  if (s.startsWith("https://") || s.startsWith("http://") || s.startsWith("data:image/")) {
+    if (s.startsWith("data:") && s.length > 1_800_000) {
+      throw new Error("Image too large. Use a smaller file (under ~1.2 MB).");
+    }
+    return s;
+  }
+  return null;
+}
+
 export async function GET() {
   const gate = await requireAdmin();
   if ("error" in gate && gate.error) return gate.error;
@@ -75,7 +88,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Title and body required" }, { status: 400 });
     }
 
-    const imageUrl: string | null = body.imageUrl ? String(body.imageUrl) : null;
+    let imageUrl: string | null = null;
+    try {
+      imageUrl = normalizeImage(body.imageUrl);
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Invalid image" },
+        { status: 400 },
+      );
+    }
+
     const id = uid("ann");
     await run(
       `INSERT INTO announcements (id, title, body, image_url, active, created_at) VALUES (?, ?, ?, ?, 1, ?)`,
@@ -104,16 +126,37 @@ export async function PATCH(req: NextRequest) {
     if (typeof body.active === "boolean") {
       await run(`UPDATE announcements SET active = ? WHERE id = ?`, [body.active ? 1 : 0, id]);
     }
-    if (body.title != null && body.body != null) {
-      await run(`UPDATE announcements SET title = ?, body = ? WHERE id = ?`, [
-        String(body.title).trim(),
-        String(body.body).trim(),
-        id,
-      ]);
-    } else if (body.title != null) {
-      await run(`UPDATE announcements SET title = ? WHERE id = ?`, [String(body.title).trim(), id]);
-    } else if (body.body != null) {
-      await run(`UPDATE announcements SET body = ? WHERE id = ?`, [String(body.body).trim(), id]);
+    if (body.title != null || body.body != null || body.imageUrl !== undefined) {
+      const title = body.title != null ? String(body.title).trim() : null;
+      const text = body.body != null ? String(body.body).trim() : null;
+      let imageUrl: string | null | undefined = undefined;
+      if (body.imageUrl !== undefined) {
+        try {
+          imageUrl = normalizeImage(body.imageUrl);
+        } catch (e) {
+          return NextResponse.json(
+            { error: e instanceof Error ? e.message : "Invalid image" },
+            { status: 400 },
+          );
+        }
+      }
+
+      if (title != null && text != null && imageUrl !== undefined) {
+        await run(`UPDATE announcements SET title = ?, body = ?, image_url = ? WHERE id = ?`, [
+          title,
+          text,
+          imageUrl,
+          id,
+        ]);
+      } else if (title != null && text != null) {
+        await run(`UPDATE announcements SET title = ?, body = ? WHERE id = ?`, [title, text, id]);
+      } else if (title != null) {
+        await run(`UPDATE announcements SET title = ? WHERE id = ?`, [title, id]);
+      } else if (text != null) {
+        await run(`UPDATE announcements SET body = ? WHERE id = ?`, [text, id]);
+      } else if (imageUrl !== undefined) {
+        await run(`UPDATE announcements SET image_url = ? WHERE id = ?`, [imageUrl, id]);
+      }
     }
 
     return NextResponse.json({ ok: true });
