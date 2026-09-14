@@ -354,28 +354,6 @@ export function BuilderView({
             <button key={x} type="button" onClick={() => void ask(x)} className="rounded-full border border-line bg-raised px-3 py-1.5 text-[12.5px] text-ink-3 hover:border-line-strong hover:text-ink">{x}</button>
           ))}
         </div>
-        {recentSites.length > 0 && (
-          <div className="mt-8 w-full max-w-3xl rounded-[22px] border border-line/80 bg-raised p-4 shadow-lg sm:p-5">
-            <div className="mb-3.5 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-4">Your work</p>
-                <p className="text-[15.5px] font-semibold tracking-tight text-ink">Your sites</p>
-              </div>
-              <Link href="/websites" className="rounded-full border border-line bg-canvas/90 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 hover:text-ink">All work →</Link>
-            </div>
-            <div className="flex gap-2.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {recentSites.slice(0, 8).map((s) => (
-                <Link key={s.id} href={s.href} className="flex min-w-[168px] max-w-[210px] shrink-0 items-center gap-2.5 rounded-[16px] border border-line/90 bg-canvas px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-sky-300/50">
-                  <span className="grid size-9 place-items-center rounded-[12px] bg-gradient-to-br from-sky-400/25 to-sky-500/10 text-sky-600"><TbWorld size={17} /></span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-semibold text-ink">{s.title}</span>
-                    <span className="block truncate text-[11.5px] text-ink-4">Site · {relativeTime(s.createdAt)}</span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
