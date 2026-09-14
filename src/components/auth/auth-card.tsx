@@ -20,6 +20,25 @@ const OAUTH_ERRORS: Record<string, string> = {
   "google-unverified": "That Google account has no confirmed email.",
 };
 
+function AppleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+    </svg>
+  );
+}
+
+function MicrosoftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 23 23" aria-hidden>
+      <path fill="#f35325" d="M1 1h10v10H1z" />
+      <path fill="#81bc06" d="M12 1h10v10H12z" />
+      <path fill="#05a6f0" d="M1 12h10v10H1z" />
+      <path fill="#ffba08" d="M12 12h10v10H12z" />
+    </svg>
+  );
+}
+
 export function AuthCard({
   mode,
   googleEnabled = true,
@@ -136,7 +155,7 @@ export function AuthCard({
         <button
           type="submit"
           disabled={pending}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-[15px] font-semibold text-white shadow-[0_10px_28px_-10px_rgba(109,40,217,0.55)] transition hover:from-violet-500 hover:to-indigo-500 active:scale-[0.99] disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-[15px] font-semibold text-white shadow-lg transition hover:from-violet-500 hover:to-indigo-500 active:scale-[0.99] disabled:opacity-60"
         >
           {pending ? <Ico icon={FiLoader} motion="spin" size={16} className="animate-spin" /> : null}
           {isLogin ? "Sign in" : "Create account"}
@@ -168,18 +187,14 @@ export function AuthCard({
           title="Coming soon"
           className="flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-400"
         >
-          <span className="text-[15px]">
-        
-          </span>
+          <AppleIcon />
           Apple
         </span>
         <span
           title="Coming soon"
           className="flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-400"
         >
-          <span className="text-[14px] font-bold text-[#00a4ef]">
-        
-          </span>
+          <MicrosoftIcon />
           Microsoft
         </span>
       </div>
