@@ -1,20 +1,51 @@
-/* Backdrop theme layers — photo lavender on light, orbs on dark */
-.nx-bg-light { display: block; }
-.nx-bg-dark { display: none; }
+/* Backdrop theme layers — opacity switch avoids display:none paint flash */
+.nx-bg-light {
+  opacity: 1;
+  visibility: visible;
+}
+.nx-bg-dark {
+  opacity: 0;
+  visibility: hidden;
+}
 
 :root[data-theme="dark"] .nx-bg-light {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
 }
 :root[data-theme="dark"] .nx-bg-dark {
-  display: block;
+  opacity: 1;
+  visibility: visible;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .nx-bg-light { display: none; }
-  :root:not([data-theme="light"]) .nx-bg-dark { display: block; }
+  :root:not([data-theme="light"]) .nx-bg-light {
+    opacity: 0;
+    visibility: hidden;
+  }
+  :root:not([data-theme="light"]) .nx-bg-dark {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .nx-bg-light { display: block; }
-  :root:not([data-theme="dark"]) .nx-bg-dark { display: none; }
+  :root:not([data-theme="dark"]) .nx-bg-light {
+    opacity: 1;
+    visibility: visible;
+  }
+  :root:not([data-theme="dark"]) .nx-bg-dark {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Match html fill to photo lavender so edges never flash warm gray */
+:root[data-theme="light"] {
+  --color-canvas: #f5f4fb;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-canvas: #f5f4fb;
+  }
 }
