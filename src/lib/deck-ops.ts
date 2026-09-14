@@ -2,19 +2,13 @@ import type { Slide } from "@/lib/slides";
 
 /**
  * Every edit a deck supports, as pure functions.
- *
- * Separate from the hook on purpose. These are array transforms with no React
- * in them, which means they can be tested directly rather than through a
- * shimmed renderer — and a shimmed renderer mostly tests the shim.
- *
- * All of them return a new array and leave the input alone, which is what lets
- * undo be "keep the previous array" rather than "reverse the operation".
  */
 
 export const BLANK_SLIDE: Slide = {
   title: "New slide",
   bullets: ["Point one"],
   note: "",
+  layout: "bullets",
 };
 
 function replace(slides: Slide[], index: number, change: Partial<Slide>): Slide[] {
@@ -76,17 +70,11 @@ export function duplicateSlide(slides: Slide[], index: number): Slide[] {
   if (!source) return slides;
   return [
     ...slides.slice(0, index + 1),
-    { ...source, bullets: [...source.bullets] },
+    { ...source, bullets: [...source.bullets], image: source.image },
     ...slides.slice(index + 1),
   ];
 }
 
-/**
- * Removes a slide, unless it is the last one.
- *
- * An empty deck renders nothing and offers no way back to having a slide, so
- * the floor is one. The caller does not have to special-case it.
- */
 export function removeSlide(slides: Slide[], index: number): Slide[] {
   if (slides.length <= 1 || !slides[index]) return slides;
   return slides.filter((_, n) => n !== index);
