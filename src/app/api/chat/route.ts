@@ -4,7 +4,7 @@ import { instructionsBlock, connectedToolsBlock } from "@/lib/user-prefs";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
-import { hintFor, temperatureFor } from "@/lib/modes";
+import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import { listConnections, secretFor } from "@/lib/connections";
 
 export const runtime = "nodejs";
@@ -97,6 +97,7 @@ async function handle(req: NextRequest) {
 
   const simple = isSimpleTurn(turns) && attachments.length === 0;
   const wantSearch = !simple;
+  const resolved = modeFor(mode);
 
   let connectedNote = "";
   try {
@@ -178,8 +179,14 @@ async function handle(req: NextRequest) {
       turns,
       system: promptFor(wantSearch),
       systemWithoutSearch: promptFor(false),
-      temperature: simple ? 0.6 : temperatureFor(mode),
-      maxOutputTokens: simple ? 512 : 4096,
+      temperature: simple ? 0.4 : temperatureFor(mode),
+      maxOutputTokens: simple
+        ? 512
+        : resolved.id === "deep"
+          ? 4096
+          : resolved.id === "creative"
+            ? 3072
+            : 2048,
       extraParts: attachments.length ? toParts(attachments) : undefined,
       search: wantSearch,
       onSources: (s) => {
