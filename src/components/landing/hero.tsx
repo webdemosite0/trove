@@ -1,27 +1,37 @@
 "use client";
 
-import { FiGlobe, FiLayout, FiCreditCard, FiCalendar, FiLayers, FiGrid } from "@/components/ui/icons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import {
+  FiGlobe,
+  FiLayout,
+  FiCreditCard,
+  FiCalendar,
+  FiLayers,
+  FiGrid,
+} from "@/components/ui/icons";
 
 const PROMPTS = [
   "Build a portfolio site for a freelance motion designer…",
-  "Create a monthly financial dashboard in a spreadsheet…",
-  "Make a 10-slide investor pitch for my SaaS…",
-  "Write a market research report as a Word doc…",
-  "Build a modern landing page for an AI startup…",
+  "Make a booking site for a specialty coffee roastery…",
+  "Create a landing page for an AI SaaS startup…",
+  "Design an online shop for handmade ceramics…",
+  "Build a case-study site for a design studio…",
 ];
 
-const CHIPS: { label: string; icon: typeof FiGlobe; prompt: string }[] = [
-  { label: "Website", icon: FiGlobe, prompt: "Build a premium landing page for a coffee brand" },
-  { label: "Document", icon: FiLayout, prompt: "Create a professional market research report" },
-  { label: "Spreadsheet", icon: FiGrid, prompt: "Build a monthly financial dashboard" },
-  { label: "Presentation", icon: FiLayers, prompt: "Create a 10-slide startup pitch deck" },
-  { label: "Shop", icon: FiCreditCard, prompt: "Design an online shop for handmade ceramics" },
-  { label: "Booking", icon: FiCalendar, prompt: "Make a booking site for a specialty coffee roastery" },
+const CHIPS: { label: string; icon: typeof FiGlobe }[] = [
+  { label: "Portfolio", icon: FiLayout },
+  { label: "Landing page", icon: FiGlobe },
+  { label: "Online shop", icon: FiCreditCard },
+  { label: "Booking site", icon: FiCalendar },
+  { label: "SaaS marketing", icon: FiLayers },
+  { label: "Agency site", icon: FiGrid },
 ];
 
+/**
+ * Large MagicSlides-style prompt box (as before) +
+ * brand lines: Describe it once. Keep the file.
+ */
 export function Hero({ freeCredits }: { freeCredits: number }) {
   const router = useRouter();
   const [value, setValue] = useState("");
@@ -60,73 +70,112 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
   }
 
   return (
-    <section className="relative overflow-hidden px-5 pb-16 pt-14 lg:pb-24 lg:pt-20">
+    <section className="relative overflow-hidden px-5 pb-20 pt-16 lg:pb-28 lg:pt-24">
       <div
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99,102,241,0.18), transparent 55%), radial-gradient(ellipse 50% 40% at 95% 70%, rgba(244,114,182,0.10), transparent 50%), radial-gradient(ellipse 45% 35% at 5% 85%, rgba(52,211,153,0.10), transparent 50%), radial-gradient(ellipse 40% 30% at 50% 55%, rgba(251,191,36,0.06), transparent 60%)",
+            "radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99,102,241,0.22), transparent 55%), radial-gradient(ellipse 55% 45% at 90% 75%, rgba(236,72,153,0.12), transparent 50%), radial-gradient(ellipse 45% 35% at 5% 85%, rgba(34,197,94,0.10), transparent 50%), radial-gradient(ellipse 40% 30% at 50% 50%, rgba(59,130,246,0.06), transparent 60%)",
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.35]"
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.4]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(128,128,128,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.05) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
+          backgroundSize: "64px 64px",
+          maskImage: "radial-gradient(ellipse 75% 55% at 50% 25%, black, transparent)",
         }}
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-8 -z-10 h-[380px] w-[680px] -translate-x-1/2 rounded-full blur-[90px]"
+        style={{ background: "rgba(99,102,241,0.15)" }}
+      />
 
-      <div className="mx-auto max-w-[720px] text-center">
-        <p className="mb-4 text-[12px] font-medium uppercase tracking-[0.14em] text-ink-4">
-          AI that finishes the work
-        </p>
+      <div className="relative mx-auto max-w-[920px] text-center">
+        <div className="nx-rise mb-6 inline-flex items-center gap-2 rounded-full border border-line bg-raised/80 px-4 py-1.5 text-[13px] text-ink-2 shadow-sm backdrop-blur">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-positive opacity-60" />
+            <span className="relative inline-flex size-2 rounded-full bg-positive" />
+          </span>
+          AI that finishes the work — then keeps building with you
+        </div>
 
-        <h1 className="text-[clamp(2.25rem,1.6rem+3vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-ink">
+        <h1 className="nx-rise-big text-[clamp(2.4rem,1.2rem+3.6vw,4.1rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-ink">
           Describe it once.
           <br />
-          <span className="wordmark-gradient">Keep the file.</span>
+          <span className="bg-gradient-to-r from-accent via-indigo-400 to-pink-400 bg-clip-text text-transparent">
+            Keep the file.
+          </span>
         </h1>
 
-        <p className="mx-auto mt-5 max-w-[42ch] text-[16.5px] leading-relaxed text-ink-3 sm:text-[17.5px]">
-          Trove doesn't just generate work. It keeps building with you —
-          websites, docs, sheets, decks, code, and agents you can download and own.
+        <p
+          className="nx-rise mx-auto mt-5 max-w-[54ch] text-[17px] leading-relaxed text-ink-3"
+          style={{ animationDelay: "80ms", animationFillMode: "backwards" }}
+        >
+          Turn a prompt into websites, documents, spreadsheets, decks, code and agents —
+          then download the actual files. Refine in the same project.
         </p>
 
-        <div className="mx-auto mt-9 max-w-[560px]">
-          <div
-            className={cn(
-              "rounded-[16px] border border-line bg-raised/90 p-2 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-md",
-              "ring-1 ring-black/[0.03]",
-            )}
-          >
-            <textarea
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  go();
-                }
-              }}
-              rows={2}
-              placeholder={value ? "" : typed || "Describe what to build…"}
-              className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[15px] text-ink outline-none placeholder:text-ink-4"
-            />
-            <div className="flex items-center justify-between gap-2 px-1.5 pb-1">
-              <span className="text-[11.5px] text-ink-4">Press Enter to start</span>
-              <button
-                type="button"
-                onClick={() => go()}
-                className="grid size-10 place-items-center rounded-full bg-ink text-white transition hover:opacity-90 active:scale-[0.97]"
-                aria-label="Start building"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+        {/* Large prompt box — same structure as before */}
+        <div
+          className="nx-rise mx-auto mt-10 max-w-[720px]"
+          style={{ animationDelay: "140ms", animationFillMode: "backwards" }}
+        >
+          <div className="rounded-[28px] border border-line bg-raised/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-md">
+            <div className="relative flex min-h-[88px] flex-col rounded-[22px] bg-sunk/40 px-4 py-3">
+              <textarea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    go();
+                  }
+                }}
+                rows={2}
+                className="w-full resize-none bg-transparent text-[15.5px] leading-relaxed text-ink outline-none placeholder:text-ink-4"
+                placeholder=""
+                aria-label="Describe what to build"
+              />
+              {!value && (
+                <span className="pointer-events-none absolute left-4 top-3 max-w-[calc(100%-4rem)] truncate text-left text-[15.5px] text-ink-4">
+                  {typed}
+                  <span className="ml-0.5 inline-block h-[1.1em] w-[2px] animate-pulse bg-accent align-middle" />
+                </span>
+              )}
+              <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                <button
+                  type="button"
+                  className="grid size-9 place-items-center rounded-full text-ink-4 transition hover:bg-hover hover:text-ink"
+                  aria-label="Attach"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go()}
+                  className="grid size-10 place-items-center rounded-full bg-ink text-white transition hover:opacity-90 active:scale-[0.97]"
+                  aria-label="Build"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-ink-4">
+            <span>HTML · React · Vite</span>
+            <span>·</span>
+            <span>JPG · PNG</span>
+            <span>·</span>
+            <span>URLs · Figma links</span>
           </div>
 
           <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -136,7 +185,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                 <button
                   key={chip.label}
                   type="button"
-                  onClick={() => go(chip.prompt)}
+                  onClick={() => go(`Build a ${chip.label.toLowerCase()} for my business`)}
                   className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-accent/40 hover:bg-hover hover:text-ink"
                 >
                   <Icon size={14} className="text-accent/80" aria-hidden />
@@ -150,8 +199,8 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         <p className="mt-6 text-[13px] text-ink-4">
           {freeCredits > 0 ? (
             <>
-              <span className="font-medium text-ink-2">{freeCredits} free credits</span>
-              {" · "}No card required · Download real files
+              <span className="text-positive">{freeCredits} free credits</span> on signup · No card
+              required · Download real files
             </>
           ) : (
             "Sign up free · No card required"
