@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandLockup } from "@/components/brand/logo";
 
 /**
- * Vapi-inspired split auth: form column + dark gradient testimonial panel.
+ * Light auth layout inspired by clean SaaS sign-in (soft mesh + testimonial).
  */
 export default function AuthLayout({
   children,
@@ -10,14 +10,14 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen bg-[#0a0a0b] text-white">
+    <div className="relative flex min-h-screen bg-[#f7f7f8] text-zinc-900">
       <div className="relative flex w-full flex-col justify-center px-6 py-12 lg:w-[48%] lg:px-14 xl:px-20">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-80"
+          className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 70% 50% at 20% 0%, rgba(99,102,241,0.18), transparent 55%)",
+              "radial-gradient(ellipse 80% 50% at 10% -10%, rgba(99,102,241,0.12), transparent 55%), radial-gradient(ellipse 50% 40% at 80% 100%, rgba(167,139,250,0.08), transparent 50%)",
           }}
         />
         <Link href="/" className="relative mb-10 inline-flex w-fit">
@@ -35,26 +35,28 @@ export default function AuthLayout({
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 70% 40%, rgba(16,185,129,0.12), transparent 55%), radial-gradient(ellipse 40% 40% at 30% 80%, rgba(99,102,241,0.15), transparent 50%), #0c0c0e",
+              "radial-gradient(ellipse 60% 50% at 70% 35%, rgba(99,102,241,0.18), transparent 55%), radial-gradient(ellipse 45% 40% at 20% 80%, rgba(16,185,129,0.10), transparent 50%), linear-gradient(160deg, #eef2ff 0%, #f8fafc 50%, #f0fdf4 100%)",
           }}
         />
         <div
           aria-hidden
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0 opacity-50"
           style={{
             backgroundImage:
-              "radial-gradient(circle, rgba(52,211,153,0.35) 1px, transparent 1px)",
+              "radial-gradient(circle, rgba(99,102,241,0.25) 1px, transparent 1px)",
             backgroundSize: "28px 28px",
           }}
         />
-        <div className="relative z-10 max-w-md rounded-[16px] border border-white/10 bg-black/50 p-7 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)] backdrop-blur-md">
-          <p className="text-[15px] font-semibold tracking-tight text-white">Builders choose Trove</p>
-          <blockquote className="mt-4 text-[15px] leading-relaxed text-zinc-300">
+        <div className="relative z-10 max-w-md rounded-[16px] border border-zinc-200/80 bg-white/80 p-7 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.18)] backdrop-blur-md">
+          <p className="text-[15px] font-semibold tracking-tight text-zinc-900">
+            Builders choose Trove
+          </p>
+          <blockquote className="mt-4 text-[15px] leading-relaxed text-zinc-600">
             “We went from a rough idea to a live multi-page site in one afternoon.
             Publish to a real subdomain and keep refining in chat — it just works.”
           </blockquote>
           <div className="mt-5">
-            <p className="text-[13.5px] font-medium text-white">Arayan K.</p>
+            <p className="text-[13.5px] font-medium text-zinc-900">Arayan K.</p>
             <p className="text-[12.5px] text-zinc-500">Founder · shipped on troveai.site</p>
           </div>
         </div>
