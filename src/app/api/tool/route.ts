@@ -19,22 +19,43 @@ output: a header row, correct alignment, and realistic, internally consistent
 values. Add any formulas as a short list under the table using spreadsheet
 syntax (e.g. =SUM(B2:B13)). Keep prose to two sentences at most.`,
 
-  slides: `You are Trove's presentation designer. Produce a deck.
+  slides: `You are Trove's presentation designer. Produce a varied, visual deck.
 
 Format, exactly:
-- Start with "# " and the deck title on its own — this becomes the title slide,
-  so give it no bullets.
-- Then one "## Slide N — Title" per slide, followed by 3-5 bullets starting
-  with "- ", then a one-line speaker note prefixed "Note:".
+- Start with "# " and the deck title on its own — title slide, no bullets.
+- Then one "## Slide N — Title" per content slide.
+- After the heading, optionally one line: Layout: title|bullets|split|photo|quote|section
+- Optionally one line: Image: short photo brief OR https URL (for photo/split layouts)
+- Then 3-5 bullets starting with "- " (skip bullets for title/section/quote when needed)
+- Then a one-line speaker note: Note: ...
 
-Bullets are phrases, not sentences: under 12 words, no trailing full stop, and
-specific rather than generic. Aim for 6-10 slides. No filler slides, no
-"Thank you" slide, no markdown tables or code fences.`,
+Layouts (mix them — do not use only bullets):
+- title: opening / closing statement
+- section: chapter break, big title only
+- bullets: classic points (default)
+- split: text left + Image photo panel right
+- photo: full-bleed image with title bar
+- quote: one strong line (+ optional attribution as second bullet)
 
-  design: `You are Trove's product designer. Describe the interface concretely:
-layout and hierarchy, a specific colour palette with hex values, a type scale
-with sizes and weights, spacing rhythm, component states, and responsive
-behaviour. Be decisive — pick values, do not offer options.`,
+Typography is one system only (the product applies a single text style).
+Vary layout and imagery, not fonts. Bullets are phrases under 12 words, no
+trailing full stop, specific. Aim for 7-10 slides. Include at least two
+photo or split slides with Image: lines. No filler, no "Thank you", no tables.`,
+
+  design: `You are Trove's product designer. Deliver a concrete UI design system.
+
+Structure the answer as:
+## Concept — one sentence product feeling
+## Layout — structure, hierarchy, key screens
+## Colour — 5–7 hex values with roles (canvas, ink, accent, etc.)
+## Type — one type family, sizes and weights only (do not mix many faces)
+## Spacing — base unit and common multiples
+## Components — buttons, inputs, cards, states (hover/focus/disabled)
+## Motion — 2–3 subtle interaction notes
+## Responsive — mobile vs desktop behaviour
+
+Be decisive. Pick values; do not offer alternatives. Prefer one cohesive
+visual system over decorative variety.`,
 
   research: `You are Trove's research analyst. Structure the answer as: a
 two-sentence summary, then "## Findings" with substantiated points, then
@@ -53,14 +74,6 @@ correct language tag. It must be complete and runnable — no placeholders, no
 decisions and any edge cases the caller must handle.`,
 };
 
-/**
- * Tools allowed to search the web.
- *
- * Only research. The others take what you gave them and produce something
- * from it — a document, a spreadsheet, some code — and a search on those is
- * latency and cost spent on a question nobody asked. Grounded requests are
- * also billed differently, so this is deliberately a short list.
- */
 const SEARCHES = new Set(["research"]);
 
 export async function POST(req: NextRequest) {
@@ -80,11 +93,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  // A caller may send either a whole thread or a single prompt. Older callers
-  // and the example chips still send just a prompt, and one message is a
-  // perfectly good thread.
   if (!messages.length && prompt) messages = [{ role: "user", text: prompt }];
-  // What the request is *about*, for validation and for the fallback text.
   prompt = lastUserText(messages) || prompt;
 
   const system = TOOL_PROMPTS[tool];
@@ -93,8 +102,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Describe what you need." }, { status: 400 });
   }
 
-  // Checked before the call; the debit below uses what Google actually
-  // reported, so a long answer costs more than a short one.
   let account: Awaited<ReturnType<typeof requireCredits>> = null;
   try {
     account = await requireCredits();
@@ -105,9 +112,6 @@ export async function POST(req: NextRequest) {
         { status: 402 },
       );
     }
-    // Not a credit problem, so it is the database — the balance lookup is
-    // the first query these routes make. Rethrowing made an outage
-    // indistinguishable from a model failure, as a blank 500.
     const why = e instanceof Error ? e.message : String(e);
     console.error("tool: credit check failed —", why);
     return Response.json(
@@ -120,8 +124,6 @@ export async function POST(req: NextRequest) {
     [system, OBEY_FORMAT, situation({ timeZone, canSearch })].join("\n\n");
 
   try {
-    // Collected during the stream and appended after it. The client renders
-    // markdown, so this needs no protocol of its own.
     let sources: Source[] = [];
 
     const stream = await streamText({
@@ -130,8 +132,6 @@ export async function POST(req: NextRequest) {
       turns: messages.length
         ? messages
         : [{ role: "user", text: "Work from the attached files." }],
-      // Every tool gets the date and the format rule; only research gets a
-      // search tool, so the knowledge caveat is worded for what it can do.
       system: promptFor(SEARCHES.has(tool)),
       systemWithoutSearch: promptFor(false),
       temperature: 0.75,
