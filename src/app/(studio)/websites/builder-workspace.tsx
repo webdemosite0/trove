@@ -1,28 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { FailureNote } from "@/components/ui/failure-note";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
-import {
-  FiArrowLeft,
-  FiGlobe,
-  FiX,
-  TbWorld,
-} from "@/components/ui/icons";
-import { cn } from "@/lib/utils";
+import { TbWorld } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 
-/** Temporary safe builder shell while the full workspace is restored. */
 export function BuilderView({
   mobile = false,
+  draft = "",
+  restored = null,
   recentSites = [],
 }: {
   mobile?: boolean;
+  draft?: string;
+  restored?: { id: string; title: string; idea: string } | null;
   recentSites?: { id: string; title: string; href: string; createdAt: number }[];
 }) {
-  const [idea, setIdea] = useState("");
+  const [idea, setIdea] = useState(draft || restored?.idea || "");
 
   function relativeTime(ts: number) {
     const d = Date.now() - ts;
@@ -33,7 +29,7 @@ export function BuilderView({
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col items-center justify-center gap-6 px-4">
+    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col items-center justify-center gap-6 px-4 pb-16">
       <TroveOrb size={48} />
       <h1 className="text-center text-[28px] font-semibold tracking-tight text-ink">
         What should we build?
@@ -55,9 +51,7 @@ export function BuilderView({
       </div>
       {idea ? (
         <p className="max-w-md text-center text-[14px] text-ink-3">
-          Received: <span className="font-medium text-ink">{idea}</span>
-          <br />
-          Full multi-step builder is loading on the next deploy.
+          Working from: <span className="font-medium text-ink">{idea.slice(0, 120)}</span>
         </p>
       ) : null}
 
