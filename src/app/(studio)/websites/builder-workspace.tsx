@@ -11,7 +11,7 @@ import { Ico, type Motion } from "@/components/ui/ico";
 import { PlanPanel } from "@/components/builder/plan-panel";
 import { QuestionBox } from "@/components/builder/question-box";
 import { PublishPanel } from "@/components/builder/publish-panel";
-import { targetFor, type TargetId } from "@/lib/targets";
+import { type TargetId } from "@/lib/targets";
 import {
   bundle, mergeFiles, type BuildPlan, type LogLine, type PlanStep,
   type ProjectFile, type Question, type Task,
@@ -85,7 +85,7 @@ export function BuilderView({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsOpen, setQuestionsOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [error, setErrorsetError] = useState<string | null>(null);
   const [finalMsg, setFinalMsg] = useState<string | null>(null);
   const [pane, setPane] = useState<Pane>("preview");
   const [preview, setPreview] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export function BuilderView({
     setWorkSecs(0);
   }, [phase]);
 
-  const log = useCallback((text: string, level: LogLine[level"] = "info") => {
+  const log = useCallback((text: string, level: LogLine["level"] = "info") => {
     setLogs((prev) => [...prev.slice(-80), { text, level, at: Date.now() }]);
   }, []);
 
@@ -157,7 +157,7 @@ export function BuilderView({
   const runStep = useCallback(
     async (step: PlanStep, style: string, current: ProjectFile[], meta: { index: number; total: number }) => {
       setTasks((t) => [
-        ...  ...t,
+        ...t,
         { id: `t${meta.index}`, kind: "write", label: step.title, state: "run" },
       ]);
       const res = await fetch("/api/builder/step", {
@@ -261,7 +261,7 @@ export function BuilderView({
     let current = files;
     try {
       for (let i = 0; i < steps.length; i++) {
-        const step = { ...steps[i], skills: steps[i].skills ?? [], files: steps[i].files ?? [] };
+        const step = { ...steps[i], skills: steps[i]skills ?? [], files: steps[i].files ?? [] };
         log(`step ${i + 1}/${steps.length}: ${step.title}`);
         current = await runStep(step, plan.style?.name || "clean", current, {
           index: i,
@@ -333,7 +333,6 @@ export function BuilderView({
     [continueChat, ask, files.length, phase],
   );
 
-  /* ——— Idle home ——— */
   if (phase === "idle" && !files.length) {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col items-center justify-center gap-6 px-4 pb-16">
@@ -348,14 +347,7 @@ export function BuilderView({
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           {IDEAS.map((x) => (
-            <button
-              key={x}
-              type="button"
-              onClick={() => void ask(x)}
-              className="rounded-full border border-line bg-raised px-3 py-1.5 text-[12.5px] text-ink-3 hover:border-line-strong hover:text-ink"
-            >
-              {x}
-            </button>
+            <button key={x} type="button" onClick={() => void ask(x)} className="rounded-full border border-line bg-raised px-3 py-1.5 text-[12.5px] text-ink-3 hover:border-line-strong hover:text-ink">{x}</button>
           ))}
         </div>
         {recentSites.length > 0 && (
@@ -365,20 +357,12 @@ export function BuilderView({
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-4">Your work</p>
                 <p className="text-[15.5px] font-semibold tracking-tight text-ink">Your sites</p>
               </div>
-              <Link href="/websites" className="rounded-full border border-line bg-canvas/90 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 hover:text-ink">
-                All work →
-              </Link>
+              <Link href="/websites" className="rounded-full border border-line bg-canvas/90 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 hover:text-ink">All work →</Link>
             </div>
             <div className="flex gap-2.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {recentSites.slice(0, 8).map((s) => (
-                <Link
-                  key={s.id}
-                  href={s.href}
-                  className="flex min-w-[168px] max-w-[210px] shrink-0 items-center gap-2.5 rounded-[16px] border border-line/90 bg-canvas px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-sky-300/50"
-                >
-                  <span className="grid size-9 place-items-center rounded-[12px] bg-gradient-to-br from-sky-400/25 to-sky-500/10 text-sky-600">
-                    <TbWorld size={17} />
-                  </span>
+                <Link key={s.id} href={s.href} className="flex min-w-[168px] max-w-[210px] shrink-0 items-center gap-2.5 rounded-[16px] border border-line/90 bg-canvas px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-sky-300/50">
+                  <span className="grid size-9 place-items-center rounded-[12px] bg-gradient-to-br from-sky-400/25 to-sky-500/10 text-sky-600"><TbWorld size={17} /></span>
                   <span className="min-w-0">
                     <span className="block truncate text-[13px] font-semibold text-ink">{s.title}</span>
                     <span className="block truncate text-[11.5px] text-ink-4">Site · {relativeTime(s.createdAt)}</span>
@@ -392,114 +376,54 @@ export function BuilderView({
     );
   }
 
-  /* ——— Build mode: chat left + preview right (like the reference) ——— */
   return (
     <div className="flex h-[100dvh] flex-col bg-canvas">
       <header className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-2">
-        <Link href="/websites" className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-hover hover:text-ink">
-          <FiArrowLeft size={16} />
-        </Link>
+        <Link href="/websites" className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-hover hover:text-ink"><FiArrowLeft size={16} /></Link>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13.5px] font-medium text-ink">{plan?.title || idea.slice(0, 48) || "Builder"}</p>
           <p className="text-[11px] text-ink-4">{phase === "ready" ? "Ready" : phase}</p>
         </div>
         <div className="flex items-center gap-1.5">
           {steas.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setPane(p.id)}
-              className={cn(
-                "grid size-8 place-items-center rounded-lg",
-                pane === p.id ? "bg-accent/15 text-accent" : "text-ink-3 hover:bg-hover",
-              )}
-            >
+            <button key={p.id} type="button" onClick={() => setPane(p.id)} className={cn("grid size-8 place-items-center rounded-lg", pane === p.id ? "bg-accent/15 text-accent" : "text-ink-3 hover:bg-hover")}>
               <Ico icon={p.icon} motion={p.motion} size={15} />
             </button>
           ))}
-          <PublishPanel
-            files={files}
-            title={plan?.title || idea.slice(0, 40)}
-            publishedUrl={publishedUrl}
-            onPublished={(url) => {
-              setPublishedUrl(url);
-              persist({ publishedUrl: url });
-            }}
-          />
+          <PublishPanel files={files} title={plan?.title || idea.slice(0, 40)} publishedUrl={publishedUrl} onPublished={(url) => { setPublishedUrl(url); persist({ publishedUrl: url }); }} />
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
-        {/* Chat column */}
         <aside className="flex w-full max-w-[400px] shrink-0 flex-col border-r border-line bg-raised md:max-w-[380px]">
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
             {messages.map((m) => (
-              <div
-                key={m.id}
-                className={cn(
-                  "rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-[1.65]",
-                  m.role === "user"
-                    ? "ml-6 bg-accent/15 text-ink"
-                    : "mr-1 space-y-2 border border-line/80 bg-sunk/80 text-ink-2",
-                )}
-              >
-                {m.role === "user" ? (
-                  <span className="whitespace-pre-wrap">{m.text}</span>
-                ) : (
-                  formatChat(m.text)
-                )}
+              <div key={m.id} className={cn("rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-[1.65]", m.role === "user" ? "ml-6 bg-accent/15 text-ink" : "mr-1 space-y-2 border border-line/80 bg-sunk/80 text-ink-2")}>
+                {m.role === "user" ? <span className="whitespace-pre-wrap">{m.text}</span> : formatChat(m.text)}
               </div>
             ))}
             {(phase === "asking" || phase === "planning") && <Thinking phase={phase} logs={logs} />}
             {phase === "building" && (
               <div className="space-y-0.5">
                 {tasks.slice(-8).map((task) => (
-                  <ProcessRow
-                    key={task.id}
-                    kind={task.kind === "write" || task.kind === "read" ? "file" : task.kind === "skill" ? "cmd" : "think"}
-                    label={task.label || task.kind}
-                    active={task.state === "run"}
-                  />
+                  <ProcessRow key={task.id} kind={task.kind === "write" || task.kind === "read" ? "file" : task.kind === "skill" ? "cmd" : "think"} label={task.label || task.kind} active={task.state === "run"} />
                 ))}
                 {!tasks.length ? <ProcessRow kind="cmd" label="Writing files…" active /> : null}
                 <WorkingTimer secs={workSecs} />
               </div>
             )}
-            {finalMsg && phase === "ready" && (
-              <div className="rounded-[12px] border border-positive/25 bg-positive/10 px-3 py-2 text-[13px] text-ink-2">{finalMsg}</div>
-            )}
+            {finalMsg && phase === "ready" && <div className="rounded-[12px] border border-positive/25 bg-positive/10 px-3 py-2 text-[13px] text-ink-2">{finalMsg}</div>}
             {error && <FailureNote error={error} onRetry={() => setError(null)} />}
             {questionsOpen && questions.length > 0 && (
-              <QuestionBox
-                questions={questions}
-                onSubmit={(a) => {
-                  setAnswers(a);
-                  void plan_(idea, a);
-                }}
-                onSkip={() => void plan_(idea, {})}
-                busy={busy}
-              />
+              <QuestionBox questions={questions} onSubmit={(a) => { setAnswers(a); void plan_(idea, a); }} onSkip={() => void plan_(idea, {})} busy={busy} />
             )}
             {phase === "review" && plan && !questionsOpen && (
-              <PlanPanel
-                plan={plan}
-                storage={storage}
-                onStorage={setStorage}
-                onGenerate={() => void generate()}
-                busy={busy}
-              />
+              <PlanPanel plan={plan} storage={storage} onStorage={setStorage} onGenerate={() => void generate()} busy={busy} />
             )}
             {chips.length > 0 && phase === "ready" && (
               <div className="flex flex-wrap gap-1.5">
                 {chips.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => void continueChat(c)}
-                    className="rounded-full border border-line bg-sunk px-2.5 py-1 text-[12px] text-ink-3 hover:border-line-strong hover:text-ink"
-                  >
-                    {c}
-                  </button>
+                  <button key={c} type="button" onClick={() => void continueChat(c)} className="rounded-full border border-line bg-sunk px-2.5 py-1 text-[12px] text-ink-3 hover:border-line-strong hover:text-ink">{c}</button>
                 ))}
               </div>
             )}
@@ -513,31 +437,18 @@ export function BuilderView({
           </div>
         </aside>
 
-        {/* Preview column */}
         <main className="min-w-0 flex-1 bg-sunk">
           {pane === "preview" && (
             <BrowserFrame url={sandboxUrl || (preview ? "localhost:preview" : "about:blank")}>
               {sandboxUrl ? (
-                <iframe
-                  title="Live Preview"
-                  src={sandboxUrl}
-                  className="h-full w-full border-0 bg-white"
-                  allow="accelerometer; camera; geolocation; microphone; clipboard-write"
-                />
+                <iframe title="Live Preview" src={sandboxUrl} className="h-full w-full border-0 bg-white" allow="accelerometer; camera; geolocation; microphone; clipboard-write" />
               ) : preview ? (
-                <iframe
-                  title="Preview"
-                  srcDoc={preview}
-                  className="h-full w-full border-0 bg-white"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                />
+                <iframe title="Preview" srcDoc={preview} className="h-full w-full border-0 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals" />
               ) : (
                 <div className="grid h-full place-items-center px-6 text-center">
                   <div>
                     <p className="text-[16px] font-semibold text-ink">Preview</p>
-                    <p className="mt-2 max-w-sm text-[13px] text-ink-4">
-                      After the first build, your site appears here. With E2B_API_KEY set, React apps get a live host URL.
-                    </p>
+                    <p className="mt-2 max-w-sm text-[13px] text-ink-4">After the first build, your site appears here. With E2B_API_KEY set, React apps get a live host URL.</p>
                   </div>
                 </div>
               )}
@@ -548,16 +459,8 @@ export function BuilderView({
               <ul className="space-y-1">
                 {files.map((f) => (
                   <li key={f.path}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpenFile(f.path);
-                        setPane("code");
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] text-ink-2 hover:bg-hover"
-                    >
-                      <FiFile size={14} className="text-ink-4" />
-                      {f.path}
+                    <button type="button" onClick={() => { setOpenFile(f.path); setPane("code"); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] text-ink-2 hover:bg-hover">
+                      <FiFile size={14} className="text-ink-4" />{f.path}
                     </button>
                   </li>
                 ))}
@@ -565,12 +468,10 @@ export function BuilderView({
             </div>
           )}
           {pane === "code" && (
-            <pre className="h-full overflow-auto p-4 font-mono text-[12px] text-ink-2">
-              {files.find((f) => f.path === openFile)?.content || "// select a file"}
-            </pre>
+            <pre className="h-full overflow-auto p-4 font-mono text-[12px] text-ink-2">{files.find((f) => f.path === openFile)?.content || "// select a file"}</pre>
           )}
           {pane === "console" && (
-            <div className="flex h-full flex-col">
+          <div className="flex h-full flex-col">
               <BuildConsole lines={logs} className="min-h-0 flex-1" />
               <ProjectTerminal files={files} className="h-40 shrink-0 border-t border-line" />
             </div>
