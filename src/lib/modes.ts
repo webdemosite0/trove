@@ -1,16 +1,5 @@
 /**
  * Response modes.
- *
- * Every mode changes something the model actually receives: a temperature that
- * reaches Google's generationConfig, and a line appended to the system prompt.
- * Nothing here is decorative — a control that looks like it does something and
- * does not is worse than no control, because it teaches people the product
- * lies to them.
- *
- * This is deliberately not a model picker. Every entry in the fallback chain is
- * a Flash variant, so a dropdown of model names would be exactly that empty
- * control. "Fast" and "Deep" are honest about what they are: instructions about
- * length and thoroughness, not different engines.
  */
 
 export type ModeId = "fast" | "balanced" | "deep" | "creative";
@@ -37,7 +26,7 @@ export const MODES: Record<ModeId, Mode> = {
   balanced: {
     id: "balanced",
     label: "Balanced",
-    blurb: "The default. Accurate, well phrased.",
+    blurb: "Accurate, well phrased.",
     temperature: 0.7,
     hint: "",
   },
@@ -65,19 +54,17 @@ export const MODES: Record<ModeId, Mode> = {
 
 export const MODE_LIST = Object.values(MODES);
 
-export const DEFAULT_MODE: ModeId = "balanced";
+/** Default is Fast so first answers arrive quickly. */
+export const DEFAULT_MODE: ModeId = "fast";
 
-/** Resolves an untrusted value to a real mode, never undefined. */
 export function modeFor(id: unknown): Mode {
   return MODES[id as ModeId] ?? MODES[DEFAULT_MODE];
 }
 
-/** Resolves an untrusted value to a real temperature. */
 export function temperatureFor(id: unknown): number {
   return modeFor(id).temperature;
 }
 
-/** The system-prompt line for a mode, or "" when it has nothing to add. */
 export function hintFor(id: unknown): string {
   return modeFor(id).hint;
 }
