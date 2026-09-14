@@ -21,7 +21,7 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <nav aria-label="Product">
               <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                 Product
@@ -75,6 +75,46 @@ export function Footer() {
                     className="text-[13px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Sign in
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/chat"
+                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Open chat
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+
+            <nav aria-label="Legal">
+              <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
+                Legal
+              </h2>
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Terms
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/sitemap.xml"
+                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Sitemap
                   </Link>
                 </li>
               </ul>
