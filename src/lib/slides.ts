@@ -1,25 +1,44 @@
 /**
- * Turns the deck outline the model writes into structured slides.
+ * Deck model + lenient markdown parser.
  *
- * The prompt asks for "## Slide N — Title", bullets, then a "Note:" line, but
- * models drift: they use plain "## Title", numbered bullets, an em dash or a
- * hyphen, or bold the note. Parsing leniently here is much cheaper than trying
- * to force exact output, and it keeps a stray format change from producing an
- * empty deck.
+ * One type system for text (title + body). Layouts vary; typography does not.
  */
+
+export type SlideLayout =
+  | "title"
+  | "bullets"
+  | "split"
+  | "photo"
+  | "quote"
+  | "section";
 
 export type Slide = {
   title: string;
   bullets: string[];
-  /** Speaker note, if the model wrote one. */
   note: string;
+  /** Visual structure. Default "bullets". */
+  layout: SlideLayout;
+  /**
+   * Optional image URL or a short photo brief the UI can show as a placeholder.
+   * Models write: Image: <url or description>
+   */
+  image?: string;
 };
 
-/** Matched against emphasis-stripped text, so "**Note:**" and "Note —" agree. */
 const NOTE = /^note\s*[:—–-]\s*(.+)$/i;
 const BULLET = /^\s*(?:[-*•]|\d+[.)])\s+(.*)$/;
+const LAYOUT = /^layout\s*[:—–-]\s*(title|bullets|split|photo|quote|section)\s*$/i;
+const IMAGE = /^image\s*[:—–-]\s*(.+)$/i;
 
-/** Strips the markdown emphasis the model sprinkles in; slides render plain. */
+const LAYOUTS = new Set<SlideLayout>([
+  "title",
+  "bullets",
+  "split",
+  "photo",
+  "quote",
+  "section",
+]);
+
 function clean(s: string): string {
   return s
     .replace(/\*\*(.+?)\*\*/g, "$1")
@@ -29,17 +48,35 @@ function clean(s: string): string {
     .trim();
 }
 
-/** Drops a leading "Slide 3 —" / "Slide 3:" so it doesn't render twice. */
 function stripSlideLabel(s: string): string {
   return s.replace(/^slide\s*\d+\s*[—–:.-]?\s*/i, "").trim();
+}
+
+function blank(title = ""): Slide {
+  return { title, bullets: [], note: "", layout: "bullets" };
+}
+
+function finalize(slide: Slide): Slide {
+  if (!slide.layout || slide.layout === "bullets") {
+    if (!slide.bullets.length && slide.title) {
+      return { ...slide, layout: "title" };
+    }
+  }
+  if (slide.image && slide.layout === "bullets") {
+    return { ...slide, layout: "split" };
+  }
+  return slide;
 }
 
 export function parseDeck(markdown: string): Slide[] {
   const slides: Slide[] = [];
   let current: Slide | null = null;
+  let firstHeading = true;
 
   const push = () => {
-    if (current && (current.title || current.bullets.length)) slides.push(current);
+    if (current && (current.title || current.bullets.length)) {
+      slides.push(finalize(current));
+    }
   };
 
   let inCode = false;
@@ -49,8 +86,6 @@ export function parseDeck(markdown: string): Slide[] {
       inCode = !inCode;
       continue;
     }
-    // Fenced blocks are not slide structure; keep their lines as bullets so
-    // nothing silently vanishes from the deck.
     if (inCode) {
       if (current && raw.trim()) current.bullets.push(raw.trim());
       continue;
@@ -59,30 +94,44 @@ export function parseDeck(markdown: string): Slide[] {
     const heading = raw.match(/^(#{1,4})\s+(.*)$/);
     if (heading) {
       const title = stripSlideLabel(clean(heading[2]));
-      // A lone H1 at the very top is the deck title, not a slide.
-      if (heading[1].length === 1 && !slides.length && !current) {
-        current = { title, bullets: [], note: "" };
+      if (heading[1].length === 1 && firstHeading && !slides.length && !current) {
+        firstHeading = false;
+        current = blank(title);
+        current.layout = "title";
         continue;
       }
+      firstHeading = false;
       push();
-      current = { title, bullets: [], note: "" };
+      current = blank(title);
+      continue;
+    }
+
+    const plain = clean(raw);
+    if (!plain) continue;
+
+    const layoutMatch = plain.match(LAYOUT);
+    if (layoutMatch && current) {
+      const l = layoutMatch[1].toLowerCase() as SlideLayout;
+      if (LAYOUTS.has(l)) current.layout = l;
+      continue;
+    }
+
+    const imageMatch = plain.match(IMAGE);
+    if (imageMatch && current) {
+      current.image = imageMatch[1].trim();
+      if (current.layout === "bullets") current.layout = "split";
       continue;
     }
 
     const bullet = raw.match(BULLET);
 
-    // Bullets that arrive before any heading still deserve a slide — dropping
-    // them would render a whole deck as blank just because the model skipped
-    // its headings. Bare prose before the first heading is preamble, so it is
-    // left out.
     if (!current) {
       if (!bullet) continue;
-      current = { title: "", bullets: [], note: "" };
+      current = blank("");
     }
 
-    const note = clean(raw).match(NOTE);
+    const note = plain.match(NOTE);
     if (note) {
-      // Later notes append rather than overwrite, so a two-line note survives.
       current.note = current.note ? `${current.note} ${note[1]}` : note[1];
       continue;
     }
@@ -93,16 +142,33 @@ export function parseDeck(markdown: string): Slide[] {
       continue;
     }
 
-    // A bare prose line under a heading is still content worth showing.
-    const prose = clean(raw);
-    if (prose) current.bullets.push(prose);
+    if (plain) current.bullets.push(plain);
   }
 
   push();
   return slides;
 }
 
-/** A filename-safe stem derived from the deck's first title. */
+export function serialiseDeck(slides: Slide[]): string {
+  if (!slides.length) return "";
+  const out: string[] = [];
+  slides.forEach((s, i) => {
+    if (i === 0 && s.layout === "title" && !s.bullets.length) {
+      out.push(`# ${s.title || "Untitled deck"}`, "");
+    } else {
+      out.push(`## Slide ${i + 1} — ${s.title || "Untitled"}`, "");
+    }
+    if (s.layout && s.layout !== "bullets") {
+      out.push(`Layout: ${s.layout}`);
+    }
+    if (s.image) out.push(`Image: ${s.image}`);
+    for (const b of s.bullets) out.push(`- ${b}`);
+    if (s.note) out.push(`Note: ${s.note}`);
+    out.push("");
+  });
+  return out.join("\n").trim() + "\n";
+}
+
 export function deckFilename(slides: Slide[], fallback: string): string {
   const base = slides[0]?.title || fallback || "deck";
   return (
@@ -112,40 +178,4 @@ export function deckFilename(slides: Slide[], fallback: string): string {
       .replace(/^-|-$/g, "")
       .toLowerCase() || "deck"
   );
-}
-
-/**
- * Slides back to the markdown they were parsed from.
- *
- * The inverse of parseDeck, and it exists because the Markdown export was
- * writing out the model's original answer while the PowerPoint export wrote
- * the edited deck. Editing a deck and downloading the .md silently produced
- * the version before the edits — the worst kind of bug, because the file looks
- * complete.
- *
- * The format matches what the prompt asks the model for, so a deck can be
- * exported, re-imported and parsed back to the same slides.
- */
-export function serialiseDeck(slides: Slide[]): string {
-  if (!slides.length) return "";
-
-  const [first, ...rest] = slides;
-  const out: string[] = [];
-
-  // The first slide is the title slide: "# Title", no bullets. That is the
-  // shape parseDeck expects, and round-tripping depends on it.
-  out.push(`# ${first.title}`.trim());
-  if (first.bullets.length) {
-    out.push("");
-    for (const b of first.bullets) out.push(`- ${b}`);
-  }
-  if (first.note) out.push("", `Note: ${first.note}`);
-
-  rest.forEach((s, i) => {
-    out.push("", `## Slide ${i + 2} — ${s.title}`.trim(), "");
-    for (const b of s.bullets) out.push(`- ${b}`);
-    if (s.note) out.push("", `Note: ${s.note}`);
-  });
-
-  return out.join("\n") + "\n";
 }
