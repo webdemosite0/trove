@@ -1,4 +1,42 @@
-/* Backdrop theme layers — opacity switch avoids display:none paint flash */
+/* Photo workspace background — exact asset from product art */
+.nx-photo-bg {
+  position: absolute;
+  inset: 0;
+  background-color: #f4f2ff;
+  background-image: url("/workspace-bg.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Fallback wash if image missing */
+.nx-photo-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 42% at 10% 16%, rgba(167, 139, 250, 0.2), transparent 60%),
+    radial-gradient(ellipse 48% 38% at 90% 10%, rgba(129, 140, 248, 0.18), transparent 58%),
+    radial-gradient(ellipse 80% 48% at 50% -8%, rgba(224, 231, 255, 0.5), transparent 62%),
+    linear-gradient(165deg, #f8f7ff 0%, #f2efff 32%, #eef4ff 68%, #f6f8fc 100%);
+  z-index: -1;
+}
+
+/* Soft grid overlay matching photo */
+.nx-photo-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 90% 75% at 50% 40%, #000 12%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 75% at 50% 40%, #000 12%, transparent 78%);
+  pointer-events: none;
+}
+
+/* Theme switch — opacity (no display flash) */
 .nx-bg-light {
   opacity: 1;
   visibility: visible;
@@ -39,13 +77,12 @@
   }
 }
 
-/* Match html fill to photo lavender so edges never flash warm gray */
+/* Match html fill to photo lavender */
 :root[data-theme="light"] {
-  --color-canvas: #f5f4fb;
+  --color-canvas: #f4f2ff;
 }
-
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-canvas: #f5f4fb;
+    --color-canvas: #f4f2ff;
   }
 }
