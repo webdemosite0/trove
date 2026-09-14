@@ -4,18 +4,6 @@ import { Wordmark } from "@/components/brand/logo";
 import { FEATURES } from "@/lib/features";
 import { site } from "@/lib/site";
 
-/**
- * The site footer.
- *
- * There was none, which cost two things. Every public page was reachable only
- * from the navigation of the page you were already on, so a crawler arriving
- * on a feature page found no route to the others — and a marketing site with
- * no way to contact anyone reads as unfinished regardless of what is above it.
- *
- * The links here are the real ones. No social accounts are listed because
- * there are none to list, and a row of dead icons is worse than a row with
- * nothing in it.
- */
 export function Footer() {
   const year = new Date().getFullYear();
 
@@ -28,8 +16,8 @@ export function Footer() {
               <Wordmark size={19} sweep={false} />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-3">
-              An AI workspace that turns a sentence into finished work you can
-              download and keep.
+              Trove doesn't just generate work. It keeps building with you
+              — websites, docs, sheets, and files you own.
             </p>
           </div>
 
