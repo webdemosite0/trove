@@ -45,6 +45,9 @@ Runs after npm install && npm run dev. Preview uses the E2B sandbox live URL.
 Required files (minimum):
   package.json, vite.config.js, index.html, src/main.jsx, src/App.jsx, src/index.css
   Plus pages/components as needed (Home, About, etc.).
+vite.config.js MUST include:
+  server: { host: "0.0.0.0", port: 5173, allowedHosts: true }
+  so E2B preview hosts (*.e2b.app) are not blocked.
 
 Pinned versions only. Fully working UI — no dead buttons.
 No remote stock photos — CSS gradients, SVG, solid color blocks only.
