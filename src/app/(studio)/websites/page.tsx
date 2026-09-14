@@ -40,6 +40,7 @@ export default async function WebsitesPage({
         href:
           r.href ||
           `/websites?c=${encodeURIComponent(r.conversationId ?? r.id)}`,
+        createdAt: r.createdAt,
       }))}
     />
   );
