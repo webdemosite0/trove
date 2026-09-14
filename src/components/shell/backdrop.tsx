@@ -1,5 +1,6 @@
 /**
- * Soft lavender workspace ground — uses the exact product photo background.
+ * Global workspace background — matches the product photo
+ * (soft lavender, grid, corner blooms).
  */
 export function Backdrop() {
   return (
@@ -8,12 +9,12 @@ export function Backdrop() {
       className="nx-no-print pointer-events-none fixed inset-0 -z-10 overflow-hidden"
       style={{ isolation: "isolate", contain: "strict" }}
     >
-      {/* Light theme — photo */}
+      {/* Light — photo palette */}
       <div className="absolute inset-0 nx-bg-light">
         <div className="nx-photo-bg" />
       </div>
 
-      {/* Dark theme */}
+      {/* Dark */}
       <div className="absolute inset-0 nx-bg-dark">
         <div
           className="absolute inset-0"
