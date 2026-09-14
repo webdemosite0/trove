@@ -5,6 +5,7 @@ import { site } from "@/lib/site";
 import { THEME_SCRIPT } from "@/components/shell/theme";
 import "./globals.css";
 import "./landing-motion.css";
+import "./theme-backdrop.css";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -74,7 +75,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f4fb" },
     { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
   ],
   colorScheme: "dark light",
