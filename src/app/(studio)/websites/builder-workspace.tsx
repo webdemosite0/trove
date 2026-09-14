@@ -339,14 +339,14 @@ export function BuilderView({
 
   if (phase === "idle" && !files.length) {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col items-center justify-center gap-6 px-4 pb-16">
-        <TroveOrb size={48} />
-        <h1 className="text-center text-[28px] font-semibold tracking-tight text-ink">What should we build?</h1>
-        <div className="w-full max-w-xl mx-auto">
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-[760px] flex-col items-center justify-center gap-7 px-5 pb-16">
+        <TroveOrb size={56} />
+        <h1 className="text-center text-[clamp(1.85rem,1rem+2vw,2.75rem)] font-semibold tracking-tight text-ink">What should we build?</h1>
+        <div className="w-full max-w-[720px]">
           {mobile ? (
             <MobileComposer onSend={sendFromComposer} placeholder="Describe a site or app…" />
           ) : (
-            <Composer onSend={sendFromComposer} placeholder="Describe a site or app…" compact autoFocus />
+            <Composer onSend={sendFromComposer} placeholder="Describe a site or app…" autoFocus />
           )}
         </div>
         <div className="flex flex-wrap justify-center gap-2">
