@@ -11,7 +11,9 @@ PRAGMA journal_mode = WAL;
       plan TEXT NOT NULL DEFAULT 'free',
       created_at INTEGER NOT NULL,
       email_verified INTEGER NOT NULL DEFAULT 0,
-      provider TEXT NOT NULL DEFAULT 'password'
+      provider TEXT NOT NULL DEFAULT 'password',
+      onboarding_done INTEGER NOT NULL DEFAULT 0,
+      onboarding_meta TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS auth_tokens (
@@ -271,6 +273,10 @@ export const MIGRATIONS: string[] = [
   `CREATE TABLE IF NOT EXISTS builder_deployments (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, environment TEXT NOT NULL DEFAULT 'preview', status TEXT NOT NULL DEFAULT 'queued', url TEXT NOT NULL DEFAULT '', commit_ref TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, finished_at INTEGER)`,
   `CREATE TABLE IF NOT EXISTS builder_brand_profiles (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, colors TEXT NOT NULL DEFAULT '[]', typography TEXT NOT NULL DEFAULT '{}', rules TEXT NOT NULL DEFAULT '{}', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `ALTER TABLE users ADD COLUMN instructions TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE users ADD COLUMN onboarding_done INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE users ADD COLUMN onboarding_meta TEXT NOT NULL DEFAULT ''`,
+  // Existing accounts already use the product — don't force the intro again.
+  `UPDATE users SET onboarding_done = 1 WHERE onboarding_done = 0 AND created_at < ${Date.now() - 60_000}`,
 ];
 
 export const REPAIRS = `
