@@ -24,7 +24,8 @@ const PUBLIC_PREFIXES = [
   "/api/auth/", // the sign-in and OAuth callback routes themselves
   "/api/health", // has to answer when the database is down
   "/api/billing/webhook", // Stripe calls this server-to-server; it has no cookie
-  "/s/", // published sites ({slug}.troveai.site rewrites here)
+  "/api/site/", // published sites ({slug}.troveai.site rewrites here — pure HTML)
+  "/s/", // legacy published-site path
 ];
 
 function isPublic(pathname: string) {
@@ -114,9 +115,14 @@ function subdomainRewrite(req: NextRequest): NextResponse | null {
   const slug = parts[0];
   if (!slug || RESERVED_HOST_SLUGS.has(slug)) return null;
   const url = req.nextUrl.clone();
-  if (url.pathname.startsWith("/s/")) return null;
-  // clinilamp.troveai.site/about → /s/clinilamp/about (SPA + static paths)
-  url.pathname = `/s/${slug}${url.pathname === "/" ? "" : url.pathname}`;
+  // Already rewritten to the public site API or /s/
+  if (url.pathname.startsWith("/api/site/") || url.pathname.startsWith("/s/")) {
+    return null;
+  }
+  // clinilamp.troveai.site → /api/site/clinilamp
+  // Use a Route Handler so the response is NEVER the Trove app layout.
+  // Nested paths (SPA) still hit the same handler; client routers take over.
+  url.pathname = `/api/site/${slug}`;
   return NextResponse.rewrite(url);
 }
 
