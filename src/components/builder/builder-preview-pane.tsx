@@ -22,11 +22,12 @@ export function BuilderPreviewPane({
   const [sandboxFailed, setSandboxFailed] = useState(false);
   const [mode, setMode] = useState<"live" | "snapshot">("live");
 
-  const useLive = Boolean(sandboxUrl) && !sandboxFailed && mode === "live";
-  const useSnapshot = Boolean(preview) && (!useLive || mode === "snapshot");
+  const hasSandbox = Boolean(sandboxUrl) && !sandboxFailed;
+  const useLive = hasSandbox && mode === "live";
+  const useSnapshot = Boolean(preview) && (mode === "snapshot" || !hasSandbox);
 
   const displayUrl = useLive
-    ? sandboxUrl!.replace(/^https?:\/\//, "").replace(/\/$/, "")
+    ? String(sandboxUrl).replace(/^https?:\/\//, "").replace(/\/$/, "")
     : useSnapshot
       ? "localhost:preview"
       : "about:blank";
@@ -71,7 +72,7 @@ export function BuilderPreviewPane({
             type="button"
             onClick={() => setMode("snapshot")}
             className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-              !useLive && useSnapshot
+              useSnapshot && !useLive
                 ? "bg-accent/15 text-accent"
                 : "text-ink-4 hover:bg-hover hover:text-ink"
             }`}
@@ -85,32 +86,30 @@ export function BuilderPreviewPane({
         url={displayUrl}
         onOpen={preview || sandboxUrl ? openExternal : undefined}
         onRefresh={() => {
-          if (useLive) {
+          if (hasSandbox) {
             setSandboxFailed(false);
-            // Force iframe reload by toggling failed flag briefly via key below
             setMode("live");
           }
           onRefresh?.();
         }}
         className="h-full min-h-0 shadow-md"
       >
-        {useLive ? (
+        {useLive && sandboxUrl ? (
           <iframe
             key={sandboxUrl}
             title="Live Preview"
-            src={sandboxUrl!}
+            src={sandboxUrl}
             className="absolute inset-0 h-full w-full border-0 bg-white"
             allow="accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
             referrerPolicy="no-referrer"
-            // E2B Vite needs scripts + same-origin for HMR sockets when allowed
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation"
             onError={handleSandboxError}
           />
-        ) : useSnapshot ? (
+        ) : useSnapshot && preview ? (
           <iframe
-            key={preview!.slice(0, 80)}
+            key={preview.slice(0, 80)}
             title="Preview"
-            srcDoc={preview!}
+            srcDoc={preview}
             className="absolute inset-0 h-full w-full border-0 bg-white"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             referrerPolicy="no-referrer"
