@@ -24,20 +24,7 @@ const OAUTH_ERRORS: Record<string, string> = {
   "microsoft-state": "That sign-in attempt expired. Please try again.",
   "microsoft-exchange": "Microsoft could not complete the sign-in. Please try again.",
   "microsoft-unverified": "That Microsoft account has no confirmed email.",
-  "apple-unconfigured":
-    "Apple sign-in is not set up yet. Add APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY on Vercel.",
-  "apple-cancelled": "Apple sign-in was cancelled.",
-  "apple-state": "That sign-in attempt expired. Please try again.",
-  "apple-exchange": "Apple could not complete the sign-in. Please try again.",
 };
-
-function AppleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-    </svg>
-  );
-}
 
 function MicrosoftIcon() {
   return (
@@ -54,7 +41,6 @@ export function AuthCard({
   mode,
   googleEnabled = true,
   microsoftEnabled = true,
-  appleEnabled = true,
   oauthError,
   next,
   justVerified = false,
@@ -62,7 +48,6 @@ export function AuthCard({
   mode: "login" | "signup";
   googleEnabled?: boolean;
   microsoftEnabled?: boolean;
-  appleEnabled?: boolean;
   oauthError?: string;
   next?: string;
   justVerified?: boolean;
@@ -184,7 +169,7 @@ export function AuthCard({
         <span className="h-px flex-1 bg-zinc-200" />
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5">
         {googleEnabled ? (
           <a
             href="/api/auth/google"
@@ -196,23 +181,6 @@ export function AuthCard({
         ) : (
           <span className="flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-100 text-[13px] text-zinc-300">
             Google
-          </span>
-        )}
-        {appleEnabled ? (
-          <a
-            href="/api/auth/apple"
-            className="flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-700 transition hover:bg-zinc-50"
-          >
-            <AppleIcon />
-            Apple
-          </a>
-        ) : (
-          <span
-            title="Add Apple env vars on Vercel to enable"
-            className="flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-400"
-          >
-            <AppleIcon />
-            Apple
           </span>
         )}
         {microsoftEnabled ? (
