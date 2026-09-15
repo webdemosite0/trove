@@ -160,7 +160,7 @@ export async function checkSlugAvailability(
   if (!isValidSlug(normalized)) {
     return {
       available: false,
-      reason: "Use 2–48 characters: lowercase letters, numbers, and hyphens only.",
+      reason: "Use 2-48 characters: lowercase letters, numbers, and hyphens only.",
       normalized,
     };
   }
@@ -194,8 +194,6 @@ export function buildPublishHtml(
 ): string {
   let out = (html && html.trim()) || "";
 
-  // Prefer rebuilding from project files whenever we have them — client HTML
-  // is often a Vite shell or an incomplete srcDoc that looks fine only on E2B.
   if (Array.isArray(files) && files.length) {
     try {
       const rebuilt = bundle(files) || "";
@@ -227,12 +225,18 @@ export function buildPublishHtml(
   return out;
 }
 
+/** Escape for safe injection into HTML text/attributes. */
 function escapeHtml(s: string) {
+  // Build entities via concat so the source cannot be corrupted by HTML decoding.
+  const amp = "&" + "amp;";
+  const lt = "&" + "lt;";
+  const gt = "&" + "gt;";
+  const quot = "&" + "quot;";
   return s
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, """);
+    .replace(/&/g, amp)
+    .replace(/</g, lt)
+    .replace(/>/g, gt)
+    .replace(/"/g, quot);
 }
 
 export async function publishSite(opts: {
@@ -412,7 +416,6 @@ export async function resolveLiveHtml(slug: string): Promise<{
 
   let html = site.html;
 
-  // Always try to rebuild from files if stored HTML is empty or a Vite shell.
   if ((!html.trim() || isViteShell(html)) && site.filesJson) {
     try {
       const files = JSON.parse(site.filesJson) as ProjectFile[];
@@ -447,14 +450,14 @@ export function brandedUnavailablePage(
         "</code>.";
   return (
     "<!DOCTYPE html>\n" +
-    "<html lang=\"en\">\n" +
+    '<html lang="en">\n' +
     "<head>\n" +
-    "  <meta charset=\"UTF-8\"/>\n" +
-    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n" +
+    '  <meta charset="UTF-8"/>\n' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1"/>\n' +
     "  <title>" +
     escapeHtml(title) +
-    " — Trove</title>\n" +
-    "  <meta name=\"robots\" content=\"noindex\"/>\n" +
+    " - Trove</title>\n" +
+    '  <meta name="robots" content="noindex"/>\n' +
     "  <style>\n" +
     "    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fafafa;display:flex;align-items:center;justify-content:center;padding:48px}\n" +
     "    .box{max-width:440px}\n" +
@@ -467,16 +470,16 @@ export function brandedUnavailablePage(
     "  </style>\n" +
     "</head>\n" +
     "<body>\n" +
-    "  <div class=\"box\">\n" +
+    '  <div class="box">\n' +
     "    <h1>" +
     escapeHtml(title) +
     "</h1>\n" +
     "    <p>" +
     body +
     "</p>\n" +
-    "    <p class=\"foot\"><a href=\"https://" +
+    '    <p class="foot"><a href="https://' +
     ROOT_DOMAIN +
-    "\">troveai.site</a></p>\n" +
+    '">troveai.site</a></p>\n' +
     "  </div>\n" +
     "</body>\n" +
     "</html>"
