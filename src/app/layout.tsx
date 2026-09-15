@@ -7,6 +7,7 @@ import "./globals.css";
 import "./landing-motion.css";
 import "./builder-motion.css";
 import "./theme-backdrop.css";
+import "./onboarding-motion.css";
 
 const inter = Inter({
   variable: "--font-inter",
