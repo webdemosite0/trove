@@ -1,21 +1,10 @@
 /* ============================================================
-   Landing motion system — small, deliberate animations
+   Landing motion — deliberate entrances + scroll reveals
    ============================================================ */
 
 @keyframes nx-float-y {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-@keyframes nx-float-x {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(10px); }
-}
-@keyframes nx-spin-slow {
-  to { transform: rotate(360deg); }
-}
-@keyframes nx-pulse-soft {
-  0%, 100% { opacity: 0.45; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.06); }
+  50% { transform: translateY(-10px); }
 }
 @keyframes nx-fade-up {
   from { opacity: 0; transform: translateY(18px); }
@@ -26,75 +15,64 @@
   to { opacity: 1; }
 }
 @keyframes nx-scale-in {
-  from { opacity: 0; transform: scale(0.94); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
-@keyframes nx-slide-in-left {
-  from { opacity: 0; transform: translateX(-24px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes nx-slide-in-right {
-  from { opacity: 0; transform: translateX(24px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes nx-blur-in {
-  from { opacity: 0; filter: blur(8px); }
-  to { opacity: 1; filter: blur(0); }
-}
-@keyframes nx-border-glow {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(99,102,241,0.15), 0 12px 40px -20px rgba(99,102,241,0.2); }
-  50% { box-shadow: 0 0 0 1px rgba(99,102,241,0.35), 0 16px 48px -16px rgba(167,139,250,0.35); }
-}
 @keyframes nx-chip-pop {
-  0% { opacity: 0; transform: translateY(8px) scale(0.92); }
+  0% { opacity: 0; transform: translateY(10px) scale(0.94); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes nx-word-shine {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
 }
 @keyframes nx-announce-in {
   from { opacity: 0; transform: translateY(-100%); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-.nx-float-y { animation: nx-float-y 6s ease-in-out infinite; }
-.nx-float-y-slow { animation: nx-float-y 9s ease-in-out infinite; }
-.nx-float-x { animation: nx-float-x 8s ease-in-out infinite; }
-.nx-spin-slow { animation: nx-spin-slow 40s linear infinite; }
-.nx-pulse-soft { animation: nx-pulse-soft 4s ease-in-out infinite; }
-.nx-fade-up { animation: nx-fade-up 0.7s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
-.nx-fade-in { animation: nx-fade-in 0.6s ease both; }
-.nx-scale-in { animation: nx-scale-in 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
-.nx-slide-left { animation: nx-slide-in-left 0.6s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
-.nx-slide-right { animation: nx-slide-in-right 0.6s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
-.nx-blur-in { animation: nx-blur-in 0.8s ease both; }
-.nx-border-glow { animation: nx-border-glow 4s ease-in-out infinite; }
-.nx-chip-pop { animation: nx-chip-pop 0.45s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
-.nx-word-shine {
-  background-size: 200% auto;
-  animation: nx-word-shine 6s linear infinite;
+@keyframes lp-hero-in {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.nx-announce-in { animation: nx-announce-in 0.5s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
 
-.nx-stagger-kids > * { animation: nx-fade-up 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
-.nx-stagger-kids > *:nth-child(1) { animation-delay: 40ms; }
-.nx-stagger-kids > *:nth-child(2) { animation-delay: 90ms; }
-.nx-stagger-kids > *:nth-child(3) { animation-delay: 140ms; }
-.nx-stagger-kids > *:nth-child(4) { animation-delay: 190ms; }
-.nx-stagger-kids > *:nth-child(5) { animation-delay: 240ms; }
-.nx-stagger-kids > *:nth-child(6) { animation-delay: 290ms; }
-.nx-stagger-kids > *:nth-child(7) { animation-delay: 340ms; }
-.nx-stagger-kids > *:nth-child(8) { animation-delay: 390ms; }
-.nx-stagger-kids > *:nth-child(9) { animation-delay: 440ms; }
-.nx-stagger-kids > *:nth-child(10) { animation-delay: 490ms; }
-.nx-stagger-kids > *:nth-child(11) { animation-delay: 540ms; }
-.nx-stagger-kids > *:nth-child(12) { animation-delay: 590ms; }
+.nx-float-y { animation: nx-float-y 7s ease-in-out infinite; }
+.nx-fade-up { animation: nx-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.nx-fade-in { animation: nx-fade-in 0.6s ease both; }
+.nx-scale-in { animation: nx-scale-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.nx-chip-pop { animation: nx-chip-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.nx-announce-in { animation: nx-announce-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/*
- * Fixed full-viewport photo backdrop — stable, no animated layers.
- * Animated orbs/blur caused banding and “glitchy” seams on GPU.
- */
+.lp-hero-in {
+  opacity: 0;
+  animation: lp-hero-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+.lp-chip-in {
+  opacity: 0;
+  animation: nx-chip-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lp-float {
+  animation: lp-float 8s ease-in-out infinite;
+}
+
+/* Scroll reveal */
+.lp-reveal {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-y, 28px), 0);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.lp-reveal--on {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Backdrop */
 .landing-scene {
   position: fixed;
   inset: 0;
@@ -102,7 +80,6 @@
   pointer-events: none;
   z-index: 0;
   background-color: #f4f2ff;
-  /* Promote one clean layer; avoid transform thrashing */
   transform: translateZ(0);
   backface-visibility: hidden;
 }
@@ -111,7 +88,6 @@
   position: absolute;
   inset: 0;
   background-color: #f4f2ff;
-  /* Soft lavender blooms + clean wash — matches product photo */
   background-image:
     radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.5), transparent 72%),
     radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.42), transparent 70%),
@@ -121,7 +97,6 @@
     linear-gradient(180deg, #f7f5ff 0%, #eef1ff 45%, #f3f5fb 100%);
 }
 
-/* Subtle static grid — no animation */
 .landing-grid {
   position: absolute;
   inset: 0;
@@ -136,19 +111,24 @@
 }
 
 .ann-card {
-  animation: nx-announce-in 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+  animation: nx-announce-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   backdrop-filter: blur(16px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nx-float-y, .nx-float-y-slow, .nx-float-x, .nx-spin-slow,
-  .nx-pulse-soft, .nx-border-glow, .nx-word-shine {
+  .nx-float-y,
+  .lp-float,
+  .lp-hero-in,
+  .lp-chip-in,
+  .nx-chip-pop,
+  .ann-card {
     animation: none !important;
   }
-  .nx-fade-up, .nx-fade-in, .nx-scale-in, .nx-slide-left, .nx-slide-right,
-  .nx-blur-in, .nx-chip-pop, .nx-stagger-kids > *, .ann-card {
-    animation: none !important;
+  .lp-hero-in,
+  .lp-chip-in,
+  .lp-reveal {
     opacity: 1 !important;
     transform: none !important;
+    transition: none !important;
   }
 }
