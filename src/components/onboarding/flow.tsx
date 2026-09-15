@@ -10,7 +10,7 @@ import {
   FiGrid,
   FiCode,
   FiLayers,
-  FiCompass,
+  FiSearch,
   FiCheck,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
@@ -55,7 +55,7 @@ const GOALS = [
     id: "explore" as const,
     title: "Just exploring",
     blurb: "Open the workspace and look around",
-    Icon: FiCompass,
+    Icon: FiSearch,
     accent: "from-zinc-500/10 to-zinc-100 border-zinc-200",
   },
 ];
@@ -115,7 +115,6 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
         <span className="ob-orb ob-orb-c" />
       </div>
 
-      {/* Progress */}
       <header className="relative z-10 mx-auto flex w-full max-w-lg items-center gap-4 px-5 pt-6 sm:pt-10">
         <TroveOrb size={28} state="idle" />
         <div className="flex-1">
