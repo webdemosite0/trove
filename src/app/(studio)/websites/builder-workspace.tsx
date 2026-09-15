@@ -63,6 +63,7 @@ export function BuilderView({
   const [sandboxUrl, setSandboxUrl] = useState<string | null>(null);
   const [openFile, setOpenFile] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(restored?.id ?? null);
   const [targetId] = useState<TargetId>("react");
   const [chips, setChips] = useState<string[]>([]);
   const msgId = useRef(0);
@@ -80,6 +81,46 @@ export function BuilderView({
       if (html) setPreview(html);
     } catch { /* keep */ }
   }, [files]);
+
+  // Restore a previously saved site when opened via ?c=<projectId>
+  useEffect(() => {
+    const id = restored?.id;
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/builder/projects?id=${encodeURIComponent(id)}`);
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        const project = data?.project;
+        if (!project || cancelled) return;
+        setProjectId(project.id);
+        if (project.prompt) setIdea(project.prompt);
+        if (Array.isArray(project.files) && project.files.length) {
+          setFiles(project.files);
+          setPhase("ready");
+          setFinalMsg("Restored your saved website. Ask for changes anytime.");
+        }
+        if (project.previewHtml) setPreview(project.previewHtml);
+        else if (Array.isArray(project.files) && project.files.length) {
+          try {
+            const html = bundle(project.files);
+            if (html) setPreview(html);
+          } catch { /* */ }
+        }
+        if (project.name) {
+          setPlan((prev) => prev ?? ({
+            title: project.name,
+            summary: project.prompt || "",
+            requirements: { overview: "", features: [], pages: [], rules: [] },
+            style: { name: "clean", mood: "", palette: [], type: "" },
+            steps: [],
+          }));
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [restored?.id]);
 
   const log = useCallback((text: string, level: LogLine["level"] = "info") => {
     const id = ++logId.current;
@@ -109,6 +150,39 @@ export function BuilderView({
       log(e instanceof Error ? e.message : "Sandbox failed", "warn");
     }
   }, [targetId, log]);
+
+  const persistProject = useCallback(async (nextFiles: ProjectFile[], nextPreview: string | null, title?: string) => {
+    if (!nextFiles.length && !nextPreview) return;
+    try {
+      const res = await fetch("/api/builder/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: projectId,
+          name: title || plan?.title || idea.slice(0, 60) || "Untitled site",
+          prompt: idea,
+          target: targetId,
+          status: "ready",
+          files: nextFiles,
+          previewHtml: nextPreview,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.id) {
+        setProjectId(data.id);
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("c") !== data.id) {
+          url.searchParams.set("c", data.id);
+          window.history.replaceState(null, "", url.toString());
+        }
+        log(`saved · ${data.id}`, "ok");
+      } else if (!res.ok) {
+        log(data?.error || "Could not save website", "warn");
+      }
+    } catch {
+      log("Could not save website", "warn");
+    }
+  }, [projectId, plan?.title, idea, targetId, log]);
 
   const runStep = useCallback(async (step: PlanStep, style: string, current: ProjectFile[], meta: { index: number; total: number }) => {
     setTasks((t) => [...t, { id: `t${meta.index}`, kind: "write", label: step.title, state: "run" }]);
@@ -219,12 +293,15 @@ export function BuilderView({
       setPhase("ready");
       setFinalMsg("Build complete. Preview is on the right — ask for changes anytime.");
       setChips(["Add a contact page", "Refine mobile layout", "Change the colors"]);
+      let html: string | null = null;
+      try { html = bundle(current) || null; if (html) setPreview(html); } catch { /* */ }
+      void persistProject(current, html, plan.title);
       void bootSandbox(current);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Build failed");
       setPhase("ready");
     }
-  }, [plan, busy, files, runStep, log, bootSandbox]);
+  }, [plan, busy, files, runStep, log, bootSandbox, persistProject]);
 
   const continueChat = useCallback(async (text: string) => {
     const t = text.trim();
@@ -237,12 +314,15 @@ export function BuilderView({
       const next = await runStep(editStep, plan?.style?.name || "clean", files, { index: 0, total: 1 });
       setMessages((m) => [...m, { id: `a${++msgId.current}`, role: "assistant", text: "Updated. Check the preview — ask for more changes anytime.", at: Date.now() }]);
       setPhase("ready");
+      let html: string | null = null;
+      try { html = bundle(next) || null; if (html) setPreview(html); } catch { /* */ }
+      void persistProject(next, html, plan?.title);
       void bootSandbox(next);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Edit failed");
       setPhase("ready");
     }
-  }, [busy, files, plan, runStep, bootSandbox]);
+  }, [busy, files, plan, runStep, bootSandbox, persistProject]);
 
   const sendFromComposer = useCallback((text: string) => {
     if (!text.trim()) return;
