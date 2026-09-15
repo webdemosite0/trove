@@ -10,57 +10,52 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Trove starts free with 200 credits a month and every tool included. Pro is $24 a month for 5,000 credits, Team is $96 for 20,000. No card to start.",
+    "Trove starts free with 200 credits a month, a 5-hour burst window, and every tool included. Pro is $24 for 5,000 credits. Team is $96 for 20,000.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     type: "website",
     url: "/pricing",
     title: `Pricing · ${site.name}`,
     description:
-      "Free to start with 200 credits a month and every tool included. Pro and Team add capacity, not features.",
+      "Free to start with monthly credits, a Codex-style 5-hour window, and every tool. Pro and Team add capacity, not features.",
   },
 };
 
-/**
- * The public pricing page.
- *
- * Reads PLANS, the same array the billing code charges against, so the page
- * cannot quote a price the checkout does not use. /plans is the signed-in
- * version with a live credit balance on it; this one is readable by anyone,
- * which is the point — pricing behind a login wall is a page nobody can cite
- * and Google cannot index.
- */
 export default function PricingPage() {
   return (
     <div className="mx-auto max-w-[1040px] px-5 pb-24 pt-16 lg:px-8 lg:pt-24">
       <header className="max-w-[640px]">
-        <h1 className="text-[clamp(2rem,1.2rem+2.4vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">
+          Capacity, not feature gates
+        </p>
+        <h1 className="mt-3 text-[clamp(2rem,1.2rem+2.4vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
           Pay for capacity, not for features.
         </h1>
         <p className="mt-5 text-[17px] leading-relaxed text-ink-2">
-          Every plan has every tool. The difference is how much you can run in a
-          month, so the free plan is the whole product rather than a demo of it.
+          Every plan has every tool. You get a monthly budget and a rolling
+          5-hour burst window — so one intense session cannot empty the whole
+          month at once.
         </p>
       </header>
 
       <div className="mt-12 grid gap-4 lg:grid-cols-3">
         {PLANS.map((plan) => {
-          // Pro gets the emphasis as the middle tier, and gets no badge.
-          // The first draft said "most capacity per pound", which was wrong
-          // twice: the prices are in dollars, and the claim is false anyway —
-          // Pro and Team are both exactly 208 credits per dollar. A pricing
-          // page is the last place to be caught rounding in your own favour.
           const featured = plan.id === "pro";
           return (
             <section
               key={plan.id}
               className={cn(
-                "relative flex flex-col rounded-[var(--r-hero)] border p-6",
+                "relative flex flex-col rounded-[var(--r-hero)] border p-6 transition hover:-translate-y-0.5",
                 featured
-                  ? "border-accent/45 bg-rail shadow-[var(--sh-2)]"
+                  ? "border-violet-400/50 bg-gradient-to-b from-violet-50/80 to-rail shadow-[var(--sh-2)]"
                   : "border-line bg-rail",
               )}
             >
+              {featured ? (
+                <span className="absolute -top-2.5 left-6 rounded-full bg-violet-600 px-2.5 py-0.5 text-[11px] font-medium text-white">
+                  Most popular
+                </span>
+              ) : null}
               <h2 className="text-[15px] font-semibold text-ink">{plan.name}</h2>
 
               <p className="mt-3 flex items-baseline gap-1.5">
@@ -75,6 +70,25 @@ export default function PricingPage() {
               <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">
                 {plan.blurb}
               </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-line bg-white/60 px-3 py-2.5">
+                  <p className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">
+                    Month
+                  </p>
+                  <p className="mt-0.5 text-[15px] font-semibold tabular-nums text-ink">
+                    {plan.monthly.toLocaleString()}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-line bg-white/60 px-3 py-2.5">
+                  <p className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">
+                    5-hour
+                  </p>
+                  <p className="mt-0.5 text-[15px] font-semibold tabular-nums text-ink">
+                    {plan.windowLimit.toLocaleString()}
+                  </p>
+                </div>
+              </div>
 
               <ul className="mt-5 flex-1 space-y-2.5">
                 {plan.features.map((f) => (
@@ -102,29 +116,32 @@ export default function PricingPage() {
         })}
       </div>
 
-      {/* The question every credit-based product gets asked first. */}
       <section className="mt-16 max-w-[720px]">
         <h2 className="text-[22px] font-semibold tracking-[-0.015em] text-ink">
           What is a credit?
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          One credit is roughly a thousand tokens of model work — the text going
-          in and the text coming back. A short question costs one. A full
-          website, a long research thread or a twelve-slide deck costs more,
-          because it is more work.
+          One credit is roughly a thousand tokens of model work — text in and
+          text back. A short question costs one. A full website costs more.
         </p>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          Nothing is metered except model work. Editing a spreadsheet, exporting
-          a document, renaming a saved thread and opening old work are all free,
-          because none of them ask a model anything. Your balance and a
-          per-feature breakdown of where the month went are in the workspace.
+          Nothing is metered except model work. Editing, exporting, renaming,
+          and opening old work are free.
         </p>
-        {/* Worth saying plainly rather than letting someone work it out and
-            wonder what else is being shaded. */}
+      </section>
+
+      <section className="mt-12 max-w-[720px]">
+        <h2 className="text-[22px] font-semibold tracking-[-0.015em] text-ink">
+          Why a 5-hour window?
+        </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          Pro and Team cost exactly the same per credit — about 208 credits per
-          dollar on both. Team is not better value, it is more capacity, plus
-          agents shared across the workspace rather than held by one account.
+          Same idea as Codex: intense sessions are paced so one afternoon cannot
+          burn the entire monthly grant. Capacity returns as older usage ages
+          out of the window — not as a hard lockout until tomorrow.
+        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+          The month is still the hard ceiling. The window only shapes how fast
+          you can spend.
         </p>
       </section>
 
@@ -143,9 +160,7 @@ export default function PricingPage() {
               >
                 <Icon size={18} className="mt-0.5 shrink-0" style={{ color: f.tone }} />
                 <span className="min-w-0">
-                  <span className="block text-[14px] font-medium text-ink">
-                    {f.label}
-                  </span>
+                  <span className="block text-[14px] font-medium text-ink">{f.label}</span>
                   <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-4">
                     {f.title}
                   </span>
@@ -156,13 +171,11 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <div className="mt-16 rounded-[var(--r-hero)] border border-line bg-rail p-7">
-        <h2 className="text-[19px] font-semibold text-ink">
-          Start on the free plan
-        </h2>
+      <div className="mt-16 rounded-[var(--r-hero)] border border-line bg-gradient-to-br from-violet-50/50 to-rail p-7">
+        <h2 className="text-[19px] font-semibold text-ink">Start on the free plan</h2>
         <p className="mt-2 max-w-[52ch] text-[14.5px] leading-relaxed text-ink-3">
-          200 credits a month, every tool, no card. Upgrade only when you run
-          out — and the balance resets on the first of each month either way.
+          200 credits a month, 40 per 5-hour window, every tool, no card. Upgrade
+          only when you need more capacity.
         </p>
         <Link
           href="/signup"
