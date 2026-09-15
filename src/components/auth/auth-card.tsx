@@ -18,6 +18,17 @@ const OAUTH_ERRORS: Record<string, string> = {
   "google-state": "That sign-in attempt expired. Please try again.",
   "google-exchange": "Google could not complete the sign-in. Please try again.",
   "google-unverified": "That Google account has no confirmed email.",
+  "microsoft-unconfigured":
+    "Microsoft sign-in is not set up yet. Add MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET on Vercel.",
+  "microsoft-cancelled": "Microsoft sign-in was cancelled.",
+  "microsoft-state": "That sign-in attempt expired. Please try again.",
+  "microsoft-exchange": "Microsoft could not complete the sign-in. Please try again.",
+  "microsoft-unverified": "That Microsoft account has no confirmed email.",
+  "apple-unconfigured":
+    "Apple sign-in is not set up yet. Add APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY on Vercel.",
+  "apple-cancelled": "Apple sign-in was cancelled.",
+  "apple-state": "That sign-in attempt expired. Please try again.",
+  "apple-exchange": "Apple could not complete the sign-in. Please try again.",
 };
 
 function AppleIcon() {
@@ -42,12 +53,16 @@ function MicrosoftIcon() {
 export function AuthCard({
   mode,
   googleEnabled = true,
+  microsoftEnabled = true,
+  appleEnabled = true,
   oauthError,
   next,
   justVerified = false,
 }: {
   mode: "login" | "signup";
   googleEnabled?: boolean;
+  microsoftEnabled?: boolean;
+  appleEnabled?: boolean;
   oauthError?: string;
   next?: string;
   justVerified?: boolean;
@@ -183,20 +198,40 @@ export function AuthCard({
             Google
           </span>
         )}
-        <span
-          title="Coming soon"
-          className="flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-400"
-        >
-          <AppleIcon />
-          Apple
-        </span>
-        <span
-          title="Coming soon"
-          className="flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-400"
-        >
-          <MicrosoftIcon />
-          Microsoft
-        </span>
+        {appleEnabled ? (
+          <a
+            href="/api/auth/apple"
+            className="flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-700 transition hover:bg-zinc-50"
+          >
+            <AppleIcon />
+            Apple
+          </a>
+        ) : (
+          <span
+            title="Add Apple env vars on Vercel to enable"
+            className="flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-400"
+          >
+            <AppleIcon />
+            Apple
+          </span>
+        )}
+        {microsoftEnabled ? (
+          <a
+            href="/api/auth/microsoft"
+            className="flex h-11 items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-700 transition hover:bg-zinc-50"
+          >
+            <MicrosoftIcon />
+            Microsoft
+          </a>
+        ) : (
+          <span
+            title="Add Microsoft env vars on Vercel to enable"
+            className="flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium text-zinc-400"
+          >
+            <MicrosoftIcon />
+            Microsoft
+          </span>
+        )}
       </div>
 
       <p className="mt-8 text-[13.5px] text-zinc-500">
