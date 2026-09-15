@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { Backdrop } from "@/components/shell/backdrop";
 import { Footer } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
@@ -33,9 +32,8 @@ export default async function Landing() {
   const free = PLANS[0];
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#f4f2ff]">
       <LandingScene />
-      <Backdrop />
       <LandingNav />
 
       <main className="relative z-10">
