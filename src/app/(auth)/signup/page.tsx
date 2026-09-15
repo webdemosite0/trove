@@ -1,7 +1,6 @@
 import { AuthCard } from "@/components/auth/auth-card";
 import { googleConfigured } from "@/lib/google";
 import { microsoftConfigured } from "@/lib/microsoft";
-import { appleConfigured } from "@/lib/apple";
 
 /** Not indexed — see the note in the sign-in page. */
 export const metadata = {
@@ -20,7 +19,6 @@ export default async function SignupPage({
       mode="signup"
       googleEnabled={googleConfigured()}
       microsoftEnabled={microsoftConfigured()}
-      appleEnabled={appleConfigured()}
       oauthError={error}
     />
   );
