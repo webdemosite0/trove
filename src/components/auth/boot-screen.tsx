@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 const STEPS = ["Signing you in", "Assembling tools", "Opening workspace"];
 
 function safeNext(value: string | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/chat";
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/onboarding";
   if (value.startsWith("/login") || value.startsWith("/signup") || value.startsWith("/launching")) {
-    return "/chat";
+    return "/onboarding";
   }
   return value;
 }
