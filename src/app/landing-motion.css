@@ -79,11 +79,6 @@
   from { opacity: 0; transform: translateY(-100%); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes nx-photo-ken {
-  0% { transform: scale(1) translate(0, 0); }
-  50% { transform: scale(1.06) translate(-1%, -0.5%); }
-  100% { transform: scale(1) translate(0, 0); }
-}
 
 .nx-float-y { animation: nx-float-y 6s ease-in-out infinite; }
 .nx-float-y-slow { animation: nx-float-y 9s ease-in-out infinite; }
@@ -120,67 +115,83 @@
 .nx-stagger-kids > *:nth-child(11) { animation-delay: 540ms; }
 .nx-stagger-kids > *:nth-child(12) { animation-delay: 590ms; }
 
-/* Fixed so the hero wash does not scroll/jump with the page */
+/*
+ * Fixed full-viewport photo backdrop — matches product reference.
+ * No remote image (avoids flash / broken load / scroll glitch).
+ */
 .landing-scene {
   position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  background-color: #f4f2ff;
 }
-.landing-scene__img {
+
+.landing-scene__photo {
   position: absolute;
-  inset: -8%;
-  width: 116%;
-  height: 116%;
-  object-fit: cover;
-  opacity: 0.28;
-  animation: none;
-  filter: saturate(1.05) contrast(1.02);
-  transform: scale(1.04);
+  inset: 0;
+  background-color: #f4f2ff;
+  background-image:
+    radial-gradient(ellipse 42% 36% at 8% 18%, rgba(186, 170, 255, 0.58), transparent 70%),
+    radial-gradient(ellipse 38% 32% at 94% 14%, rgba(160, 175, 255, 0.5), transparent 68%),
+    radial-gradient(ellipse 48% 38% at 88% 88%, rgba(200, 190, 255, 0.38), transparent 72%),
+    radial-gradient(ellipse 44% 34% at 10% 92%, rgba(175, 185, 255, 0.3), transparent 70%),
+    radial-gradient(ellipse 55% 42% at 50% 42%, rgba(255, 255, 255, 0.72), transparent 62%),
+    linear-gradient(165deg, #f7f5ff 0%, #eef1ff 38%, #f2f5fc 72%, #f6f7fb 100%);
 }
+
 .landing-scene__veil {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.22), transparent 55%),
-    radial-gradient(ellipse 45% 40% at 90% 60%, rgba(244,114,182,0.12), transparent 50%),
-    radial-gradient(ellipse 40% 35% at 5% 80%, rgba(52,211,153,0.1), transparent 50%),
-    linear-gradient(to bottom, transparent 40%, var(--color-canvas, #fafafa) 95%);
+    radial-gradient(ellipse 80% 48% at 50% -8%, rgba(99, 102, 241, 0.14), transparent 55%),
+    radial-gradient(ellipse 42% 36% at 92% 58%, rgba(244, 114, 182, 0.08), transparent 52%),
+    linear-gradient(to bottom, transparent 55%, #f4f2ff 100%);
 }
+
 .landing-orb {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(48px);
-  animation: nx-drift 16s ease-in-out infinite;
+  filter: blur(56px);
+  animation: nx-drift 18s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 .landing-orb--1 {
-  width: 280px; height: 280px;
-  top: 8%; left: 12%;
-  background: rgba(99,102,241,0.35);
+  width: 300px;
+  height: 300px;
+  top: 6%;
+  left: 8%;
+  background: rgba(139, 120, 255, 0.32);
 }
 .landing-orb--2 {
-  width: 220px; height: 220px;
-  top: 35%; right: 8%;
-  background: rgba(236,72,153,0.28);
-  animation-delay: -4s;
+  width: 240px;
+  height: 240px;
+  top: 28%;
+  right: 6%;
+  background: rgba(186, 160, 255, 0.28);
+  animation-delay: -5s;
 }
 .landing-orb--3 {
-  width: 180px; height: 180px;
-  bottom: 20%; left: 30%;
-  background: rgba(52,211,153,0.22);
-  animation-delay: -8s;
+  width: 200px;
+  height: 200px;
+  bottom: 18%;
+  left: 28%;
+  background: rgba(160, 175, 255, 0.22);
+  animation-delay: -9s;
 }
+
 .landing-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.3;
+  opacity: 0.55;
   background-image:
-    linear-gradient(rgba(128,128,128,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(128,128,128,0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgba(120, 130, 220, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 130, 220, 0.07) 1px, transparent 1px);
   background-size: 56px 56px;
-  animation: nx-grid-pan 40s linear infinite;
-  mask-image: radial-gradient(ellipse 70% 55% at 50% 20%, black, transparent);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 8%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 8%, transparent 78%);
+  pointer-events: none;
 }
 
 .ann-card {
@@ -189,15 +200,19 @@
 }
 
 @media (max-width: 768px) {
-  .landing-orb, .landing-grid {
+  .landing-orb,
+  .landing-grid {
     animation: none !important;
+  }
+  .landing-orb {
+    opacity: 0.7;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .nx-float-y, .nx-float-y-slow, .nx-float-x, .nx-drift, .nx-spin-slow,
   .nx-pulse-soft, .nx-glow-breathe, .nx-border-glow, .nx-word-shine,
-  .landing-scene__img, .landing-grid, .landing-orb {
+  .landing-grid, .landing-orb {
     animation: none !important;
   }
   .nx-fade-up, .nx-fade-in, .nx-scale-in, .nx-slide-left, .nx-slide-right,
