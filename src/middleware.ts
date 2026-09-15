@@ -79,11 +79,32 @@ function canonicalHost(req: NextRequest): NextResponse | null {
 }
 
 
-/**
- * Live deploy hosts: {slug}.troveai.site → /s/{slug}
- * Store built sites under /s/[slug] (static export or edge config map).
- * Apex and www stay the main app; only multi-level hostnames rewrite.
- */
+/** System hosts that must never be treated as a user-published site. */
+const RESERVED_HOST_SLUGS = new Set([
+  "www",
+  "app",
+  "api",
+  "admin",
+  "dashboard",
+  "builder",
+  "login",
+  "signup",
+  "auth",
+  "support",
+  "billing",
+  "docs",
+  "status",
+  "mail",
+  "cdn",
+  "static",
+  "assets",
+  "help",
+  "blog",
+  "studio",
+  "sites",
+  "trove",
+]);
+
 function subdomainRewrite(req: NextRequest): NextResponse | null {
   const host = (req.headers.get("host") || "").split(":")[0].toLowerCase();
   if (!host.endsWith(".troveai.site")) return null;
@@ -91,9 +112,10 @@ function subdomainRewrite(req: NextRequest): NextResponse | null {
   // slug.troveai.site → 3 parts; ignore apex (troveai.site) and www
   if (parts.length < 3) return null;
   const slug = parts[0];
-  if (!slug || slug === "www" || slug === "app" || slug === "api") return null;
+  if (!slug || RESERVED_HOST_SLUGS.has(slug)) return null;
   const url = req.nextUrl.clone();
   if (url.pathname.startsWith("/s/")) return null;
+  // clinilamp.troveai.site/about → /s/clinilamp/about (SPA + static paths)
   url.pathname = `/s/${slug}${url.pathname === "/" ? "" : url.pathname}`;
   return NextResponse.rewrite(url);
 }
