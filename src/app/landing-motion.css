@@ -1,5 +1,5 @@
 /* ============================================================
-   Landing motion system — many small, deliberate animations
+   Landing motion system — small, deliberate animations
    ============================================================ */
 
 @keyframes nx-float-y {
@@ -10,22 +10,12 @@
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(10px); }
 }
-@keyframes nx-drift {
-  0% { transform: translate(0, 0) scale(1); opacity: 0.55; }
-  33% { transform: translate(18px, -14px) scale(1.05); opacity: 0.8; }
-  66% { transform: translate(-12px, 10px) scale(0.96); opacity: 0.65; }
-  100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
-}
 @keyframes nx-spin-slow {
   to { transform: rotate(360deg); }
 }
 @keyframes nx-pulse-soft {
   0%, 100% { opacity: 0.45; transform: scale(1); }
   50% { opacity: 0.85; transform: scale(1.06); }
-}
-@keyframes nx-glow-breathe {
-  0%, 100% { opacity: 0.35; filter: blur(40px); }
-  50% { opacity: 0.7; filter: blur(52px); }
 }
 @keyframes nx-fade-up {
   from { opacity: 0; transform: translateY(18px); }
@@ -51,10 +41,6 @@
   from { opacity: 0; filter: blur(8px); }
   to { opacity: 1; filter: blur(0); }
 }
-@keyframes nx-shimmer-line {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; }
-}
 @keyframes nx-border-glow {
   0%, 100% { box-shadow: 0 0 0 1px rgba(99,102,241,0.15), 0 12px 40px -20px rgba(99,102,241,0.2); }
   50% { box-shadow: 0 0 0 1px rgba(99,102,241,0.35), 0 16px 48px -16px rgba(167,139,250,0.35); }
@@ -67,14 +53,6 @@
   0% { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
 }
-@keyframes nx-orb-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.15); opacity: 0.85; }
-}
-@keyframes nx-grid-pan {
-  0% { background-position: 0 0; }
-  100% { background-position: 64px 64px; }
-}
 @keyframes nx-announce-in {
   from { opacity: 0; transform: translateY(-100%); }
   to { opacity: 1; transform: translateY(0); }
@@ -83,10 +61,8 @@
 .nx-float-y { animation: nx-float-y 6s ease-in-out infinite; }
 .nx-float-y-slow { animation: nx-float-y 9s ease-in-out infinite; }
 .nx-float-x { animation: nx-float-x 8s ease-in-out infinite; }
-.nx-drift { animation: nx-drift 14s ease-in-out infinite; }
 .nx-spin-slow { animation: nx-spin-slow 40s linear infinite; }
 .nx-pulse-soft { animation: nx-pulse-soft 4s ease-in-out infinite; }
-.nx-glow-breathe { animation: nx-glow-breathe 5s ease-in-out infinite; }
 .nx-fade-up { animation: nx-fade-up 0.7s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
 .nx-fade-in { animation: nx-fade-in 0.6s ease both; }
 .nx-scale-in { animation: nx-scale-in 0.55s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both; }
@@ -116,8 +92,8 @@
 .nx-stagger-kids > *:nth-child(12) { animation-delay: 590ms; }
 
 /*
- * Fixed full-viewport photo backdrop — matches product reference.
- * No remote image (avoids flash / broken load / scroll glitch).
+ * Fixed full-viewport photo backdrop — stable, no animated layers.
+ * Animated orbs/blur caused banding and “glitchy” seams on GPU.
  */
 .landing-scene {
   position: fixed;
@@ -126,71 +102,36 @@
   pointer-events: none;
   z-index: 0;
   background-color: #f4f2ff;
+  /* Promote one clean layer; avoid transform thrashing */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .landing-scene__photo {
   position: absolute;
   inset: 0;
   background-color: #f4f2ff;
+  /* Soft lavender blooms + clean wash — matches product photo */
   background-image:
-    radial-gradient(ellipse 42% 36% at 8% 18%, rgba(186, 170, 255, 0.58), transparent 70%),
-    radial-gradient(ellipse 38% 32% at 94% 14%, rgba(160, 175, 255, 0.5), transparent 68%),
-    radial-gradient(ellipse 48% 38% at 88% 88%, rgba(200, 190, 255, 0.38), transparent 72%),
-    radial-gradient(ellipse 44% 34% at 10% 92%, rgba(175, 185, 255, 0.3), transparent 70%),
-    radial-gradient(ellipse 55% 42% at 50% 42%, rgba(255, 255, 255, 0.72), transparent 62%),
-    linear-gradient(165deg, #f7f5ff 0%, #eef1ff 38%, #f2f5fc 72%, #f6f7fb 100%);
+    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.5), transparent 72%),
+    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.42), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 90% 92%, rgba(200, 190, 255, 0.32), transparent 74%),
+    radial-gradient(ellipse 50% 40% at 8% 94%, rgba(175, 185, 255, 0.26), transparent 72%),
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(255, 255, 255, 0.78), transparent 68%),
+    linear-gradient(180deg, #f7f5ff 0%, #eef1ff 45%, #f3f5fb 100%);
 }
 
-.landing-scene__veil {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 48% at 50% -8%, rgba(99, 102, 241, 0.14), transparent 55%),
-    radial-gradient(ellipse 42% 36% at 92% 58%, rgba(244, 114, 182, 0.08), transparent 52%),
-    linear-gradient(to bottom, transparent 55%, #f4f2ff 100%);
-}
-
-.landing-orb {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(56px);
-  animation: nx-drift 18s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-.landing-orb--1 {
-  width: 300px;
-  height: 300px;
-  top: 6%;
-  left: 8%;
-  background: rgba(139, 120, 255, 0.32);
-}
-.landing-orb--2 {
-  width: 240px;
-  height: 240px;
-  top: 28%;
-  right: 6%;
-  background: rgba(186, 160, 255, 0.28);
-  animation-delay: -5s;
-}
-.landing-orb--3 {
-  width: 200px;
-  height: 200px;
-  bottom: 18%;
-  left: 28%;
-  background: rgba(160, 175, 255, 0.22);
-  animation-delay: -9s;
-}
-
+/* Subtle static grid — no animation */
 .landing-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.55;
+  opacity: 0.4;
   background-image:
-    linear-gradient(to right, rgba(120, 130, 220, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(120, 130, 220, 0.07) 1px, transparent 1px);
+    linear-gradient(to right, rgba(120, 130, 220, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 130, 220, 0.06) 1px, transparent 1px);
   background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 8%, transparent 78%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 35%, #000 8%, transparent 78%);
+  mask-image: radial-gradient(ellipse 92% 75% at 50% 35%, #000 10%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 92% 75% at 50% 35%, #000 10%, transparent 80%);
   pointer-events: none;
 }
 
@@ -199,20 +140,9 @@
   backdrop-filter: blur(16px);
 }
 
-@media (max-width: 768px) {
-  .landing-orb,
-  .landing-grid {
-    animation: none !important;
-  }
-  .landing-orb {
-    opacity: 0.7;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .nx-float-y, .nx-float-y-slow, .nx-float-x, .nx-drift, .nx-spin-slow,
-  .nx-pulse-soft, .nx-glow-breathe, .nx-border-glow, .nx-word-shine,
-  .landing-grid, .landing-orb {
+  .nx-float-y, .nx-float-y-slow, .nx-float-x, .nx-spin-slow,
+  .nx-pulse-soft, .nx-border-glow, .nx-word-shine {
     animation: none !important;
   }
   .nx-fade-up, .nx-fade-in, .nx-scale-in, .nx-slide-left, .nx-slide-right,
