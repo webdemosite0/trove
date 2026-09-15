@@ -36,7 +36,7 @@ export function BuilderPreviewPane({
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col p-2 md:p-3">
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col p-1.5 md:p-2">
       <BrowserFrame
         url={displayUrl}
         onOpen={preview || sandboxUrl ? openExternal : undefined}
