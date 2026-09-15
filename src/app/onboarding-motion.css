@@ -1,57 +1,56 @@
-/* Onboarding motion — layered micro-animations */
+/* Onboarding — theme tokens + motion */
 
 @keyframes ob-fade {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 @keyframes ob-rise {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes ob-in-fwd {
-  from { opacity: 0; transform: translateX(28px); }
+  from { opacity: 0; transform: translateX(24px); }
   to { opacity: 1; transform: translateX(0); }
 }
 @keyframes ob-in-back {
-  from { opacity: 0; transform: translateX(-28px); }
+  from { opacity: 0; transform: translateX(-24px); }
   to { opacity: 1; transform: translateX(0); }
 }
 @keyframes ob-card-in {
-  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes ob-chip-in {
-  from { opacity: 0; transform: scale(0.9); }
+  from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: scale(1); }
 }
-@keyframes ob-progress {
-  from { transform: scaleX(0); transform-origin: left; }
-}
 @keyframes ob-orb-a {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.45; }
-  50% { transform: translate(12px, -18px) scale(1.08); opacity: 0.7; }
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(10px, -14px) scale(1.06); opacity: 0.75; }
 }
 @keyframes ob-orb-b {
-  0%, 100% { transform: translate(0, 0); opacity: 0.35; }
-  50% { transform: translate(-16px, 10px); opacity: 0.55; }
+  0%, 100% { transform: translate(0, 0); opacity: 0.4; }
+  50% { transform: translate(-12px, 8px); opacity: 0.6; }
 }
 @keyframes ob-orb-c {
-  0%, 100% { transform: translate(0, 8px); opacity: 0.3; }
-  50% { transform: translate(10px, -6px); opacity: 0.5; }
+  0%, 100% { transform: translate(0, 6px); opacity: 0.35; }
+  50% { transform: translate(8px, -4px); opacity: 0.55; }
 }
 
 .ob-root {
   isolation: isolate;
+  background: var(--color-canvas);
+  color: var(--color-ink);
 }
 
 .ob-bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 50% 40% at 10% 0%, rgba(186, 170, 255, 0.45), transparent 70%),
-    radial-gradient(ellipse 45% 35% at 95% 10%, rgba(160, 175, 255, 0.35), transparent 68%),
-    linear-gradient(180deg, #f7f5ff 0%, #eef1ff 50%, #f4f2ff 100%);
   z-index: 0;
+  background:
+    radial-gradient(ellipse 55% 42% at 8% 0%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 70%),
+    radial-gradient(ellipse 48% 36% at 96% 8%, color-mix(in oklab, var(--color-violet) 14%, transparent), transparent 68%),
+    linear-gradient(180deg, var(--color-canvas) 0%, var(--color-sunk) 100%);
 }
 
 .ob-orbs {
@@ -65,65 +64,65 @@
 .ob-orb {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(48px);
+  filter: blur(52px);
 }
 .ob-orb-a {
   width: 220px;
   height: 220px;
-  top: 12%;
-  left: -40px;
-  background: rgba(139, 92, 246, 0.28);
+  top: 10%;
+  left: -48px;
+  background: var(--orb-a);
   animation: ob-orb-a 14s ease-in-out infinite;
 }
 .ob-orb-b {
   width: 180px;
   height: 180px;
-  top: 40%;
-  right: -30px;
-  background: rgba(99, 102, 241, 0.22);
+  top: 42%;
+  right: -36px;
+  background: var(--orb-b);
   animation: ob-orb-b 16s ease-in-out infinite;
 }
 .ob-orb-c {
-  width: 160px;
-  height: 160px;
-  bottom: 8%;
-  left: 30%;
-  background: rgba(236, 72, 153, 0.12);
+  width: 150px;
+  height: 150px;
+  bottom: 10%;
+  left: 32%;
+  background: var(--orb-c);
   animation: ob-orb-c 18s ease-in-out infinite;
 }
 
 .ob-progress {
-  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: width 0.45s var(--ease-out);
 }
 
 .ob-in-fwd {
-  animation: ob-in-fwd 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ob-in-fwd 0.42s var(--ease-out) both;
 }
 .ob-in-back {
-  animation: ob-in-back 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ob-in-back 0.42s var(--ease-out) both;
 }
 
 .ob-fade {
-  animation: ob-fade 0.4s ease both;
+  animation: ob-fade 0.35s ease both;
 }
 .ob-rise {
-  animation: ob-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ob-rise 0.5s var(--ease-out) both;
 }
 .ob-rise-d1 {
-  animation: ob-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+  animation: ob-rise 0.5s var(--ease-out) 50ms both;
 }
 .ob-rise-d2 {
-  animation: ob-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) 110ms both;
+  animation: ob-rise 0.5s var(--ease-out) 100ms both;
 }
 .ob-rise-d3 {
-  animation: ob-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
+  animation: ob-rise 0.5s var(--ease-out) 150ms both;
 }
 
 .ob-card {
-  animation: ob-card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ob-card-in 0.48s var(--ease-out) both;
 }
 .ob-chip {
-  animation: ob-chip-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ob-chip-in 0.38s var(--ease-out) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
