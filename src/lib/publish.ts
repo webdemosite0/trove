@@ -217,7 +217,12 @@ export function buildPublishHtml(
 
   if (!out.trim()) return "";
   if (!/<html[\s>]/i.test(out) && !/<!DOCTYPE/i.test(out)) {
-    out = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${escapeHtml(title)}</title></head><body>${out}</body></html>`;
+    out =
+      "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><title>" +
+      escapeHtml(title) +
+      "</title></head><body>" +
+      out +
+      "</body></html>";
   }
   return out;
 }
@@ -422,37 +427,58 @@ export async function resolveLiveHtml(slug: string): Promise<{
   return { html, title: site.title, version: site.version };
 }
 
-export function brandedUnavailablePage(slug: string, reason: "not_found" | "unpublished" = "not_found") {
+export function brandedUnavailablePage(
+  slug: string,
+  reason: "not_found" | "unpublished" = "not_found",
+) {
   const title =
     reason === "unpublished" ? "This site is currently unavailable" : "Site not found";
   const body =
     reason === "unpublished"
-      ? `The site at <code>${escapeHtml(slug)}.${ROOT_DOMAIN}</code> has been unpublished by its owner.`
-      : `No published website was found for <code>${escapeHtml(slug)}.${ROOT_DOMAIN}</code>.`;
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>${escapeHtml(title)} — Trove</title>
-  <meta name="robots" content="noindex"/>
-  <style>
-    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fafafa;display:flex;align-items:center;justify-content:center;padding:48px}
-    .box{max-width:440px}
-    h1{font-size:22px;margin:0 0 10px;font-weight:600}
-    p{opacity:.7;margin:0;line-height:1.55;font-size:15px}
-    code{color:#a5b4fc;font-size:13px}
-    a{color:#a5b4fc;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .foot{margin-top:28px;font-size:13px;opacity:.45}
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h1>${escapeHtml(title)}</h1>
-    <p>${body}</p>
-    <p class="foot"><a href="https://${ROOT_DOMAIN}">troveai.site</a></p>
-  </div>
-</body>
-</html>`;
+      ? "The site at <code>" +
+        escapeHtml(slug) +
+        "." +
+        ROOT_DOMAIN +
+        "</code> has been unpublished by its owner."
+      : "No published website was found for <code>" +
+        escapeHtml(slug) +
+        "." +
+        ROOT_DOMAIN +
+        "</code>.";
+  return (
+    "<!DOCTYPE html>\n" +
+    "<html lang=\"en\">\n" +
+    "<head>\n" +
+    "  <meta charset=\"UTF-8\"/>\n" +
+    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n" +
+    "  <title>" +
+    escapeHtml(title) +
+    " — Trove</title>\n" +
+    "  <meta name=\"robots\" content=\"noindex\"/>\n" +
+    "  <style>\n" +
+    "    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fafafa;display:flex;align-items:center;justify-content:center;padding:48px}\n" +
+    "    .box{max-width:440px}\n" +
+    "    h1{font-size:22px;margin:0 0 10px;font-weight:600}\n" +
+    "    p{opacity:.7;margin:0;line-height:1.55;font-size:15px}\n" +
+    "    code{color:#a5b4fc;font-size:13px}\n" +
+    "    a{color:#a5b4fc;text-decoration:none}\n" +
+    "    a:hover{text-decoration:underline}\n" +
+    "    .foot{margin-top:28px;font-size:13px;opacity:.45}\n" +
+    "  </style>\n" +
+    "</head>\n" +
+    "<body>\n" +
+    "  <div class=\"box\">\n" +
+    "    <h1>" +
+    escapeHtml(title) +
+    "</h1>\n" +
+    "    <p>" +
+    body +
+    "</p>\n" +
+    "    <p class=\"foot\"><a href=\"https://" +
+    ROOT_DOMAIN +
+    "\">troveai.site</a></p>\n" +
+    "  </div>\n" +
+    "</body>\n" +
+    "</html>"
+  );
 }
