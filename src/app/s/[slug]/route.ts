@@ -1,114 +1,61 @@
-import { one, run } from "@/lib/db";
-import { bundle, type ProjectFile } from "@/lib/builder";
+import { resolveLiveHtml, brandedUnavailablePage, getPublishedBySlug, normalizeSlug } from "@/lib/publish";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * Public site at {slug}.troveai.site (middleware rewrites → /s/{slug}).
- * Returns raw HTML so the page is not wrapped by the app root layout
- * (which would paint the lavender shell and leave a blank frame).
+ * Returns raw HTML so the page is not wrapped by the app root layout.
+ * SPA deep links also land here via /s/{slug}/[[...path]].
  */
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ slug: string }> },
 ) {
-  const { slug } = await ctx.params;
-  if (!/^[a-z0-9-]{2,48}$/.test(slug)) {
-    return htmlResponse(notPublished(slug), 404);
+  const { slug: raw } = await ctx.params;
+  const slug = normalizeSlug(raw);
+  if (!slug || slug.length < 2) {
+    return htmlResponse(brandedUnavailablePage(raw || "site", "not_found"), 404);
   }
 
-  try {
-    await run(
-      `CREATE TABLE IF NOT EXISTS published_sites (
-        slug TEXT PRIMARY KEY,
-        title TEXT,
-        html TEXT,
-        files_json TEXT,
-        user_id TEXT,
-        updated_at INTEGER
-      )`,
-    );
-  } catch {
-    /* table may already exist */
+  const site = await getPublishedBySlug(slug).catch(() => null);
+  if (!site) {
+    return htmlResponse(brandedUnavailablePage(slug, "not_found"), 404);
+  }
+  if (site.status !== "published") {
+    return htmlResponse(brandedUnavailablePage(slug, "unpublished"), 404);
   }
 
-  const row = await one(`SELECT * FROM published_sites WHERE slug = ?`, [slug]).catch(
-    () => null,
+  const live = await resolveLiveHtml(slug).catch(() => null);
+  if (!live?.html) {
+    return htmlResponse(brandedUnavailablePage(slug, "not_found"), 404);
+  }
+
+  const url = new URL(req.url);
+  const isAssetLike = /\.(js|css|map|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|eot|json|txt)$/i.test(
+    url.pathname,
   );
 
-  let html = row?.html ? String(row.html) : "";
-
-  // Prefer stored HTML; otherwise rebuild from files the same way the builder preview does.
-  if (!html && row?.files_json) {
-    try {
-      const files = JSON.parse(String(row.files_json)) as ProjectFile[];
-      if (Array.isArray(files) && files.length) {
-        html = bundle(files) || "";
-        if (!html) {
-          const index = files.find(
-            (f) => f.path === "index.html" || f.path.endsWith("/index.html"),
-          );
-          if (index?.content) html = index.content;
-        }
-      }
-    } catch {
-      /* ignore bad JSON */
-    }
-  }
-
-  if (!row || !html.trim()) {
-    return htmlResponse(notPublished(slug), 404);
-  }
-
-  // Ensure a full document so browsers render correctly.
-  if (!/<html[\s>]/i.test(html) && !/<!DOCTYPE/i.test(html)) {
-    const title = String(row.title || slug);
-    html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${escapeHtml(title)}</title></head><body>${html}</body></html>`;
-  }
-
-  return htmlResponse(html, 200);
+  return htmlResponse(live.html, 200, {
+    cache: isAssetLike
+      ? "public, max-age=31536000, immutable"
+      : "public, s-maxage=30, stale-while-revalidate=120",
+  });
 }
 
-function htmlResponse(body: string, status: number) {
+function htmlResponse(
+  body: string,
+  status: number,
+  opts?: { cache?: string },
+) {
   return new Response(body, {
     status,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      "Cache-Control": opts?.cache || "public, s-maxage=30, stale-while-revalidate=120",
       "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "frame-ancestors 'self'",
+      "X-Frame-Options": "SAMEORIGIN",
     },
   });
-}
-
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function notPublished(slug: string) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Not published — Trove</title>
-  <style>
-    body{margin:0;min-height:100vh;font-family:system-ui,sans-serif;background:#0a0a0a;color:#fafafa;display:flex;align-items:center;justify-content:center;padding:48px}
-    .box{max-width:420px}
-    h1{font-size:22px;margin:0 0 8px}
-    p{opacity:.65;margin:0;line-height:1.5}
-    code{color:#a5b4fc}
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h1>Site not published</h1>
-    <p>No live build found for <code>${escapeHtml(slug)}.troveai.site</code>. Open the site in Trove Sites and click Publish again.</p>
-  </div>
-</body>
-</html>`;
 }
