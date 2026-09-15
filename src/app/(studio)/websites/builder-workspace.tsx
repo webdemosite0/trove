@@ -82,7 +82,6 @@ export function BuilderView({
     } catch { /* keep */ }
   }, [files]);
 
-  // Restore a previously saved site when opened via ?c=<projectId>
   useEffect(() => {
     const id = restored?.id;
     if (!id) return;
@@ -332,7 +331,7 @@ export function BuilderView({
 
   if (phase === "idle" && !files.length) {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-[760px] flex-col items-center justify-center gap-7 px-5 pb-16">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-col items-center justify-center gap-7 px-5">
         <TroveOrb size={56} />
         <h1 className="text-center text-[clamp(1.85rem,1rem+2vw,2.75rem)] font-semibold tracking-tight text-ink">What should we build?</h1>
         <div className="w-full max-w-[720px]">
@@ -348,7 +347,7 @@ export function BuilderView({
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-canvas">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-canvas">
       <header className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-2">
         <Link href="/websites" className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-hover hover:text-ink"><FiArrowLeft size={16} /></Link>
         <div className="min-w-0 flex-1">
@@ -365,7 +364,7 @@ export function BuilderView({
         </div>
       </header>
       <div className="flex min-h-0 flex-1">
-        <aside className="flex w-full max-w-[400px] shrink-0 flex-col border-r border-line bg-raised md:max-w-[380px]">
+        <aside className="flex w-full max-w-[340px] shrink-0 flex-col border-r border-line bg-raised md:max-w-[320px]">
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
             {messages.map((m) => (
               <div key={m.id} className={cn("rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-[1.65]", m.role === "user" ? "ml-6 bg-accent/15 text-ink" : "mr-1 border border-line/80 bg-sunk/80 text-ink-2")}>
