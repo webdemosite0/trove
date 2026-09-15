@@ -75,11 +75,10 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
     };
   }
 
-  // Email verification is disabled — account is ready immediately.
   const user = await createUser(email, name, password, { emailVerified: true });
 
   await startSession(user.id);
-  redirect("/chat");
+  redirect("/launching?next=/onboarding");
 }
 
 export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState> {
@@ -92,7 +91,13 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
   }
 
   await startSession(row.id);
-  redirect(next ?? "/chat");
+
+  // Incomplete onboarding always wins over a deep link
+  if (!row.onboardingDone) {
+    redirect("/launching?next=/onboarding");
+  }
+
+  redirect(`/launching?next=${encodeURIComponent(next ?? "/chat")}`);
 }
 
 export async function logOut() {
