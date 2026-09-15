@@ -1,4 +1,7 @@
+"use client";
+
 import { FiDownload, FiLock, FiFolder, FiRefreshCw } from "@/components/ui/icons";
+import { Reveal } from "@/components/landing/reveal";
 
 const POINTS = [
   {
@@ -17,36 +20,38 @@ const POINTS = [
     Icon: FiRefreshCw,
   },
   {
-    title: "Built for real work",
-    body: "Designed for deliverables you can share with a client or team.",
+    title: "Publish when ready",
+    body: "Ship to your own subdomain on *.troveai.site — or unpublish anytime.",
     Icon: FiLock,
   },
 ];
 
 export function TrustSection() {
   return (
-    <section className="relative border-y border-line bg-rail/40 px-5 py-20 lg:py-24">
+    <section className="relative border-y border-zinc-200/80 bg-white/50 px-5 py-20 backdrop-blur-sm lg:py-24">
       <div className="mx-auto max-w-[1140px]">
-        <div className="mx-auto max-w-[42ch] text-center">
-          <h2 className="text-[clamp(1.6rem,1.1rem+1.5vw,2.15rem)] font-semibold tracking-tight text-ink">
+        <Reveal className="mx-auto max-w-[44ch] text-center">
+          <h2 className="text-[clamp(1.6rem,1.1rem+1.5vw,2.2rem)] font-semibold tracking-tight text-zinc-900">
             Your projects are not trapped inside a chat.
           </h2>
-          <p className="mt-3 text-[15.5px] leading-relaxed text-ink-3">
-            Trove is built so finished work can leave the product — as files you own.
+          <p className="mt-3 text-[15.5px] leading-relaxed text-zinc-600">
+            Trove is built so finished work can leave the product — as files you own, and sites you
+            control.
           </p>
-        </div>
+        </Reveal>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {POINTS.map((p) => {
+          {POINTS.map((p, i) => {
             const Icon = p.Icon;
             return (
-              <div
-                key={p.title}
-                className="rounded-[14px] border border-line bg-raised p-5"
-              >
-                <Icon size={20} className="text-accent" />
-                <h3 className="mt-3 text-[15px] font-semibold text-ink">{p.title}</h3>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">{p.body}</p>
-              </div>
+              <Reveal key={p.title} delay={i * 60}>
+                <div className="h-full rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <span className="grid size-10 place-items-center rounded-xl bg-violet-50 text-violet-600">
+                    <Icon size={18} />
+                  </span>
+                  <h3 className="mt-3 text-[15px] font-semibold text-zinc-900">{p.title}</h3>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-zinc-600">{p.body}</p>
+                </div>
+              </Reveal>
             );
           })}
         </div>
