@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
 import { FiArrowLeft, FiFile, TbWorld, TbTerminal2, TbCode, TbFiles } from "@/components/ui/icons";
@@ -56,6 +56,7 @@ export function BuilderView({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsOpen, setQuestionsOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [storage, setStorage] = useState<"local" | "none">("local");
   const [error, setError] = useState<string | null>(null);
   const [finalMsg, setFinalMsg] = useState<string | null>(null);
   const [pane, setPane] = useState<Pane>("preview");
@@ -239,7 +240,7 @@ export function BuilderView({
       const res = await fetch("/api/builder/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea: text, answers: ans, target: targetId }),
+        body: JSON.stringify({ idea: text, answers: ans, target: targetId, depth: "deep" }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Plan failed");
@@ -356,7 +357,7 @@ export function BuilderView({
         </div>
         <div className="flex items-center gap-1.5">
           {TABS.map((p) => (
-            <button key={p.id} type="button" onClick={() => setPane(p.id)} className={cn("grid size-8 place-items-center rounded-lg", pane === p.id ? "bg-accent/15 text-accent" : "text-ink-3 hover:bg-hover")}>
+            <button key={p.id} type="button" onClick={() => setPane(p.id)} className={cn("trove-tab-active grid size-8 place-items-center rounded-lg transition", pane === p.id ? "bg-accent/15 text-accent shadow-sm" : "text-ink-3 hover:bg-hover")}>
               <Ico icon={p.icon} motion={p.motion} size={15} />
             </button>
           ))}
@@ -367,7 +368,7 @@ export function BuilderView({
         <aside className="flex w-full max-w-[340px] shrink-0 flex-col border-r border-line bg-raised md:max-w-[320px]">
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
             {messages.map((m) => (
-              <div key={m.id} className={cn("rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-[1.65]", m.role === "user" ? "ml-6 bg-accent/15 text-ink" : "mr-1 border border-line/80 bg-sunk/80 text-ink-2")}>
+              <div key={m.id} className={cn("trove-msg-enter rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-[1.65]", m.role === "user" ? "ml-6 bg-accent/15 text-ink" : "mr-1 border border-line/80 bg-sunk/80 text-ink-2")}>
                 <span className="whitespace-pre-wrap">{m.text}</span>
               </div>
             ))}
@@ -384,11 +385,31 @@ export function BuilderView({
               </div>
             )}
             {questionsOpen && questions.length > 0 && (
-              <QuestionBox questions={questions} answers={answers} onChange={setAnswers} onSubmit={() => { setQuestionsOpen(false); void plan_(idea, answers); }} />
+              <QuestionBox
+                questions={questions}
+                onSubmit={(a) => {
+                  setAnswers(a);
+                  setQuestionsOpen(false);
+                  void plan_(idea, a);
+                }}
+                onSkip={() => {
+                  setQuestionsOpen(false);
+                  void plan_(idea, {});
+                }}
+                busy={busy}
+              />
             )}
-            {plan && phase === "review" && !questionsOpen && <PlanPanel plan={plan} onGenerate={() => void generate()} busy={busy} />}
+            {plan && phase === "review" && !questionsOpen && (
+              <PlanPanel
+                plan={plan}
+                storage={storage}
+                onStorage={setStorage}
+                onGenerate={() => void generate()}
+                busy={busy}
+              />
+            )}
             {finalMsg && <div className="rounded-[14px] border border-line bg-sunk/80 px-3.5 py-2.5 text-[13.5px] text-ink-2">{finalMsg}</div>}
-            {error && <FailureNote message={error} onRetry={() => setError(null)} />}
+            {error && <FailureNote error={error} onRetry={() => setError(null)} />}
             {chips.length > 0 && phase === "ready" && (
               <div className="flex flex-wrap gap-1.5">
                 {chips.map((c) => (
