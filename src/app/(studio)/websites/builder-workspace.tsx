@@ -322,8 +322,21 @@ export function BuilderView({
             {mobile ? <MobileComposer onSend={sendFromComposer} placeholder={busy ? "Working…" : "Ask for changes…"} disabled={busy} /> : <Composer onSend={sendFromComposer} placeholder={busy ? "Working…" : "Ask for changes…"} disabled={busy} />}
           </div>
         </aside>
-        <main className="min-w-0 flex-1 bg-sunk">
-          {pane === "preview" && <BuilderPreviewPane preview={preview} sandboxUrl={sandboxUrl} onSandboxError={() => setSandboxUrl(null)} />}
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-sunk">
+          {pane === "preview" && (
+            <BuilderPreviewPane
+              preview={preview}
+              sandboxUrl={sandboxUrl}
+              onSandboxError={() => setSandboxUrl(null)}
+              onRefresh={() => {
+                if (!files.length) return;
+                try {
+                  const html = bundle(files);
+                  if (html) setPreview(html);
+                } catch { /* keep */ }
+              }}
+            />
+          )}
           {pane === "files" && (
             <div className="h-full overflow-auto p-3">
               <ul className="space-y-1">
