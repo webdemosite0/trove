@@ -1,18 +1,20 @@
 /*
  * Product photo background (lavender grid + soft blooms).
- * Applied on all shell pages via Backdrop.
+ * Static only — no animated layers (avoids GPU banding / seams).
  */
 .nx-photo-bg {
   position: absolute;
   inset: 0;
   background-color: #f4f2ff;
   background-image:
-    radial-gradient(ellipse 42% 36% at 8% 22%, rgba(186, 170, 255, 0.55), transparent 70%),
-    radial-gradient(ellipse 38% 32% at 94% 18%, rgba(160, 175, 255, 0.48), transparent 68%),
-    radial-gradient(ellipse 50% 40% at 88% 88%, rgba(200, 190, 255, 0.35), transparent 72%),
-    radial-gradient(ellipse 45% 35% at 12% 90%, rgba(175, 185, 255, 0.28), transparent 70%),
-    radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255, 255, 255, 0.85), transparent 65%),
-    linear-gradient(165deg, #f6f4ff 0%, #eef1ff 40%, #f3f6fc 75%, #f8f9fc 100%);
+    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.5), transparent 72%),
+    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.42), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 90% 92%, rgba(200, 190, 255, 0.32), transparent 74%),
+    radial-gradient(ellipse 50% 40% at 8% 94%, rgba(175, 185, 255, 0.26), transparent 72%),
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(255, 255, 255, 0.78), transparent 68%),
+    linear-gradient(180deg, #f7f5ff 0%, #eef1ff 45%, #f3f5fb 100%);
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Fine grid like the photo */
@@ -21,11 +23,11 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, rgba(120, 130, 220, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(120, 130, 220, 0.07) 1px, transparent 1px);
+    linear-gradient(to right, rgba(120, 130, 220, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 130, 220, 0.06) 1px, transparent 1px);
   background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse 95% 85% at 50% 45%, #000 5%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 50% 45%, #000 5%, transparent 80%);
+  mask-image: radial-gradient(ellipse 92% 75% at 50% 35%, #000 10%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 92% 75% at 50% 35%, #000 10%, transparent 80%);
   pointer-events: none;
 }
 
