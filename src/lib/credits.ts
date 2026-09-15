@@ -4,21 +4,27 @@ import { one, all, run, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 
 /**
- * Credits are a thin, honest wrapper over Gemini token usage.
+ * Credits are a thin, honest wrapper over model token usage.
  *
- * One credit = TOKENS_PER_CREDIT tokens actually reported by Google in
- * `usageMetadata` — prompt + response. Nothing is estimated ahead of time and
- * nothing is charged per request regardless of size, because a one-line chat
- * and a 30k-token website build are not the same amount of work.
+ * One credit = TOKENS_PER_CREDIT tokens reported by the model
+ * (prompt + response). Nothing is estimated ahead of time.
+ *
+ * In addition to the monthly grant, a rolling 5-hour window (Codex-style)
+ * caps burst usage so one intense session cannot empty the month in minutes.
  */
 
 export const TOKENS_PER_CREDIT = 1_000;
+
+/** Rolling burst window — same idea as Codex's 5-hour rate limit. */
+export const RATE_WINDOW_MS = 5 * 60 * 60 * 1000;
 
 export interface Plan {
   id: string;
   name: string;
   /** Credits granted at the start of each calendar month. */
   monthly: number;
+  /** Max credits that may be spent inside any rolling 5-hour window. */
+  windowLimit: number;
   price: number;
   blurb: string;
   features: string[];
@@ -29,10 +35,12 @@ export const PLANS: Plan[] = [
     id: "free",
     name: "Free",
     monthly: 200,
+    windowLimit: 40,
     price: 0,
     blurb: "Enough to build something real and see how it feels.",
     features: [
       "200 credits a month (~200k tokens)",
+      "40 credits per 5-hour window",
       "Every tool: chat, docs, sheets, code, research",
       "Agents, reminders and integrations",
     ],
@@ -41,22 +49,26 @@ export const PLANS: Plan[] = [
     id: "pro",
     name: "Pro",
     monthly: 5_000,
+    windowLimit: 500,
     price: 24,
     blurb: "For daily work, where you stop thinking about the meter.",
     features: [
       "5,000 credits a month (~5M tokens)",
+      "500 credits per 5-hour window",
       "Everything in Free",
-      "Priority model fallback when Google is busy",
+      "Priority model fallback when the provider is busy",
     ],
   },
   {
     id: "team",
     name: "Team",
     monthly: 20_000,
+    windowLimit: 2_000,
     price: 96,
     blurb: "Shared capacity for a group building together.",
     features: [
       "20,000 credits a month (~20M tokens)",
+      "2,000 credits per 5-hour window",
       "Everything in Pro",
       "Shared agents across the workspace",
     ],
@@ -78,6 +90,18 @@ export function creditsForTokens(tokens: number): number {
   return Math.max(1, Math.ceil(tokens / TOKENS_PER_CREDIT));
 }
 
+export interface RateWindow {
+  /** Credits spent in the last RATE_WINDOW_MS. */
+  used: number;
+  /** Plan cap for this window. */
+  limit: number;
+  remaining: number;
+  /** When the oldest spend in the window ages out (or now if empty). */
+  resetsAt: Date;
+  /** True when the window is exhausted. */
+  exhausted: boolean;
+}
+
 export interface Balance {
   plan: Plan;
   granted: number;
@@ -85,14 +109,10 @@ export interface Balance {
   remaining: number;
   tokensUsed: number;
   period: string;
+  /** Rolling 5-hour burst window. */
+  window: RateWindow;
 }
 
-/**
- * Makes sure this month's grant exists, then returns the balance.
- *
- * The grant is topped up (never reduced) when the plan changed mid-month, so
- * upgrading takes effect immediately instead of next month.
- */
 async function ensureGrant(
   userId: string,
   planId: string,
@@ -124,6 +144,45 @@ async function ensureGrant(
   return granted;
 }
 
+/**
+ * Rolling 5-hour usage for a user.
+ * resetsAt = when the earliest spend in the window falls out of the window.
+ */
+export async function rateWindowFor(
+  userId: string,
+  planId: string,
+  now = Date.now(),
+): Promise<RateWindow> {
+  const plan = planById(planId);
+  const since = now - RATE_WINDOW_MS;
+
+  const row = await one(
+    `SELECT COALESCE(SUM(credits), 0) AS used,
+            MIN(created_at) AS oldest
+       FROM credit_spends
+      WHERE user_id = ? AND created_at >= ?`,
+    [userId, since],
+  );
+
+  const used = num(row?.used);
+  const oldest = row?.oldest != null ? num(row.oldest) : null;
+  // When the oldest entry ages past the window, capacity frees up.
+  const resetsAt =
+    oldest != null && oldest > 0
+      ? new Date(oldest + RATE_WINDOW_MS)
+      : new Date(now);
+
+  const remaining = Math.max(0, plan.windowLimit - used);
+
+  return {
+    used,
+    limit: plan.windowLimit,
+    remaining,
+    resetsAt,
+    exhausted: remaining <= 0,
+  };
+}
+
 export async function balanceFor(userId: string, planId: string): Promise<Balance> {
   const period = currentPeriod();
   const granted = await ensureGrant(userId, planId, period);
@@ -135,6 +194,7 @@ export async function balanceFor(userId: string, planId: string): Promise<Balanc
   );
 
   const used = num(row?.used);
+  const window = await rateWindowFor(userId, planId);
 
   return {
     plan: planById(planId),
@@ -143,6 +203,7 @@ export async function balanceFor(userId: string, planId: string): Promise<Balanc
     remaining: Math.max(0, granted - used),
     tokensUsed: num(row?.tokens),
     period,
+    window,
   };
 }
 
@@ -155,7 +216,7 @@ export async function myBalance(): Promise<Balance | null> {
 
 /**
  * Records real usage. Called after the model has responded, with the token
- * count Google reported — never before, and never with a guess.
+ * count the provider reported — never before, and never with a guess.
  */
 export async function spend(
   userId: string,
@@ -170,7 +231,6 @@ export async function spend(
       [uid("spend"), userId, kind, Math.max(0, tokens), credits, currentPeriod(), Date.now()],
     );
   } catch (e) {
-    // Never fail a response the user already received over bookkeeping.
     console.error("credits: could not record spend", e);
   }
 }
@@ -186,9 +246,24 @@ export class OutOfCredits extends Error {
   }
 }
 
+export class RateWindowExceeded extends Error {
+  constructor(public readonly balance: Balance) {
+    const when = balance.window.resetsAt.toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    super(
+      `You've hit the ${balance.plan.windowLimit.toLocaleString()}-credit limit ` +
+        `for this 5-hour window on ${balance.plan.name}. ` +
+        `More capacity opens around ${when}.`,
+    );
+    this.name = "RateWindowExceeded";
+  }
+}
+
 /**
- * Gate for a route. Returns the identity and balance, or throws OutOfCredits.
- * Checked before the call; the actual debit happens after, from real usage.
+ * Gate for a route. Returns the identity and balance, or throws OutOfCredits /
+ * RateWindowExceeded. Checked before the call; the actual debit happens after.
  */
 export async function requireCredits(): Promise<{
   userId: string;
@@ -199,6 +274,7 @@ export async function requireCredits(): Promise<{
 
   const balance = await balanceFor(user.id, user.plan);
   if (balance.remaining <= 0) throw new OutOfCredits(balance);
+  if (balance.window.exhausted) throw new RateWindowExceeded(balance);
 
   return { userId: user.id, balance };
 }
@@ -233,19 +309,10 @@ export async function usageByKind(userId: string): Promise<UsageRow[]> {
 }
 
 export interface DayRow {
-  /** YYYY-MM-DD, UTC, matching how periods are cut. */
   day: string;
   credits: number;
 }
 
-/**
- * Credits spent per day over the last `days` days, oldest first.
- *
- * Days with no spend are filled in as zero rather than left out. A bar chart
- * built from only the days that have rows silently rescales its own x-axis —
- * a quiet week and a busy week draw the same shape, which is the opposite of
- * what the chart is for.
- */
 export async function usageByDay(userId: string, days = 14): Promise<DayRow[]> {
   const since = Date.now() - (days - 1) * 86_400_000;
 
