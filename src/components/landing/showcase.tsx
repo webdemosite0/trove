@@ -2,8 +2,18 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Reveal } from "@/components/landing/reveal";
 
-const BRANDS = ["Google", "Amazon", "Netflix", "LinkedIn", "Salesforce", "Shopify", "Stripe", "NVIDIA", "IBM", "SpaceX"];
+const BRANDS = [
+  "Google",
+  "Amazon",
+  "Netflix",
+  "LinkedIn",
+  "Salesforce",
+  "Shopify",
+  "Stripe",
+  "NVIDIA",
+];
 
 const AI_MODELS = [
   { name: "GPT-4o", color: "#10a37f" },
@@ -16,26 +26,34 @@ const AI_MODELS = [
 
 export function TrustedBar() {
   return (
-    <section className="border-y border-line bg-rail/40 px-5 py-12">
-      <p className="text-center text-[12px] font-medium uppercase tracking-[0.14em] text-ink-4">
-        Trusted by teams building the next wave of products
-      </p>
-      <div className="mx-auto mt-8 flex max-w-[1000px] flex-wrap items-center justify-center gap-x-8 gap-y-4">
-        {BRANDS.map((b) => (
-          <span key={b} className="text-[15px] font-semibold tracking-tight text-ink-3/80 transition hover:text-ink">
-            {b}
-          </span>
+    <section className="border-y border-zinc-200/80 bg-white/40 px-5 py-14 backdrop-blur-sm">
+      <Reveal>
+        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+          Built for teams shipping real products
+        </p>
+      </Reveal>
+      <div className="mx-auto mt-8 flex max-w-[1000px] flex-wrap items-center justify-center gap-x-10 gap-y-4">
+        {BRANDS.map((b, i) => (
+          <Reveal key={b} delay={i * 40} as="div">
+            <span className="text-[15px] font-semibold tracking-tight text-zinc-400 transition hover:text-zinc-800">
+              {b}
+            </span>
+          </Reveal>
         ))}
       </div>
-      <p className="mt-10 text-center text-[12px] font-medium uppercase tracking-[0.14em] text-ink-4">
-        Powered by the models you already trust
-      </p>
-      <div className="mx-auto mt-5 flex max-w-[720px] flex-wrap items-center justify-center gap-3">
-        {AI_MODELS.map((m) => (
-          <span key={m.name} className="inline-flex items-center gap-2 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] font-medium text-ink-2 shadow-sm">
-            <span className="size-2 rounded-full" style={{ background: m.color }} />
-            {m.name}
-          </span>
+      <Reveal delay={120}>
+        <p className="mt-12 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+          Powered by models you already trust
+        </p>
+      </Reveal>
+      <div className="mx-auto mt-5 flex max-w-[720px] flex-wrap items-center justify-center gap-2.5">
+        {AI_MODELS.map((m, i) => (
+          <Reveal key={m.name} delay={140 + i * 35} as="div">
+            <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[13px] font-medium text-zinc-700 shadow-sm">
+              <span className="size-2 rounded-full" style={{ background: m.color }} />
+              {m.name}
+            </span>
+          </Reveal>
         ))}
       </div>
     </section>
@@ -43,138 +61,278 @@ export function TrustedBar() {
 }
 
 const FEATURES = [
-  { title: "Create from Scratch", body: "Start with a blank idea and build a full multi-page site through natural chat with AI.", tone: "bg-rose-500/10 text-rose-500" },
-  { title: "Add Pages Anytime", body: "Seamlessly add case studies, pricing, or contact pages without restarting the project.", tone: "bg-emerald-500/10 text-emerald-600" },
-  { title: "Clone & Remix", body: "Duplicate an existing layout and customize with AI while keeping design consistency.", tone: "bg-amber-500/10 text-amber-600" },
-  { title: "Refine with Chat", body: "Ask for darker themes, better mobile, or real forms — every reply updates the live site.", tone: "bg-rose-500/10 text-rose-500" },
-  { title: "Design Assistance", body: "Get recommendations for color, type, and layout that match modern product standards.", tone: "bg-orange-500/10 text-orange-600" },
-  { title: "Lightning Fast", body: "Generate professional multi-page sites in minutes, not days, with streaming build steps.", tone: "bg-teal-500/10 text-teal-600" },
+  {
+    title: "Create from scratch",
+    body: "Start with a blank idea. Chat builds a full multi-page site with real structure, not a one-block template.",
+    tone: "from-rose-500/15 to-rose-500/5 text-rose-600",
+    icon: "1",
+  },
+  {
+    title: "Add pages anytime",
+    body: "Case studies, pricing, contact — extend the project without restarting. Layout stays consistent.",
+    tone: "from-emerald-500/15 to-emerald-500/5 text-emerald-700",
+    icon: "2",
+  },
+  {
+    title: "Clone & remix",
+    body: "Duplicate a layout you like, then reshape copy and sections with AI while design stays coherent.",
+    tone: "from-amber-500/15 to-amber-500/5 text-amber-700",
+    icon: "3",
+  },
+  {
+    title: "Refine in chat",
+    body: "Ask for darker themes, better mobile, or real forms — every reply updates the live preview.",
+    tone: "from-violet-500/15 to-violet-500/5 text-violet-700",
+    icon: "4",
+  },
+  {
+    title: "Design guidance",
+    body: "Color, type, and spacing recommendations aligned with modern product UI standards.",
+    tone: "from-orange-500/15 to-orange-500/5 text-orange-700",
+    icon: "5",
+  },
+  {
+    title: "Ship in minutes",
+    body: "Streaming build steps, sandbox preview, and one-click publish to your *.troveai.site subdomain.",
+    tone: "from-teal-500/15 to-teal-500/5 text-teal-700",
+    icon: "6",
+  },
 ];
 
 export function FeatureGrid() {
   return (
-    <section className="px-5 py-20 lg:py-28">
-      <div className="mx-auto max-w-[1000px]">
-        <div className="overflow-hidden rounded-[24px] border border-line bg-raised shadow-[0_24px_80px_rgba(0,0,0,0.06)]">
+    <section id="capabilities" className="px-5 py-20 lg:py-28">
+      <div className="mx-auto max-w-[1040px]">
+        <Reveal className="text-center">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">
+            Capabilities
+          </p>
+          <h2 className="mt-3 text-[clamp(1.85rem,1.2rem+1.8vw,2.75rem)] font-semibold tracking-[-0.03em] text-zinc-900">
+            Everything you need to finish
+          </h2>
+          <p className="mx-auto mt-3 max-w-[46ch] text-[16px] text-zinc-600">
+            From first prompt to published subdomain — designed as a complete workflow, not a demo.
+          </p>
+        </Reveal>
+
+        <div className="mt-12 overflow-hidden rounded-[28px] border border-zinc-200/90 bg-white/80 shadow-[0_28px_80px_-32px_rgba(15,23,42,0.18)] backdrop-blur">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f, i) => (
-              <div key={f.title} className={cn("border-line p-7 transition hover:bg-hover/40", i % 3 !== 2 && "lg:border-r", i < 3 && "border-b")}>
-                <span className={cn("grid size-11 place-items-center rounded-[14px] text-[18px] font-semibold", f.tone)}>{i + 1}</span>
-                <h3 className="mt-4 text-[16px] font-semibold tracking-tight text-ink">{f.title}</h3>
-                <p className="mt-2 text-[13.5px] leading-relaxed text-ink-3">{f.body}</p>
-              </div>
+              <Reveal
+                key={f.title}
+                delay={i * 50}
+                className={cn(
+                  "border-zinc-100 p-7 transition hover:bg-violet-50/40",
+                  i % 3 !== 2 && "lg:border-r",
+                  i < 3 && "border-b",
+                  i >= 3 && i % 3 !== 2 && "max-lg:border-b sm:border-b-0",
+                  i === 3 || i === 4 ? "sm:border-b lg:border-b-0" : "",
+                )}
+              >
+                <span
+                  className={cn(
+                    "grid size-11 place-items-center rounded-2xl bg-gradient-to-br text-[15px] font-bold",
+                    f.tone,
+                  )}
+                >
+                  {f.icon}
+                </span>
+                <h3 className="mt-4 text-[16px] font-semibold tracking-tight text-zinc-900">
+                  {f.title}
+                </h3>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-zinc-600">{f.body}</p>
+              </Reveal>
             ))}
           </div>
         </div>
-        <div className="mt-10 flex justify-center">
-          <Link href="/signup" className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-[14.5px] font-medium text-white transition hover:opacity-90">
-            Try AI Builder Now <span aria-hidden>→</span>
+
+        <Reveal delay={80} className="mt-10 flex justify-center">
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-[14.5px] font-semibold text-white shadow-lg transition hover:bg-zinc-800"
+          >
+            Try AI Builder <span aria-hidden>→</span>
           </Link>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
 }
 
+/** CSS product art — browser + chat workspace (no external image dependency). */
 export function ProductMockup() {
   return (
     <section className="px-5 py-16 lg:py-24">
-      <div className="mx-auto max-w-[1100px]">
-        <p className="text-center text-[13px] font-medium uppercase tracking-[0.12em] text-accent">Live workspace</p>
-        <h2 className="mx-auto mt-3 max-w-[28ch] text-center text-[clamp(1.8rem,1.2rem+1.8vw,2.6rem)] font-semibold tracking-[-0.03em] text-ink">
-          Build by chatting with the AI website maker
-        </h2>
-        <div className="nx-rise mt-12 overflow-hidden rounded-[20px] border border-line bg-raised shadow-[0_30px_90px_rgba(0,0,0,0.1)]">
-          <div className="flex items-center gap-2 border-b border-line bg-sunk/50 px-4 py-2.5">
-            <span className="size-[10px] rounded-full bg-[#ff5f57]" />
-            <span className="size-[10px] rounded-full bg-[#febc2e]" />
-            <span className="size-[10px] rounded-full bg-[#28c840]" />
-            <div className="mx-auto flex h-7 max-w-[320px] flex-1 items-center justify-center rounded-full bg-raised text-[12px] text-ink-4">troveai.site/builder</div>
-          </div>
-          <div className="grid min-h-[380px] lg:grid-cols-[1fr_300px]">
-            <div className="flex flex-col border-b border-line bg-gradient-to-br from-[#f8f7f4] to-[#eee] p-6 dark:from-zinc-900 dark:to-zinc-950 lg:border-b-0 lg:border-r">
-              <div className="flex flex-1 flex-col justify-center rounded-[16px] border border-black/5 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-zinc-900">
-                <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-4">Strategic product site</p>
-                <h3 className="mt-3 text-[28px] font-semibold tracking-tight text-ink">FlowDesk</h3>
-                <p className="mt-1 text-[14px] text-ink-3">The AI-Powered Workforce Platform Built for Scale</p>
-                <div className="mt-6 flex gap-2">
-                  <span className="rounded-full bg-ink px-3 py-1 text-[12px] text-white">Get started</span>
-                  <span className="rounded-full border border-line px-3 py-1 text-[12px] text-ink-2">View demo</span>
+      <div className="mx-auto max-w-[1120px]">
+        <Reveal className="text-center">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">
+            Live workspace
+          </p>
+          <h2 className="mx-auto mt-3 max-w-[28ch] text-[clamp(1.85rem,1.2rem+1.9vw,2.7rem)] font-semibold tracking-[-0.03em] text-zinc-900">
+            Build by chatting with the AI website maker
+          </h2>
+          <p className="mx-auto mt-3 max-w-[48ch] text-[15.5px] text-zinc-600">
+            Preview on the left. Conversation on the right. Publish when it looks right.
+          </p>
+        </Reveal>
+
+        <Reveal delay={100} y={40} className="mt-12">
+          <div className="overflow-hidden rounded-[24px] border border-zinc-200/90 bg-white shadow-[0_40px_100px_-40px_rgba(79,70,229,0.35)]">
+            <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50/90 px-4 py-3">
+              <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+              <span className="size-2.5 rounded-full bg-[#febc2e]" />
+              <span className="size-2.5 rounded-full bg-[#28c840]" />
+              <div className="mx-auto flex h-8 max-w-[360px] flex-1 items-center justify-center rounded-full bg-white text-[12px] text-zinc-500 ring-1 ring-zinc-200">
+                clinilamp.troveai.site
+              </div>
+            </div>
+            <div className="grid min-h-[400px] lg:grid-cols-[1.15fr_320px]">
+              <div className="relative border-b border-zinc-100 bg-gradient-to-br from-[#f4f2ff] via-white to-[#eef1ff] p-6 lg:border-b-0 lg:border-r">
+                <div className="lp-float absolute right-8 top-8 hidden h-24 w-24 rounded-full bg-violet-400/20 blur-2xl sm:block" />
+                <div className="relative flex h-full min-h-[320px] flex-col justify-center rounded-[20px] border border-white/80 bg-white/90 p-8 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.2)] ring-1 ring-zinc-100">
+                  <div className="mb-6 flex items-center gap-2">
+                    <span className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-[13px] font-bold text-white">
+                      CL
+                    </span>
+                    <span className="text-[13px] font-semibold text-zinc-800">CliniLamp</span>
+                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-600">
+                    Healthcare · Product site
+                  </p>
+                  <h3 className="mt-2 text-[clamp(1.5rem,1.2rem+1vw,2rem)] font-semibold tracking-tight text-zinc-900">
+                    Light that follows care
+                  </h3>
+                  <p className="mt-2 max-w-[36ch] text-[14px] leading-relaxed text-zinc-600">
+                    Clinical-grade lighting for modern wards — book a demo, explore specs, meet the team.
+                  </p>
+                  <div className="mt-7 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-zinc-900 px-4 py-2 text-[12.5px] font-medium text-white">
+                      Get started
+                    </span>
+                    <span className="rounded-full border border-zinc-200 px-4 py-2 text-[12.5px] font-medium text-zinc-700">
+                      View product
+                    </span>
+                  </div>
+                  <div className="mt-10 grid grid-cols-3 gap-3">
+                    {["Specs", "Hospitals", "Support"].map((x) => (
+                      <div
+                        key={x}
+                        className="rounded-2xl border border-zinc-100 bg-zinc-50/80 px-3 py-3 text-center text-[11px] font-medium text-zinc-600"
+                      >
+                        {x}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col bg-zinc-50/50">
+                <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3.5">
+                  <span className="grid size-8 place-items-center rounded-full bg-violet-100 text-[12px] text-violet-700">
+                    ✦
+                  </span>
+                  <span className="text-[13.5px] font-semibold text-zinc-800">AI Chat</span>
+                </div>
+                <div className="flex flex-1 flex-col gap-3 p-4 text-[13px]">
+                  <div className="max-w-[95%] rounded-2xl rounded-tl-md border border-zinc-200 bg-white px-3.5 py-2.5 text-zinc-700 shadow-sm">
+                    I can add pages, refine design, or publish when you’re ready.
+                  </div>
+                  <div className="ml-auto max-w-[90%] rounded-2xl rounded-tr-md bg-zinc-900 px-3.5 py-2.5 text-white">
+                    Add a pricing page and soft lavender hero
+                  </div>
+                  <div className="max-w-[95%] rounded-2xl rounded-tl-md border border-zinc-200 bg-white px-3.5 py-2.5 text-zinc-700 shadow-sm">
+                    Done — pricing is live in the preview. Want to publish to{" "}
+                    <span className="font-medium text-violet-700">clinilamp.troveai.site</span>?
+                  </div>
+                </div>
+                <div className="border-t border-zinc-100 p-3">
+                  <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
+                    <span className="flex-1 text-[12.5px] text-zinc-400">Ask AI anything…</span>
+                    <span className="grid size-8 place-items-center rounded-full bg-violet-600 text-[12px] text-white">
+                      ↑
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col bg-raised">
-              <div className="flex items-center gap-2 border-b border-line px-4 py-3">
-                <span className="grid size-7 place-items-center rounded-full bg-accent/15 text-accent text-[12px]">✦</span>
-                <span className="text-[13.5px] font-medium text-ink">AI Chat</span>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-4 text-[13px]">
-                <div className="rounded-[14px] border border-line bg-sunk/50 px-3 py-2 text-ink-2">Hi! I can add pages, edit content, or change the design.</div>
-                <div className="ml-8 rounded-[14px] bg-ink px-3 py-2 text-white">Add a case study page with project outcomes</div>
-                <div className="rounded-[14px] border border-line bg-sunk/50 px-3 py-2 text-ink-2">Done! I've added a Case Study section. Preview is live on the left.</div>
-              </div>
-              <div className="border-t border-line p-3">
-                <div className="flex items-center gap-2 rounded-full border border-line bg-sunk/40 px-3 py-2">
-                  <span className="flex-1 text-[12.5px] text-ink-4">Ask AI anything…</span>
-                  <span className="grid size-7 place-items-center rounded-full bg-ink text-white text-[11px]">↑</span>
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
 }
 
 const INPUTS = [
-  { label: "Prompt", sub: "Just describe it", color: "text-rose-500" },
-  { label: "Figma", sub: "Design links", color: "text-violet-500" },
-  { label: "URL", sub: "Any public page", color: "text-sky-500" },
-  { label: "Images", sub: "PNG · JPG · WebP", color: "text-amber-500" },
-  { label: "Docs", sub: "PDF · DOCX", color: "text-blue-500" },
-  { label: "Code", sub: "GitHub repos", color: "text-emerald-500" },
+  { label: "Prompt", sub: "Just describe it", color: "text-rose-600", bg: "bg-rose-50" },
+  { label: "Figma", sub: "Design links", color: "text-violet-600", bg: "bg-violet-50" },
+  { label: "URL", sub: "Any public page", color: "text-sky-600", bg: "bg-sky-50" },
+  { label: "Images", sub: "PNG · JPG · WebP", color: "text-amber-700", bg: "bg-amber-50" },
+  { label: "Docs", sub: "PDF · DOCX", color: "text-blue-600", bg: "bg-blue-50" },
+  { label: "Code", sub: "Project files", color: "text-emerald-700", bg: "bg-emerald-50" },
 ];
 
 const OUTPUTS = [
-  { label: "Live site", sub: "*.troveai.site", color: "text-indigo-500" },
-  { label: "React / Vite", sub: "Download project", color: "text-cyan-500" },
-  { label: "HTML", sub: "Static export", color: "text-orange-500" },
-  { label: "GitHub", sub: "Push repo", color: "text-ink-2" },
-  { label: "Vercel", sub: "One-click deploy", color: "text-ink" },
-  { label: "Share link", sub: "Anyone with URL", color: "text-pink-500" },
+  { label: "Live site", sub: "*.troveai.site", color: "text-indigo-600", bg: "bg-indigo-50" },
+  { label: "React / Vite", sub: "Download project", color: "text-cyan-700", bg: "bg-cyan-50" },
+  { label: "HTML", sub: "Static export", color: "text-orange-700", bg: "bg-orange-50" },
+  { label: "Preview", sub: "Sandbox + snapshot", color: "text-zinc-700", bg: "bg-zinc-100" },
+  { label: "Versions", sub: "Republish safely", color: "text-zinc-800", bg: "bg-zinc-100" },
+  { label: "Share link", sub: "Anyone with URL", color: "text-pink-600", bg: "bg-pink-50" },
 ];
 
 export function HubDiagram() {
   return (
     <section className="px-5 py-16 lg:py-24">
       <div className="mx-auto max-w-[1100px]">
-        <h2 className="text-center text-[clamp(1.7rem,1.1rem+1.6vw,2.4rem)] font-semibold tracking-[-0.03em] text-ink">
-          One workspace. Every source. Every output.
-        </h2>
-        <p className="mx-auto mt-3 max-w-[48ch] text-center text-[15px] text-ink-3">
-          Drop a prompt, a Figma link, or a brief — Trove turns it into a production-ready site.
-        </p>
-        <div className="mt-14 grid items-center gap-6 lg:grid-cols-[1fr_auto_1fr]">
+        <Reveal className="text-center">
+          <h2 className="text-[clamp(1.75rem,1.1rem+1.7vw,2.5rem)] font-semibold tracking-[-0.03em] text-zinc-900">
+            One workspace. Every source. Every output.
+          </h2>
+          <p className="mx-auto mt-3 max-w-[48ch] text-[15.5px] text-zinc-600">
+            Drop a prompt, a brief, or a design link — Trove turns it into a site you can preview,
+            download, and publish.
+          </p>
+        </Reveal>
+
+        <div className="mt-14 grid items-center gap-8 lg:grid-cols-[1fr_auto_1fr]">
           <div className="grid gap-3 sm:grid-cols-2">
-            {INPUTS.map((x) => (
-              <div key={x.label} className="rounded-[16px] border border-line bg-raised px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className={cn("text-[14px] font-semibold", x.color)}>{x.label}</p>
-                <p className="text-[12.5px] text-ink-4">{x.sub}</p>
-              </div>
+            {INPUTS.map((x, i) => (
+              <Reveal key={x.label} delay={i * 40}>
+                <div
+                  className={cn(
+                    "rounded-2xl border border-zinc-200/80 bg-white px-4 py-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+                    x.bg,
+                  )}
+                >
+                  <p className={cn("text-[14px] font-semibold", x.color)}>{x.label}</p>
+                  <p className="text-[12.5px] text-zinc-500">{x.sub}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
-          <div className="mx-auto flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-accent to-indigo-500 text-white shadow-[0_12px_40px_rgba(99,102,241,0.45)]">
-            <div className="text-center">
-              <p className="text-[11px] font-semibold">Trove</p>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {OUTPUTS.map((x) => (
-              <div key={x.label} className="rounded-[16px] border border-line bg-raised px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className={cn("text-[14px] font-semibold", x.color)}>{x.label}</p>
-                <p className="text-[12.5px] text-ink-4">{x.sub}</p>
+
+          <Reveal delay={120} className="mx-auto">
+            <div className="relative flex size-28 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-500 text-white shadow-[0_16px_50px_rgba(99,102,241,0.45)]">
+              <div className="absolute inset-0 animate-ping rounded-full bg-violet-400/20" style={{ animationDuration: "3s" }} />
+              <div className="relative text-center">
+                <p className="text-[13px] font-bold tracking-tight">Trove</p>
+                <p className="text-[10px] opacity-80">AI hub</p>
               </div>
+            </div>
+          </Reveal>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {OUTPUTS.map((x, i) => (
+              <Reveal key={x.label} delay={80 + i * 40}>
+                <div
+                  className={cn(
+                    "rounded-2xl border border-zinc-200/80 bg-white px-4 py-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+                    x.bg,
+                  )}
+                >
+                  <p className={cn("text-[14px] font-semibold", x.color)}>{x.label}</p>
+                  <p className="text-[12.5px] text-zinc-500">{x.sub}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -184,36 +342,67 @@ export function HubDiagram() {
 }
 
 const GALLERY = [
-  { title: "Nocturne", tone: "from-zinc-900 to-zinc-800", label: "Editorial" },
-  { title: "Plugin Ecosystem", tone: "from-white to-zinc-100", label: "SaaS", dark: false },
-  { title: "Atelier", tone: "from-stone-100 to-stone-50", label: "Studio", dark: false },
-  { title: "60K", tone: "from-zinc-950 to-zinc-900", label: "Metrics" },
-  { title: "Open Design", tone: "from-emerald-50 to-white", label: "Agency", dark: false },
-  { title: "Impact", tone: "from-indigo-950 to-indigo-900", label: "Brand" },
+  { title: "Nocturne", tone: "from-zinc-900 via-zinc-800 to-zinc-900", label: "Editorial", light: false },
+  { title: "Plugin OS", tone: "from-white via-zinc-50 to-violet-50", label: "SaaS", light: true },
+  { title: "Atelier", tone: "from-stone-100 to-amber-50", label: "Studio", light: true },
+  { title: "60K", tone: "from-zinc-950 to-indigo-950", label: "Metrics", light: false },
+  { title: "Open Design", tone: "from-emerald-50 to-white", label: "Agency", light: true },
+  { title: "Impact", tone: "from-indigo-950 via-violet-950 to-fuchsia-950", label: "Brand", light: false },
 ];
 
 export function WhyGallery() {
   return (
     <section className="overflow-hidden px-5 py-20 lg:py-28">
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes trove-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }` }} />
-      <div className="mx-auto max-w-[720px] text-center">
-        <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-accent">Why Trove</p>
-        <h2 className="mt-3 text-[clamp(1.9rem,1.2rem+2vw,3rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `@keyframes trove-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}`,
+        }}
+      />
+      <Reveal className="mx-auto max-w-[720px] text-center">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">Why Trove</p>
+        <h2 className="mt-3 text-[clamp(1.9rem,1.2rem+2vw,3rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-zinc-900">
           The hard part was never the site
         </h2>
-        <p className="mx-auto mt-4 max-w-[50ch] text-[16px] leading-relaxed text-ink-3">
-          It is the launch due tomorrow, the portfolio that is still a Google Doc, and the landing page you promised last week. Trove takes each one off your plate.
+        <p className="mx-auto mt-4 max-w-[50ch] text-[16px] leading-relaxed text-zinc-600">
+          It is the launch due tomorrow, the portfolio still in a Doc, and the landing page you
+          promised last week. Trove takes each one off your plate.
         </p>
-        <Link href="/websites" className="mt-8 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-5 py-2.5 text-[13.5px] font-medium text-accent transition hover:bg-accent/15">
-          WEBSITES
+        <Link
+          href="/websites"
+          className="mt-8 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-5 py-2.5 text-[13.5px] font-semibold text-violet-700 transition hover:bg-violet-100"
+        >
+          Explore websites →
         </Link>
-      </div>
+      </Reveal>
+
       <div className="relative mt-14">
-        <div className="flex animate-[trove-marquee_40s_linear_infinite] gap-4 hover:[animation-play-state:paused]">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#f4f2ff] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#f4f2ff] to-transparent" />
+        <div className="flex animate-[trove-marquee_42s_linear_infinite] gap-4 hover:[animation-play-state:paused]">
           {[...GALLERY, ...GALLERY].map((g, i) => (
-            <div key={`${g.title}-${i}`} className={cn("flex h-[200px] w-[280px] shrink-0 flex-col justify-end rounded-[18px] border border-line bg-gradient-to-br p-5 shadow-sm", g.tone)}>
-              <p className={cn("text-[11px] uppercase tracking-[0.12em]", g.dark === false ? "text-ink-4" : "text-white/50")}>{g.label}</p>
-              <p className={cn("mt-1 text-[20px] font-semibold tracking-tight", g.dark === false ? "text-ink" : "text-white")}>{g.title}</p>
+            <div
+              key={`${g.title}-${i}`}
+              className={cn(
+                "flex h-[220px] w-[300px] shrink-0 flex-col justify-end rounded-[22px] border border-zinc-200/50 bg-gradient-to-br p-6 shadow-md",
+                g.tone,
+              )}
+            >
+              <p
+                className={cn(
+                  "text-[11px] font-semibold uppercase tracking-[0.14em]",
+                  g.light ? "text-zinc-500" : "text-white/50",
+                )}
+              >
+                {g.label}
+              </p>
+              <p
+                className={cn(
+                  "mt-1 text-[22px] font-semibold tracking-tight",
+                  g.light ? "text-zinc-900" : "text-white",
+                )}
+              >
+                {g.title}
+              </p>
             </div>
           ))}
         </div>
