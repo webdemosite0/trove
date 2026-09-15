@@ -124,26 +124,53 @@ export function bundle(files: ProjectFile[], entry = "index.html"): string {
   return reactCdnPreview(files);
 }
 
+/** Strip ESM imports/exports so Babel standalone can run the file. */
+function stripModules(src: string): string {
+  return src
+    .replace(/^import\s+[\s\S]*?from\s+["'][^"']+["']\s*;?\s*$/gm, "")
+    .replace(/^import\s+["'][^"']+["']\s*;?\s*$/gm, "")
+    .replace(/export\s+default\s+function\s+/g, "function ")
+    .replace(/export\s+default\s+class\s+/g, "class ")
+    .replace(/export\s+default\s+/g, "const __default = ")
+    .replace(/export\s+(async\s+)?function\s+/g, "$1function ")
+    .replace(/export\s+(const|let|var)\s+/g, "$1 ")
+    .replace(/export\s+\{[^}]+\}\s*;?/g, "");
+}
+
 /** Best-effort in-browser preview for Vite/React file sets (no npm). */
 function reactCdnPreview(files: ProjectFile[]): string {
   const app =
     files.find((f) => /(?:^|\/)App\.(jsx|tsx|js)$/i.test(f.path)) ??
     files.find((f) => /src\/main\.(jsx|tsx|js)$/i.test(f.path));
-  if (!app) return "";
+  if (!app) {
+    // Last resort: any substantial HTML file
+    const html = files.find((f) => f.path.endsWith(".html") && f.content.length > 80);
+    return html?.content || "";
+  }
 
   const css = files
     .filter((f) => f.path.endsWith(".css"))
     .map((f) => f.content)
     .join("\n");
 
-  let body = app.content
-    .replace(/^import\s+.+?;?\s*$/gm, "")
-    .replace(/export\s+default\s+function\s+/g, "function ")
-    .replace(/export\s+default\s+/g, "const __App = ")
-    .replace(/export\s+\{[^}]+\};?/g, "");
+  // Include other components before App so simple name references resolve.
+  const others = files
+    .filter(
+      (f) =>
+        f !== app &&
+        /\.(jsx|tsx)$/i.test(f.path) &&
+        !/main\.(jsx|tsx)$/i.test(f.path),
+    )
+    .map((f) => stripModules(f.content))
+    .join("\n\n");
+
+  let body = stripModules(app.content);
 
   if (!/const __App\s*=/.test(body) && /function\s+App\b/.test(body)) {
     body += "\nconst __App = App;\n";
+  }
+  if (!/const __App\s*=/.test(body) && /const __default\s*=/.test(body)) {
+    body += "\nconst __App = __default;\n";
   }
   if (!/const __App\s*=/.test(body)) {
     body += "\nconst __App = typeof App !== 'undefined' ? App : () => null;\n";
@@ -167,9 +194,13 @@ ${css}
 <body>
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
+${others}
 ${body}
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(__App));
+const rootEl = document.getElementById("root");
+if (rootEl && typeof ReactDOM !== "undefined" && typeof React !== "undefined") {
+  const root = ReactDOM.createRoot(rootEl);
+  root.render(React.createElement(__App));
+}
 <\/script>
 </body>
 </html>`;
