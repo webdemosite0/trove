@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: "Trove — Turn Prompts Into Real Files",
   description:
-    "Build websites, documents, spreadsheets, presentations, code, research and AI agents with Trove — then download the actual files. Describe it once. Keep the file.",
+    "Build websites, documents, spreadsheets, presentations, code, research and AI agents with Trove — then download the actual files or publish live on *.troveai.site.",
 };
 
 export default async function Landing() {
@@ -38,29 +38,19 @@ export default async function Landing() {
 
       <main className="relative z-10">
         <Hero freeCredits={free.monthly} />
-
         <TrustedBar />
-
         <ProductProof />
-
-        <FeatureGrid />
-
         <ProductMockup />
-
-        <TrustSection />
-
+        <FeatureGrid />
         <HubDiagram />
-
+        <TrustSection />
         <WhyGallery />
-
         <div id="pricing">
           <PricingPreview plans={PLANS} />
         </div>
-
         <div id="faq">
           <Faq />
         </div>
-
         <FinalCta />
       </main>
 
