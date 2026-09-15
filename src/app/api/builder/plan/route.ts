@@ -30,53 +30,55 @@ export interface BuildPlan {
   steps: PlanStep[];
 }
 
-const SYSTEM = `You are Trove's build planner. You turn a one-line idea into a
-concrete plan for a production-ready website that runs from a folder of files
-and WORKS in the browser preview — not a static mock.
+const SYSTEM = `You are Trove's senior product designer and technical planner.
+You turn a one-line idea into a COMPLETE, production-quality multi-page website
+plan — not a thin landing page. Users expect a full product site from a single
+prompt: rich sections, real navigation, multiple pages/views, polished UI, and
+working interactions. Scope big unless the idea is explicitly a single section.
 
 Reply with ONE JSON object and nothing else — no prose, no markdown fence.
 
 {
-  "title": "short project name, 2-4 words",
-  "summary": "one sentence on what gets built",
+  "title": "short project name, 2-5 words",
+  "summary": "two sentences: what is built and who it is for",
   "requirements": {
-    "overview": "two sentences on scope",
-    "features": ["6-9 specific WORKING features, each under 12 words"],
-    "pages": [{"name": "Home", "purpose": "under 12 words"}],
-    "rules": ["4-6 constraints or edge cases worth stating"]
+    "overview": "3-4 sentences on product scope, audience, and primary jobs-to-be-done",
+    "features": ["10-16 specific WORKING features, each under 12 words"],
+    "pages": [{"name": "Home", "purpose": "under 16 words"}],
+    "rules": ["6-10 constraints, edge cases, accessibility or content rules"]
   },
   "style": {
-    "name": "a named direction, e.g. Warm Editorial",
-    "mood": "one sentence",
-    "palette": ["#hex", "#hex", "#hex", "#hex", "#hex"],
-    "type": "the font pairing as a system-font stack description"
+    "name": "a named direction, e.g. Warm Editorial or Precision SaaS",
+    "mood": "one vivid sentence on visual tone",
+    "palette": ["#hex", "#hex", "#hex", "#hex", "#hex", "#hex"],
+    "type": "font pairing described as a system-font stack"
   },
   "steps": [
     {
-      "title": "under 6 words",
-      "detail": "one sentence on what this step produces",
+      "title": "under 8 words",
+      "detail": "one or two sentences on what this step produces",
       "skills": ["ui-design"],
       "files": ["styles.css"]
     }
   ]
 }
 
+SCOPE — plan a FULL website, not a demo:
+- At least 4 distinct pages or routed views (Home, Features/Services, Pricing or Menu, About/Contact). Prefer 5–7 when the idea supports it.
+- Home alone must include multiple substantial sections: hero, social proof, features grid, how-it-works, testimonials, FAQ, and a strong CTA.
+- Real navigation linking every page; footer with secondary links.
+- Forms that validate client-side; interactive components (tabs, accordions, filters, modals, or carts) where needed.
+- Inline SVG icon set (no emoji as UI icons). Prefer CSS/SVG art over remote images.
+- Thoughtful empty states, hover/focus, and responsive layout to 360px.
+- Across the plan list at least 8–14 distinct file paths.
+
 Rules for steps:
 - Between MIN_STEPS and MAX_STEPS steps, ordered so each builds on the last.
-- Across the whole plan, list AT LEAST 8 distinct file paths (prefer 10–14).
-  Always include index.html (or entry), main CSS, main JS, and extras as needed
-  (README.md, .env.example, extra pages/modules). Nested paths are fine.
-- The FIRST step must establish the design system and produce the main stylesheet.
-- MULTI-PAGE REQUIREMENT: plan at least 3 distinct HTML pages (or routes) for any site
-  that is not a pure single-purpose tool/game. e.g. Home + About/Features + Contact, or
-  Home + Product + Cart. List each in requirements.pages. Never ship a one-file landing only
-  when the idea implies a product.
-- VISUALS: rich SVG/CSS heroes; Unsplash or data-URI when photography is needed.
-- STORAGE: localStorage by default; if idea mentions Supabase/backend, plan client + .env.example.
-- Include interactivity (cart, forms, filters, game loop, tabs, booking) and motion.
-- Aim for a COMPLETE multi-page product, not a thin landing.
+- FIRST step: design system (tokens, type, components) + global styles.
+- Middle steps: one major page or feature cluster each — do not cram the whole site into two steps.
+- LAST step: polish pass — consistency, a11y, motion, cross-links, content.
 - skills must be drawn from the allowed skill ids only.
-- files listed on a step are the ones that step will create or heavily edit.
+- Prefer depth over thin placeholders. No \"coming soon\" pages.
 `;
 
 function clamp(n: number, lo: number, hi: number) {
@@ -116,8 +118,8 @@ export async function POST(req: NextRequest) {
   const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
   const attachments = Array.isArray(body.attachments) ? body.attachments : [];
 
-  const minSteps = depth === "quick" ? 4 : 6;
-  const maxSteps = depth === "quick" ? 6 : 10;
+  const minSteps = depth === "quick" ? 4 : 7;
+  const maxSteps = depth === "quick" ? 6 : 12;
 
   const system = SYSTEM.replace("MIN_STEPS", String(minSteps)).replace(
     "MAX_STEPS",
@@ -134,7 +136,7 @@ export async function POST(req: NextRequest) {
     `Depth: ${depth}\n` +
     `Stack: ${target.id}\n` +
     (answered ? `Answers:\n${answered}\n` : "") +
-    `Plan a complete, interactive product for the browser preview.`;
+    `Plan a complete multi-page product website for the browser preview — not a thin landing page.`;
 
   try {
     const raw = await generateText({
@@ -179,13 +181,13 @@ export async function POST(req: NextRequest) {
       title: String(parsed.title ?? "Untitled").slice(0, 60),
       summary: String(parsed.summary ?? "").slice(0, 240),
       requirements: {
-        overview: String(parsed.requirements?.overview ?? "").slice(0, 400),
-        features: (parsed.requirements?.features ?? []).map(String).slice(0, 12),
+        overview: String(parsed.requirements?.overview ?? "").slice(0, 500),
+        features: (parsed.requirements?.features ?? []).map(String).slice(0, 18),
         pages: (parsed.requirements?.pages ?? []).slice(0, 12).map((p) => ({
           name: String(p.name ?? "Page").slice(0, 40),
           purpose: String(p.purpose ?? "").slice(0, 80),
         })),
-        rules: (parsed.requirements?.rules ?? []).map(String).slice(0, 10),
+        rules: (parsed.requirements?.rules ?? []).map(String).slice(0, 12),
       },
       style: {
         name: String(parsed.style?.name ?? "Clean").slice(0, 40),
