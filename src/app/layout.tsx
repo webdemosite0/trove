@@ -5,6 +5,7 @@ import { site } from "@/lib/site";
 import { THEME_SCRIPT } from "@/components/shell/theme";
 import "./globals.css";
 import "./landing-motion.css";
+import "./builder-motion.css";
 import "./theme-backdrop.css";
 
 const inter = Inter({
