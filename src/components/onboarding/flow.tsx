@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { finishOnboarding } from "@/app/actions/onboarding";
-import { BrandLockup } from "@/components/brand/logo";
+import { Wordmark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";
 import {
   FiArrowRight,
@@ -110,20 +110,21 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
         <span className="ob-orb ob-orb-c" />
       </div>
 
-      <header className="relative z-10 mx-auto flex w-full max-w-lg items-center gap-4 px-5 pt-6 sm:pt-10">
-        <BrandLockup orbSize={28} wordSize={18} />
-        <div className="flex-1">
+      <header className="relative z-10 mx-auto flex w-full max-w-lg items-center gap-3 px-5 pt-6 sm:gap-4 sm:pt-10">
+        {/* Text only — no box / orbit mark */}
+        <Wordmark size={22} className="shrink-0" />
+        <div className="min-w-0 flex-1 self-center">
           <div className="h-1.5 overflow-hidden rounded-full bg-sunk">
             <div
               className="ob-progress h-full rounded-full bg-gradient-to-r from-[var(--btn-a)] to-[var(--btn-b)]"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="mt-2 text-[12px] font-medium text-ink-4">
+          <p className="mt-1.5 text-[11.5px] font-medium leading-none text-ink-4">
             Step {step + 1} of {TOTAL_STEPS}
           </p>
         </div>
-        <ThemeToggle />
+        <ThemeToggle className="shrink-0" />
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col px-5 pb-10 pt-8">
