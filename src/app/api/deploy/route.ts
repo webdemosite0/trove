@@ -26,8 +26,18 @@ export async function POST(req: NextRequest) {
     }
 
     const title = String(body.title || slug);
-    const html = body.html ? String(body.html) : "";
+    let html = body.html ? String(body.html) : "";
     const filesJson = body.files ? JSON.stringify(body.files) : null;
+
+    // If client sent files but empty html, rebuild so publish is never blank.
+    if (!html.trim() && Array.isArray(body.files) && body.files.length) {
+      try {
+        const { bundle } = await import("@/lib/builder");
+        html = bundle(body.files as { path: string; content: string }[]) || "";
+      } catch {
+        /* keep empty; route will 404 with a clear message */
+      }
+    }
 
     await run(
       `CREATE TABLE IF NOT EXISTS published_sites (
