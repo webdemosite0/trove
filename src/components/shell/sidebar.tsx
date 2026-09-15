@@ -28,7 +28,6 @@ import {
   TbPlugConnected,
   TbRefreshDot,
 } from "@/components/ui/icons";
-import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
@@ -89,6 +88,23 @@ const SECONDARY: { href: string; label: string; icon: IconType }[] = [
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
+}
+
+/** Compact text mark for the collapsed rail — no box / orbit. */
+function MarkT({ size = 15 }: { size?: number }) {
+  return (
+    <span
+      className="wordmark-gradient inline-flex items-center justify-center font-semibold leading-none"
+      style={{
+        fontFamily: "var(--font-display)",
+        fontSize: size,
+        letterSpacing: "-0.02em",
+      }}
+      aria-hidden
+    >
+      T
+    </span>
+  );
 }
 
 function NavRow({
@@ -225,15 +241,14 @@ function RailBody({
 
   return (
     <>
-      <div className="flex items-center justify-between px-3.5 pt-3.5">
+      <div className="flex h-11 items-center justify-between px-3.5 pt-3.5">
         <Link
           href="/chat"
           onClick={onNavigate}
           aria-label="Trove home"
-          className="group inline-flex items-center gap-2"
+          className="group inline-flex h-8 items-center"
         >
-          <TroveOrb size={24} state="idle" />
-          <Wordmark size={15} sweep={false} />
+          <Wordmark size={17} sweep={false} />
         </Link>
         {onCollapse ? (
           <button
@@ -251,7 +266,7 @@ function RailBody({
         <Link
           href="/chat"
           onClick={onNavigate}
-          className="group flex h-9 items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:bg-hover hover:border-line-strong"
+          className="group flex h-9 items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
         >
           <Ico icon={FiPlus} motion="open" size={15} className="text-accent" />
           New chat
@@ -392,8 +407,12 @@ export function Sidebar({
           </div>
         ) : (
           <div className="flex h-full flex-col items-center gap-1 py-3.5">
-            <Link href="/chat" aria-label="Trove home">
-              <TroveOrb size={28} state="idle" />
+            <Link
+              href="/chat"
+              aria-label="Trove home"
+              className="grid h-8 w-8 place-items-center"
+            >
+              <MarkT size={16} />
             </Link>
             <button
               onClick={() => setCollapsed(false)}
