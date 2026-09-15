@@ -178,6 +178,15 @@ export async function checkSlugAvailability(
   return { available: false, reason: "This URL is already taken.", normalized };
 }
 
+export function isViteShell(html: string): boolean {
+  if (!html) return false;
+  return (
+    /type=["']module["']/i.test(html) &&
+    (/src\/main\.(jsx|tsx|js)/i.test(html) || /\/src\//i.test(html)) &&
+    !/<h1|<section|<main|class=["'][^"']*hero/i.test(html)
+  );
+}
+
 export function buildPublishHtml(
   html: string | undefined | null,
   files: ProjectFile[] | undefined | null,
@@ -185,26 +194,24 @@ export function buildPublishHtml(
 ): string {
   let out = (html && html.trim()) || "";
 
-  // Vite/React shells that only mount #root and load /src/main.jsx cannot run
-  // on a public domain. Always rebuild from project files via bundle().
-  const looksLikeViteShell =
-    !!out &&
-    /type=["']module["']/i.test(out) &&
-    (/src\/main\.(jsx|tsx|js)/i.test(out) || /\/src\//i.test(out)) &&
-    !/<h1|<section|<main|class=["'][^"']*hero/i.test(out);
-
-  if ((!out || looksLikeViteShell) && Array.isArray(files) && files.length) {
+  // Prefer rebuilding from project files whenever we have them — client HTML
+  // is often a Vite shell or an incomplete srcDoc that looks fine only on E2B.
+  if (Array.isArray(files) && files.length) {
     try {
       const rebuilt = bundle(files) || "";
-      if (rebuilt.trim()) out = rebuilt;
+      if (rebuilt.trim() && !isViteShell(rebuilt)) {
+        out = rebuilt;
+      } else if (rebuilt.trim() && (!out || isViteShell(out))) {
+        out = rebuilt;
+      }
     } catch {
       /* keep out */
     }
-    if (!out.trim()) {
+    if (!out.trim() || isViteShell(out)) {
       const index = files.find(
         (f) => f.path === "index.html" || f.path.endsWith("/index.html"),
       );
-      if (index?.content && !looksLikeViteShell) out = index.content;
+      if (index?.content && !isViteShell(index.content)) out = index.content;
     }
   }
 
@@ -217,10 +224,10 @@ export function buildPublishHtml(
 
 function escapeHtml(s: string) {
   return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, """);
 }
 
 export async function publishSite(opts: {
@@ -399,14 +406,18 @@ export async function resolveLiveHtml(slug: string): Promise<{
   if (!site || site.status !== "published") return null;
 
   let html = site.html;
-  if (!html.trim() && site.filesJson) {
+
+  // Always try to rebuild from files if stored HTML is empty or a Vite shell.
+  if ((!html.trim() || isViteShell(html)) && site.filesJson) {
     try {
       const files = JSON.parse(site.filesJson) as ProjectFile[];
-      html = buildPublishHtml("", files, site.title);
+      const rebuilt = buildPublishHtml("", files, site.title);
+      if (rebuilt.trim()) html = rebuilt;
     } catch {
-      html = "";
+      /* keep */
     }
   }
+
   if (!html.trim()) return null;
   return { html, title: site.title, version: site.version };
 }
