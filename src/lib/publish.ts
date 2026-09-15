@@ -184,19 +184,30 @@ export function buildPublishHtml(
   title: string,
 ): string {
   let out = (html && html.trim()) || "";
-  if (!out && Array.isArray(files) && files.length) {
+
+  // Vite/React shells that only mount #root and load /src/main.jsx cannot run
+  // on a public domain. Always rebuild from project files via bundle().
+  const looksLikeViteShell =
+    !!out &&
+    /type=["']module["']/i.test(out) &&
+    (/src\/main\.(jsx|tsx|js)/i.test(out) || /\/src\//i.test(out)) &&
+    !/<h1|<section|<main|class=["'][^"']*hero/i.test(out);
+
+  if ((!out || looksLikeViteShell) && Array.isArray(files) && files.length) {
     try {
-      out = bundle(files) || "";
+      const rebuilt = bundle(files) || "";
+      if (rebuilt.trim()) out = rebuilt;
     } catch {
-      out = "";
+      /* keep out */
     }
-    if (!out) {
+    if (!out.trim()) {
       const index = files.find(
         (f) => f.path === "index.html" || f.path.endsWith("/index.html"),
       );
-      if (index?.content) out = index.content;
+      if (index?.content && !looksLikeViteShell) out = index.content;
     }
   }
+
   if (!out.trim()) return "";
   if (!/<html[\s>]/i.test(out) && !/<!DOCTYPE/i.test(out)) {
     out = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${escapeHtml(title)}</title></head><body>${out}</body></html>`;
