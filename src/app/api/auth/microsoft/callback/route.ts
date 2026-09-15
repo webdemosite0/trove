@@ -35,10 +35,12 @@ export async function GET(req: NextRequest) {
   if (!profile.emailVerified) return fail("microsoft-unverified");
 
   const existing = await findByEmail(profile.email);
+  let needOnboarding = true;
 
   if (existing) {
     if (!existing.emailVerified) await markVerified(existing.id);
     await startSession(existing.id);
+    needOnboarding = !existing.onboardingDone;
   } else {
     const created = await createUser(
       profile.email,
@@ -47,10 +49,12 @@ export async function GET(req: NextRequest) {
       { provider: "microsoft", emailVerified: true },
     );
     await startSession(created.id);
+    needOnboarding = true;
   }
 
+  const next = needOnboarding ? "/onboarding" : "/chat";
   const res = NextResponse.redirect(
-    `${site.url}/launching?next=${encodeURIComponent("/chat")}`,
+    `${site.url}/launching?next=${encodeURIComponent(next)}`,
   );
   res.cookies.delete("nx_oauth_state");
   return res;
