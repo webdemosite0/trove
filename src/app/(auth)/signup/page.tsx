@@ -1,4 +1,7 @@
 import { AuthCard } from "@/components/auth/auth-card";
+import { googleConfigured } from "@/lib/google";
+import { microsoftConfigured } from "@/lib/microsoft";
+import { appleConfigured } from "@/lib/apple";
 
 /** Not indexed — see the note in the sign-in page. */
 export const metadata = {
@@ -12,5 +15,13 @@ export default async function SignupPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  return <AuthCard mode="signup" googleEnabled={true} oauthError={error} />;
+  return (
+    <AuthCard
+      mode="signup"
+      googleEnabled={googleConfigured()}
+      microsoftEnabled={microsoftConfigured()}
+      appleEnabled={appleConfigured()}
+      oauthError={error}
+    />
+  );
 }
