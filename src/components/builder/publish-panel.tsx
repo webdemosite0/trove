@@ -14,8 +14,10 @@ import { bundle } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 
 const ROOT_DOMAIN =
-  process.env.NEXT_PUBLIC_PUBLISH_ROOT_DOMAIN?.trim().replace(/^https?:\/\//, "").replace(/^\*\./, "").replace(/\/$/, "") ||
-  "troveai.site";
+  process.env.NEXT_PUBLIC_PUBLISH_ROOT_DOMAIN?.trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/^\*\./, "")
+    .replace(/\/$/, "") || "troveai.site";
 
 function slugify(title: string) {
   return (
@@ -28,10 +30,7 @@ function slugify(title: string) {
   );
 }
 
-/**
- * One project → one claimed subdomain.
- * Publishing again updates the same domain instead of creating a new site.
- */
+/** One saved project -> one permanently claimed public subdomain. */
 export function PublishPanel({
   files,
   projectId,
@@ -55,8 +54,14 @@ export function PublishPanel({
   const [copied, setCopied] = useState(false);
   const [publishedAt, setPublishedAt] = useState<number | null>(null);
   const [checking, setChecking] = useState(false);
-  const [availability, setAvailability] = useState<{ available: boolean; reason?: string } | null>(null);
+  const [availability, setAvailability] = useState<{
+    available: boolean;
+    reason?: string;
+  } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
+
+  const hasContent = Boolean(files.length || previewHtml);
+  const readyToPublish = Boolean(projectId) && hasContent;
 
   useEffect(() => {
     if (publishedUrl) setUrl(publishedUrl);
@@ -79,7 +84,7 @@ export function PublishPanel({
   }, [open]);
 
   useEffect(() => {
-    if (!open || url) return;
+    if (!open || url || !projectId) return;
     const clean = slugify(slug || title || "site");
     if (clean.length < 2) {
       setAvailability(null);
@@ -88,12 +93,14 @@ export function PublishPanel({
     const timer = window.setTimeout(async () => {
       setChecking(true);
       try {
-        const params = new URLSearchParams({ slug: clean });
-        if (projectId) params.set("projectId", projectId);
+        const params = new URLSearchParams({ slug: clean, projectId });
         const res = await fetch(`/api/publish/check-slug?${params.toString()}`);
         const data = await res.json().catch(() => null);
         if (res.ok && data) {
-          setAvailability({ available: Boolean(data.available), reason: data.reason || undefined });
+          setAvailability({
+            available: Boolean(data.available),
+            reason: data.reason || undefined,
+          });
         }
       } catch {
         setAvailability(null);
@@ -105,7 +112,12 @@ export function PublishPanel({
   }, [open, projectId, slug, title, url]);
 
   const publish = useCallback(async () => {
-    if ((!files.length && !previewHtml) || busy) return;
+    if (busy || !hasContent) return;
+    if (!projectId) {
+      setError("Trove is still saving this project. Publish will unlock when it is ready.");
+      return;
+    }
+
     setBusy(true);
     setError(null);
     try {
@@ -133,7 +145,7 @@ export function PublishPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: clean,
-          projectId: projectId || null,
+          projectId,
           title: title || clean,
           html,
           files,
@@ -153,7 +165,7 @@ export function PublishPanel({
     } finally {
       setBusy(false);
     }
-  }, [files, projectId, title, slug, busy, onPublished, previewHtml]);
+  }, [busy, files, hasContent, onPublished, previewHtml, projectId, slug, title]);
 
   const copy = async () => {
     if (!url) return;
@@ -170,12 +182,12 @@ export function PublishPanel({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        disabled={!files.length && !previewHtml}
-        aria-label="Publish"
+        disabled={!readyToPublish}
+        aria-label={projectId ? "Publish" : "Saving project"}
         className={cn(
           "inline-flex h-8 items-center gap-1.5 rounded-full bg-accent px-3 text-[12.5px] font-semibold text-white shadow-sm transition hover:brightness-105 active:scale-[.98]",
-          open && "shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_18%,transparent)]",
-          !files.length && !previewHtml && "opacity-40",
+          open && "ring-4 ring-accent/10",
+          !readyToPublish && "opacity-40",
         )}
       >
         <svg
@@ -191,7 +203,7 @@ export function PublishPanel({
           <path d="M12 19V5" />
           <path d="M5 12l7-7 7 7" />
         </svg>
-        Publish
+        {hasContent && !projectId ? "Saving…" : "Publish"}
       </button>
 
       {open ? (
@@ -245,7 +257,11 @@ export function PublishPanel({
               <div
                 className={cn(
                   "flex items-center gap-2 rounded-[13px] border bg-sunk px-3 py-2.5 transition",
-                  blocked ? "border-negative/40" : url ? "border-emerald-500/25" : "border-line focus-within:border-accent/45",
+                  blocked
+                    ? "border-negative/40"
+                    : url
+                      ? "border-emerald-500/25"
+                      : "border-line focus-within:border-accent/45",
                 )}
               >
                 <FiLink size={13} className="shrink-0 text-ink-4" />
@@ -334,7 +350,7 @@ export function PublishPanel({
             <button
               type="button"
               onClick={() => void publish()}
-              disabled={busy || blocked || checking || (!files.length && !previewHtml)}
+              disabled={busy || blocked || checking || !readyToPublish}
               className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] bg-accent px-4 text-[13px] font-semibold text-white shadow-sm transition hover:brightness-105 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
               {busy ? "Publishing…" : url ? "Publish changes" : "Publish to domain"}
