@@ -6,17 +6,18 @@ import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
 import { LandingScene } from "@/components/landing/scene";
 import {
-  TrustedBar,
   FeatureGrid,
   ProductMockup,
   HubDiagram,
   WhyGallery,
 } from "@/components/landing/showcase";
+import { LandingTrustedBar } from "@/components/landing/trusted-bar";
 import { PricingPreview, FinalCta } from "@/components/landing/sections";
 import { ProductProof } from "@/components/landing/product-proof";
 import { TrustSection } from "@/components/landing/trust";
 import { Faq } from "@/components/landing/faq";
 import { PLANS } from "@/lib/credits";
+import { availableChatModels } from "@/lib/chat-models.server";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -30,6 +31,7 @@ export default async function Landing() {
   if (jar.has("nx_session")) redirect("/chat");
 
   const free = PLANS[0];
+  const models = availableChatModels();
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#f4f2ff]">
@@ -38,7 +40,7 @@ export default async function Landing() {
 
       <main className="relative z-10">
         <Hero freeCredits={free.monthly} />
-        <TrustedBar />
+        <LandingTrustedBar models={models} />
         <ProductProof />
         <ProductMockup />
         <FeatureGrid />
