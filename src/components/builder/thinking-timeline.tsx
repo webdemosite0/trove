@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ThinkingOrb } from "thinking-orbs";
 import {
   FiCheck,
   FiFileText,
@@ -43,6 +44,25 @@ const ICON: Record<ThinkKind, typeof FiZap> = {
   run: TbTerminal2,
 };
 
+function orbForKind(kind: ThinkKind): "working" | "searching" | "solving" | "connecting" | "weaving" | "composing" | "shaping" {
+  switch (kind) {
+    case "search":
+      return "searching";
+    case "page":
+      return "connecting";
+    case "read":
+      return "solving";
+    case "write":
+      return "composing";
+    case "run":
+      return "weaving";
+    case "skill":
+      return "shaping";
+    default:
+      return "working";
+  }
+}
+
 function LiveTimer({ startedAt }: { startedAt: number }) {
   const [s, setS] = useState(() => Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
   useEffect(() => {
@@ -55,8 +75,7 @@ function LiveTimer({ startedAt }: { startedAt: number }) {
 }
 
 /**
- * Grok-style activity feed: real events from the build stream,
- * not rotating placeholder copy.
+ * Grok-style activity feed with ThinkingOrb on the live step.
  */
 export function ThinkingTimeline({
   lines,
@@ -68,12 +87,7 @@ export function ThinkingTimeline({
   if (!lines.length) return null;
 
   return (
-    <ol
-      className={cn(
-        "space-y-1.5 border-l border-line/80 pl-3",
-        className,
-      )}
-    >
+    <ol className={cn("space-y-1.5 border-l border-line/80 pl-3", className)}>
       {lines.map((line, i) => {
         const Icon = ICON[line.kind] ?? FiZap;
         const isLast = i === lines.length - 1;
@@ -95,14 +109,14 @@ export function ThinkingTimeline({
             />
             <span
               className={cn(
-                "mt-0.5 grid size-4 shrink-0 place-items-center",
+                "mt-0.5 grid size-5 shrink-0 place-items-center",
                 live ? "text-accent" : "text-ink-4",
               )}
             >
               {live ? (
-                <span className="size-3.5 animate-spin rounded-full border-[1.5px] border-accent border-t-transparent" />
+                <ThinkingOrb state={orbForKind(line.kind)} size={20} theme="auto" />
               ) : (
-                <Ico icon={Icon} motion={live ? "scan" : "nudge"} size={13} />
+                <Ico icon={Icon} motion="nudge" size={13} />
               )}
             </span>
             <span className="min-w-0 flex-1">
