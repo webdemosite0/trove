@@ -10,7 +10,6 @@ import { StarterCards } from "@/components/home/starter-cards";
 import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
 import { useChatThread } from "@/lib/use-chat-thread";
 import { ContinuePanel } from "@/components/home/recent-panels";
-import { SceneDecor } from "@/components/shell/scene-decor";
 import type { Recent } from "@/lib/recents";
 
 export function HomeChat({
@@ -35,8 +34,6 @@ export function HomeChat({
   if (turns.length === 0) {
     return (
       <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
-        <SceneDecor />
-
         <div className="relative z-[1] flex flex-1 flex-col items-center px-5 pb-14 pt-[6vh] lg:pt-[9vh]">
           <div className="w-full max-w-[720px] text-center">
             <div className="nx-rise">
