@@ -12,10 +12,9 @@ import {
 /**
  * Full-height project preview.
  *
- * The generated Vite app runs inside the browser-local runtime. The UI always
- * presents the project as localhost instead of leaking a sandbox-provider URL.
- * While dependencies boot (or when the browser cannot run WebContainers), the
- * exact bundled HTML remains available as an instant snapshot fallback.
+ * The generated Vite app runs in a reusable E2B sandbox. Trove keeps the
+ * provider URL out of the workspace chrome and presents the dev server as
+ * localhost:5173 while retaining the bundled HTML as an instant fallback.
  */
 export function BuilderPreviewPane({
   preview,
@@ -24,7 +23,6 @@ export function BuilderPreviewPane({
 }: {
   preview: string | null;
   files?: ProjectFile[];
-  /** Kept optional for source compatibility with older BuilderView callers. */
   sandboxUrl?: string | null;
   onSandboxError?: () => void;
   onRefresh?: () => void;
@@ -44,15 +42,19 @@ export function BuilderPreviewPane({
     void syncLocalProject(files);
   }, [files, filesKey]);
 
-  const useLocal = runtime.status === "ready" && Boolean(runtime.url);
-  const useSnapshot = Boolean(preview) && !useLocal;
-  const displayUrl = useLocal
+  const useLive = runtime.status === "ready" && Boolean(runtime.url);
+  const useSnapshot = Boolean(preview) && !useLive;
+  const displayUrl = useLive
     ? `localhost:${runtime.port || 5173}`
     : preview
       ? "localhost:5173"
       : "about:blank";
 
-  const openSnapshot = () => {
+  const openPreview = () => {
+    if (useLive && runtime.url) {
+      window.open(runtime.url, "_blank", "noopener,noreferrer");
+      return;
+    }
     if (!preview) return;
     const blob = new Blob([preview], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -62,25 +64,25 @@ export function BuilderPreviewPane({
 
   const statusLabel =
     runtime.status === "booting"
-      ? "Starting local runtime"
+      ? "Starting sandbox"
       : runtime.status === "installing"
         ? "Installing packages"
         : runtime.status === "starting"
-          ? "Starting localhost"
+          ? "Starting preview server"
           : runtime.status === "syncing"
             ? "Syncing files"
             : runtime.status === "error"
               ? "Snapshot fallback"
-              : useLocal
-                ? "Local · live"
-                : "Local preview";
+              : useLive
+                ? "Live · sandbox"
+                : "Live preview";
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col gap-2 bg-sunk p-1.5 md:p-2">
       <div className="flex shrink-0 items-center gap-2 px-1">
         <span
           className={`size-1.5 rounded-full ${
-            useLocal
+            useLive
               ? "bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,.12)]"
               : runtime.status === "error"
                 ? "bg-amber-400"
@@ -96,7 +98,7 @@ export function BuilderPreviewPane({
 
       <BrowserFrame
         url={displayUrl}
-        onOpen={preview ? openSnapshot : undefined}
+        onOpen={useLive || preview ? openPreview : undefined}
         onRefresh={() => {
           setRefreshKey((value) => value + 1);
           if (files.length) void syncLocalProject(files);
@@ -104,19 +106,19 @@ export function BuilderPreviewPane({
         }}
         className="h-full min-h-0 shadow-[0_16px_50px_rgba(15,23,42,.08)]"
       >
-        {useLocal && runtime.url ? (
+        {useLive && runtime.url ? (
           <iframe
             key={`${runtime.url}:${refreshKey}`}
-            title="Local live preview"
+            title="Live site preview"
             src={runtime.url}
             className="absolute inset-0 h-full w-full border-0 bg-white"
-            allow="cross-origin-isolated; accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
+            allow="accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
             referrerPolicy="no-referrer"
           />
         ) : useSnapshot && preview ? (
           <iframe
             key={`${preview.slice(0, 80)}:${refreshKey}`}
-            title="Local preview"
+            title="Preview snapshot"
             srcDoc={preview}
             className="absolute inset-0 h-full w-full border-0 bg-white"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
@@ -128,9 +130,9 @@ export function BuilderPreviewPane({
               <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-line bg-raised shadow-sm">
                 <span className="font-mono text-[15px] font-semibold text-accent">{"//"}</span>
               </div>
-              <p className="text-[16px] font-semibold tracking-tight text-ink">Local preview</p>
+              <p className="text-[16px] font-semibold tracking-tight text-ink">Live preview</p>
               <p className="mt-2 text-[13px] leading-5 text-ink-4">
-                Build your project and Trove will run it in a browser-local Node runtime at localhost:5173.
+                Build your project and Trove will start its Vite server in an isolated cloud sandbox.
               </p>
             </div>
           </div>
@@ -139,7 +141,7 @@ export function BuilderPreviewPane({
 
       {runtime.status === "error" && runtime.error ? (
         <p className="shrink-0 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-700 dark:text-amber-200">
-          Local runtime unavailable: {runtime.error}. Trove is showing the instant snapshot instead.
+          Live runtime unavailable: {runtime.error}. Trove is showing the instant snapshot instead.
         </p>
       ) : null}
     </div>
