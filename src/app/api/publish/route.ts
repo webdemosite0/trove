@@ -14,8 +14,10 @@ export const maxDuration = 60;
 
 /**
  * POST /api/publish
- * Body: { slug, title?, html?, files?, projectId? }
- * Publishes (or updates) a site at {slug}.troveai.site
+ * Body: { slug, title?, html?, files?, projectId }
+ *
+ * A saved project id is required because a public domain is a permanent claim:
+ * one project owns one slug, and that slug cannot later be reassigned.
  */
 export async function POST(req: NextRequest) {
   const user = await currentUser();
@@ -36,11 +38,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(result);
     }
 
+    const projectId = String(body.projectId || "").trim();
+    if (!projectId) {
+      return NextResponse.json(
+        { error: "This project is still saving. Try Publish again in a moment." },
+        { status: 409 },
+      );
+    }
+
     const slug = String(body.slug || "");
     const title = body.title ? String(body.title) : undefined;
     const html = body.html != null ? String(body.html) : null;
     const files = Array.isArray(body.files) ? (body.files as ProjectFile[]) : null;
-    const projectId = body.projectId ? String(body.projectId) : null;
 
     const result: PublishResult = await publishSite({
       userId: user.id,
@@ -59,10 +68,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * GET /api/publish?slug=clinilamp
- * Returns publish status for the authenticated user.
- */
+/** GET /api/publish?slug=clinilamp */
 export async function GET(req: NextRequest) {
   const user = await currentUser();
   if (!user) {
