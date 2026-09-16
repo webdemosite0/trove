@@ -4,7 +4,21 @@ import { openPreviewRuntime } from "@/lib/live-preview";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const COOKIE = "trove_preview_sandbox";
+function projectKey(req: NextRequest, body: any) {
+  const explicit = typeof body?.projectId === "string" ? body.projectId.trim() : "";
+  if (explicit) return explicit.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32) || "draft";
+
+  const referer = req.headers.get("referer");
+  if (referer) {
+    try {
+      const id = new URL(referer).searchParams.get("c") || "";
+      if (id) return id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32) || "draft";
+    } catch {
+      // Ignore malformed referer and use draft scope.
+    }
+  }
+  return "draft";
+}
 
 /**
  * Lovable-style live preview runtime.
@@ -12,9 +26,9 @@ const COOKIE = "trove_preview_sandbox";
  * First call:
  *   files -> create E2B sandbox -> install deps -> start dev server -> return URL
  *
- * Later calls from the same browser session:
- *   reconnect to the same sandbox -> overwrite changed project files -> existing
- *   dev server notices the changes (Vite/FastAPI reload) -> same preview URL updates.
+ * Later calls for the same Trove project:
+ *   reconnect to the same sandbox -> overwrite project files -> the existing dev
+ *   server notices the changes (Vite/FastAPI reload) -> same preview URL updates.
  */
 export async function POST(req: NextRequest) {
   if (!process.env.E2B_API_KEY?.trim()) {
@@ -38,9 +52,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No files to run" }, { status: 400 });
     }
 
-    // body.sandboxId is supported for future project-scoped clients. The cookie
-    // keeps today's builder backward-compatible without touching its large UI.
-    const remembered = req.cookies.get(COOKIE)?.value || null;
+    const scope = projectKey(req, body);
+    const cookieName = `trove_preview_${scope}`;
+    const remembered = req.cookies.get(cookieName)?.value || null;
     const requested = typeof body?.sandboxId === "string" ? body.sandboxId.trim() : null;
 
     const preview = await openPreviewRuntime({
@@ -56,9 +70,10 @@ export async function POST(req: NextRequest) {
       sandboxId: preview.sandboxId,
       framework: preview.framework,
       reused: preview.reused,
+      projectScope: scope,
     });
 
-    res.cookies.set(COOKIE, preview.sandboxId, {
+    res.cookies.set(cookieName, preview.sandboxId, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
