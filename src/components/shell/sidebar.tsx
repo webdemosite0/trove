@@ -89,18 +89,26 @@ function NavRow({
         "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] font-medium transition-colors",
         active
           ? "bg-accent-soft text-accent"
-          : "text-ink-2 hover:bg-hover hover:text-ink",
+          : "text-ink-3 hover:bg-hover hover:text-ink-2",
         compact && "justify-center px-0",
       )}
     >
+      {/* Icons darker than labels for hierarchy */}
       <Ico
         icon={item.icon}
         motion={item.motion}
         active={active}
         size={18}
-        className="shrink-0"
+        className={cn(
+          "shrink-0",
+          active ? "text-accent" : "text-ink",
+        )}
       />
-      {!compact ? <span className="truncate">{item.label}</span> : null}
+      {!compact ? (
+        <span className={cn("truncate", active ? "text-accent" : "text-ink-3")}>
+          {item.label}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -163,7 +171,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
             }}
             className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
           >
-            <FiSettings size={15} className="text-ink-4" />
+            <FiSettings size={15} className="text-ink" />
             Settings
           </Link>
           <Link
@@ -175,7 +183,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
             }}
             className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
           >
-            <FiCreditCard size={15} className="text-ink-4" />
+            <FiCreditCard size={15} className="text-ink" />
             Plan & credits
           </Link>
           <form action={logOut} className="border-t border-line">
@@ -183,7 +191,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
               role="menuitem"
               className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
             >
-              <FiLogOut size={15} className="text-ink-4" />
+              <FiLogOut size={15} className="text-ink" />
               Sign out
             </button>
           </form>
@@ -223,9 +231,9 @@ function RailBody({
             onClick={onCollapse}
             aria-label="Collapse sidebar"
             title="Toggle sidebar  ⌘B"
-            className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+            className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover hover:text-ink"
           >
-            <Ico icon={FiSidebar} motion="nudge" size={17} />
+            <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
           </button>
         ) : null}
       </div>
@@ -236,7 +244,7 @@ function RailBody({
           onClick={onNavigate}
           className="group flex h-9 items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
         >
-          <Ico icon={FiPlus} motion="open" size={15} className="text-accent" />
+          <Ico icon={FiPlus} motion="open" size={15} className="text-ink" />
           New chat
         </Link>
       </div>
@@ -267,8 +275,8 @@ function RailBody({
             onClick={onNavigate}
             className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13.5px] text-ink transition-colors hover:bg-hover"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-raised text-ink-3">
-              <Ico icon={FiUser} motion="tilt" size={14} />
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-raised text-ink">
+              <Ico icon={FiUser} motion="tilt" size={14} className="text-ink" />
             </span>
             Log in
           </Link>
@@ -280,9 +288,9 @@ function RailBody({
               href="/settings"
               onClick={onNavigate}
               aria-label="Settings"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink-4 transition-colors hover:bg-hover hover:text-ink"
+              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
-              <FiSettings size={16} />
+              <FiSettings size={16} className="text-ink" />
             </Link>
           </Tooltip>
           <Tooltip label="Plan" side="top">
@@ -290,9 +298,9 @@ function RailBody({
               href="/plans"
               onClick={onNavigate}
               aria-label="Plan"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink-4 transition-colors hover:bg-hover hover:text-ink"
+              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
-              <FiCreditCard size={16} />
+              <FiCreditCard size={16} className="text-ink" />
             </Link>
           </Tooltip>
           <span className="flex-1" />
@@ -387,9 +395,9 @@ export function Sidebar({
               onClick={() => setCollapsed(false)}
               aria-label="Expand sidebar"
               title="Toggle sidebar  ⌘B"
-              className="mb-2 grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+              className="mb-2 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
-              <Ico icon={FiSidebar} motion="nudge" size={17} />
+              <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
             </button>
 
             <Link
@@ -425,7 +433,7 @@ export function Sidebar({
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"
-              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
               <FiX size={17} />
             </button>
