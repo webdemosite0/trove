@@ -234,9 +234,9 @@ function RailBody({
         <Link
           href="/chat"
           onClick={onNavigate}
-          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-ink text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
+          className="group flex h-9 items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
         >
-          <FiPlus size={16} />
+          <Ico icon={FiPlus} motion="open" size={15} className="text-accent" />
           New chat
         </Link>
       </div>
@@ -396,7 +396,7 @@ export function Sidebar({
               href="/chat"
               title="New chat"
               aria-label="New chat"
-              className="mb-2 grid h-9 w-9 place-items-center rounded-xl bg-ink text-white"
+              className="btn-grad mb-2 grid h-9 w-9 place-items-center rounded-[var(--r-control)]"
             >
               <FiPlus size={16} />
             </Link>
