@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export type PreviewDestination = "chat" | "files" | "code" | "console";
+export type PreviewDestination = "chat" | "files" | "code";
 
 /**
  * Trove preview chrome.
@@ -80,7 +80,6 @@ export function BrowserFrame({
                 ["chat", "Chat"],
                 ["files", "Files"],
                 ["code", "Code"],
-                ["console", "Terminal"],
               ] as const).map(([destination, label]) => (
                 <button
                   key={destination}
