@@ -4,7 +4,7 @@
  * fallbacks only and is not offered in the UI.
  */
 
-export type TargetId = "static" | "react" | "node" | "python";
+export type TargetId = "static" | "react" | "node" | "python" | "laravel";
 
 export interface Target {
   id: TargetId;
@@ -31,7 +31,7 @@ export const TARGETS: Record<TargetId, Target> = {
   react: {
     id: "react",
     label: "React app",
-    blurb: "Vite + React. Live Preview via sandbox after build.",
+    blurb: "Vite + React. Live Preview via reusable sandbox.",
     previewable: true,
     entry: "src/App.jsx",
     commands: ["npm install", "npm run dev"],
@@ -57,38 +57,53 @@ Multi-page products use React Router or simple state routing.`,
   node: {
     id: "node",
     label: "Node API",
-    blurb: "Express API with sandbox Preview.",
+    blurb: "Node/Express with live sandbox Preview.",
     previewable: true,
     entry: "server.js",
-    commands: ["npm install", "npm start"],
+    commands: ["npm install", "npm run dev || npm start"],
     serves: "http://localhost:3000",
-    prompt: `STACK — Node.js Express 4, ES modules.
+    prompt: `STACK — Node.js with a dev/start script that binds to 0.0.0.0:3000.
 Working CRUD, validation, JSON store, README with curl examples.`,
   },
 
   python: {
     id: "python",
-    label: "Python API",
-    blurb: "FastAPI with sandbox Preview.",
+    label: "Python app",
+    blurb: "FastAPI or Django with reloadable sandbox Preview.",
     previewable: true,
     entry: "main.py",
     commands: [
-      "python -m venv .venv",
-      "source .venv/bin/activate",
       "pip install -r requirements.txt",
-      "uvicorn main:app --reload",
+      "uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
     ],
     serves: "http://127.0.0.1:8000",
-    prompt: `STACK — Python 3.11, FastAPI, Pydantic v2.
-Working endpoints, typed models, JSON persistence.`,
+    prompt: `STACK — Python 3.11. Prefer FastAPI + Pydantic v2 unless Django is explicitly requested.
+Bind to 0.0.0.0:8000 and keep reload enabled for Live Preview.`,
+  },
+
+  laravel: {
+    id: "laravel",
+    label: "Laravel app",
+    blurb: "Laravel via a PHP-enabled E2B template.",
+    previewable: true,
+    entry: "artisan",
+    commands: [
+      "composer install",
+      "php artisan serve --host=0.0.0.0 --port=8000",
+    ],
+    serves: "http://127.0.0.1:8000",
+    prompt: `STACK — Laravel. The preview sandbox must include PHP and Composer.
+Run composer install, then php artisan serve --host=0.0.0.0 --port=8000.
+If the project also uses Vite for frontend assets, keep its dev server configured for external hosts.`,
   },
 };
 
-/** Shown in the Sites builder — no plain HTML static. */
+/** Shown in the Sites builder — React remains the default. */
 export const TARGET_LIST: Target[] = [
   TARGETS.react,
   TARGETS.node,
   TARGETS.python,
+  TARGETS.laravel,
 ];
 
 export function targetFor(id: unknown): Target {
