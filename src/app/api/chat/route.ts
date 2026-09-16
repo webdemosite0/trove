@@ -10,6 +10,7 @@ import {
   RateWindowExceeded,
 } from "@/lib/credits";
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
+import { isChatModelId, type ChatModelId } from "@/lib/chat-models";
 import { listConnections, secretFor } from "@/lib/connections";
 
 export const runtime = "nodejs";
@@ -66,6 +67,7 @@ async function handle(req: NextRequest) {
   let turns: Turn[];
   let attachments: Attachment[] = [];
   let mode: unknown;
+  let model: ChatModelId = "auto";
   let timeZone = "UTC";
 
   try {
@@ -73,6 +75,7 @@ async function handle(req: NextRequest) {
     turns = Array.isArray(body?.messages) ? body.messages : [];
     attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     mode = body?.mode;
+    model = isChatModelId(body?.model) ? body.model : "auto";
     timeZone = safeTimeZone(body?.timeZone);
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
@@ -205,6 +208,7 @@ async function handle(req: NextRequest) {
             : 2048,
       extraParts: attachments.length ? toParts(attachments) : undefined,
       search: wantSearch,
+      preferredProvider: model,
       onSources: (s) => {
         sources = s;
       },

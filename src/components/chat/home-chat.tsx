@@ -8,6 +8,11 @@ import { Message } from "@/components/chat/message";
 import { Greeting } from "@/components/chat/greeting";
 import { StarterCards } from "@/components/home/starter-cards";
 import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
+import {
+  DEFAULT_CHAT_MODEL,
+  type ChatModelId,
+  type ChatModelOption,
+} from "@/lib/chat-models";
 import { useChatThread } from "@/lib/use-chat-thread";
 import { ContinuePanel } from "@/components/home/recent-panels";
 import type { Recent } from "@/lib/recents";
@@ -17,19 +22,35 @@ export function HomeChat({
   name = "there",
   activity = [],
   draft: initialDraft = "",
+  models = [],
 }: {
   restored?: { id: string; title: string; messages: { role: "user" | "model"; text: string }[] } | null;
   name?: string;
   activity?: Recent[];
   draft?: string;
+  models?: ChatModelOption[];
 }) {
   const [draft, setDraft] = useState(initialDraft);
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
+  const [model, setModel] = useState<ChatModelId>(
+    models.some((option) => option.id === DEFAULT_CHAT_MODEL)
+      ? DEFAULT_CHAT_MODEL
+      : (models[0]?.id ?? DEFAULT_CHAT_MODEL),
+  );
 
   const { turns, busy, error, send, retry, regenerate, clear, bottom } = useChatThread({
     restored,
     mode,
+    model,
   });
+
+  const composerModelProps = {
+    model,
+    modelOptions: models,
+    onModelChange: setModel,
+    mode,
+    onModeChange: setMode,
+  };
 
   if (turns.length === 0) {
     return (
@@ -58,8 +79,7 @@ export function HomeChat({
                 key={draft}
                 initialValue={draft}
                 onSend={send}
-                mode={mode}
-                onModeChange={setMode}
+                {...composerModelProps}
                 autoFocus
                 disabled={busy}
               />
@@ -122,7 +142,12 @@ export function HomeChat({
 
       <div className="sticky bottom-0 bg-gradient-to-t from-canvas via-canvas to-transparent px-5 pb-5 pt-3 lg:px-8">
         <div className="mx-auto max-w-[760px]">
-          <Composer onSend={send} placeholder="Reply…" disabled={busy} />
+          <Composer
+            onSend={send}
+            placeholder="Reply…"
+            disabled={busy}
+            {...composerModelProps}
+          />
         </div>
       </div>
     </div>

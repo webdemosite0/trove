@@ -11,31 +11,18 @@ import {
   type Attachment,
 } from "@/lib/attachments";
 import { ModePicker } from "@/components/chat/mode-picker";
+import { ModelPicker } from "@/components/chat/model-picker";
 import type { ModeId } from "@/lib/modes";
+import type { ChatModelId, ChatModelOption } from "@/lib/chat-models";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
 
 /**
  * The phone composer.
  *
- * A separate component from the desktop one rather than a `compact` prop,
- * because the two disagree about nearly every decision. The desktop box is a
- * card with a labelled toolbar under it; this is a single tall card with one
- * row of controls along the bottom.
- *
- * That row is deliberately three things and no more — attach, mode, send —
- * because it has to survive 320px. The previous version laid the four modes
- * out as chips beside the attach and send buttons, which needed 300px of
- * controls in a 343px card and crushed everything. The mode selector is the
- * shared ModePicker, so the phone and the desktop offer the same four options
- * with the same descriptions rather than two different mode UIs.
- *
- * The field is 16px and not a pixel less. iOS Safari zooms the whole page when
- * a focused input is smaller than that, and it does not zoom back out — the
- * page is left scaled and half off-screen for the rest of the session.
- *
- * Enter inserts a newline; it does not send. On a phone the return key is how
- * you write a second line, and the send button is right there.
+ * The phone gets a dedicated composer so controls remain thumb-sized. Model
+ * and response-style pickers collapse into compact pills while their menus
+ * open as bottom sheets, keeping the text box usable even on 320px screens.
  */
 export function MobileComposer({
   onSend,
@@ -43,6 +30,9 @@ export function MobileComposer({
   placeholder = "Ask anything, or describe what to build…",
   mode,
   onModeChange,
+  model,
+  modelOptions,
+  onModelChange,
   autoFocus = false,
   initialValue = "",
 }: {
@@ -51,6 +41,9 @@ export function MobileComposer({
   placeholder?: string;
   mode?: ModeId;
   onModeChange?: (id: ModeId) => void;
+  model?: ChatModelId;
+  modelOptions?: ChatModelOption[];
+  onModelChange?: (id: ChatModelId) => void;
   autoFocus?: boolean;
   /** Prefills the box — an idea typed before signing in, for instance. */
   initialValue?: string;
@@ -60,8 +53,6 @@ export function MobileComposer({
   const [error, setError] = React.useState<string | null>(null);
   const box = React.useRef<HTMLTextAreaElement>(null);
 
-  // Grow with the content, up to a cap. Measured from scrollHeight after a
-  // reset, because a textarea never shrinks on its own.
   const resize = React.useCallback(() => {
     const el = box.current;
     if (!el) return;
@@ -161,8 +152,7 @@ export function MobileComposer({
         className="block max-h-[148px] min-h-[52px] w-full resize-none bg-transparent px-3.5 pb-1 pt-3 text-[16px] leading-[1.45] text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed"
       />
 
-      {/* Three controls, and no more — this row has to survive 320px. */}
-      <div className="flex items-center gap-1 px-1 pb-0.5">
+      <div className="flex items-center gap-0.5 px-1 pb-0.5">
         <label
           className={cn(
             "grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition-colors active:bg-hover",
@@ -181,6 +171,16 @@ export function MobileComposer({
             }}
           />
         </label>
+
+        {model && modelOptions?.length && onModelChange ? (
+          <ModelPicker
+            value={model}
+            options={modelOptions}
+            onChange={onModelChange}
+            disabled={disabled}
+            touch
+          />
+        ) : null}
 
         {mode && onModeChange ? (
           <ModePicker value={mode} onChange={onModeChange} disabled={disabled} touch />
