@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- WebContainer is loaded dynamically at runtime, so its SDK types are intentionally not a build dependency. */
 "use client";
 
 import type { ProjectFile } from "@/lib/builder";
@@ -13,28 +12,15 @@ type RuntimeSnapshot = {
   output: string[];
 };
 
-type WebContainerLike = {
-  workdir: string;
-  mount: (tree: Record<string, unknown>) => Promise<void>;
-  spawn: (command: string, args?: string[], options?: Record<string, unknown>) => Promise<any>;
-  on: (event: string, cb: (...args: any[]) => void) => (() => void) | void;
-};
-
 type RuntimeStore = {
   snapshot: RuntimeSnapshot;
   listeners: Set<(snapshot: RuntimeSnapshot) => void>;
-  bootPromise: Promise<WebContainerLike> | null;
-  container: WebContainerLike | null;
-  serverProcess: any;
-  shellProcess: any;
-  shellWriter: WritableStreamDefaultWriter<string> | null;
-  packageFingerprint: string;
-  mountedFingerprint: string;
   syncPromise: Promise<void> | null;
+  mountedFingerprint: string;
+  projectScope: string;
 };
 
-const CDN = "https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/+esm";
-const STORE_KEY = "__troveWebContainerRuntimeV1";
+const STORE_KEY = "__troveE2BRuntimeV1";
 
 function createStore(): RuntimeStore {
   return {
@@ -45,24 +31,13 @@ function createStore(): RuntimeStore {
       error: null,
       output: [],
     },
-    listeners: new Set<(snapshot: RuntimeSnapshot) => void>(),
-    bootPromise: null,
-    container: null,
-    serverProcess: null,
-    shellProcess: null,
-    shellWriter: null,
-    packageFingerprint: "",
-    mountedFingerprint: "",
+    listeners: new Set(),
     syncPromise: null,
+    mountedFingerprint: "",
+    projectScope: "",
   };
 }
 
-/**
- * WebContainer.boot() may only create one live instance per page. Next.js can
- * re-evaluate client modules during navigation/HMR, so module-level variables
- * are not strong enough to enforce that invariant. Keep the runtime on
- * globalThis so Preview and Terminal always reuse the same instance.
- */
 function getStore(): RuntimeStore {
   const root = globalThis as typeof globalThis & Record<string, unknown>;
   const existing = root[STORE_KEY] as RuntimeStore | undefined;
@@ -85,66 +60,17 @@ function stripAnsi(value: string) {
 
 function appendOutput(value: string) {
   const clean = stripAnsi(String(value || "")).replace(/\r/g, "");
-  if (!clean) return;
   const chunks = clean.split("\n").filter(Boolean);
   if (!chunks.length) return;
-  publish({ output: [...store.snapshot.output, ...chunks].slice(-240) });
+  publish({ output: [...store.snapshot.output, ...chunks].slice(-300) });
 }
 
-function safePath(raw: string) {
-  return String(raw || "")
-    .replace(/\\/g, "/")
-    .replace(/^\/+/, "")
-    .split("/")
-    .filter((part) => part && part !== "." && part !== "..")
-    .join("/");
+function projectIdFromUrl() {
+  if (typeof window === "undefined") return "";
+  return new URL(window.location.href).searchParams.get("c")?.trim() || "";
 }
 
-function defaultPackage() {
-  return JSON.stringify(
-    {
-      name: "trove-local-preview",
-      private: true,
-      type: "module",
-      scripts: { dev: "vite --host 0.0.0.0 --port 5173" },
-      dependencies: { react: "18.3.1", "react-dom": "18.3.1" },
-      devDependencies: { vite: "6.0.11", "@vitejs/plugin-react": "4.3.1" },
-    },
-    null,
-    2,
-  );
-}
-
-function normalizeFiles(files: ProjectFile[]) {
-  const cleaned = files
-    .map((file) => ({ path: safePath(file.path), content: String(file.content ?? "") }))
-    .filter((file) => file.path);
-
-  if (!cleaned.some((file) => file.path === "package.json")) {
-    cleaned.push({ path: "package.json", content: defaultPackage() });
-  }
-  return cleaned;
-}
-
-function toTree(files: { path: string; content: string }[]) {
-  const tree: Record<string, any> = {};
-  for (const file of files) {
-    const parts = file.path.split("/");
-    let node = tree;
-    for (let i = 0; i < parts.length; i += 1) {
-      const part = parts[i];
-      if (i === parts.length - 1) {
-        node[part] = { file: { contents: file.content } };
-      } else {
-        node[part] ||= { directory: {} };
-        node = node[part].directory;
-      }
-    }
-  }
-  return tree;
-}
-
-function fingerprint(files: { path: string; content: string }[]) {
+function fingerprint(files: ProjectFile[]) {
   let hash = 2166136261;
   for (const file of files) {
     const source = `${file.path}\u0000${file.content}\u0001`;
@@ -156,176 +82,111 @@ function fingerprint(files: { path: string; content: string }[]) {
   return (hash >>> 0).toString(36);
 }
 
-function normalizeRuntimeError(raw: string) {
-  if (/SharedArrayBuffer|crossOriginIsolated|postMessage.*Worker/i.test(raw)) {
-    return "Local runtime needs browser cross-origin isolation. Reload the Sites workspace in a fresh tab; Trove will not start the runtime until COOP/COEP are active.";
-  }
-  if (/more instances|single instance|already.*instance/i.test(raw)) {
-    return "The local runtime was already started by this tab. Reload the Sites workspace once to reconnect to the shared runtime.";
-  }
-  return raw;
-}
-
-async function ensureCrossOriginIsolation() {
-  if (typeof window === "undefined") {
-    throw new Error("Local runtime only runs in the browser.");
-  }
-  if (!window.isSecureContext && window.location.hostname !== "localhost") {
-    throw new Error("Local preview requires HTTPS.");
-  }
-
-  const hasSharedArrayBuffer = typeof SharedArrayBuffer !== "undefined";
-  if (window.crossOriginIsolated && hasSharedArrayBuffer) return;
-
-  // A client-side transition from a normal Trove page to /websites keeps the
-  // old document's security policy. One real document reload makes the browser
-  // receive the /websites COOP/COEP response headers and enables SAB.
-  const isSitesWorkspace = /^\/websites(?:\/|$)/.test(window.location.pathname);
-  const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-  const alreadyReloaded = navigation?.type === "reload";
-
-  if (isSitesWorkspace && !alreadyReloaded) {
-    publish({ status: "booting", error: null });
-    appendOutput("Preparing isolated local runtime…");
-    window.location.reload();
-    await new Promise<never>(() => undefined);
-  }
-
-  throw new Error(
-    "Browser cross-origin isolation is not active. Open Trove Sites directly over HTTPS and hard refresh once. Chrome/Edge are recommended for the local runtime.",
-  );
-}
-
-async function loadWebContainer(): Promise<WebContainerLike> {
-  if (store.container) return store.container;
-  if (store.bootPromise) return store.bootPromise;
-
-  store.bootPromise = (async () => {
-    publish({ status: "booting", error: null });
-    await ensureCrossOriginIsolation();
-
-    const dynamicImport = new Function("url", "return import(url)") as (url: string) => Promise<any>;
-    const mod = await dynamicImport(CDN);
-    if (!mod?.WebContainer?.boot) throw new Error("Local runtime could not load.");
-
-    const wc = (await mod.WebContainer.boot({
-      coep: "credentialless",
-      workdirName: "trove-project",
-      forwardPreviewErrors: "exceptions-only",
-    })) as WebContainerLike;
-
-    // Assign immediately after boot so every later caller can reuse it.
-    store.container = wc;
-
-    wc.on("server-ready", (port: number, url: string) => {
-      publish({ status: "ready", port: Number(port) || 5173, url: String(url), error: null });
-      appendOutput(`Local server ready on http://localhost:${port}`);
-    });
-    wc.on("error", (error: unknown) => {
-      const raw = error instanceof Error ? error.message : String(error || "Local runtime error");
-      const message = normalizeRuntimeError(raw);
-      publish({ status: "error", error: message });
-      appendOutput(`runtime: ${message}`);
-    });
-
-    appendOutput("Trove local runtime booted in your browser.");
-    return wc;
-  })().catch((error) => {
-    store.bootPromise = null;
-    const raw = error instanceof Error ? error.message : "Local runtime failed to start.";
-    const message = normalizeRuntimeError(raw);
-    publish({ status: "error", error: message });
-    throw error;
-  });
-
-  return store.bootPromise;
-}
-
-async function pipeProcess(process: any, prefix?: string) {
-  if (!process?.output?.pipeTo) return;
-  void process.output
-    .pipeTo(
-      new WritableStream<string>({
-        write(data) {
-          appendOutput(prefix ? `${prefix}${data}` : data);
-        },
-      }),
-    )
-    .catch(() => undefined);
-}
-
-async function installIfNeeded(wc: WebContainerLike, files: { path: string; content: string }[]) {
-  const pkg = files.find((file) => file.path === "package.json")?.content || defaultPackage();
-  if (pkg === store.packageFingerprint) return false;
-  publish({ status: "installing", error: null });
-  appendOutput("$ npm install --no-audit --no-fund");
-  const install = await wc.spawn("npm", ["install", "--no-audit", "--no-fund"]);
-  await pipeProcess(install);
-  const exit = await install.exit;
-  if (exit !== 0) throw new Error(`npm install exited with code ${exit}`);
-  store.packageFingerprint = pkg;
-  return true;
-}
-
-async function startServer(wc: WebContainerLike, restart = false) {
-  if (store.serverProcess && !restart) return;
-  if (store.serverProcess?.kill) {
-    try {
-      store.serverProcess.kill();
-    } catch {
-      // Ignore stale process handles.
-    }
-  }
-  publish({ status: "starting", error: null, url: restart ? null : store.snapshot.url });
-  appendOutput("$ npm run dev -- --host 0.0.0.0 --port 5173");
-  store.serverProcess = await wc.spawn("npm", ["run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]);
-  await pipeProcess(store.serverProcess);
+async function readJson(res: Response) {
+  return res.json().catch(() => null) as Promise<Record<string, unknown> | null>;
 }
 
 export async function syncLocalProject(files: ProjectFile[]) {
   if (!files.length) return;
-  const normalized = normalizeFiles(files);
-  const nextFingerprint = fingerprint(normalized);
-  if (nextFingerprint === store.mountedFingerprint && store.snapshot.status !== "error") return;
 
-  if (store.syncPromise) await store.syncPromise.catch(() => undefined);
+  const nextFingerprint = fingerprint(files);
+  const projectId = projectIdFromUrl();
+  const scope = projectId || "draft";
+
+  if (
+    nextFingerprint === store.mountedFingerprint &&
+    store.projectScope === scope &&
+    store.snapshot.status === "ready" &&
+    store.snapshot.url
+  ) {
+    return;
+  }
+
+  if (store.syncPromise) {
+    await store.syncPromise.catch(() => undefined);
+    if (
+      nextFingerprint === store.mountedFingerprint &&
+      store.projectScope === scope &&
+      store.snapshot.status === "ready" &&
+      store.snapshot.url
+    ) {
+      return;
+    }
+  }
+
   store.syncPromise = (async () => {
     try {
-      const wc = await loadWebContainer();
-      publish({ status: "syncing", error: null });
-      await wc.mount(toTree(normalized));
-      const packageChanged = await installIfNeeded(wc, normalized);
+      publish({
+        status: store.snapshot.url ? "syncing" : "booting",
+        error: null,
+      });
+      appendOutput(store.snapshot.url ? "Syncing project to sandbox…" : "Starting project sandbox…");
+
+      const res = await fetch("/api/sandbox/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files, projectId: projectId || null }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) {
+        throw new Error(String(data?.error || `Sandbox failed (${res.status})`));
+      }
+
+      const url = typeof data?.url === "string" ? data.url : null;
+      if (!url) throw new Error("Sandbox started without a preview URL.");
+
       store.mountedFingerprint = nextFingerprint;
-      await startServer(wc, packageChanged);
-      if (store.snapshot.url) publish({ status: "ready" });
+      store.projectScope = scope;
+      publish({
+        status: "ready",
+        url,
+        port: Number(data?.port) || 5173,
+        error: null,
+      });
+      appendOutput(
+        data?.reused
+          ? "Reconnected to the existing Trove sandbox."
+          : "Trove sandbox is ready.",
+      );
+      appendOutput("Preview server ready on http://localhost:5173");
     } catch (error) {
-      const raw = error instanceof Error ? error.message : "Local runtime failed.";
-      const message = normalizeRuntimeError(raw);
+      const message = error instanceof Error ? error.message : "Sandbox failed to start.";
       publish({ status: "error", error: message });
-      appendOutput(`error: ${message}`);
+      appendOutput(`runtime: ${message}`);
     } finally {
       store.syncPromise = null;
     }
   })();
-  await store.syncPromise;
-}
 
-async function ensureShell() {
-  const wc = await loadWebContainer();
-  if (store.shellWriter) return store.shellWriter;
-  store.shellProcess = await wc.spawn("jsh", [], { terminal: { cols: 92, rows: 28 } });
-  await pipeProcess(store.shellProcess);
-  const writer = store.shellProcess.input.getWriter() as WritableStreamDefaultWriter<string>;
-  store.shellWriter = writer;
-  return writer;
+  await store.syncPromise;
 }
 
 export async function runLocalCommand(command: string) {
   const value = command.trim();
   if (!value) return;
+
   appendOutput(`$ ${value}`);
-  const writer = await ensureShell();
-  await writer.write(`${value}\n`);
+  const projectId = projectIdFromUrl();
+
+  try {
+    const res = await fetch("/api/sandbox/exec", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: value, projectId: projectId || null }),
+    });
+    const data = await readJson(res);
+    if (!res.ok) {
+      throw new Error(String(data?.error || `Command failed (${res.status})`));
+    }
+
+    if (typeof data?.stdout === "string" && data.stdout) appendOutput(data.stdout);
+    if (typeof data?.stderr === "string" && data.stderr) appendOutput(data.stderr);
+    const exitCode = Number(data?.exitCode ?? 0);
+    if (exitCode !== 0) appendOutput(`process exited with code ${exitCode}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Command failed.";
+    appendOutput(`terminal: ${message}`);
+  }
 }
 
 export function clearLocalOutput() {
