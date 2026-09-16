@@ -126,7 +126,7 @@ export function BuilderPreviewPane({
           <div className="grid h-full min-h-[280px] place-items-center px-6 text-center">
             <div className="max-w-sm">
               <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-line bg-raised shadow-sm">
-                <span className="font-mono text-[15px] font-semibold text-accent">//</span>
+                <span className="font-mono text-[15px] font-semibold text-accent">{"//"}</span>
               </div>
               <p className="text-[16px] font-semibold tracking-tight text-ink">Local preview</p>
               <p className="mt-2 text-[13px] leading-5 text-ink-4">
