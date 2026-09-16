@@ -69,7 +69,7 @@ export function BuildConsole({
       : runtime.status === "error"
         ? "runtime error"
         : runtime.status === "idle"
-          ? "local runtime"
+          ? "sandbox"
           : runtime.status;
 
   return (
@@ -106,7 +106,7 @@ export function BuildConsole({
           <span className="text-emerald-400/80">trove</span>
           <span className="text-white/20">:</span>
           <span className="text-sky-300/70">~/project</span>
-          <span className="text-white/40"> — browser-local shell</span>
+          <span className="text-white/40"> — isolated sandbox shell</span>
         </div>
 
         {lines.map((line) => (
@@ -145,7 +145,7 @@ export function BuildConsole({
           ref={input}
           value={command}
           onChange={(event) => setCommand(event.target.value)}
-          placeholder={runtime.status === "ready" ? "Type a command…" : "Runtime is starting…"}
+          placeholder={runtime.status === "ready" ? "Type a command…" : "Sandbox is starting…"}
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
