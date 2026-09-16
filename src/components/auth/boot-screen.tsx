@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TroveIcon } from "@/components/brand/logo";
+import { TroveOrb } from "@/components/brand/orb";
 import { FiCheck } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ export function BootScreen({ next }: { next?: string }) {
 
       <div className="relative flex flex-col items-center">
         <span className="nx-thinking grid place-items-center">
-          <TroveIcon size={52} priority />
+          <TroveOrb size={52} state="working" />
         </span>
         <p className="mt-6 text-[15px] font-medium tracking-[-0.02em] text-ink">
           Preparing Trove

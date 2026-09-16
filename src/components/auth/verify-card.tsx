@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { FiAlertCircle, FiCheck, FiLoader, FiMail } from "@/components/ui/icons";
 import { logOut, resendVerification, type AuthState } from "@/app/actions/auth";
-import { TroveIcon } from "@/components/brand/logo";
+import { TroveOrb } from "@/components/brand/orb";
 import { Ico } from "@/components/ui/ico";
 
 export function VerifyCard({
@@ -19,7 +19,7 @@ export function VerifyCard({
   return (
     <div className="nx-in w-full max-w-[420px] rounded-[var(--r-panel)] border border-line bg-rail p-6 text-center shadow-[0_24px_70px_-20px_rgba(0,0,0,0.85)] sm:p-7">
       <div className="mb-5 flex flex-col items-center">
-        <TroveIcon size={40} priority />
+        <TroveOrb size={40} state="thinking" />
         <h1 className="mt-4 text-[17px] font-semibold text-ink">Confirm your email</h1>
       </div>
 
