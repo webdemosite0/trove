@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiArrowRight, FiMenu, FiX } from "@/components/ui/icons";
-import { BrandLockup } from "@/components/brand/logo";
+import { TroveOrb } from "@/components/brand/orb";
+import { Wordmark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +50,8 @@ export function LandingNav() {
         )}
       >
         <Link href="/" aria-label="Trove" className="flex shrink-0 items-center gap-2">
-          <BrandLockup orbSize={22} wordSize={16} sweep={false} priority />
+          <TroveOrb size={22} state="idle" />
+          <Wordmark size={16} sweep={false} />
         </Link>
 
         <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 md:flex">
