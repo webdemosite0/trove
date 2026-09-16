@@ -4,6 +4,7 @@ import { isMobile } from "@/lib/device";
 import { loadConversation } from "@/lib/conversations";
 import { loadProject } from "@/lib/projects";
 
+/** Only user-facing site panes. Terminal/console is backend-only. */
 const VIEW_MAP: Record<string, SiteView> = {
   chat: "chat",
   preview: "preview",
@@ -17,7 +18,11 @@ export async function generateMetadata({
   params: Promise<{ view: string }>;
 }) {
   const { view } = await params;
-  const label = view.charAt(0).toUpperCase() + view.slice(1);
+  const requested = view.toLowerCase();
+  const label =
+    requested === "terminal" || requested === "console"
+      ? "Preview"
+      : view.charAt(0).toUpperCase() + view.slice(1);
   return { title: `${label} · Sites` };
 }
 
