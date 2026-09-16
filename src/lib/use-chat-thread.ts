@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSaved } from "@/lib/use-saved";
 import type { Attachment } from "@/lib/attachments";
 import type { ModeId } from "@/lib/modes";
+import type { ChatModelId } from "@/lib/chat-models";
 import { localTimeZone } from "@/lib/context";
 
 export interface Turn {
@@ -30,9 +31,11 @@ function isImagePrompt(text: string): boolean {
 export function useChatThread({
   restored,
   mode,
+  model,
 }: {
   restored?: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
   mode: ModeId;
+  model: ChatModelId;
 }) {
   const router = useRouter();
   const { save, reset } = useSaved("chat", restored?.id ?? null);
@@ -92,7 +95,6 @@ export function useChatThread({
           throw new Error(data?.error ?? `Image request failed (${res.status}).`);
         }
         const url = data?.url as string;
-        // Markdown image only — no "Generated image via …" footer
         finishReply(replyId, `![${caption}](${url})`);
       } catch (e) {
         setTurns((t) => t.filter((x) => x.id !== replyId));
@@ -128,6 +130,7 @@ export function useChatThread({
           body: JSON.stringify({
             messages: history.map(({ role, text }) => ({ role, text })),
             mode,
+            model,
             timeZone: localTimeZone(),
             attachments: files?.map(({ name, mimeType, size, data, kind }) => ({
               name,
@@ -169,7 +172,7 @@ export function useChatThread({
         setBusy(false);
       }
     },
-    [router, save, mode, runImage],
+    [router, save, mode, model, runImage],
   );
 
   const send = useCallback(
