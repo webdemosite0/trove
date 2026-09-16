@@ -7,8 +7,8 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /**
- * Legacy alias for POST /api/publish — kept so older PublishPanel clients keep working.
- * Prefer /api/publish going forward.
+ * Legacy alias for POST /api/publish.
+ * It keeps the same one-project/one-domain invariant as the primary endpoint.
  */
 export async function POST(req: NextRequest) {
   const user = await currentUser();
@@ -18,13 +18,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const projectId = String(body.projectId || "").trim();
+    if (!projectId) {
+      return NextResponse.json(
+        { error: "This project is still saving. Try Publish again in a moment." },
+        { status: 409 },
+      );
+    }
+
     const result = await publishSite({
       userId: user.id,
       slug: String(body.slug || ""),
       title: body.title ? String(body.title) : undefined,
       html: body.html != null ? String(body.html) : null,
       files: Array.isArray(body.files) ? (body.files as ProjectFile[]) : null,
-      projectId: body.projectId ? String(body.projectId) : null,
+      projectId,
     });
     return NextResponse.json({
       ok: true,
