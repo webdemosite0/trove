@@ -3,30 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiArrowRight, FiMenu, FiX } from "@/components/ui/icons";
-import { TroveOrb } from "@/components/brand/orb";
-import { Wordmark } from "@/components/brand/logo";
+import { BrandLockup } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";
 import { cn } from "@/lib/utils";
 
-/**
- * The landing header.
- *
- * Compacts on scroll rather than being tall and staying tall. The scroll
- * listener is passive and only ever flips one boolean, so it does no work
- * beyond a comparison on most frames.
- *
- * Every link points at a section on this page or a route that exists — there
- * is no Solutions or Resources here, because neither exists to link to.
- */
-/**
- * Anchors point within the landing page; paths are real pages.
- *
- * The anchors only resolve on "/", so this nav is rendered on the feature and
- * pricing pages too — where "#pricing" would scroll to nothing. They are
- * written as "/#pricing" for that reason: on the landing page the browser
- * treats it as an in-page jump, and anywhere else it navigates home and then
- * jumps.
- */
 const LINKS = [
   { href: "/#capabilities", label: "Product" },
   { href: "/features/ai-agents", label: "Agents" },
@@ -69,8 +49,7 @@ export function LandingNav() {
         )}
       >
         <Link href="/" aria-label="Trove" className="flex shrink-0 items-center gap-2">
-          <TroveOrb size={22} state="idle" />
-          <Wordmark size={16} sweep={false} />
+          <BrandLockup orbSize={22} wordSize={16} sweep={false} priority />
         </Link>
 
         <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 md:flex">
