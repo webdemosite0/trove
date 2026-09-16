@@ -25,8 +25,9 @@ export type { Turn, Usage, OnUsage, OnAttempt, Source, OnSources };
  *   2. Gemini — search + chat fallback
  *   3. OpenRouter → Grok → Puter — further fallbacks
  *
- * Puter's OpenAI-compatible API often returns 402 on free accounts;
- * those errors fall through instead of stopping the chain.
+ * Chat can now put one configured provider at the front of this chain. If the
+ * selected backend is unavailable, the normal fallback chain still protects
+ * the conversation instead of turning the picker into a reliability switch.
  */
 
 interface Common {
@@ -74,7 +75,7 @@ function describe(p: CompatProvider) {
   return `${p.label} (${p.model})`;
 }
 
-/** Full compat list ranked: Explabs → OpenRouter → Grok → Puter. */
+/** Full compat list ranked: Explabs → OpenRouter → Grok → Puter → others. */
 function orderedCompat(): CompatProvider[] {
   const all = compatProviders();
   const rank = (id: string) =>
@@ -82,12 +83,10 @@ function orderedCompat(): CompatProvider[] {
   return [...all].sort((a, b) => rank(a.id) - rank(b.id));
 }
 
-/** gpt-6-astra via Experiential Labs only (when EXPLABS_API_KEY is set). */
 function primaryGpt(): CompatProvider | null {
   return orderedCompat().find((p) => p.id === "explabs") ?? null;
 }
 
-/** Compat fallbacks after Explabs + Gemini: OpenRouter → Grok → Puter. */
 function secondaryCompat(): CompatProvider[] {
   return orderedCompat().filter((p) => p.id !== "explabs");
 }
@@ -144,7 +143,6 @@ export async function generateText(
     onUsage: opts.onUsage,
   };
 
-  // 1) GPT-6 Astra (Experiential Labs) first when configured
   const gpt = primaryGpt();
   if (gpt) {
     try {
@@ -165,7 +163,6 @@ export async function generateText(
     }
   }
 
-  // 2) Gemini
   const grounded = {
     turns: opts.turns,
     system: opts.system,
@@ -199,7 +196,6 @@ export async function generateText(
       }
     }
 
-    // 3) OpenRouter → Grok → Puter
     const viaCompat = await tryCompatGenerate(secondaryCompat(), compatOpts, attempts);
     if (viaCompat != null) return viaCompat;
 
@@ -215,16 +211,48 @@ export async function streamText(
     systemWithoutSearch?: string;
     onSources?: OnSources;
     onSearch?: (query: string, provider: string, count: number) => void;
+    /** Provider id selected in Chat. `auto` preserves Trove's normal order. */
+    preferredProvider?: string;
   },
 ): Promise<ReadableStream<Uint8Array>> {
   const temperature = opts.temperature ?? 0.7;
   const maxOutputTokens = opts.maxOutputTokens ?? 8192;
   const attempts: { label: string; reason: string }[] = [];
-  const tryGrounding = Boolean(opts.search) && groundingAvailable();
+  const preferred = opts.preferredProvider?.trim() || "auto";
+  const compat = orderedCompat();
+  const selectedCompat =
+    preferred !== "auto" && preferred !== "gemini"
+      ? compat.find((provider) => provider.id === preferred) ?? null
+      : null;
 
-  // 1) GPT-6 Astra first (non-search path; Gemini still used when search is required)
+  // A direct user selection gets the first attempt. Search is a Gemini-only
+  // capability here, so another selected backend runs without grounding; if it
+  // fails, Gemini can still take over and search as part of the fallback path.
+  if (selectedCompat) {
+    try {
+      console.warn(`ai: user selected ${describe(selectedCompat)}`);
+      return await compatStream({
+        provider: selectedCompat,
+        turns: opts.turns,
+        system: opts.systemWithoutSearch ?? opts.system,
+        temperature,
+        maxOutputTokens,
+        onUsage: opts.onUsage,
+      });
+    } catch (e) {
+      const reason = errText(e);
+      attempts.push({ label: describe(selectedCompat), reason });
+      console.warn(`ai: selected ${describe(selectedCompat)} failed —`, reason);
+      if (!shouldFallOver(reason)) throw e;
+    }
+  }
+
+  const tryGrounding = Boolean(opts.search) && groundingAvailable();
   const gpt = primaryGpt();
-  if (gpt && !tryGrounding) {
+
+  // Auto keeps the historical fast path: Astra first when no web grounding is
+  // required. Explicit Gemini skips this so the picker actually means Gemini.
+  if (preferred === "auto" && gpt && !tryGrounding) {
     try {
       console.warn(`ai: stream primary ${describe(gpt)}`);
       return await compatStream({
@@ -252,7 +280,6 @@ export async function streamText(
     extraParts: opts.extraParts,
   };
 
-  // 2) Gemini (search-aware)
   if (tryGrounding) {
     try {
       return await geminiSearchStream({
@@ -294,14 +321,19 @@ export async function streamText(
       }
     }
 
-    // If we skipped GPT because of search, try it now as a non-search fallback
-    if (gpt && tryGrounding) {
+    // If Gemini was explicitly selected, or another explicit backend already
+    // failed, Astra is the first non-Gemini fallback when it is configured.
+    if (
+      gpt &&
+      gpt.id !== preferred &&
+      (tryGrounding || preferred !== "auto")
+    ) {
       try {
         console.warn(`ai: stream fallback ${describe(gpt)}`);
         return await compatStream({
           provider: gpt,
           turns: opts.turns,
-          system: opts.system,
+          system: opts.systemWithoutSearch ?? opts.system,
           temperature,
           maxOutputTokens,
           onUsage: opts.onUsage,
@@ -313,14 +345,13 @@ export async function streamText(
       }
     }
 
-    // 3) OpenRouter → Grok → Puter
-    for (const provider of secondaryCompat()) {
+    for (const provider of secondaryCompat().filter((item) => item.id !== preferred)) {
       try {
         console.warn(`ai: stream via ${describe(provider)}`);
         return await compatStream({
           provider,
           turns: opts.turns,
-          system: opts.system,
+          system: opts.systemWithoutSearch ?? opts.system,
           temperature,
           maxOutputTokens,
           onUsage: opts.onUsage,
@@ -341,7 +372,7 @@ export async function streamText(
 export function providerChain(): string[] {
   const labels: string[] = [];
   for (const p of orderedCompat()) {
-    if (p.id === "explabs") labels.push(p.label); // GPT-6 Astra first
+    if (p.id === "explabs") labels.push(p.label);
   }
   if (process.env.GEMINI_API_KEY?.trim()) labels.push("Gemini");
   for (const p of secondaryCompat()) labels.push(p.label);
