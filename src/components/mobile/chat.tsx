@@ -13,6 +13,7 @@ import { useChatThread } from "@/lib/use-chat-thread";
 import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
 import { StarterCards } from "@/components/home/starter-cards";
+import { cn } from "@/lib/utils";
 
 const TOOLS: { href: string; label: string; icon: IconType }[] = [
   { href: "/websites", label: "Websites", icon: TbWorld },
