@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ projects });
 }
 
-/** POST — create or update a site project (files + preview snapshot). */
+/** POST — create/update a site project, including an empty draft identity. */
 export async function POST(req: Request) {
   let body: {
     id?: string | null;
@@ -42,7 +42,10 @@ export async function POST(req: Request) {
   }
 
   const files = Array.isArray(body.files) ? body.files : [];
-  if (!files.length && !body.previewHtml) {
+  const status = String(body.status || "ready");
+  const isDraftIdentity = status === "draft";
+
+  if (!files.length && !body.previewHtml && !isDraftIdentity) {
     return NextResponse.json(
       { error: "Nothing to save — build the site first." },
       { status: 400 },
@@ -54,7 +57,7 @@ export async function POST(req: Request) {
     name: body.name || "Untitled site",
     prompt: body.prompt || "",
     target: body.target || "react",
-    status: body.status || "ready",
+    status,
     files,
     previewHtml: body.previewHtml,
     conversationId: body.conversationId,
