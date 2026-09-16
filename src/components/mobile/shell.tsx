@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
 import {
   FiPlus,
+  FiMoreHorizontal,
   TbHome,
   TbMessageCircle,
   TbRobot,
@@ -21,7 +22,6 @@ import {
   TbSettings,
   TbLayoutSidebar,
   TbLogout,
-  TbMoreHorizontal,
 } from "@/components/ui/icons";
 import { logOut } from "@/app/actions/auth";
 import { TroveOrb } from "@/components/brand/orb";
@@ -38,7 +38,6 @@ interface Dest {
   icon: IconType;
 }
 
-/** Bottom tabs — primary destinations, Lovable-style */
 const TABS: Dest[] = [
   { href: "/dashboard", label: "Home", icon: TbHome },
   { href: "/chat", label: "Chat", icon: TbMessageCircle },
@@ -106,7 +105,6 @@ export function MobileShell({
 
   return (
     <div className="nx-mobile flex min-h-[100dvh] flex-col bg-canvas">
-      {/* Top bar — minimal */}
       <header className="nx-no-print sticky top-0 z-30 border-b border-line bg-canvas/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
         <div className="flex h-12 items-center gap-2 px-3">
           <Link href="/dashboard" className="flex items-center gap-2" aria-label="Trove">
@@ -143,7 +141,6 @@ export function MobileShell({
         {children}
       </main>
 
-      {/* Bottom tab bar — Lovable style */}
       <nav
         aria-label="Primary"
         className="nx-no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
@@ -178,13 +175,12 @@ export function MobileShell({
               !tabActive && open ? "text-accent" : "text-ink-3",
             )}
           >
-            <TbMoreHorizontal size={22} strokeWidth={1.75} className="text-ink" />
+            <FiMoreHorizontal size={22} strokeWidth={1.75} className="text-ink" />
             <span className="text-[10.5px] font-medium">More</span>
           </button>
         </div>
       </nav>
 
-      {/* Full menu drawer */}
       <Drawer open={open} onClose={() => setOpen(false)}>
         <div className="flex items-center justify-between px-4 pb-1 pt-4">
           <span className="flex items-center gap-2">
