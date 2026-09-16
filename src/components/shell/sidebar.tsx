@@ -13,7 +13,6 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
-  FiHome,
   TbBell,
   TbUsers,
   TbRobot,
@@ -26,7 +25,6 @@ import {
   TbSearch,
   TbMessageCircle,
   TbPlugConnected,
-  TbRefreshDot,
 } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
@@ -45,46 +43,25 @@ interface Item {
   label: string;
   icon: IconType;
   motion: Motion;
-  badge?: string;
 }
 
-const GROUPS: { label: string; items: Item[] }[] = [
-  {
-    label: "Workspace",
-    items: [
-      { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
-      { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
-      { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
-      { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
-      { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
-    ],
-  },
-  {
-    label: "Build",
-    items: [
-      { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
-      { href: "/documents", label: "Docs", icon: TbFileText, motion: "lift" },
-      { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
-      { href: "/slides", label: "Decks", icon: TbPresentation, motion: "grow" },
-      { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
-    ],
-  },
-  {
-    label: "Connect",
-    items: [
-      { href: "/integrations", label: "Apps", icon: TbPlugConnected, motion: "open" },
-      { href: "/workflows", label: "Flows", icon: TbRefreshDot, motion: "spin", badge: "Soon" },
-      { href: "/reminders", label: "Alerts", icon: TbBell, motion: "ring" },
-    ],
-  },
+/** Flat primary nav — Lovable-style: short labels, one list, no noisy groups */
+const PRIMARY: Item[] = [
+  { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
+  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
+  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
+  { href: "/documents", label: "Docs", icon: TbFileText, motion: "lift" },
+  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
+  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "grow" },
+  { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
+  { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
+  { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
 ];
 
-const ALL = GROUPS.flatMap((g) => g.items);
-
-const SECONDARY: { href: string; label: string; icon: IconType }[] = [
-  { href: "/settings", label: "Settings", icon: FiSettings },
-  { href: "/integrations", label: "Apps", icon: TbPlugConnected },
-  { href: "/plans", label: "Plan", icon: FiCreditCard },
+const MORE: Item[] = [
+  { href: "/integrations", label: "Apps", icon: TbPlugConnected, motion: "open" },
+  { href: "/reminders", label: "Alerts", icon: TbBell, motion: "ring" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -95,10 +72,12 @@ function NavRow({
   item,
   pathname,
   onNavigate,
+  compact,
 }: {
   item: Item;
   pathname: string;
   onNavigate?: () => void;
+  compact?: boolean;
 }) {
   const active = isActive(pathname, item.href);
   return (
@@ -106,21 +85,23 @@ function NavRow({
       href={item.href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={cn("rail-item group", active && "rail-item-active")}
+      title={compact ? item.label : undefined}
+      className={cn(
+        "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] font-medium transition-colors",
+        active
+          ? "bg-accent-soft text-accent"
+          : "text-ink-2 hover:bg-hover hover:text-ink",
+        compact && "justify-center px-0",
+      )}
     >
       <Ico
         icon={item.icon}
         motion={item.motion}
         active={active}
         size={18}
-        className="shrink-0 transition-colors duration-[var(--t-hover)]"
+        className="shrink-0"
       />
-      <span className="truncate">{item.label}</span>
-      {item.badge ? (
-        <span className="ml-auto shrink-0 rounded-[var(--r-chip)] bg-accent-soft px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-[0.06em] text-accent">
-          {item.badge}
-        </span>
-      ) : null}
+      {!compact ? <span className="truncate">{item.label}</span> : null}
     </Link>
   );
 }
@@ -143,25 +124,19 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
     };
   }, [open]);
 
-  const links = [
-    { href: "/settings", label: "Settings", icon: FiSettings },
-    { href: "/plans", label: "Plan", icon: FiCreditCard },
-    { href: "/dashboard", label: "Home", icon: FiHome },
-  ];
-
   return (
     <div ref={wrap} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="group flex w-full items-center gap-2.5 rounded-[var(--r-chip)] px-2 py-1.5 transition-colors hover:bg-hover"
+        className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover"
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-raised text-[11.5px] font-semibold text-ink-2">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink-2 ring-1 ring-line">
           {user.name.slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-[13px] text-ink">{user.name}</span>
+          <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
           <span className="block truncate text-[11px] capitalize text-ink-4">
             {user.plan} plan
           </span>
@@ -169,7 +144,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
         <FiChevronRight
           size={14}
           className={cn(
-            "shrink-0 text-ink-4 transition-transform duration-[var(--t-hover)]",
+            "shrink-0 text-ink-4 transition-transform",
             open && "rotate-90",
           )}
         />
@@ -178,29 +153,38 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
       {open ? (
         <div
           role="menu"
-          className="nx-in absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-[var(--r-control)] border border-line bg-raised shadow-[var(--sh-3)]"
+          className="absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-xl border border-line bg-raised shadow-lg"
         >
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onNavigate?.();
-              }}
-              className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
-            >
-              <l.icon size={14} className="shrink-0 text-ink-4" />
-              {l.label}
-            </Link>
-          ))}
+          <Link
+            href="/settings"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+          >
+            <FiSettings size={15} className="text-ink-4" />
+            Settings
+          </Link>
+          <Link
+            href="/plans"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+          >
+            <FiCreditCard size={15} className="text-ink-4" />
+            Plan & credits
+          </Link>
           <form action={logOut} className="border-t border-line">
             <button
               role="menuitem"
-              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
             >
-              <FiLogOut size={14} className="shrink-0 text-ink-4" />
+              <FiLogOut size={15} className="text-ink-4" />
               Sign out
             </button>
           </form>
@@ -225,14 +209,15 @@ function RailBody({
 
   return (
     <>
-      <div className="flex items-center justify-between px-3.5 pt-3.5">
+      {/* Header — logo + collapse */}
+      <div className="flex items-center justify-between px-3 pt-3.5">
         <Link
-          href="/chat"
+          href="/dashboard"
           onClick={onNavigate}
           aria-label="Trove home"
-          className="group inline-flex items-center gap-2"
+          className="inline-flex items-center gap-2"
         >
-          <TroveOrb size={24} state="idle" />
+          <TroveOrb size={26} state="idle" />
           <Wordmark size={15} sweep={false} />
         </Link>
         {onCollapse ? (
@@ -240,43 +225,43 @@ function RailBody({
             onClick={onCollapse}
             aria-label="Collapse sidebar"
             title="Toggle sidebar  ⌘B"
-            className="group grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+            className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink"
           >
             <Ico icon={FiSidebar} motion="nudge" size={17} />
           </button>
         ) : null}
       </div>
 
-      <div className="px-2.5 pt-3">
+      {/* Primary CTA */}
+      <div className="px-3 pt-3">
         <Link
           href="/chat"
           onClick={onNavigate}
-          className="group flex h-9 items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
+          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-ink text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
         >
-          <Ico icon={FiPlus} motion="open" size={15} className="text-accent" />
+          <FiPlus size={16} />
           New chat
         </Link>
       </div>
 
+      {/* Main nav — single clean list */}
       <nav
-        aria-label="Workspace"
-        className="mt-4 flex-1 overflow-y-auto px-2.5 pb-3 scrollbar-none"
+        aria-label="Main"
+        className="mt-4 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-2 scrollbar-none"
       >
-        {GROUPS.map((g, i) => (
-          <div key={g.label} className={cn(i > 0 && "mt-6")}>
-            <div className="px-2.5 pb-1 pt-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
-              {g.label}
-            </div>
-            <div className="space-y-0.5">
-              {g.items.map((it) => (
-                <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
-              ))}
-            </div>
-          </div>
+        {PRIMARY.map((it) => (
+          <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
+        ))}
+
+        <div className="my-3 border-t border-line" />
+
+        {MORE.map((it) => (
+          <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
         ))}
       </nav>
 
-      <div className="space-y-1 border-t border-line p-2.5">
+      {/* Footer — credits + user */}
+      <div className="space-y-2 border-t border-line p-2.5">
         <CreditMeter balance={balance} />
 
         {user ? (
@@ -285,28 +270,36 @@ function RailBody({
           <Link
             href="/login"
             onClick={onNavigate}
-            className="group flex items-center gap-2.5 rounded-[var(--r-chip)] px-2 py-1.5 text-[13.5px] text-ink transition-colors hover:bg-hover"
+            className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13.5px] text-ink transition-colors hover:bg-hover"
           >
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-raised text-ink-3">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-raised text-ink-3">
               <Ico icon={FiUser} motion="tilt" size={14} />
             </span>
             Log in
           </Link>
         )}
 
-        <div className="flex items-center gap-0.5 border-t border-line pt-2">
-          {SECONDARY.map((x) => (
-            <Tooltip key={x.href} label={x.label} side="top">
-              <Link
-                href={x.href}
-                onClick={onNavigate}
-                aria-label={x.label}
-                className="grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-4 transition-colors hover:bg-hover hover:text-ink"
-              >
-                <x.icon size={16} />
-              </Link>
-            </Tooltip>
-          ))}
+        <div className="flex items-center gap-1 pt-1">
+          <Tooltip label="Settings" side="top">
+            <Link
+              href="/settings"
+              onClick={onNavigate}
+              aria-label="Settings"
+              className="grid h-8 w-8 place-items-center rounded-lg text-ink-4 transition-colors hover:bg-hover hover:text-ink"
+            >
+              <FiSettings size={16} />
+            </Link>
+          </Tooltip>
+          <Tooltip label="Plan" side="top">
+            <Link
+              href="/plans"
+              onClick={onNavigate}
+              aria-label="Plan"
+              className="grid h-8 w-8 place-items-center rounded-lg text-ink-4 transition-colors hover:bg-hover hover:text-ink"
+            >
+              <FiCreditCard size={16} />
+            </Link>
+          </Tooltip>
           <span className="flex-1" />
           <ThemeToggle />
         </div>
@@ -374,9 +367,9 @@ export function Sidebar({
         onMouseLeave={onRailLeave}
         className={cn(
           "nx-no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail lg:flex",
-          "transition-[width,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          expanded ? "w-[248px]" : "w-[64px]",
-          collapsed && peek && "z-40 border-line-strong shadow-[var(--sh-3)]",
+          "transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          expanded ? "w-[240px]" : "w-[64px]",
+          collapsed && peek && "z-40 shadow-lg",
         )}
       >
         {expanded ? (
@@ -391,61 +384,48 @@ export function Sidebar({
             />
           </div>
         ) : (
-          <div className="flex h-full flex-col items-center gap-1 py-3.5">
-            <Link href="/chat" aria-label="Trove home">
+          /* Collapsed icon rail */
+          <div className="flex h-full flex-col items-center gap-1 py-3">
+            <Link href="/dashboard" aria-label="Trove home" className="mb-1">
               <TroveOrb size={28} state="idle" />
             </Link>
             <button
               onClick={() => setCollapsed(false)}
               aria-label="Expand sidebar"
               title="Toggle sidebar  ⌘B"
-              className="group mb-2 mt-1 grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+              className="mb-2 grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink"
             >
               <Ico icon={FiSidebar} motion="nudge" size={17} />
             </button>
 
             <Link
               href="/chat"
-              title="New"
-              aria-label="New"
-              className="btn-grad grid h-9 w-9 place-items-center rounded-[var(--r-control)]"
+              title="New chat"
+              aria-label="New chat"
+              className="mb-2 grid h-9 w-9 place-items-center rounded-xl bg-ink text-white"
             >
               <FiPlus size={16} />
             </Link>
 
-            <div className="mt-1 flex flex-col items-center gap-1 overflow-y-auto scrollbar-none">
-              {ALL.map((i) => {
-                const active = isActive(pathname, i.href);
-                return (
-                  <Link
-                    key={i.href}
-                    href={i.href}
-                    title={i.label}
-                    aria-label={i.label}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "group flex w-[52px] shrink-0 flex-col items-center gap-1 rounded-[var(--r-control)] px-1 py-2 transition-colors",
-                      active
-                        ? "bg-accent-soft text-accent"
-                        : "text-ink-4 hover:bg-hover hover:text-ink-2",
-                    )}
-                  >
-                    <Ico icon={i.icon} motion={i.motion} active={active} size={19} />
-                    <span className="w-full truncate text-center text-[9.5px] leading-none">
-                      {i.label}
-                    </span>
-                  </Link>
-                );
-              })}
+            <div className="flex flex-1 flex-col items-center gap-0.5 overflow-y-auto scrollbar-none">
+              {PRIMARY.map((i) => (
+                <NavRow
+                  key={i.href}
+                  item={i}
+                  pathname={pathname}
+                  compact
+                />
+              ))}
             </div>
 
-            <div className="mt-auto">
+            <div className="mt-auto pt-2">
               <CreditMeter balance={balance} collapsed />
             </div>
           </div>
         )}
       </aside>
 
+      {/* Mobile drawer */}
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
@@ -453,11 +433,11 @@ export function Sidebar({
             onClick={() => setOpen(false)}
             className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
           />
-          <div className="nx-in absolute inset-y-0 left-0 flex w-[276px] flex-col border-r border-line bg-rail">
+          <div className="absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-line bg-rail shadow-xl">
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"
-              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-[var(--r-chip)] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink"
             >
               <FiX size={17} />
             </button>
@@ -466,10 +446,11 @@ export function Sidebar({
         </div>
       ) : null}
 
+      {/* Spacer so content doesn't sit under fixed rail */}
       <div
         className={cn(
           "nx-no-print hidden shrink-0 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:block",
-          collapsed ? "w-[64px]" : "w-[248px]",
+          collapsed ? "w-[64px]" : "w-[240px]",
         )}
       />
     </>
