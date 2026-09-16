@@ -1,18 +1,10 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 import { all } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function isAdminEmail(email: string) {
-  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
-  return raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(email.toLowerCase());
-}
 
 export async function GET() {
   const user = await currentUser();
