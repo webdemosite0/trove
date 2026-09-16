@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BorderBeam } from "border-beam";
 import {
   FiArrowUp,
   FiLoader,
@@ -131,7 +132,9 @@ export function Composer({
     }
   }
 
-  return (
+  const beamActive = focused || disabled || voice.listening;
+
+  const shell = (
     <div
       onDragOver={(e) => {
         if (!allowAttachments || disabled) return;
@@ -345,5 +348,17 @@ export function Composer({
         </button>
       </div>
     </div>
+  );
+
+  return (
+    <BorderBeam
+      size={compact ? "sm" : "md"}
+      colorVariant={disabled ? "ocean" : "colorful"}
+      strength={disabled ? 0.85 : 0.55}
+      active={beamActive}
+      theme="auto"
+    >
+      {shell}
+    </BorderBeam>
   );
 }
