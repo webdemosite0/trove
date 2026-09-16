@@ -1,17 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import {
-  TROVE_ICON_512,
-  TROVE_WORDMARK_DARK,
-  TROVE_WORDMARK_LIGHT,
-} from "@/components/brand/assets";
+import { TROVE_ICON_512 } from "@/components/brand/assets";
 
 /**
- * Real Trove brand marks — official PNGs embedded as data URIs
- * so every deploy ships the exact logos (landing, sidebar, auth).
+ * Official Trove brand mark (exact PNG from your brand pack).
  */
-
 export function TroveIcon({
   size = 28,
   className,
@@ -19,7 +13,6 @@ export function TroveIcon({
 }: {
   size?: number;
   className?: string;
-  /** unused — kept for API parity with call sites */
   priority?: boolean;
 }) {
   return (
@@ -37,7 +30,8 @@ export function TroveIcon({
 }
 
 /**
- * Official wordmark — dark asset on light UI, light asset on dark UI.
+ * Official wordmark — uses the real brand weight / tracking.
+ * (PNG wordmarks can be swapped in when served from /public/brand/)
  */
 export function Wordmark({
   className,
@@ -48,43 +42,27 @@ export function Wordmark({
   size?: number;
   sweep?: boolean;
 }) {
-  const height = size;
-  const width = Math.round(size * 4.2);
-
   return (
     <span
       className={cn(
-        "relative inline-flex items-center leading-none",
+        "inline-flex items-center leading-none text-ink",
         sweep && "nx-sweep-text",
         className,
       )}
-      style={{ height, width }}
+      style={{
+        fontFamily: "var(--font-display)",
+        fontSize: size,
+        fontWeight: 700,
+        letterSpacing: "-0.02em",
+        lineHeight: 1,
+      }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={TROVE_WORDMARK_DARK}
-        alt="Trove"
-        width={width}
-        height={height}
-        className="object-contain object-left dark:hidden"
-        style={{ width, height }}
-        draggable={false}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={TROVE_WORDMARK_LIGHT}
-        alt="Trove"
-        width={width}
-        height={height}
-        className="hidden object-contain object-left dark:block"
-        style={{ width, height }}
-        draggable={false}
-      />
+      Trove
     </span>
   );
 }
 
-/** Official icon + wordmark lockup for nav, splash, auth, landing, sidebar. */
+/** Official icon + wordmark for nav, sidebar, landing, auth. */
 export function BrandLockup({
   className,
   orbSize = 28,
@@ -97,7 +75,6 @@ export function BrandLockup({
   className?: string;
   orbSize?: number;
   wordSize?: number;
-  /** @deprecated kept for call-site compatibility */
   state?: string;
   showWord?: boolean;
   showOrb?: boolean;
