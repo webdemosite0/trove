@@ -85,15 +85,21 @@ const RESERVED_HOST_SLUGS = new Set([
   "localhost",
 ]);
 
+function requestHostname(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const raw = forwarded || req.headers.get("host") || req.nextUrl.hostname || "";
+  return raw.split(":")[0].trim().toLowerCase();
+}
+
 /**
- * xyz.<publish-root-domain> -> /api/site/xyz
+ * xyz.<publish-root-domain>/<path> -> /s/xyz/<path>
  *
- * Only one label is allowed in front of the configured root domain. This keeps
- * every claimed website address unambiguous and matches the one-project/one-domain
- * constraint in the database.
+ * Preserve the original path so published websites can serve CSS, JS, images,
+ * favicons and SPA deep links from the same wildcard hostname. A single label
+ * is allowed before the root domain to match the one-project/one-domain model.
  */
 function subdomainRewrite(req: NextRequest): NextResponse | null {
-  const host = (req.headers.get("host") || "").split(":")[0].toLowerCase();
+  const host = requestHostname(req);
   const suffix = `.${PUBLISH_ROOT_DOMAIN}`;
   if (!host.endsWith(suffix)) return null;
 
@@ -105,7 +111,8 @@ function subdomainRewrite(req: NextRequest): NextResponse | null {
     return null;
   }
 
-  url.pathname = `/api/site/${slug}`;
+  const originalPath = url.pathname === "/" ? "" : url.pathname;
+  url.pathname = `/s/${slug}${originalPath}`;
   return NextResponse.rewrite(url);
 }
 
