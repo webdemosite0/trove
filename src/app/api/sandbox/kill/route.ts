@@ -16,11 +16,15 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    // Project id is optional; draft is the default scope.
+    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
 
-  const scope = body.projectId?.trim() || "draft";
-  const cookieName = e2bCookieName(user.id, scope);
+  const projectId = body.projectId?.trim() || "";
+  if (!projectId) {
+    return NextResponse.json({ error: "Project id is required." }, { status: 400 });
+  }
+
+  const cookieName = e2bCookieName(user.id, projectId);
   const jar = await cookies();
   const sandboxId = jar.get(cookieName)?.value;
 
@@ -33,7 +37,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const response = NextResponse.json({ ok: true, runtime: "e2b" });
+  const response = NextResponse.json({ ok: true, projectId, runtime: "e2b" });
   response.cookies.set(cookieName, "", {
     httpOnly: true,
     sameSite: "lax",
