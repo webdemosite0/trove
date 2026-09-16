@@ -65,13 +65,56 @@ const ROLES = [
   "Other",
 ];
 
-const TOTAL_STEPS = 4;
+/** Client-safe mirror of PLANS — keep in sync with src/lib/credits.ts */
+const PLAN_OPTIONS = [
+  {
+    id: "free",
+    name: "Free",
+    priceLabel: "$0",
+    priceNote: "forever",
+    monthly: "200 credits / mo",
+    window: "40 / 5-hour window",
+    blurb: "Build for real and feel the product.",
+    features: ["Every tool", "*.troveai.site publish", "Download real files"],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    priceLabel: "$24",
+    priceNote: "/ month",
+    monthly: "5,000 credits / mo",
+    window: "500 / 5-hour window",
+    blurb: "Daily work without watching the meter.",
+    features: ["Everything in Free", "Priority model fallback", "Higher burst limit"],
+  },
+  {
+    id: "team",
+    name: "Team",
+    priceLabel: "$96",
+    priceNote: "/ month",
+    monthly: "20,000 credits / mo",
+    window: "2,000 / 5-hour window",
+    blurb: "Shared capacity for a small crew.",
+    features: ["Everything in Pro", "Shared agents", "Room for the whole team"],
+  },
+] as const;
+
+const PAY_METHODS = [
+  { id: "later", label: "Start free — pay later" },
+  { id: "bank", label: "Bank transfer (Pakistan)" },
+  { id: "jazzcash", label: "JazzCash" },
+  { id: "easypaisa", label: "EasyPaisa" },
+] as const;
+
+const TOTAL_STEPS = 5;
 
 export function OnboardingFlow({ name, email }: { name: string; email: string }) {
   const [step, setStep] = useState(0);
   const [displayName, setDisplayName] = useState(name || "");
   const [goal, setGoal] = useState<(typeof GOALS)[number]["id"] | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [plan, setPlan] = useState<string>("free");
+  const [paymentMethod, setPaymentMethod] = useState<string>("later");
   const [idea, setIdea] = useState("");
   const [pending, start] = useTransition();
   const [dir, setDir] = useState<"fwd" | "back">("fwd");
@@ -87,8 +130,9 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
     if (step === 0) return displayName.trim().length >= 2;
     if (step === 1) return Boolean(goal);
     if (step === 2) return Boolean(role);
+    if (step === 3) return Boolean(plan);
     return true;
-  }, [step, displayName, goal, role]);
+  }, [step, displayName, goal, role, plan]);
 
   function submit() {
     start(async () => {
@@ -97,6 +141,8 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
         goal: goal || "explore",
         role: role || "",
         firstIdea: idea.trim(),
+        plan,
+        paymentMethod: plan === "free" ? "" : paymentMethod,
       });
     });
   }
@@ -245,6 +291,113 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {step === 3 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+                Your plan
+              </p>
+              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+                Choose how you start
+              </h1>
+              <p className="ob-rise-d1 mt-2 text-[15px] text-ink-3">
+                Free starts immediately. Pro & Team can be paid in Pakistan without Stripe.
+              </p>
+
+              <div className="mt-6 space-y-2.5">
+                {PLAN_OPTIONS.map((p, i) => {
+                  const on = plan === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setPlan(p.id);
+                        if (p.id === "free") setPaymentMethod("later");
+                      }}
+                      className={cn(
+                        "ob-card w-full rounded-2xl border bg-raised p-4 text-left transition",
+                        on
+                          ? "border-accent ring-2 ring-[var(--focus-ring)]"
+                          : "border-line hover:border-line-strong",
+                      )}
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <span className="flex items-start justify-between gap-3">
+                        <span>
+                          <span className="flex items-center gap-2">
+                            <span className="text-[15px] font-semibold text-ink">{p.name}</span>
+                            {p.id === "pro" ? (
+                              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
+                                Popular
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="mt-0.5 block text-[12.5px] text-ink-3">{p.blurb}</span>
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="block text-[16px] font-semibold tabular-nums text-ink">
+                            {p.priceLabel}
+                          </span>
+                          <span className="text-[11px] text-ink-4">{p.priceNote}</span>
+                        </span>
+                      </span>
+                      <span className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-sunk px-2 py-0.5 text-[11px] text-ink-3">
+                          {p.monthly}
+                        </span>
+                        <span className="rounded-full bg-sunk px-2 py-0.5 text-[11px] text-ink-3">
+                          {p.window}
+                        </span>
+                      </span>
+                      <ul className="mt-2.5 space-y-1">
+                        {p.features.map((f) => (
+                          <li key={f} className="flex items-center gap-1.5 text-[12.5px] text-ink-3">
+                            <FiCheck size={12} className="shrink-0 text-positive" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {plan !== "free" ? (
+                <div className="ob-rise-d2 mt-5 rounded-2xl border border-line bg-sunk/50 p-4">
+                  <p className="text-[13px] font-medium text-ink">Pay from Pakistan (no Stripe)</p>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-ink-3">
+                    Stripe cards often fail for PK accounts. Pick how you'll pay — we activate
+                    Pro/Team after you send proof to{" "}
+                    <a href="mailto:official@troveai.site" className="font-medium text-accent underline-offset-2 hover:underline">
+                      official@troveai.site
+                    </a>
+                    . You keep Free credits until then.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {PAY_METHODS.map((m) => {
+                      const on = paymentMethod === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setPaymentMethod(m.id)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-[12px] font-medium transition",
+                            on
+                              ? "border-accent bg-accent text-[var(--btn-ink)]"
+                              : "border-line bg-raised text-ink-2 hover:bg-hover",
+                          )}
+                        >
+                          {m.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+
+          {step === 4 && (
+            <>
+              <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 Almost there
               </p>
               <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
@@ -265,16 +418,20 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                 className="ob-rise-d2 mt-7 w-full resize-none rounded-2xl border border-line-strong bg-raised p-4 text-[14.5px] text-ink outline-none transition focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
               />
               <ul className="ob-rise-d3 mt-6 space-y-2 text-[13px] text-ink-3">
-                {["Free credits every month", "Download real files anytime", "Publish to *.troveai.site"].map(
-                  (t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <span className="grid size-5 place-items-center rounded-full bg-positive-soft text-positive">
-                        <FiCheck size={12} />
-                      </span>
-                      {t}
-                    </li>
-                  ),
-                )}
+                {[
+                  plan === "free"
+                    ? "Free credits every month"
+                    : `${PLAN_OPTIONS.find((p) => p.id === plan)?.name} selected — Free until payment confirmed`,
+                  "Download real files anytime",
+                  "Publish to *.troveai.site",
+                ].map((t) => (
+                  <li key={t} className="flex items-center gap-2">
+                    <span className="grid size-5 place-items-center rounded-full bg-positive-soft text-positive">
+                      <FiCheck size={12} />
+                    </span>
+                    {t}
+                  </li>
+                ))}
               </ul>
             </>
           )}
