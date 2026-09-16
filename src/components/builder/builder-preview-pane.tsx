@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BrowserFrame,
   type PreviewDestination,
@@ -16,8 +16,8 @@ import {
 
 /**
  * Full-height project preview backed by the reusable E2B runtime.
- * The provider URL stays out of Trove's chrome; users see a product-style
- * preview workspace while the real Vite server remains embedded underneath.
+ * Every site is keyed to its own project id so one project's sandbox/preview
+ * can never become another project's live iframe.
  */
 export function BuilderPreviewPane({
   preview,
@@ -36,11 +36,18 @@ export function BuilderPreviewPane({
   publishControl?: ReactNode;
   pageTitle?: string;
 }) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [runtime, setRuntime] = useState(getLocalRuntimeSnapshot());
+  const routeProjectId = pathname?.match(/^\/websites\/project\/([^/]+)(?:\/|$)/i)?.[1];
+  const projectId =
+    searchParams?.get("c")?.trim() ||
+    (routeProjectId ? decodeURIComponent(routeProjectId).trim() : "") ||
+    null;
+
+  const [runtime, setRuntime] = useState(() => getLocalRuntimeSnapshot(projectId));
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => subscribeLocalRuntime(setRuntime), []);
+  useEffect(() => subscribeLocalRuntime(setRuntime, projectId), [projectId]);
 
   const filesKey = useMemo(
     () => files.map((file) => `${file.path}:${file.content.length}`).join("|"),
@@ -48,9 +55,9 @@ export function BuilderPreviewPane({
   );
 
   useEffect(() => {
-    if (!files.length) return;
-    void syncLocalProject(files);
-  }, [files, filesKey]);
+    if (!files.length || !projectId) return;
+    void syncLocalProject(files, projectId);
+  }, [files, filesKey, projectId]);
 
   const useLive = runtime.status === "ready" && Boolean(runtime.url);
   const useSnapshot = Boolean(preview) && !useLive;
@@ -60,7 +67,6 @@ export function BuilderPreviewPane({
       ? "localhost:5173"
       : "about:blank";
 
-  const projectId = searchParams?.get("c") || null;
   const publishTitle = useMemo(() => {
     const index = files.find(
       (file) => file.path === "index.html" || file.path.endsWith("/index.html"),
@@ -124,7 +130,10 @@ export function BuilderPreviewPane({
     }
 
     const url = new URL(window.location.href);
-    url.pathname = "/websites/chat";
+    url.pathname = projectId
+      ? `/websites/project/${encodeURIComponent(projectId)}/chat`
+      : "/websites/chat";
+    url.searchParams.delete("c");
     window.location.assign(url.toString());
   };
 
@@ -161,14 +170,14 @@ export function BuilderPreviewPane({
         onOpen={useLive || preview ? openPreview : undefined}
         onRefresh={() => {
           setRefreshKey((value) => value + 1);
-          if (files.length) void syncLocalProject(files);
+          if (files.length && projectId) void syncLocalProject(files, projectId);
           onRefresh?.();
         }}
         className="h-full min-h-0"
       >
         {useLive && runtime.url ? (
           <iframe
-            key={`${runtime.url}:${refreshKey}`}
+            key={`${projectId || "site"}:${runtime.url}:${refreshKey}`}
             title="Live site preview"
             src={runtime.url}
             className="absolute inset-0 h-full w-full border-0 bg-white"
@@ -177,7 +186,7 @@ export function BuilderPreviewPane({
           />
         ) : useSnapshot && preview ? (
           <iframe
-            key={`${preview.slice(0, 80)}:${refreshKey}`}
+            key={`${projectId || "site"}:${preview.slice(0, 80)}:${refreshKey}`}
             title="Preview snapshot"
             srcDoc={preview}
             className="absolute inset-0 h-full w-full border-0 bg-white"
@@ -192,7 +201,7 @@ export function BuilderPreviewPane({
               </div>
               <p className="text-[16px] font-semibold tracking-tight">Live preview</p>
               <p className="mt-2 text-[13px] leading-5 text-black/45">
-                Build your project and Trove will start its Vite server in an isolated cloud sandbox.
+                Build this project and Trove will start its own isolated Vite workspace.
               </p>
             </div>
           </div>
@@ -201,7 +210,7 @@ export function BuilderPreviewPane({
 
       {runtime.status === "error" && runtime.error ? (
         <div className="pointer-events-none absolute bottom-5 left-6 z-50 max-w-[360px] rounded-2xl border border-amber-400/20 bg-[#242426]/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-amber-100 shadow-2xl backdrop-blur-xl">
-          Live runtime unavailable: {runtime.error}. Showing the saved snapshot.
+          Live runtime unavailable: {runtime.error}. Showing this project's saved snapshot.
         </div>
       ) : null}
     </div>

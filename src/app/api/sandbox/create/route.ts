@@ -30,16 +30,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Build the site before starting preview." }, { status: 400 });
   }
 
-  const scope = body.projectId?.trim() || "draft";
+  const projectId = body.projectId?.trim() || "";
+  if (!projectId) {
+    return NextResponse.json(
+      { error: "This site needs its own saved project before preview can start." },
+      { status: 400 },
+    );
+  }
+
   const jar = await cookies();
-  const cookieName = e2bCookieName(user.id, scope);
-  const draftCookieName = e2bCookieName(user.id, "draft");
-  const existingSandboxId =
-    jar.get(cookieName)?.value ||
-    (scope !== "draft" ? jar.get(draftCookieName)?.value : undefined);
+  const cookieName = e2bCookieName(user.id, projectId);
+  const existingSandboxId = jar.get(cookieName)?.value;
 
   try {
-    const { sandbox, reused } = await connectOrCreateSandbox(existingSandboxId);
+    const { sandbox, reused } = await connectOrCreateSandbox(existingSandboxId, projectId);
     const preview = await syncE2BProject(sandbox, files);
 
     const response = NextResponse.json({
@@ -48,6 +52,7 @@ export async function POST(req: Request) {
       port: preview.port,
       reused,
       packageChanged: preview.packageChanged,
+      projectId,
       runtime: "e2b",
     });
 
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/api/sandbox",
-      maxAge: 60 * 60,
+      maxAge: 30 * 60,
     });
 
     return response;
@@ -64,7 +69,7 @@ export async function POST(req: Request) {
     const message = error instanceof Error ? error.message : "E2B preview failed to start.";
     const missingKey = message.includes("E2B_API_KEY");
     return NextResponse.json(
-      { error: message, runtime: "e2b" },
+      { error: message, runtime: "e2b", projectId },
       { status: missingKey ? 503 : 500 },
     );
   }

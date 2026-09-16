@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BuilderView, type SiteView } from "../builder-view";
 import { isMobile } from "@/lib/device";
 import { loadConversation } from "@/lib/conversations";
@@ -11,6 +11,14 @@ const VIEW_MAP: Record<string, SiteView> = {
   code: "code",
   terminal: "console",
   console: "console",
+};
+
+const VIEW_ROUTE: Record<SiteView, string> = {
+  chat: "chat",
+  preview: "preview",
+  files: "files",
+  code: "code",
+  console: "terminal",
 };
 
 export async function generateMetadata({
@@ -41,19 +49,15 @@ export default async function WebsiteSectionPage({
   if (id) {
     const project = await loadProject(id).catch(() => null);
     if (project) {
-      restored = {
-        id: project.id,
-        title: project.name,
-        idea: project.prompt,
-      };
-    } else {
-      const convo = await loadConversation(id).catch(() => null);
-      if (convo && convo.kind === "site") {
-        const idea = convo.messages.find((message) => message.role === "user")?.text ?? convo.title;
-        restored = { id: convo.id, title: convo.title, idea };
-      } else {
-        restored = { id, title: "Restored site", idea: "" };
-      }
+      redirect(
+        `/websites/project/${encodeURIComponent(project.id)}/${VIEW_ROUTE[initialView]}`,
+      );
+    }
+
+    const convo = await loadConversation(id).catch(() => null);
+    if (convo && convo.kind === "site") {
+      const idea = convo.messages.find((message) => message.role === "user")?.text ?? convo.title;
+      restored = { id: convo.id, title: convo.title, idea };
     }
   }
 

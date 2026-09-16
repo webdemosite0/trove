@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { BuilderView } from "./builder-view";
 import { isMobile } from "@/lib/device";
 import { loadConversation } from "@/lib/conversations";
@@ -19,20 +20,13 @@ export default async function WebsitesPage({
   if (id) {
     const project = await loadProject(id).catch(() => null);
     if (project) {
-      restored = {
-        id: project.id,
-        title: project.name,
-        idea: project.prompt,
-      };
-    } else {
-      const convo = await loadConversation(id).catch(() => null);
-      if (convo && convo.kind === "site") {
-        const idea =
-          convo.messages.find((m) => m.role === "user")?.text ?? convo.title;
-        restored = { id: convo.id, title: convo.title, idea };
-      } else if (id) {
-        restored = { id, title: "Restored site", idea: "" };
-      }
+      redirect(`/websites/project/${encodeURIComponent(project.id)}/preview`);
+    }
+
+    const convo = await loadConversation(id).catch(() => null);
+    if (convo && convo.kind === "site") {
+      const idea = convo.messages.find((m) => m.role === "user")?.text ?? convo.title;
+      restored = { id: convo.id, title: convo.title, idea };
     }
   }
 
