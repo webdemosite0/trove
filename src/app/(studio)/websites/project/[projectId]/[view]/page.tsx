@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
+const SAFE_VIEWS = new Set(["chat", "preview", "files", "code"]);
+
 export default async function LegacyProjectWebsiteSectionPage({
   params,
 }: {
@@ -7,9 +9,9 @@ export default async function LegacyProjectWebsiteSectionPage({
 }) {
   const { projectId, view } = await params;
   const requested = view.toLowerCase();
-  const safeView = ["chat", "preview", "files", "code"].includes(requested)
-    ? requested
-    : "preview";
+
+  // terminal/console and any unknown segment → preview
+  const safeView = SAFE_VIEWS.has(requested) ? requested : "preview";
 
   redirect(`/project/${encodeURIComponent(projectId)}/${safeView}`);
 }
