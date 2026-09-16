@@ -8,29 +8,16 @@ import { Message } from "@/components/chat/message";
 import { MobileComposer } from "@/components/mobile/composer";
 import { Wordmark } from "@/components/brand/logo";
 import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
+import {
+  DEFAULT_CHAT_MODEL,
+  type ChatModelId,
+  type ChatModelOption,
+} from "@/lib/chat-models";
 import { useChatThread } from "@/lib/use-chat-thread";
 import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
 import { StarterCards } from "@/components/home/starter-cards";
 
-/**
- * Chat, for a phone.
- *
- * Two states, laid out differently rather than one hiding parts of the other.
- * Empty is the wordmark, the composer, and a row of tools you can reach with a
- * thumb. In a thread it is the transcript and nothing else, with the composer
- * docked at the bottom.
- *
- * The desktop screen puts the composer mid-page surrounded by panels of recent
- * work — a good use of a wide screen and a poor use of a tall one, which is
- * why this is a separate component and not a breakpoint.
- *
- * Streaming, saving and error handling come from useChatThread, shared with
- * the desktop screen, so the parts that can be wrong are not duplicated.
- */
-
-/** The tool row under the composer. Horizontal, because a phone has one
-    column and this is a shortcut list, not a menu that needs reading. */
 const TOOLS: { href: string; label: string; icon: IconType }[] = [
   { href: "/websites", label: "Websites", icon: TbWorld },
   { href: "/agents", label: "Agents", icon: TbRobot },
@@ -47,6 +34,7 @@ export function MobileChat({
   name = "there",
   activity = [],
   draft: initialDraft = "",
+  models = [],
 }: {
   restored?: {
     id: string;
@@ -55,25 +43,33 @@ export function MobileChat({
   } | null;
   name?: string;
   activity?: Recent[];
-  /** Prefills the composer, e.g. an idea typed before signing in. */
   draft?: string;
+  models?: ChatModelOption[];
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
-  // Filled by a starter card. The composer is keyed on it so picking one
-  // refills an existing box rather than an effect syncing a prop into state.
+  const [model, setModel] = React.useState<ChatModelId>(
+    models.some((option) => option.id === DEFAULT_CHAT_MODEL)
+      ? DEFAULT_CHAT_MODEL
+      : (models[0]?.id ?? DEFAULT_CHAT_MODEL),
+  );
   const [draft, setDraft] = React.useState(initialDraft);
   const { turns, busy, error, send, retry, clear, bottom } = useChatThread({
     restored,
     mode,
+    model,
   });
 
-  /* ---------------------- empty ---------------------- */
+  const composerModelProps = {
+    model,
+    modelOptions: models,
+    onModelChange: setModel,
+    mode,
+    onModeChange: setMode,
+  };
 
   if (turns.length === 0) {
     return (
       <div className="flex min-h-full flex-col px-4 pb-6">
-        {/* The mark, centred and large. It is the only thing above the
-            composer, so it carries the whole "what is this" job. */}
         <div className="nx-rise flex flex-col items-center pb-7 pt-10">
           <Wordmark size={44} sweep={false} />
           <p className="mt-3 text-center text-[13.5px] text-ink-3">
@@ -85,8 +81,7 @@ export function MobileChat({
           <MobileComposer
             onSend={send}
             disabled={busy}
-            mode={mode}
-            onModeChange={setMode}
+            {...composerModelProps}
             key={draft}
             initialValue={draft}
           />
@@ -94,8 +89,6 @@ export function MobileChat({
 
         {error ? <Problem message={error} onRetry={retry} /> : null}
 
-        {/* Tool row — scrolls sideways, fading at the edge so it is obviously
-            a strip rather than a clipped grid. */}
         <div className="nx-rise-slow -mx-4 mt-4">
           <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none">
             {TOOLS.map((t) => (
@@ -111,12 +104,6 @@ export function MobileChat({
           </div>
         </div>
 
-        {/* With nothing saved yet the screen ended at the tool strip and the
-            bottom two-thirds were blank — which is the first thing a new
-            person sees. The starters fill it with the four things worth
-            trying, and tapping one loads the composer rather than navigating
-            away, exactly as on the desktop screen. They give way to Recent
-            once there is real work to come back to. */}
         {activity.length === 0 ? (
           <StarterCards className="mt-7" onPick={setDraft} />
         ) : null}
@@ -143,8 +130,6 @@ export function MobileChat({
       </div>
     );
   }
-
-  /* ---------------------- thread ---------------------- */
 
   return (
     <div className="flex min-h-full flex-col">
@@ -175,15 +160,12 @@ export function MobileChat({
         <div ref={bottom} />
       </div>
 
-      {/* Docked. The safe-area padding matters here: without it the send
-          button sits under the home indicator on a gesture-nav phone. */}
       <div className="sticky bottom-0 bg-gradient-to-t from-canvas via-canvas to-transparent px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
         <MobileComposer
           onSend={send}
           disabled={busy}
           placeholder="Reply…"
-          mode={mode}
-          onModeChange={setMode}
+          {...composerModelProps}
         />
       </div>
     </div>
@@ -191,6 +173,5 @@ export function MobileChat({
 }
 
 function Problem({ message, onRetry }: { message: string; onRetry: () => void }) {
-  // compact: the phone layout has no room for the full card.
   return <FailureNote error={message} onRetry={onRetry} className="mt-4" compact />;
 }
