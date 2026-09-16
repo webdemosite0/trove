@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wordmark } from "@/components/brand/logo";
+import { TroveOrb } from "@/components/brand/orb";
 import { FiCheck } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
@@ -43,13 +43,15 @@ export function BootScreen({ next }: { next?: string }) {
         }}
       />
 
-      <div className="relative flex flex-col items-center text-center">
-        <Wordmark size={36} className="justify-center" />
-        <p className="mt-5 text-[15px] font-medium tracking-[-0.02em] text-ink">
-          Preparing your workspace
+      <div className="relative flex flex-col items-center">
+        <span className="nx-thinking grid place-items-center">
+          <TroveOrb size={52} state="working" />
+        </span>
+        <p className="mt-6 text-[15px] font-medium tracking-[-0.02em] text-ink">
+          Preparing Trove
         </p>
 
-        <ul className="mt-8 w-[220px] space-y-2.5 text-left">
+        <ul className="mt-8 w-[220px] space-y-2.5">
           {STEPS.map((label, i) => {
             const done = step > i;
             const live = step === i;
