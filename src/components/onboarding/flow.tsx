@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { finishOnboarding } from "@/app/actions/onboarding";
-import { Wordmark } from "@/components/brand/logo";
+import { BrandLockup } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";
 import {
   FiArrowRight,
@@ -111,8 +111,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
       </div>
 
       <header className="relative z-10 mx-auto flex w-full max-w-lg items-center gap-3 px-5 pt-6 sm:gap-4 sm:pt-10">
-        {/* Text only — no box / orbit mark */}
-        <Wordmark size={22} className="shrink-0" />
+        <BrandLockup orbSize={28} wordSize={18} className="shrink-0" />
         <div className="min-w-0 flex-1 self-center">
           <div className="h-1.5 overflow-hidden rounded-full bg-sunk">
             <div
