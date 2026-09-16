@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   BrowserFrame,
   type PreviewDestination,
 } from "@/components/builder/browser-frame";
+import { PublishPanel } from "@/components/builder/publish-panel";
 import type { ProjectFile } from "@/lib/builder";
 import {
   getLocalRuntimeSnapshot,
@@ -34,6 +36,7 @@ export function BuilderPreviewPane({
   publishControl?: ReactNode;
   pageTitle?: string;
 }) {
+  const searchParams = useSearchParams();
   const [runtime, setRuntime] = useState(getLocalRuntimeSnapshot());
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -57,6 +60,26 @@ export function BuilderPreviewPane({
       ? "localhost:5173"
       : "about:blank";
 
+  const projectId = searchParams?.get("c") || null;
+  const publishTitle = useMemo(() => {
+    const index = files.find(
+      (file) => file.path === "index.html" || file.path.endsWith("/index.html"),
+    );
+    const htmlTitle = index?.content.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim();
+    if (htmlTitle) return htmlTitle.slice(0, 80);
+
+    const packageFile = files.find((file) => file.path === "package.json");
+    if (packageFile) {
+      try {
+        const data = JSON.parse(packageFile.content) as { name?: string };
+        if (data.name?.trim()) return data.name.trim().slice(0, 80);
+      } catch {
+        // Keep the friendly fallback below.
+      }
+    }
+    return "Website";
+  }, [files]);
+
   const openPreview = () => {
     if (useLive && runtime.url) {
       window.open(runtime.url, "_blank", "noopener,noreferrer");
@@ -67,6 +90,42 @@ export function BuilderPreviewPane({
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank", "noopener,noreferrer");
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const navigate = (destination: PreviewDestination) => {
+    if (onNavigate) {
+      onNavigate(destination);
+      return;
+    }
+
+    const root = document.querySelector<HTMLElement>("[data-trove-site-view]");
+    const mobileButtons = Array.from(root?.querySelectorAll<HTMLButtonElement>("nav button") || []);
+    const label =
+      destination === "console"
+        ? "Terminal"
+        : destination.charAt(0).toUpperCase() + destination.slice(1);
+    const mobileButton = mobileButtons.find((button) => button.textContent?.trim() === label);
+    if (mobileButton) {
+      mobileButton.click();
+      return;
+    }
+
+    if (destination !== "chat") {
+      const indexMap: Record<Exclude<PreviewDestination, "chat">, number> = {
+        files: 1,
+        code: 2,
+        console: 3,
+      };
+      const desktopTabs = Array.from(
+        root?.querySelectorAll<HTMLButtonElement>("button.trove-tab-active") || [],
+      );
+      desktopTabs[indexMap[destination]]?.click();
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.pathname = "/websites/chat";
+    window.location.assign(url.toString());
   };
 
   const chromeStatus =
@@ -81,14 +140,24 @@ export function BuilderPreviewPane({
           ? "working"
           : "idle";
 
+  const realPublishControl =
+    publishControl ?? (
+      <PublishPanel
+        files={files}
+        projectId={projectId}
+        title={publishTitle}
+        previewHtml={preview}
+      />
+    );
+
   return (
     <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#1b1b1c]">
       <BrowserFrame
         url={displayUrl}
         pageTitle={pageTitle}
         status={chromeStatus}
-        publishControl={publishControl}
-        onNavigate={onNavigate}
+        publishControl={realPublishControl}
+        onNavigate={navigate}
         onOpen={useLive || preview ? openPreview : undefined}
         onRefresh={() => {
           setRefreshKey((value) => value + 1);
