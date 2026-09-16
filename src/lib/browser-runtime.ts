@@ -20,28 +20,63 @@ type WebContainerLike = {
   on: (event: string, cb: (...args: any[]) => void) => (() => void) | void;
 };
 
-const CDN = "https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/+esm";
-const listeners = new Set<(snapshot: RuntimeSnapshot) => void>();
-
-let snapshot: RuntimeSnapshot = {
-  status: "idle",
-  url: null,
-  port: 5173,
-  error: null,
-  output: [],
+type RuntimeStore = {
+  snapshot: RuntimeSnapshot;
+  listeners: Set<(snapshot: RuntimeSnapshot) => void>;
+  bootPromise: Promise<WebContainerLike> | null;
+  container: WebContainerLike | null;
+  serverProcess: any;
+  shellProcess: any;
+  shellWriter: WritableStreamDefaultWriter<string> | null;
+  packageFingerprint: string;
+  mountedFingerprint: string;
+  syncPromise: Promise<void> | null;
 };
-let bootPromise: Promise<WebContainerLike> | null = null;
-let container: WebContainerLike | null = null;
-let serverProcess: any = null;
-let shellProcess: any = null;
-let shellWriter: WritableStreamDefaultWriter<string> | null = null;
-let packageFingerprint = "";
-let mountedFingerprint = "";
-let syncPromise: Promise<void> | null = null;
+
+const CDN = "https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/+esm";
+const STORE_KEY = "__troveWebContainerRuntimeV1";
+
+function createStore(): RuntimeStore {
+  return {
+    snapshot: {
+      status: "idle",
+      url: null,
+      port: 5173,
+      error: null,
+      output: [],
+    },
+    listeners: new Set<(snapshot: RuntimeSnapshot) => void>(),
+    bootPromise: null,
+    container: null,
+    serverProcess: null,
+    shellProcess: null,
+    shellWriter: null,
+    packageFingerprint: "",
+    mountedFingerprint: "",
+    syncPromise: null,
+  };
+}
+
+/**
+ * WebContainer.boot() may only create one live instance per page. Next.js can
+ * re-evaluate client modules during navigation/HMR, so module-level variables
+ * are not strong enough to enforce that invariant. Keep the runtime on
+ * globalThis so Preview and Terminal always reuse the same instance.
+ */
+function getStore(): RuntimeStore {
+  const root = globalThis as typeof globalThis & Record<string, unknown>;
+  const existing = root[STORE_KEY] as RuntimeStore | undefined;
+  if (existing) return existing;
+  const fresh = createStore();
+  root[STORE_KEY] = fresh;
+  return fresh;
+}
+
+const store = getStore();
 
 function publish(next: Partial<RuntimeSnapshot> = {}) {
-  snapshot = { ...snapshot, ...next };
-  for (const listener of listeners) listener(snapshot);
+  store.snapshot = { ...store.snapshot, ...next };
+  for (const listener of store.listeners) listener(store.snapshot);
 }
 
 function stripAnsi(value: string) {
@@ -53,7 +88,7 @@ function appendOutput(value: string) {
   if (!clean) return;
   const chunks = clean.split("\n").filter(Boolean);
   if (!chunks.length) return;
-  publish({ output: [...snapshot.output, ...chunks].slice(-240) });
+  publish({ output: [...store.snapshot.output, ...chunks].slice(-240) });
 }
 
 function safePath(raw: string) {
@@ -122,10 +157,10 @@ function fingerprint(files: { path: string; content: string }[]) {
 }
 
 async function loadWebContainer(): Promise<WebContainerLike> {
-  if (container) return container;
-  if (bootPromise) return bootPromise;
+  if (store.container) return store.container;
+  if (store.bootPromise) return store.bootPromise;
 
-  bootPromise = (async () => {
+  store.bootPromise = (async () => {
     publish({ status: "booting", error: null });
     if (typeof window === "undefined") throw new Error("Local runtime only runs in the browser.");
     if (!window.isSecureContext && window.location.hostname !== "localhost") {
@@ -142,6 +177,9 @@ async function loadWebContainer(): Promise<WebContainerLike> {
       forwardPreviewErrors: "exceptions-only",
     })) as WebContainerLike;
 
+    // Assign immediately after boot so every later caller can reuse it.
+    store.container = wc;
+
     wc.on("server-ready", (port: number, url: string) => {
       publish({ status: "ready", port: Number(port) || 5173, url: String(url), error: null });
       appendOutput(`Local server ready on http://localhost:${port}`);
@@ -152,17 +190,19 @@ async function loadWebContainer(): Promise<WebContainerLike> {
       appendOutput(`runtime: ${message}`);
     });
 
-    container = wc;
     appendOutput("Trove local runtime booted in your browser.");
     return wc;
   })().catch((error) => {
-    bootPromise = null;
-    const message = error instanceof Error ? error.message : "Local runtime failed to start.";
+    store.bootPromise = null;
+    const raw = error instanceof Error ? error.message : "Local runtime failed to start.";
+    const message = /more instances|single instance|already.*instance/i.test(raw)
+      ? "The local runtime was already started by this tab. Refresh this Trove page once to reconnect to the shared runtime."
+      : raw;
     publish({ status: "error", error: message });
     throw error;
   });
 
-  return bootPromise;
+  return store.bootPromise;
 }
 
 async function pipeProcess(process: any, prefix?: string) {
@@ -180,66 +220,69 @@ async function pipeProcess(process: any, prefix?: string) {
 
 async function installIfNeeded(wc: WebContainerLike, files: { path: string; content: string }[]) {
   const pkg = files.find((file) => file.path === "package.json")?.content || defaultPackage();
-  if (pkg === packageFingerprint) return false;
+  if (pkg === store.packageFingerprint) return false;
   publish({ status: "installing", error: null });
   appendOutput("$ npm install --no-audit --no-fund");
   const install = await wc.spawn("npm", ["install", "--no-audit", "--no-fund"]);
   await pipeProcess(install);
   const exit = await install.exit;
   if (exit !== 0) throw new Error(`npm install exited with code ${exit}`);
-  packageFingerprint = pkg;
+  store.packageFingerprint = pkg;
   return true;
 }
 
 async function startServer(wc: WebContainerLike, restart = false) {
-  if (serverProcess && !restart) return;
-  if (serverProcess?.kill) {
+  if (store.serverProcess && !restart) return;
+  if (store.serverProcess?.kill) {
     try {
-      serverProcess.kill();
+      store.serverProcess.kill();
     } catch {
       // Ignore stale process handles.
     }
   }
-  publish({ status: "starting", error: null, url: restart ? null : snapshot.url });
+  publish({ status: "starting", error: null, url: restart ? null : store.snapshot.url });
   appendOutput("$ npm run dev -- --host 0.0.0.0 --port 5173");
-  serverProcess = await wc.spawn("npm", ["run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]);
-  await pipeProcess(serverProcess);
+  store.serverProcess = await wc.spawn("npm", ["run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]);
+  await pipeProcess(store.serverProcess);
 }
 
 export async function syncLocalProject(files: ProjectFile[]) {
   if (!files.length) return;
   const normalized = normalizeFiles(files);
   const nextFingerprint = fingerprint(normalized);
-  if (nextFingerprint === mountedFingerprint && snapshot.status !== "error") return;
+  if (nextFingerprint === store.mountedFingerprint && store.snapshot.status !== "error") return;
 
-  if (syncPromise) await syncPromise.catch(() => undefined);
-  syncPromise = (async () => {
+  if (store.syncPromise) await store.syncPromise.catch(() => undefined);
+  store.syncPromise = (async () => {
     try {
       const wc = await loadWebContainer();
       publish({ status: "syncing", error: null });
       await wc.mount(toTree(normalized));
       const packageChanged = await installIfNeeded(wc, normalized);
-      mountedFingerprint = nextFingerprint;
+      store.mountedFingerprint = nextFingerprint;
       await startServer(wc, packageChanged);
-      if (snapshot.url) publish({ status: "ready" });
+      if (store.snapshot.url) publish({ status: "ready" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Local runtime failed.";
+      const raw = error instanceof Error ? error.message : "Local runtime failed.";
+      const message = /more instances|single instance|already.*instance/i.test(raw)
+        ? "The local runtime was already started by this tab. Refresh this Trove page once to reconnect to the shared runtime."
+        : raw;
       publish({ status: "error", error: message });
       appendOutput(`error: ${message}`);
     } finally {
-      syncPromise = null;
+      store.syncPromise = null;
     }
   })();
-  await syncPromise;
+  await store.syncPromise;
 }
 
 async function ensureShell() {
   const wc = await loadWebContainer();
-  if (shellWriter) return shellWriter;
-  shellProcess = await wc.spawn("jsh", [], { terminal: { cols: 92, rows: 28 } });
-  await pipeProcess(shellProcess);
-  const writer = shellProcess.input.getWriter() as WritableStreamDefaultWriter<string>;
-  shellWriter = writer;
+  if (store.shellWriter) return store.shellWriter;
+  store.shellProcess = await wc.spawn("jsh", [], { terminal: { cols: 92, rows: 28 } });
+  await pipeProcess(store.shellProcess);
+  const writer = store.shellProcess.input.getWriter() as WritableStreamDefaultWriter<string>;
+  store.shellWriter = writer;
   return writer;
 }
 
@@ -256,13 +299,13 @@ export function clearLocalOutput() {
 }
 
 export function getLocalRuntimeSnapshot() {
-  return snapshot;
+  return store.snapshot;
 }
 
 export function subscribeLocalRuntime(listener: (value: RuntimeSnapshot) => void) {
-  listeners.add(listener);
-  listener(snapshot);
+  store.listeners.add(listener);
+  listener(store.snapshot);
   return () => {
-    listeners.delete(listener);
+    store.listeners.delete(listener);
   };
 }
