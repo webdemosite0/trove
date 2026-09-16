@@ -16,9 +16,18 @@ const eslintConfig = defineConfig([
       "react-hooks/purity": "off",
       "react-hooks/refs": "off",
       "react-hooks/preserve-manual-memoization": "off",
+      // Existing marketing/auth copy intentionally uses natural apostrophes in JSX.
+      "react/no-unescaped-entities": "off",
     },
   },
-  // Override default ignores of eslint-config-next.
+  {
+    files: ["src/app/(studio)/websites/builder-workspace.tsx"],
+    rules: {
+      // Builder step events are newline-delimited JSON supplied by multiple AI
+      // providers; their payload is intentionally runtime-shaped.
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",
