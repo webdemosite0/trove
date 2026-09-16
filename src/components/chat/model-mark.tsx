@@ -20,7 +20,7 @@ export function ModelMark({
         className={cn("inline-grid shrink-0 place-items-center overflow-hidden rounded-[8px]", className)}
         style={{ width: size, height: size }}
       >
-        <TroveOrb size={Math.max(16, Math.round(size * 0.86))} sweep={false} />
+        <TroveOrb size={Math.max(16, Math.round(size * 0.86))} />
       </span>
     );
   }
