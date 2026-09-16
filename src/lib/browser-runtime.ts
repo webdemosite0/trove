@@ -180,13 +180,13 @@ async function pipeProcess(process: any, prefix?: string) {
 async function installIfNeeded(wc: WebContainerLike, files: { path: string; content: string }[]) {
   const pkg = files.find((file) => file.path === "package.json")?.content || defaultPackage();
   if (pkg === packageFingerprint) return false;
-  packageFingerprint = pkg;
   publish({ status: "installing", error: null });
   appendOutput("$ npm install --no-audit --no-fund");
   const install = await wc.spawn("npm", ["install", "--no-audit", "--no-fund"]);
   await pipeProcess(install);
   const exit = await install.exit;
   if (exit !== 0) throw new Error(`npm install exited with code ${exit}`);
+  packageFingerprint = pkg;
   return true;
 }
 
@@ -217,8 +217,8 @@ export async function syncLocalProject(files: ProjectFile[]) {
       const wc = await loadWebContainer();
       publish({ status: "syncing", error: null });
       await wc.mount(toTree(normalized));
-      mountedFingerprint = nextFingerprint;
       const packageChanged = await installIfNeeded(wc, normalized);
+      mountedFingerprint = nextFingerprint;
       await startServer(wc, packageChanged);
       if (snapshot.url) publish({ status: "ready" });
     } catch (error) {
@@ -260,5 +260,7 @@ export function getLocalRuntimeSnapshot() {
 export function subscribeLocalRuntime(listener: (value: RuntimeSnapshot) => void) {
   listeners.add(listener);
   listener(snapshot);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
