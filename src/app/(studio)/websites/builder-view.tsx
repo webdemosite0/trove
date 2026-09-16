@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BuilderView as WorkspaceBuilderView } from "./builder-workspace";
 
-export type SiteView = "chat" | "preview" | "files" | "code" | "console";
+export type SiteView = "chat" | "preview" | "files" | "code";
 
 type RestoredSite = { id: string; title: string; idea: string };
 
@@ -20,7 +20,6 @@ const ROUTES: Record<SiteView, string> = {
   preview: "preview",
   files: "files",
   code: "code",
-  console: "terminal",
 };
 
 const MOBILE_LABELS: Record<SiteView, string> = {
@@ -28,35 +27,36 @@ const MOBILE_LABELS: Record<SiteView, string> = {
   preview: "Preview",
   files: "Files",
   code: "Code",
-  console: "Terminal",
 };
 
 const DESKTOP_INDEX: Partial<Record<SiteView, number>> = {
   preview: 0,
   files: 1,
   code: 2,
-  console: 3,
 };
 
 function viewFromPath(pathname: string): SiteView | null {
   const parts = pathname.split("/").filter(Boolean);
-  const segment =
-    parts[0] === "websites" && parts[1] === "project"
-      ? parts[3]?.toLowerCase()
-      : parts[1]?.toLowerCase();
+  let segment = "";
+
+  if (parts[0] === "project") segment = parts[2]?.toLowerCase() || "";
+  else if (parts[0] === "websites" && parts[1] === "project") {
+    segment = parts[3]?.toLowerCase() || "";
+  } else {
+    segment = parts[1]?.toLowerCase() || "";
+  }
 
   if (segment === "chat") return "chat";
   if (segment === "preview") return "preview";
   if (segment === "files") return "files";
   if (segment === "code") return "code";
-  if (segment === "terminal" || segment === "console") return "console";
   return null;
 }
 
 function routeUrl(view: SiteView, projectId?: string | null) {
   const url = new URL(window.location.href);
   if (projectId) {
-    url.pathname = `/websites/project/${encodeURIComponent(projectId)}/${ROUTES[view]}`;
+    url.pathname = `/project/${encodeURIComponent(projectId)}/${ROUTES[view]}`;
     url.searchParams.delete("c");
     url.searchParams.delete("q");
   } else {
@@ -131,7 +131,7 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
   useEffect(() => {
     if (!identity?.id || typeof window === "undefined") return;
     const current = window.location.pathname;
-    if (current.startsWith(`/websites/project/${encodeURIComponent(identity.id)}/`)) return;
+    if (current.startsWith(`/project/${encodeURIComponent(identity.id)}/`)) return;
 
     const nextUrl = routeUrl(desiredView.current, identity.id);
     window.history.replaceState({ troveSiteView: desiredView.current }, "", nextUrl);
@@ -326,12 +326,18 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>nav]:hidden [&>div>div>main]:bg-[#1b1b1c]"
       : "";
 
+  // Terminal execution remains available to Trove's backend agent, but there is
+  // intentionally no user-facing terminal tab or route. The two selectors below
+  // hide the legacy workspace controls while the backend API remains intact.
+  const terminalHiddenClass =
+    "[&_.trove-tab-active:last-of-type]:!hidden [&>div>nav>div]:!grid-cols-4 [&>div>nav>div>button:last-child]:!hidden";
+
   return (
     <div
       ref={rootRef}
       data-trove-site-view={view}
       data-trove-project-id={identity.id}
-      className={`h-full min-h-0 ${previewRouteClass}`}
+      className={`h-full min-h-0 ${previewRouteClass} ${terminalHiddenClass}`}
     >
       <WorkspaceBuilderView {...props} restored={identity} />
     </div>

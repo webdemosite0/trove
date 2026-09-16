@@ -61,18 +61,19 @@ function parseFiles(raw: unknown): ProjectFile[] {
 }
 
 function projectHref(id: string) {
-  return `/websites/project/${encodeURIComponent(id)}/preview`;
+  return `/project/${encodeURIComponent(id)}/preview`;
 }
 
 async function syncRecentSite(userId: string, id: string, name: string, now: number) {
   const href = projectHref(id);
+  const oldProjectHref = `/websites/project/${encodeURIComponent(id)}/preview`;
   const legacyHref = `/websites?c=${encodeURIComponent(id)}`;
   const legacyPreviewHref = `/websites/preview?c=${encodeURIComponent(id)}`;
 
   try {
     await run(
-      `DELETE FROM recents WHERE user_id = ? AND kind = 'site' AND href IN (?, ?, ?)`,
-      [userId, href, legacyHref, legacyPreviewHref],
+      `DELETE FROM recents WHERE user_id = ? AND kind = 'site' AND href IN (?, ?, ?, ?)`,
+      [userId, href, oldProjectHref, legacyHref, legacyPreviewHref],
     );
     await run(
       `INSERT INTO recents (id, user_id, kind, title, href, created_at) VALUES (?, ?, 'site', ?, ?, ?)`,

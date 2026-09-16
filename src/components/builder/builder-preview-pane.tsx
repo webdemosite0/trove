@@ -38,7 +38,9 @@ export function BuilderPreviewPane({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const routeProjectId = pathname?.match(/^\/websites\/project\/([^/]+)(?:\/|$)/i)?.[1];
+  const topLevelProjectId = pathname?.match(/^\/project\/([^/]+)(?:\/|$)/i)?.[1];
+  const legacyProjectId = pathname?.match(/^\/websites\/project\/([^/]+)(?:\/|$)/i)?.[1];
+  const routeProjectId = topLevelProjectId || legacyProjectId;
   const projectId =
     searchParams?.get("c")?.trim() ||
     (routeProjectId ? decodeURIComponent(routeProjectId).trim() : "") ||
@@ -106,10 +108,7 @@ export function BuilderPreviewPane({
 
     const root = document.querySelector<HTMLElement>("[data-trove-site-view]");
     const mobileButtons = Array.from(root?.querySelectorAll<HTMLButtonElement>("nav button") || []);
-    const label =
-      destination === "console"
-        ? "Terminal"
-        : destination.charAt(0).toUpperCase() + destination.slice(1);
+    const label = destination.charAt(0).toUpperCase() + destination.slice(1);
     const mobileButton = mobileButtons.find((button) => button.textContent?.trim() === label);
     if (mobileButton) {
       mobileButton.click();
@@ -120,7 +119,6 @@ export function BuilderPreviewPane({
       const indexMap: Record<Exclude<PreviewDestination, "chat">, number> = {
         files: 1,
         code: 2,
-        console: 3,
       };
       const desktopTabs = Array.from(
         root?.querySelectorAll<HTMLButtonElement>("button.trove-tab-active") || [],
@@ -131,7 +129,7 @@ export function BuilderPreviewPane({
 
     const url = new URL(window.location.href);
     url.pathname = projectId
-      ? `/websites/project/${encodeURIComponent(projectId)}/chat`
+      ? `/project/${encodeURIComponent(projectId)}/chat`
       : "/websites/chat";
     url.searchParams.delete("c");
     window.location.assign(url.toString());
