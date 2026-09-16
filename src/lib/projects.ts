@@ -60,6 +60,29 @@ function parseFiles(raw: unknown): ProjectFile[] {
   }
 }
 
+function projectHref(id: string) {
+  return `/websites/project/${encodeURIComponent(id)}/preview`;
+}
+
+async function syncRecentSite(userId: string, id: string, name: string, now: number) {
+  const href = projectHref(id);
+  const legacyHref = `/websites?c=${encodeURIComponent(id)}`;
+  const legacyPreviewHref = `/websites/preview?c=${encodeURIComponent(id)}`;
+
+  try {
+    await run(
+      `DELETE FROM recents WHERE user_id = ? AND kind = 'site' AND href IN (?, ?, ?)`,
+      [userId, href, legacyHref, legacyPreviewHref],
+    );
+    await run(
+      `INSERT INTO recents (id, user_id, kind, title, href, created_at) VALUES (?, ?, 'site', ?, ?, ?)`,
+      [uid("rec"), userId, name, href, now],
+    );
+  } catch {
+    /* recents is best-effort */
+  }
+}
+
 export async function saveProject(opts: {
   id?: string | null;
   name: string;
@@ -121,6 +144,7 @@ export async function saveProject(opts: {
         user.id,
       ],
     );
+    await syncRecentSite(user.id, id, name, now);
     return { id };
   }
 
@@ -144,22 +168,7 @@ export async function saveProject(opts: {
     ],
   );
 
-  // Recents entry so Sites list shows this project
-  const href = `/websites?c=${encodeURIComponent(id)}`;
-  try {
-    await run(`DELETE FROM recents WHERE user_id = ? AND kind = ? AND href = ?`, [
-      user.id,
-      "site",
-      href,
-    ]);
-    await run(
-      `INSERT INTO recents (id, user_id, kind, title, href, created_at) VALUES (?, ?, 'site', ?, ?, ?)`,
-      [uid("rec"), user.id, name, href, now],
-    );
-  } catch {
-    /* recents is best-effort */
-  }
-
+  await syncRecentSite(user.id, id, name, now);
   return { id };
 }
 
