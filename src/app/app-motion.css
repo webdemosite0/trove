@@ -1,0 +1,81 @@
+/* ============================================================
+   App motion — page text entrances across chat, build, home
+   Desktop-first; reduced motion respected
+   ============================================================ */
+
+@keyframes app-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes app-blur-in {
+  from { opacity: 0; filter: blur(8px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+@keyframes app-stagger {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Apply to main content region on desktop */
+.app-page-in {
+  animation: app-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app-title-in {
+  animation: app-blur-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app-sub-in {
+  animation: app-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 60ms;
+}
+
+.app-block-in {
+  animation: app-stagger 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--app-delay, 0ms);
+}
+
+/* Auto-stagger children inside lists / grids */
+.app-stagger > * {
+  opacity: 0;
+  animation: app-stagger 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.app-stagger > *:nth-child(1) { animation-delay: 40ms; }
+.app-stagger > *:nth-child(2) { animation-delay: 80ms; }
+.app-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.app-stagger > *:nth-child(4) { animation-delay: 160ms; }
+.app-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.app-stagger > *:nth-child(6) { animation-delay: 240ms; }
+.app-stagger > *:nth-child(7) { animation-delay: 280ms; }
+.app-stagger > *:nth-child(8) { animation-delay: 320ms; }
+.app-stagger > *:nth-child(n+9) { animation-delay: 360ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-page-in,
+  .app-title-in,
+  .app-sub-in,
+  .app-block-in,
+  .app-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* Mobile: keep motion subtle / off for performance */
+@media (max-width: 1023px) {
+  .app-page-in,
+  .app-title-in,
+  .app-sub-in,
+  .app-block-in {
+    animation-duration: 0.35s;
+  }
+}
