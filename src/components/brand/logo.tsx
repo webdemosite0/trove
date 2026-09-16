@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { TroveOrb, type OrbState } from "@/components/brand/orb";
 
 /**
- * Trove wordmark — display weight, soft gradient, tight optical alignment.
+ * Trove wordmark — geometric display weight, soft gradient, unique spacing.
  */
 export function Wordmark({
   className,
@@ -27,7 +27,6 @@ export function Wordmark({
         fontSize: size,
         fontWeight: 700,
         letterSpacing: "-0.01em",
-        // Optical vertical centering next to progress bars / controls
         lineHeight: 1,
         paddingBottom: "0.04em",
       }}
@@ -37,17 +36,14 @@ export function Wordmark({
   );
 }
 
-/**
- * Brand lockup. Orb (box + orbit) is off by default — text only.
- * Pass showOrb when a compact mark is needed (e.g. collapsed rail).
- */
+/** Orb + wordmark lockup for nav, splash, auth. */
 export function BrandLockup({
   className,
   orbSize = 28,
   wordSize = 20,
   state = "idle",
   showWord = true,
-  showOrb = false,
+  showOrb = true,
   sweep = false,
 }: {
   className?: string;
@@ -59,7 +55,7 @@ export function BrandLockup({
   sweep?: boolean;
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
+    <span className={cn("inline-flex items-center gap-2.5", className)}>
       {showOrb ? <TroveOrb size={orbSize} state={state} /> : null}
       {showWord ? <Wordmark size={wordSize} sweep={sweep} /> : null}
     </span>
