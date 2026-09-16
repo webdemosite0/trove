@@ -1,18 +1,13 @@
 "use client";
 
-import { useId } from "react";
 import { cn } from "@/lib/utils";
 import "./orb.css";
 
 export type OrbState = "idle" | "thinking" | "working" | "done" | "error";
 
 /**
- * Trove mark — geometric monogram.
- *
- * Concept: a vaulted frame (the "trove") holding a precise T, with a thin
- * orbital arc for continuous creation. Readable at 16px, premium at 48px+.
- *
- * States only change motion and accent; the silhouette never changes.
+ * Official Trove app mark — black rounded square, white T, soft blue edge glow.
+ * Matches the product icon (idle). Motion only for thinking/working states.
  */
 export function TroveOrb({
   size = 28,
@@ -23,19 +18,15 @@ export function TroveOrb({
   state?: OrbState;
   className?: string;
 }) {
-  const uid = useId().replace(/:/g, "");
-  const g = {
-    face: `tv-face-${uid}`,
-    edge: `tv-edge-${uid}`,
-    t: `tv-t-${uid}`,
-    arc: `tv-arc-${uid}`,
-  };
-
-  const orbit =
-    state === "working" ? "4.5s" : state === "thinking" ? "10s" : undefined;
   const pulse = state === "idle" || state === "thinking";
-  const accent =
-    state === "error" ? "#ef4444" : state === "done" ? "#22c55e" : undefined;
+  const busy = state === "thinking" || state === "working";
+
+  const face =
+    state === "error"
+      ? "#7f1d1d"
+      : state === "done"
+        ? "#14532d"
+        : "#0a0a0b";
 
   const label = {
     idle: "Trove",
@@ -56,105 +47,70 @@ export function TroveOrb({
       role="img"
       aria-label={label}
     >
-      {(state === "thinking" || state === "working") && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-[-14%] rounded-[22%] opacity-70"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(99,102,241,0.45) 0%, transparent 68%)",
-            filter: "blur(4px)",
-            animation: "trove-orb-glow 2.4s ease-in-out infinite",
-          }}
-        />
-      )}
+      {/* Soft blue outer glow — matches the product icon */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-[-18%] rounded-[28%]"
+        style={{
+          background:
+            state === "error"
+              ? "radial-gradient(circle, rgba(239,68,68,0.45) 0%, transparent 70%)"
+              : state === "done"
+                ? "radial-gradient(circle, rgba(34,197,94,0.4) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(59,130,246,0.55) 0%, rgba(99,102,241,0.25) 45%, transparent 72%)",
+          filter: "blur(5px)",
+          opacity: busy ? 0.95 : 0.85,
+          animation: busy ? "trove-orb-glow 2.4s ease-in-out infinite" : undefined,
+        }}
+      />
 
-      <svg viewBox="0 0 48 48" width={size} height={size} fill="none" className="relative z-[1]">
+      <svg
+        viewBox="0 0 48 48"
+        width={size}
+        height={size}
+        fill="none"
+        className="relative z-[1]"
+        style={{
+          filter:
+            "drop-shadow(0 0 6px rgba(59,130,246,0.45)) drop-shadow(0 2px 8px rgba(0,0,0,0.45))",
+        }}
+      >
+        {/* Black app tile */}
+        <rect x="4" y="4" width="40" height="40" rx="11" fill={face} />
+        {/* Subtle top sheen */}
+        <rect
+          x="4"
+          y="4"
+          width="40"
+          height="40"
+          rx="11"
+          fill="url(#trove-tile-sheen)"
+          opacity="0.35"
+        />
         <defs>
-          <linearGradient id={g.face} x1="0.15" y1="0" x2="0.9" y2="1">
-            <stop offset="0%" stopColor="#2a2f45" />
-            <stop offset="55%" stopColor="#151826" />
-            <stop offset="100%" stopColor="#0a0c14" />
-          </linearGradient>
-          <linearGradient id={g.edge} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#a5b4fc" stopOpacity="0.9" />
-            <stop offset="45%" stopColor="#6366f1" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#312e81" stopOpacity="0.35" />
-          </linearGradient>
-          <linearGradient id={g.t} x1="0.5" y1="0" x2="0.5" y2="1">
-            <stop offset="0%" stopColor="#f8fafc" />
-            <stop offset="100%" stopColor="#c7d2fe" />
-          </linearGradient>
-          <linearGradient id={g.arc} x1="0" y1="0.5" x2="1" y2="0.5">
-            <stop offset="0%" stopColor="#818cf8" stopOpacity="0" />
-            <stop offset="35%" stopColor="#818cf8" />
-            <stop offset="70%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+          <linearGradient id="trove-tile-sheen" x1="0.2" y1="0" x2="0.8" y2="1">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.14" />
+            <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.04" />
           </linearGradient>
         </defs>
-
+        {/* Thin blue rim */}
         <rect
-          x="5"
-          y="5"
-          width="38"
-          height="38"
-          rx="11"
-          fill={accent ?? `url(#${g.face})`}
-          opacity={accent ? 0.92 : 1}
-        />
-        <rect
-          x="5"
-          y="5"
-          width="38"
-          height="38"
-          rx="11"
+          x="4.5"
+          y="4.5"
+          width="39"
+          height="39"
+          rx="10.5"
           fill="none"
-          stroke={accent ?? `url(#${g.edge})`}
-          strokeWidth="1.35"
-          opacity={accent ? 0.85 : 1}
+          stroke={state === "error" ? "#f87171" : state === "done" ? "#4ade80" : "#3b82f6"}
+          strokeOpacity={state === "idle" ? 0.55 : 0.85}
+          strokeWidth="1.25"
         />
-
-        {!accent ? (
-          <rect
-            x="8"
-            y="8"
-            width="32"
-            height="32"
-            rx="9"
-            fill="none"
-            stroke="#ffffff"
-            strokeOpacity="0.06"
-            strokeWidth="1"
-          />
-        ) : null}
-
+        {/* White geometric T */}
         <path
-          d="M16.2 16.4h15.6c0.7 0 1.2 0.55 1.2 1.2v1.15c0 0.66-0.53 1.2-1.2 1.2H26.1v11.4c0 0.72-0.58 1.3-1.3 1.3h-1.6c-0.72 0-1.3-0.58-1.3-1.3V19.95H16.2c-0.66 0-1.2-0.54-1.2-1.2V17.6c0-0.65 0.54-1.2 1.2-1.2z"
-          fill={accent ? "#ffffff" : `url(#${g.t})`}
+          d="M15.5 16.2h17c0.75 0 1.35 0.6 1.35 1.35v1.35c0 0.75-0.6 1.35-1.35 1.35H26.6v12.4c0 0.75-0.6 1.35-1.35 1.35h-2.5c-0.75 0-1.35-0.6-1.35-1.35V20.25H15.5c-0.75 0-1.35-0.6-1.35-1.35v-1.35c0-0.75 0.6-1.35 1.35-1.35z"
+          fill="#f8fafc"
         />
-
-        <g
-          style={{
-            transformOrigin: "24px 24px",
-            animation: orbit ? `nx-orbit ${orbit} linear infinite` : undefined,
-          }}
-        >
-          <path
-            d="M8.5 24 A15.5 15.5 0 0 1 39.5 24"
-            stroke={accent ?? `url(#${g.arc})`}
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            fill="none"
-            opacity={state === "idle" ? 0.55 : 0.95}
-          />
-          {state !== "error" && state !== "done" ? (
-            <circle cx="39.5" cy="24" r="1.5" fill={accent ?? "#a5b4fc"} opacity="0.95">
-              {(state === "thinking" || state === "working") && (
-                <animate attributeName="opacity" values="0.4;1;0.4" dur="1.4s" repeatCount="indefinite" />
-              )}
-            </circle>
-          ) : null}
-        </g>
       </svg>
     </span>
   );
