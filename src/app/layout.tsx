@@ -8,6 +8,7 @@ import "./landing-motion.css";
 import "./builder-motion.css";
 import "./theme-backdrop.css";
 import "./onboarding-motion.css";
+import "./app-motion.css";
 
 const inter = Inter({
   variable: "--font-inter",
