@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BuilderView as WorkspaceBuilderView } from "./builder-workspace";
 
+/** User-facing site panes. Terminal/console is backend-only and never a route. */
 export type SiteView = "chat" | "preview" | "files" | "code";
 
 type RestoredSite = { id: string; title: string; idea: string };
@@ -327,8 +328,7 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       : "";
 
   // Terminal execution remains available to Trove's backend agent, but there is
-  // intentionally no user-facing terminal tab or route. The two selectors below
-  // hide the legacy workspace controls while the backend API remains intact.
+  // intentionally no user-facing terminal tab or route.
   const terminalHiddenClass =
     "[&_.trove-tab-active:last-of-type]:!hidden [&>div>nav>div]:!grid-cols-4 [&>div>nav>div>button:last-child]:!hidden";
 
