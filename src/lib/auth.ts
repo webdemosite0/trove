@@ -40,7 +40,6 @@ function rowToUser(row: Record<string, unknown>): User {
     plan: str(row.plan),
     emailVerified: num(row.email_verified) === 1,
     provider: str(row.provider) || "password",
-    // Missing column / null → not done (new accounts must onboard)
     onboardingDone: num(row.onboarding_done) === 1,
   };
 }
@@ -60,7 +59,6 @@ export async function createUser(
      VALUES (?, ?, ?, ?, 'free', ?, ?, ?, 0)`,
     [id, email.toLowerCase(), name, hashPassword(password), Date.now(), verified, provider],
   ).catch(async () => {
-    // Fallback if column not yet migrated on this instance
     await run(
       `INSERT INTO users (id, email, name, password_hash, plan, created_at, email_verified, provider)
        VALUES (?, ?, ?, ?, 'free', ?, ?, ?)`,
@@ -104,12 +102,20 @@ export async function updateUserProfile(
 
 export async function completeOnboarding(
   userId: string,
-  meta?: { goal?: string; role?: string; firstIdea?: string },
+  meta?: {
+    goal?: string;
+    role?: string;
+    firstIdea?: string;
+    plan?: string;
+    paymentMethod?: string;
+  },
 ) {
   const payload = JSON.stringify({
     goal: meta?.goal || "",
     role: meta?.role || "",
     firstIdea: meta?.firstIdea || "",
+    preferredPlan: meta?.plan || "free",
+    paymentMethod: meta?.paymentMethod || "",
     at: Date.now(),
   });
   try {
@@ -119,6 +125,18 @@ export async function completeOnboarding(
     );
   } catch {
     await run(`UPDATE users SET onboarding_done = 1 WHERE id = ?`, [userId]);
+  }
+
+  // Log paid interest for admin (Pakistan / manual billing)
+  if (meta?.plan && meta.plan !== "free") {
+    console.info(
+      "[billing] paid plan requested",
+      JSON.stringify({
+        userId,
+        preferredPlan: meta.plan,
+        paymentMethod: meta.paymentMethod || "later",
+      }),
+    );
   }
 }
 
