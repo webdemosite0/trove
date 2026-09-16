@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- WebContainer is loaded dynamically at runtime, so its SDK types are intentionally not a build dependency. */
 "use client";
 
 import type { ProjectFile } from "@/lib/builder";
