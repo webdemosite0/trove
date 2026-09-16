@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TroveOrb } from "@/components/brand/orb";
+import { ThinkingOrb } from "thinking-orbs";
 import { ProcessRow, WorkingTimer } from "@/components/builder/process-row";
 
 type Step = {
@@ -10,6 +10,17 @@ type Step = {
   connectorId?: string;
 };
 
+type OrbState =
+  | "working"
+  | "searching"
+  | "solving"
+  | "listening"
+  | "connecting"
+  | "weaving"
+  | "composing"
+  | "breathing"
+  | "shaping";
+
 const DEFAULT_STEPS: Step[] = [
   { kind: "think", label: "Exploring your request" },
   { kind: "cmd", label: "Planning the answer" },
@@ -17,8 +28,20 @@ const DEFAULT_STEPS: Step[] = [
   { kind: "think", label: "Writing the response" },
 ];
 
+function orbForStep(s: Step | undefined): OrbState {
+  if (!s) return "working";
+  const lower = `${s.label} ${s.connectorId ?? ""}`.toLowerCase();
+  if (s.kind === "connect" || lower.includes("connect")) return "connecting";
+  if (lower.includes("search") || lower.includes("explor")) return "searching";
+  if (lower.includes("plan")) return "solving";
+  if (lower.includes("writ") || lower.includes("compos")) return "composing";
+  if (s.kind === "cmd") return "weaving";
+  if (s.kind === "file") return "shaping";
+  return "working";
+}
+
 /**
- * Live thinking strip — process rows + working timer (Grok-style).
+ * Live thinking strip — process rows + ThinkingOrb (Libraries.dev).
  * Connector steps render as "Used GitHub Connector" with the service mark.
  */
 export function ThinkingLine({ labels }: { labels?: string[] }) {
@@ -54,10 +77,13 @@ export function ThinkingLine({ labels }: { labels?: string[] }) {
     return () => clearInterval(t);
   }, [steps.length]);
 
+  const current = steps[step];
+  const orbState = orbForStep(current);
+
   return (
     <div className="nx-in flex items-start gap-3">
-      <span className="nx-thinking relative mt-0.5 grid shrink-0 place-items-center">
-        <TroveOrb size={24} state="thinking" />
+      <span className="relative mt-0.5 grid shrink-0 place-items-center" aria-hidden>
+        <ThinkingOrb state={orbState} size={64} theme="auto" />
       </span>
       <div className="min-w-0 flex-1 space-y-0.5">
         {steps.slice(0, step + 1).map((s, i) => (
@@ -69,7 +95,7 @@ export function ThinkingLine({ labels }: { labels?: string[] }) {
             active={i === step}
           />
         ))}
-        <WorkingTimer secs={secs} />
+        <WorkingTimer secs={secs} orbState={orbState} />
       </div>
     </div>
   );
