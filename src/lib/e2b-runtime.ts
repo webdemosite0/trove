@@ -24,6 +24,12 @@ function safePath(raw: string) {
     .join("/");
 }
 
+function safeMetadataValue(value: string) {
+  return String(value || "")
+    .replace(/[^a-zA-Z0-9_.:-]/g, "-")
+    .slice(0, 100);
+}
+
 function defaultPackageJson() {
   return JSON.stringify(
     {
@@ -62,8 +68,23 @@ export function normalizeProjectFiles(files: ProjectFile[]) {
 }
 
 function hashPackage(files: { path: string; content: string }[]) {
-  const pkg = files.find((file) => file.path === "package.json")?.content || defaultPackageJson();
-  return createHash("sha256").update(pkg).digest("hex");
+  const dependencyFiles = files
+    .filter((file) =>
+      [
+        "package.json",
+        "package-lock.json",
+        "npm-shrinkwrap.json",
+        "pnpm-lock.yaml",
+        "yarn.lock",
+      ].includes(file.path),
+    )
+    .sort((a, b) => a.path.localeCompare(b.path));
+
+  const source = dependencyFiles.length
+    ? dependencyFiles.map((file) => `${file.path}\n${file.content}`).join("\n---\n")
+    : defaultPackageJson();
+
+  return createHash("sha256").update(source).digest("hex");
 }
 
 async function portIsUp(sandbox: Sandbox) {
@@ -108,7 +129,10 @@ export async function connectExistingSandbox(sandboxId: string) {
   return sandbox;
 }
 
-export async function connectOrCreateSandbox(existingSandboxId?: string | null) {
+export async function connectOrCreateSandbox(
+  existingSandboxId?: string | null,
+  projectScope?: string | null,
+) {
   if (existingSandboxId) {
     try {
       const sandbox = await connectExistingSandbox(existingSandboxId);
@@ -122,7 +146,11 @@ export async function connectOrCreateSandbox(existingSandboxId?: string | null) 
   const sandbox = await Sandbox.create({
     apiKey,
     timeoutMs: SANDBOX_TIMEOUT_MS,
-    metadata: { app: "trove", purpose: "site-preview" },
+    metadata: {
+      app: "trove",
+      purpose: "site-preview",
+      ...(projectScope ? { project: safeMetadataValue(projectScope) } : {}),
+    },
   });
 
   return { sandbox, reused: false };
