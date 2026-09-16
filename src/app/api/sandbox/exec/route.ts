@@ -32,17 +32,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Command is too long." }, { status: 400 });
   }
 
-  const scope = body.projectId?.trim() || "draft";
+  const projectId = body.projectId?.trim() || "";
+  if (!projectId) {
+    return NextResponse.json(
+      { error: "This terminal needs a saved site project." },
+      { status: 400 },
+    );
+  }
+
   const jar = await cookies();
-  const cookieName = e2bCookieName(user.id, scope);
-  const draftCookieName = e2bCookieName(user.id, "draft");
-  const sandboxId =
-    jar.get(cookieName)?.value ||
-    (scope !== "draft" ? jar.get(draftCookieName)?.value : undefined);
+  const cookieName = e2bCookieName(user.id, projectId);
+  const sandboxId = jar.get(cookieName)?.value;
 
   if (!sandboxId) {
     return NextResponse.json(
-      { error: "Open Preview once before using the terminal." },
+      { error: "Open this project's Preview once before using its terminal." },
       { status: 409 },
     );
   }
@@ -55,6 +59,7 @@ export async function POST(req: Request) {
       stdout: result.stdout,
       stderr: result.stderr,
       exitCode: result.exitCode,
+      projectId,
       runtime: "e2b",
     });
 
@@ -63,14 +68,15 @@ export async function POST(req: Request) {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/api/sandbox",
-      maxAge: 60 * 60,
+      maxAge: 30 * 60,
     });
 
     return response;
   } catch {
     return NextResponse.json(
       {
-        error: "Preview sandbox expired. Open Preview to restore the project, then run the command again.",
+        error: "This project's preview sandbox expired. Open Preview to restore it, then run the command again.",
+        projectId,
         runtime: "e2b",
       },
       { status: 409 },
