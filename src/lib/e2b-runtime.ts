@@ -101,22 +101,27 @@ async function startPreviewServer(sandbox: Sandbox) {
   }
 }
 
-export async function connectOrCreateSandbox(existingSandboxId?: string | null) {
+export async function connectExistingSandbox(sandboxId: string) {
   const apiKey = requireApiKey();
+  const sandbox = await Sandbox.connect(sandboxId, {
+    apiKey,
+    timeoutMs: SANDBOX_TIMEOUT_MS,
+  });
+  await sandbox.setTimeout(SANDBOX_TIMEOUT_MS);
+  return sandbox;
+}
 
+export async function connectOrCreateSandbox(existingSandboxId?: string | null) {
   if (existingSandboxId) {
     try {
-      const sandbox = await Sandbox.connect(existingSandboxId, {
-        apiKey,
-        timeoutMs: SANDBOX_TIMEOUT_MS,
-      });
-      await sandbox.setTimeout(SANDBOX_TIMEOUT_MS);
+      const sandbox = await connectExistingSandbox(existingSandboxId);
       return { sandbox, reused: true };
     } catch {
       // The sandbox may have timed out or been killed. Create a fresh one.
     }
   }
 
+  const apiKey = requireApiKey();
   const sandbox = await Sandbox.create({
     apiKey,
     timeoutMs: SANDBOX_TIMEOUT_MS,
