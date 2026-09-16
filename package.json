@@ -13,6 +13,7 @@
   "dependencies": {
     "@libsql/client": "^0.17.4",
     "@supabase/supabase-js": "^2.112.3",
+    "border-beam": "^1.0.0",
     "clsx": "^2.1.1",
     "docx": "^9.7.1",
     "e2b": "^1.13.2",
@@ -26,7 +27,8 @@
     "react-icons": "^5.7.0",
     "server-only": "^0.0.1",
     "stripe": "^22.5.0",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "thinking-orbs": "^0.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
