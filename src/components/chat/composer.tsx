@@ -141,7 +141,8 @@ export function Composer({
       data-disabled={disabled}
       data-focused={focused}
       className={cn(
-        "composer relative overflow-hidden border bg-rail",
+        /* overflow-visible so ModePicker / AttachMenu menus are not clipped */
+        "composer relative border bg-rail",
         compact
           ? "rounded-[var(--r-panel)]"
           : "rounded-[24px] shadow-[var(--sh-2)]",
@@ -249,7 +250,7 @@ export function Composer({
 
       <div
         className={cn(
-          "flex items-center",
+          "relative z-10 flex items-center",
           compact ? "gap-1.5 px-2 pb-2" : "gap-2 border-t border-line/70 px-3.5 py-3",
         )}
       >
