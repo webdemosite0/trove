@@ -2,6 +2,7 @@ import "server-only";
 
 import { one, all, run, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 
 /**
  * Credits are a thin, honest wrapper over model token usage.
@@ -11,12 +12,17 @@ import { currentUser } from "@/lib/auth";
  *
  * In addition to the monthly grant, a rolling 5-hour window (Codex-style)
  * caps burst usage so one intense session cannot empty the month in minutes.
+ *
+ * Admin emails (ADMIN_EMAILS / ADMIN_EMAIL) are unlimited — never gated.
  */
 
 export const TOKENS_PER_CREDIT = 1_000;
 
 /** Rolling burst window — same idea as Codex's 5-hour rate limit. */
 export const RATE_WINDOW_MS = 5 * 60 * 60 * 1000;
+
+/** Sentinel used in Balance when the account is unlimited (admin). */
+export const UNLIMITED = 1_000_000_000;
 
 export interface Plan {
   id: string;
@@ -111,6 +117,8 @@ export interface Balance {
   period: string;
   /** Rolling 5-hour burst window. */
   window: RateWindow;
+  /** True when this account is admin and never rate-limited. */
+  unlimited: boolean;
 }
 
 async function ensureGrant(
@@ -152,7 +160,18 @@ export async function rateWindowFor(
   userId: string,
   planId: string,
   now = Date.now(),
+  opts?: { unlimited?: boolean },
 ): Promise<RateWindow> {
+  if (opts?.unlimited) {
+    return {
+      used: 0,
+      limit: UNLIMITED,
+      remaining: UNLIMITED,
+      resetsAt: new Date(now),
+      exhausted: false,
+    };
+  }
+
   const plan = planById(planId);
   const since = now - RATE_WINDOW_MS;
 
@@ -166,7 +185,6 @@ export async function rateWindowFor(
 
   const used = num(row?.used);
   const oldest = row?.oldest != null ? num(row.oldest) : null;
-  // When the oldest entry ages past the window, capacity frees up.
   const resetsAt =
     oldest != null && oldest > 0
       ? new Date(oldest + RATE_WINDOW_MS)
@@ -183,8 +201,36 @@ export async function rateWindowFor(
   };
 }
 
-export async function balanceFor(userId: string, planId: string): Promise<Balance> {
+export async function balanceFor(
+  userId: string,
+  planId: string,
+  opts?: { email?: string },
+): Promise<Balance> {
+  const unlimited = isAdminEmail(opts?.email);
   const period = currentPeriod();
+
+  if (unlimited) {
+    // Still record real usage for observability, but never gate.
+    const row = await one(
+      `SELECT COALESCE(SUM(credits), 0) AS used, COALESCE(SUM(tokens), 0) AS tokens
+         FROM credit_spends WHERE user_id = ? AND period = ?`,
+      [userId, period],
+    ).catch(() => null);
+
+    const window = await rateWindowFor(userId, planId, Date.now(), { unlimited: true });
+
+    return {
+      plan: planById(planId),
+      granted: UNLIMITED,
+      used: num(row?.used),
+      remaining: UNLIMITED,
+      tokensUsed: num(row?.tokens),
+      period,
+      window,
+      unlimited: true,
+    };
+  }
+
   const granted = await ensureGrant(userId, planId, period);
 
   const row = await one(
@@ -204,6 +250,7 @@ export async function balanceFor(userId: string, planId: string): Promise<Balanc
     tokensUsed: num(row?.tokens),
     period,
     window,
+    unlimited: false,
   };
 }
 
@@ -211,12 +258,13 @@ export async function balanceFor(userId: string, planId: string): Promise<Balanc
 export async function myBalance(): Promise<Balance | null> {
   const user = await currentUser();
   if (!user) return null;
-  return await balanceFor(user.id, user.plan);
+  return await balanceFor(user.id, user.plan, { email: user.email });
 }
 
 /**
  * Records real usage. Called after the model has responded, with the token
  * count the provider reported — never before, and never with a guess.
+ * Admin spends are still logged so you can see activity; they are never gated.
  */
 export async function spend(
   userId: string,
@@ -264,6 +312,8 @@ export class RateWindowExceeded extends Error {
 /**
  * Gate for a route. Returns the identity and balance, or throws OutOfCredits /
  * RateWindowExceeded. Checked before the call; the actual debit happens after.
+ *
+ * Admin Gmail (ADMIN_EMAILS) always passes — unlimited credits and no 5h cap.
  */
 export async function requireCredits(): Promise<{
   userId: string;
@@ -272,7 +322,12 @@ export async function requireCredits(): Promise<{
   const user = await currentUser();
   if (!user) return null;
 
-  const balance = await balanceFor(user.id, user.plan);
+  const balance = await balanceFor(user.id, user.plan, { email: user.email });
+
+  if (balance.unlimited) {
+    return { userId: user.id, balance };
+  }
+
   if (balance.remaining <= 0) throw new OutOfCredits(balance);
   if (balance.window.exhausted) throw new RateWindowExceeded(balance);
 
