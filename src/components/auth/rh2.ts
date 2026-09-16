@@ -1,1 +1,1 @@
-PLACEHOLDER
+export const RH2 = "";
