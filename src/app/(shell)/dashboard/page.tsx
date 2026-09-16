@@ -32,7 +32,6 @@ const START = [
     href: "/websites",
     Icon: TbWorld,
     tint: "bg-sky-50 border-sky-100 hover:border-sky-300/60 dark:bg-sky-500/10 dark:border-sky-500/20",
-    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
   {
     label: "Create an AI agent",
@@ -40,7 +39,6 @@ const START = [
     href: "/agents",
     Icon: TbRobot,
     tint: "bg-violet-50 border-violet-100 hover:border-violet-300/60 dark:bg-violet-500/10 dark:border-violet-500/20",
-    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
   {
     label: "Research something",
@@ -48,7 +46,6 @@ const START = [
     href: "/research",
     Icon: TbSearch,
     tint: "bg-cyan-50 border-cyan-100 hover:border-cyan-300/60 dark:bg-cyan-500/10 dark:border-cyan-500/20",
-    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
   {
     label: "Write a document",
@@ -56,7 +53,6 @@ const START = [
     href: "/documents",
     Icon: TbFileText,
     tint: "bg-amber-50 border-amber-100 hover:border-amber-300/60 dark:bg-amber-500/10 dark:border-amber-500/20",
-    iconBg: "bg-white text-ink shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:text-white dark:ring-white/10",
   },
 ];
 
@@ -140,8 +136,8 @@ export default async function MePage() {
           href="/chat"
           className="mx-auto mt-8 flex max-w-[560px] items-center gap-3 rounded-[16px] border border-line bg-raised/90 px-4 py-3.5 shadow-[0_12px_40px_-20px_rgba(15,23,42,0.25)] transition hover:border-line-strong hover:shadow-[0_16px_48px_-18px_rgba(15,23,42,0.3)]"
         >
-          <span className="grid size-8 place-items-center rounded-full bg-ink/5 text-ink-4">
-            <FiZap size={16} />
+          <span className="grid size-8 place-items-center rounded-full bg-ink/5 text-ink">
+            <FiZap size={16} className="text-ink" />
           </span>
           <span className="flex-1 text-left text-[14.5px] text-ink-4">
             Ask anything, or describe what to build…
@@ -183,8 +179,8 @@ export default async function MePage() {
                   className={`group flex flex-col rounded-[16px] border p-5 transition hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-18px_rgba(15,23,42,0.22)] ${a.tint}`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className={`grid size-10 place-items-center rounded-xl ${a.iconBg}`}>
-                      <Icon size={20} strokeWidth={1.75} />
+                    <span className="grid size-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+                      <Icon size={20} strokeWidth={1.75} className="text-black" />
                     </span>
                     <FiArrowRight
                       size={16}
@@ -208,7 +204,7 @@ export default async function MePage() {
                 href={m.href}
                 className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-line-strong hover:text-ink"
               >
-                <Icon size={14} className="text-ink" />
+                <Icon size={14} className="text-black" />
                 {m.label}
               </Link>
             );
