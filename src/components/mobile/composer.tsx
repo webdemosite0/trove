@@ -17,17 +17,10 @@ import type { ChatModelId, ChatModelOption } from "@/lib/chat-models";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
 
-/**
- * The phone composer.
- *
- * The phone gets a dedicated composer so controls remain thumb-sized. Model
- * and response-style pickers collapse into compact pills while their menus
- * open as bottom sheets, keeping the text box usable even on 320px screens.
- */
 export function MobileComposer({
   onSend,
   disabled = false,
-  placeholder = "Ask anything, or describe what to build…",
+  placeholder = "Ask Trove to build, refine, or analyze…",
   mode,
   onModeChange,
   model,
@@ -45,7 +38,6 @@ export function MobileComposer({
   modelOptions?: ChatModelOption[];
   onModelChange?: (id: ChatModelId) => void;
   autoFocus?: boolean;
-  /** Prefills the box — an idea typed before signing in, for instance. */
   initialValue?: string;
 }) {
   const [value, setValue] = React.useState(initialValue);
@@ -57,7 +49,7 @@ export function MobileComposer({
     const el = box.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 148)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 112)}px`;
   }, []);
 
   const submit = () => {
@@ -73,16 +65,11 @@ export function MobileComposer({
   const pick = async (list: FileList | null) => {
     if (!list?.length) return;
     setError(null);
-
     const room = MAX_FILES - files.length;
-    if (room <= 0) {
-      setError(`Up to ${MAX_FILES} files.`);
-      return;
-    }
+    if (room <= 0) return setError(`Up to ${MAX_FILES} files.`);
 
     const next: Attachment[] = [];
     let total = files.reduce((n, f) => n + f.size, 0);
-
     for (const file of Array.from(list).slice(0, room)) {
       if (file.size > MAX_FILE_BYTES) {
         setError(`${file.name} is over ${humanSize(MAX_FILE_BYTES)}.`);
@@ -99,47 +86,31 @@ export function MobileComposer({
         setError(`Could not read ${file.name}.`);
       }
     }
-
     if (next.length) setFiles((f) => [...f, ...next]);
   };
 
   const ready = Boolean(value.trim()) && !disabled;
 
   return (
-    <div
-      className={cn(
-        "composer rounded-[var(--r-hero)] border bg-raised px-1 pb-1 pt-1",
-        disabled && "opacity-70",
-      )}
-    >
+    <div className={cn("rounded-[18px] border border-line bg-raised/96 p-1 shadow-[0_10px_35px_-24px_rgba(15,23,42,.42)] backdrop-blur-xl", disabled && "opacity-70")}>
       {files.length ? (
-        <ul className="flex gap-2 overflow-x-auto px-3 pb-1 pt-2 scrollbar-none">
+        <ul className="flex gap-1.5 overflow-x-auto px-2 pb-1 pt-1.5 scrollbar-none">
           {files.map((f, i) => (
-            <li
-              key={`${f.name}-${i}`}
-              className="flex shrink-0 items-center gap-1.5 rounded-full bg-sunk py-1 pl-3 pr-1.5"
-            >
-              <span className="max-w-[140px] truncate text-[12px] text-ink-2">{f.name}</span>
-              <button
-                type="button"
-                aria-label={`Remove ${f.name}`}
-                onClick={() => setFiles((list) => list.filter((_, n) => n !== i))}
-                className="grid h-5 w-5 place-items-center rounded-full text-ink-4 active:bg-hover"
-              >
-                <Ico icon={FiX} motion="close" size={12} />
+            <li key={`${f.name}-${i}`} className="flex shrink-0 items-center gap-1 rounded-full bg-sunk py-0.5 pl-2.5 pr-1">
+              <span className="max-w-[120px] truncate text-[10.5px] text-ink-2">{f.name}</span>
+              <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((list) => list.filter((_, n) => n !== i))} className="grid size-5 place-items-center rounded-full text-ink-4 hover:bg-hover">
+                <Ico icon={FiX} motion="close" size={11} />
               </button>
             </li>
           ))}
         </ul>
       ) : null}
 
-      {error ? (
-        <p className="px-3.5 pb-1 pt-2 text-[12.5px] text-critical">{error}</p>
-      ) : null}
+      {error ? <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] text-critical">{error}</p> : null}
 
       <textarea
         ref={box}
-        rows={2}
+        rows={1}
         value={value}
         disabled={disabled}
         autoFocus={autoFocus}
@@ -149,43 +120,21 @@ export function MobileComposer({
         }}
         placeholder={disabled ? "Working…" : placeholder}
         aria-label={placeholder}
-        className="block max-h-[148px] min-h-[52px] w-full resize-none bg-transparent px-3.5 pb-1 pt-3 text-[16px] leading-[1.45] text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed"
+        className="block max-h-[112px] min-h-[42px] w-full resize-none bg-transparent px-3 pb-1 pt-2.5 text-[14px] leading-5 text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed"
       />
 
-      <div className="flex items-center gap-0.5 px-1 pb-0.5">
-        <label
-          className={cn(
-            "grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition-colors active:bg-hover",
-            disabled && "pointer-events-none opacity-40",
-          )}
-        >
-          <Ico icon={FiPlus} motion="grow" size={20} />
+      <div className="flex items-center gap-0.5 px-0.5 pb-0.5">
+        <label className={cn("grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-hover", disabled && "pointer-events-none opacity-40")}>
+          <Ico icon={FiPlus} motion="grow" size={17} />
           <span className="sr-only">Attach files</span>
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              void pick(e.target.files);
-              e.target.value = "";
-            }}
-          />
+          <input type="file" multiple className="hidden" onChange={(e) => { void pick(e.target.files); e.target.value = ""; }} />
         </label>
 
         {model && modelOptions?.length && onModelChange ? (
-          <ModelPicker
-            value={model}
-            options={modelOptions}
-            onChange={onModelChange}
-            disabled={disabled}
-            touch
-          />
+          <ModelPicker value={model} options={modelOptions} onChange={onModelChange} disabled={disabled} compact touch />
         ) : null}
 
-        {mode && onModeChange ? (
-          <ModePicker value={mode} onChange={onModeChange} disabled={disabled} touch />
-        ) : null}
-
+        {mode && onModeChange ? <ModePicker value={mode} onChange={onModeChange} disabled={disabled} touch /> : null}
         <span className="flex-1" />
 
         <button
@@ -194,13 +143,11 @@ export function MobileComposer({
           disabled={!ready}
           aria-label="Send"
           className={cn(
-            "grid h-11 w-11 shrink-0 place-items-center rounded-full transition-all duration-[var(--t-hover)]",
-            ready
-              ? "btn-grad shadow-[0_6px_18px_-6px_var(--btn-glow)] active:scale-95"
-              : "bg-sunk text-ink-4",
+            "grid size-9 shrink-0 place-items-center rounded-full transition-all duration-[var(--t-hover)]",
+            ready ? "btn-grad shadow-[0_6px_16px_-7px_var(--btn-glow)] active:scale-95" : "bg-sunk text-ink-4",
           )}
         >
-          <Ico icon={FiArrowUp} motion="send" size={20} />
+          <Ico icon={FiArrowUp} motion="send" size={17} />
         </button>
       </div>
     </div>
