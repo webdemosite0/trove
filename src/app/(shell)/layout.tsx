@@ -58,7 +58,7 @@ export default async function ShellLayout({
           <main className="flex min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <AnnouncementBanner />
-            {children}
+            <div className="app-page-in min-w-0 flex-1">{children}</div>
           </main>
         </div>
         <FloatingChat />
