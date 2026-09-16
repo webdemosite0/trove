@@ -238,8 +238,9 @@ async function ensureShell() {
   if (shellWriter) return shellWriter;
   shellProcess = await wc.spawn("jsh", [], { terminal: { cols: 92, rows: 28 } });
   await pipeProcess(shellProcess);
-  shellWriter = shellProcess.input.getWriter();
-  return shellWriter;
+  const writer = shellProcess.input.getWriter() as WritableStreamDefaultWriter<string>;
+  shellWriter = writer;
+  return writer;
 }
 
 export async function runLocalCommand(command: string) {
