@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 import { one, run, uid, all } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
-
-function isAdminEmail(email: string) {
-  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
-  return raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(email.toLowerCase());
-}
 
 async function requireAdmin() {
   const user = await currentUser();
