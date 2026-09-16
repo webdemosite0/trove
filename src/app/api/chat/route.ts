@@ -3,7 +3,12 @@ import { streamText, type Source, type Turn } from "@/lib/ai";
 import { instructionsBlock, connectedToolsBlock } from "@/lib/user-prefs";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
-import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import {
+  requireCredits,
+  spend,
+  OutOfCredits,
+  RateWindowExceeded,
+} from "@/lib/credits";
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import { listConnections, secretFor } from "@/lib/connections";
 
@@ -85,6 +90,17 @@ async function handle(req: NextRequest) {
       return Response.json(
         { error: e.message, outOfCredits: true, balance: e.balance },
         { status: 402 },
+      );
+    }
+    if (e instanceof RateWindowExceeded) {
+      return Response.json(
+        {
+          error: e.message,
+          rateWindowExceeded: true,
+          balance: e.balance,
+          resetsAt: e.balance.window.resetsAt.toISOString(),
+        },
+        { status: 429 },
       );
     }
     const message = e instanceof Error ? e.message : String(e);
