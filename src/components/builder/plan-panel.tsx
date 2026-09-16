@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BorderBeam } from "border-beam";
 import { FiFileText, FiDatabase, FiCheck, TbPalette } from "@/components/ui/icons";
 import type { BuildPlan } from "@/lib/builder";
 import { skillLabel } from "@/lib/skills";
@@ -32,7 +33,7 @@ export function PlanPanel({
     ...new Set(plan.steps.flatMap((s) => s.skills ?? [])),
   ];
 
-  return (
+  const panel = (
     <div className="bezel overflow-hidden">
       <div className="flex gap-1 border-b border-line bg-rail/60 p-1.5">
         {TABS.map((t) => (
@@ -235,5 +236,17 @@ export function PlanPanel({
         </button>
       </div>
     </div>
+  );
+
+  return (
+    <BorderBeam
+      size="md"
+      colorVariant="colorful"
+      strength={busy ? 0.8 : 0.4}
+      active={busy}
+      theme="auto"
+    >
+      {panel}
+    </BorderBeam>
   );
 }
