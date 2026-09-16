@@ -1,5 +1,7 @@
 "use client";
 
+import { ThinkingOrb } from "thinking-orbs";
+import { BorderBeam } from "border-beam";
 import { FiCheck, FiAlertCircle } from "@/components/ui/icons";
 import type { PlanStep, Task } from "@/lib/builder";
 import { skillLabel } from "@/lib/skills";
@@ -9,11 +11,7 @@ export type StepState = "todo" | "run" | "ok" | "fail";
 
 /**
  * The plan and its progress, in one box.
- *
- * Previously each step spawned its own collapsible feed, so a seven-step build
- * produced seven boxes and the conversation was mostly chrome. Here the plan is
- * the single fixed thing on screen and the running step carries its own live
- * line, which is the only part that changes.
+ * Active build gets ThinkingOrb + BorderBeam glow.
  */
 export function StepsBox({
   steps,
@@ -31,11 +29,13 @@ export function StepsBox({
   const done = steps.filter((s) => states[s.id] === "ok").length;
   const running = current >= 0 && current < steps.length;
 
-  return (
+  const body = (
     <div className="bezel overflow-hidden">
       <div className="flex items-center gap-2 border-b border-line bg-rail/60 px-3.5 py-2.5">
         {running ? (
-          <span className="block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-[1.5px] border-accent border-t-transparent" />
+          <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
+            <ThinkingOrb state="weaving" size={20} theme="auto" />
+          </span>
         ) : done === steps.length && steps.length ? (
           <FiCheck size={14} className="shrink-0 text-positive" />
         ) : null}
@@ -53,7 +53,6 @@ export function StepsBox({
         </span>
       </div>
 
-      {/* Progress bar — the one place a long build shows shape at a glance. */}
       <div
         className={cn("relative h-[2px] w-full overflow-hidden bg-sunk", running && "nx-sweep")}
       >
@@ -76,9 +75,9 @@ export function StepsBox({
               )}
             >
               <div className="flex items-center gap-2.5">
-                <span className="grid h-4 w-4 shrink-0 place-items-center">
+                <span className="grid h-5 w-5 shrink-0 place-items-center">
                   {st === "run" ? (
-                    <span className="block h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-accent border-t-transparent" />
+                    <ThinkingOrb state="working" size={20} theme="auto" />
                   ) : st === "ok" ? (
                     <FiCheck size={13} className="text-positive" />
                   ) : st === "fail" ? (
@@ -113,7 +112,6 @@ export function StepsBox({
                 ))}
               </div>
 
-              {/* What it is doing, right now, under the step doing it. */}
               {isCurrent && activity ? (
                 <p className="nx-in mt-1 pl-[26px] text-[12px] text-accent">
                   <span className="nx-dots">{activity.label}</span>
@@ -124,5 +122,13 @@ export function StepsBox({
         })}
       </ul>
     </div>
+  );
+
+  if (!running) return body;
+
+  return (
+    <BorderBeam size="md" colorVariant="colorful" strength={0.65} active theme="auto">
+      {body}
+    </BorderBeam>
   );
 }
