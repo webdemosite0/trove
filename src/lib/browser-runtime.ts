@@ -156,16 +156,53 @@ function fingerprint(files: { path: string; content: string }[]) {
   return (hash >>> 0).toString(36);
 }
 
+function normalizeRuntimeError(raw: string) {
+  if (/SharedArrayBuffer|crossOriginIsolated|postMessage.*Worker/i.test(raw)) {
+    return "Local runtime needs browser cross-origin isolation. Reload the Sites workspace in a fresh tab; Trove will not start the runtime until COOP/COEP are active.";
+  }
+  if (/more instances|single instance|already.*instance/i.test(raw)) {
+    return "The local runtime was already started by this tab. Reload the Sites workspace once to reconnect to the shared runtime.";
+  }
+  return raw;
+}
+
+async function ensureCrossOriginIsolation() {
+  if (typeof window === "undefined") {
+    throw new Error("Local runtime only runs in the browser.");
+  }
+  if (!window.isSecureContext && window.location.hostname !== "localhost") {
+    throw new Error("Local preview requires HTTPS.");
+  }
+
+  const hasSharedArrayBuffer = typeof SharedArrayBuffer !== "undefined";
+  if (window.crossOriginIsolated && hasSharedArrayBuffer) return;
+
+  // A client-side transition from a normal Trove page to /websites keeps the
+  // old document's security policy. One real document reload makes the browser
+  // receive the /websites COOP/COEP response headers and enables SAB.
+  const isSitesWorkspace = /^\/websites(?:\/|$)/.test(window.location.pathname);
+  const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  const alreadyReloaded = navigation?.type === "reload";
+
+  if (isSitesWorkspace && !alreadyReloaded) {
+    publish({ status: "booting", error: null });
+    appendOutput("Preparing isolated local runtime…");
+    window.location.reload();
+    await new Promise<never>(() => undefined);
+  }
+
+  throw new Error(
+    "Browser cross-origin isolation is not active. Open Trove Sites directly over HTTPS and hard refresh once. Chrome/Edge are recommended for the local runtime.",
+  );
+}
+
 async function loadWebContainer(): Promise<WebContainerLike> {
   if (store.container) return store.container;
   if (store.bootPromise) return store.bootPromise;
 
   store.bootPromise = (async () => {
     publish({ status: "booting", error: null });
-    if (typeof window === "undefined") throw new Error("Local runtime only runs in the browser.");
-    if (!window.isSecureContext && window.location.hostname !== "localhost") {
-      throw new Error("Local preview requires HTTPS.");
-    }
+    await ensureCrossOriginIsolation();
 
     const dynamicImport = new Function("url", "return import(url)") as (url: string) => Promise<any>;
     const mod = await dynamicImport(CDN);
@@ -185,7 +222,8 @@ async function loadWebContainer(): Promise<WebContainerLike> {
       appendOutput(`Local server ready on http://localhost:${port}`);
     });
     wc.on("error", (error: unknown) => {
-      const message = error instanceof Error ? error.message : String(error || "Local runtime error");
+      const raw = error instanceof Error ? error.message : String(error || "Local runtime error");
+      const message = normalizeRuntimeError(raw);
       publish({ status: "error", error: message });
       appendOutput(`runtime: ${message}`);
     });
@@ -195,9 +233,7 @@ async function loadWebContainer(): Promise<WebContainerLike> {
   })().catch((error) => {
     store.bootPromise = null;
     const raw = error instanceof Error ? error.message : "Local runtime failed to start.";
-    const message = /more instances|single instance|already.*instance/i.test(raw)
-      ? "The local runtime was already started by this tab. Refresh this Trove page once to reconnect to the shared runtime."
-      : raw;
+    const message = normalizeRuntimeError(raw);
     publish({ status: "error", error: message });
     throw error;
   });
@@ -264,9 +300,7 @@ export async function syncLocalProject(files: ProjectFile[]) {
       if (store.snapshot.url) publish({ status: "ready" });
     } catch (error) {
       const raw = error instanceof Error ? error.message : "Local runtime failed.";
-      const message = /more instances|single instance|already.*instance/i.test(raw)
-        ? "The local runtime was already started by this tab. Refresh this Trove page once to reconnect to the shared runtime."
-        : raw;
+      const message = normalizeRuntimeError(raw);
       publish({ status: "error", error: message });
       appendOutput(`error: ${message}`);
     } finally {
