@@ -28,6 +28,7 @@ import {
   TbPlugConnected,
   TbRefreshDot,
 } from "@/components/ui/icons";
+import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
@@ -88,23 +89,6 @@ const SECONDARY: { href: string; label: string; icon: IconType }[] = [
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
-}
-
-/** Compact text mark for the collapsed rail — no box / orbit. */
-function MarkT({ size = 15 }: { size?: number }) {
-  return (
-    <span
-      className="wordmark-gradient inline-flex items-center justify-center font-semibold leading-none"
-      style={{
-        fontFamily: "var(--font-display)",
-        fontSize: size,
-        letterSpacing: "-0.02em",
-      }}
-      aria-hidden
-    >
-      T
-    </span>
-  );
 }
 
 function NavRow({
@@ -241,14 +225,15 @@ function RailBody({
 
   return (
     <>
-      <div className="flex h-11 items-center justify-between px-3.5 pt-3.5">
+      <div className="flex items-center justify-between px-3.5 pt-3.5">
         <Link
           href="/chat"
           onClick={onNavigate}
           aria-label="Trove home"
-          className="group inline-flex h-8 items-center"
+          className="group inline-flex items-center gap-2"
         >
-          <Wordmark size={17} sweep={false} />
+          <TroveOrb size={24} state="idle" />
+          <Wordmark size={15} sweep={false} />
         </Link>
         {onCollapse ? (
           <button
@@ -407,12 +392,8 @@ export function Sidebar({
           </div>
         ) : (
           <div className="flex h-full flex-col items-center gap-1 py-3.5">
-            <Link
-              href="/chat"
-              aria-label="Trove home"
-              className="grid h-8 w-8 place-items-center"
-            >
-              <MarkT size={16} />
+            <Link href="/chat" aria-label="Trove home">
+              <TroveOrb size={28} state="idle" />
             </Link>
             <button
               onClick={() => setCollapsed(false)}
