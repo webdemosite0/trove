@@ -103,10 +103,7 @@ async function startPreviewServer(sandbox: Sandbox) {
 
 export async function connectExistingSandbox(sandboxId: string) {
   const apiKey = requireApiKey();
-  const sandbox = await Sandbox.connect(sandboxId, {
-    apiKey,
-    timeoutMs: SANDBOX_TIMEOUT_MS,
-  });
+  const sandbox = await Sandbox.connect(sandboxId, { apiKey });
   await sandbox.setTimeout(SANDBOX_TIMEOUT_MS);
   return sandbox;
 }
@@ -152,7 +149,6 @@ export async function syncE2BProject(sandbox: Sandbox, projectFiles: ProjectFile
     await stopPreviewServer(sandbox);
   }
 
-  // Mirror the generated project while keeping node_modules warm between edits.
   await sandbox.commands.run(
     `bash -lc 'cd ${PROJECT_ROOT} && find . -mindepth 1 -maxdepth 1 ! -name node_modules ! -name .trove-package-hash -exec rm -rf {} +'`,
     { timeoutMs: 15_000 },
