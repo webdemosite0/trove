@@ -21,12 +21,9 @@ import {
   TbSearch,
   TbMessageCircle,
   TbFolder,
-  TbLayoutGrid,
   TbFiles,
-  TbTemplate,
+  TbPuzzle,
 } from "@/components/ui/icons";
-import { TroveOrb } from "@/components/brand/orb";
-import { Wordmark } from "@/components/brand/logo";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
 import { Ico, type Motion } from "@/components/ui/ico";
@@ -41,7 +38,6 @@ interface Item {
   motion: Motion;
 }
 
-/** Exact order from product screenshot */
 const NAV: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
@@ -54,7 +50,7 @@ const NAV: Item[] = [
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
   { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
   { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
-  { href: "/skills", label: "Templates", icon: TbTemplate, motion: "open" },
+  { href: "/skills", label: "Templates", icon: TbPuzzle, motion: "open" },
 ];
 
 function isActive(pathname: string, href: string, label?: string) {
@@ -192,13 +188,11 @@ function RailBody({
   user: User | null;
   balance: Balance | null;
   onNavigate?: () => void;
-  onCollapse?: () => void;
 }) {
   const pathname = usePathname();
 
   return (
     <>
-      {/* Logo */}
       <div className="flex items-center px-4 pt-4 pb-2">
         <Link
           href="/dashboard"
@@ -215,7 +209,6 @@ function RailBody({
         </Link>
       </div>
 
-      {/* Nav list */}
       <nav
         aria-label="Main"
         className="mt-2 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-3 scrollbar-none"
@@ -230,7 +223,6 @@ function RailBody({
         ))}
       </nav>
 
-      {/* Footer */}
       <div className="space-y-2.5 border-t border-[#efeeef] p-3">
         <Link
           href="/plans"
