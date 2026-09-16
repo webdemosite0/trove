@@ -217,8 +217,17 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
     return () => window.removeEventListener("popstate", onPopState);
   }, [selectView]);
 
+  const previewRouteClass =
+    view === "preview"
+      ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>nav]:hidden [&>div>div>main]:bg-[#1b1b1c]"
+      : "";
+
   return (
-    <div ref={rootRef} data-trove-site-view={view} className="h-full min-h-0">
+    <div
+      ref={rootRef}
+      data-trove-site-view={view}
+      className={`h-full min-h-0 ${previewRouteClass}`}
+    >
       <WorkspaceBuilderView {...props} />
     </div>
   );

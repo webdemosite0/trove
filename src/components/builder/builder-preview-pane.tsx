@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { BrowserFrame } from "@/components/builder/browser-frame";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  BrowserFrame,
+  type PreviewDestination,
+} from "@/components/builder/browser-frame";
+import { PublishPanel } from "@/components/builder/publish-panel";
 import type { ProjectFile } from "@/lib/builder";
 import {
   getLocalRuntimeSnapshot,
@@ -10,23 +15,28 @@ import {
 } from "@/lib/browser-runtime";
 
 /**
- * Full-height project preview.
- *
- * The generated Vite app runs in a reusable E2B sandbox. Trove keeps the
- * provider URL out of the workspace chrome and presents the dev server as
- * localhost:5173 while retaining the bundled HTML as an instant fallback.
+ * Full-height project preview backed by the reusable E2B runtime.
+ * The provider URL stays out of Trove's chrome; users see a product-style
+ * preview workspace while the real Vite server remains embedded underneath.
  */
 export function BuilderPreviewPane({
   preview,
   files = [],
   onRefresh,
+  onNavigate,
+  publishControl,
+  pageTitle = "Homepage",
 }: {
   preview: string | null;
   files?: ProjectFile[];
   sandboxUrl?: string | null;
   onSandboxError?: () => void;
   onRefresh?: () => void;
+  onNavigate?: (destination: PreviewDestination) => void;
+  publishControl?: ReactNode;
+  pageTitle?: string;
 }) {
+  const searchParams = useSearchParams();
   const [runtime, setRuntime] = useState(getLocalRuntimeSnapshot());
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -50,6 +60,26 @@ export function BuilderPreviewPane({
       ? "localhost:5173"
       : "about:blank";
 
+  const projectId = searchParams?.get("c") || null;
+  const publishTitle = useMemo(() => {
+    const index = files.find(
+      (file) => file.path === "index.html" || file.path.endsWith("/index.html"),
+    );
+    const htmlTitle = index?.content.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim();
+    if (htmlTitle) return htmlTitle.slice(0, 80);
+
+    const packageFile = files.find((file) => file.path === "package.json");
+    if (packageFile) {
+      try {
+        const data = JSON.parse(packageFile.content) as { name?: string };
+        if (data.name?.trim()) return data.name.trim().slice(0, 80);
+      } catch {
+        // Keep the friendly fallback below.
+      }
+    }
+    return "Website";
+  }, [files]);
+
   const openPreview = () => {
     if (useLive && runtime.url) {
       window.open(runtime.url, "_blank", "noopener,noreferrer");
@@ -62,49 +92,79 @@ export function BuilderPreviewPane({
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
-  const statusLabel =
-    runtime.status === "booting"
-      ? "Starting sandbox"
-      : runtime.status === "installing"
-        ? "Installing packages"
-        : runtime.status === "starting"
-          ? "Starting preview server"
-          : runtime.status === "syncing"
-            ? "Syncing files"
-            : runtime.status === "error"
-              ? "Snapshot fallback"
-              : useLive
-                ? "Live · sandbox"
-                : "Live preview";
+  const navigate = (destination: PreviewDestination) => {
+    if (onNavigate) {
+      onNavigate(destination);
+      return;
+    }
+
+    const root = document.querySelector<HTMLElement>("[data-trove-site-view]");
+    const mobileButtons = Array.from(root?.querySelectorAll<HTMLButtonElement>("nav button") || []);
+    const label =
+      destination === "console"
+        ? "Terminal"
+        : destination.charAt(0).toUpperCase() + destination.slice(1);
+    const mobileButton = mobileButtons.find((button) => button.textContent?.trim() === label);
+    if (mobileButton) {
+      mobileButton.click();
+      return;
+    }
+
+    if (destination !== "chat") {
+      const indexMap: Record<Exclude<PreviewDestination, "chat">, number> = {
+        files: 1,
+        code: 2,
+        console: 3,
+      };
+      const desktopTabs = Array.from(
+        root?.querySelectorAll<HTMLButtonElement>("button.trove-tab-active") || [],
+      );
+      desktopTabs[indexMap[destination]]?.click();
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.pathname = "/websites/chat";
+    window.location.assign(url.toString());
+  };
+
+  const chromeStatus =
+    runtime.status === "error"
+      ? "error"
+      : useLive
+        ? "ready"
+        : runtime.status === "booting" ||
+            runtime.status === "installing" ||
+            runtime.status === "starting" ||
+            runtime.status === "syncing"
+          ? "working"
+          : "idle";
+
+  const realPublishControl =
+    publishControl ?? (
+      <PublishPanel
+        files={files}
+        projectId={projectId}
+        title={publishTitle}
+        previewHtml={preview}
+      />
+    );
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-1 flex-col gap-2 bg-sunk p-1.5 md:p-2">
-      <div className="flex shrink-0 items-center gap-2 px-1">
-        <span
-          className={`size-1.5 rounded-full ${
-            useLive
-              ? "bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,.12)]"
-              : runtime.status === "error"
-                ? "bg-amber-400"
-                : "animate-pulse bg-accent"
-          }`}
-        />
-        <span className="text-[11px] font-medium text-ink-3">{statusLabel}</span>
-        <span className="flex-1" />
-        <span className="hidden rounded-full border border-line bg-raised px-2 py-0.5 font-mono text-[10px] text-ink-4 sm:inline-flex">
-          localhost:{runtime.port || 5173}
-        </span>
-      </div>
-
+    <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#1b1b1c]">
       <BrowserFrame
         url={displayUrl}
+        pageTitle={pageTitle}
+        status={chromeStatus}
+        publishControl={realPublishControl}
+        onNavigate={navigate}
         onOpen={useLive || preview ? openPreview : undefined}
         onRefresh={() => {
           setRefreshKey((value) => value + 1);
           if (files.length) void syncLocalProject(files);
           onRefresh?.();
         }}
-        className="h-full min-h-0 shadow-[0_16px_50px_rgba(15,23,42,.08)]"
+        className="h-full min-h-0"
       >
         {useLive && runtime.url ? (
           <iframe
@@ -125,13 +185,13 @@ export function BuilderPreviewPane({
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="grid h-full min-h-[280px] place-items-center px-6 text-center">
+          <div className="grid h-full min-h-[280px] place-items-center bg-white px-6 text-center text-[#242427]">
             <div className="max-w-sm">
-              <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-line bg-raised shadow-sm">
-                <span className="font-mono text-[15px] font-semibold text-accent">{"//"}</span>
+              <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-black/[0.08] bg-[#f7f7f8] shadow-sm">
+                <span className="font-mono text-[15px] font-semibold text-[#6f45ff]">{"//"}</span>
               </div>
-              <p className="text-[16px] font-semibold tracking-tight text-ink">Live preview</p>
-              <p className="mt-2 text-[13px] leading-5 text-ink-4">
+              <p className="text-[16px] font-semibold tracking-tight">Live preview</p>
+              <p className="mt-2 text-[13px] leading-5 text-black/45">
                 Build your project and Trove will start its Vite server in an isolated cloud sandbox.
               </p>
             </div>
@@ -140,9 +200,9 @@ export function BuilderPreviewPane({
       </BrowserFrame>
 
       {runtime.status === "error" && runtime.error ? (
-        <p className="shrink-0 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-700 dark:text-amber-200">
-          Live runtime unavailable: {runtime.error}. Trove is showing the instant snapshot instead.
-        </p>
+        <div className="pointer-events-none absolute bottom-5 left-6 z-50 max-w-[360px] rounded-2xl border border-amber-400/20 bg-[#242426]/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-amber-100 shadow-2xl backdrop-blur-xl">
+          Live runtime unavailable: {runtime.error}. Showing the saved snapshot.
+        </div>
       ) : null}
     </div>
   );
