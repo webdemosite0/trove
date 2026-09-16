@@ -45,9 +45,8 @@ const ACTIONS = [
   },
 ];
 
-function relativeTime(ts: number | string | Date) {
-  const t = typeof ts === "number" ? ts : new Date(ts).getTime();
-  const diff = Math.max(0, Date.now() - t);
+function relativeTime(ts: number) {
+  const diff = Math.max(0, Date.now() - ts);
   const m = Math.floor(diff / 60000);
   if (m < 60) return `${Math.max(1, m)}m ago`;
   const h = Math.floor(m / 60);
@@ -60,7 +59,8 @@ function typeLabel(kind?: string) {
   const k = (kind || "").toLowerCase();
   if (k.includes("site") || k.includes("web")) return "Website";
   if (k.includes("doc")) return "Document";
-  if (k.includes("slide") || k.includes("deck") || k.includes("present")) return "Presentation";
+  if (k.includes("slide") || k.includes("deck") || k.includes("present"))
+    return "Presentation";
   if (k.includes("sheet") || k.includes("spread")) return "Sheet";
   if (k.includes("code") || k.includes("chat")) return "Code";
   return "Project";
@@ -72,7 +72,9 @@ export default async function MePage() {
   if (!user) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-5 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">Welcome to Trove</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+          Welcome to Trove
+        </h1>
         <p className="mt-2 text-[14.5px] text-ink-3">
           Sign in to open your workspace and keep building.
         </p>
@@ -95,7 +97,6 @@ export default async function MePage() {
 
   return (
     <div className="relative min-h-[calc(100dvh-3.5rem)] overflow-hidden">
-      {/* Soft lavender aurora background */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
@@ -106,7 +107,6 @@ export default async function MePage() {
       />
 
       <div className="mx-auto max-w-[920px] px-5 pb-20 pt-12 lg:pt-16">
-        {/* Badge */}
         <div className="flex justify-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#e4e2f0] bg-white/80 px-3.5 py-1.5 text-[12.5px] font-medium text-[#5c5c6e] shadow-sm backdrop-blur">
             <span className="relative flex h-2 w-2">
@@ -118,7 +118,6 @@ export default async function MePage() {
           </span>
         </div>
 
-        {/* Headline */}
         <h1 className="mt-6 text-center text-[clamp(2.1rem,1.6rem+2.2vw,3.15rem)] font-semibold leading-[1.12] tracking-[-0.035em] text-[#0f0f14]">
           Describe it once.
           <br />
@@ -139,7 +138,6 @@ export default async function MePage() {
           <span className="font-medium text-[#5b4cdb]">*.troveai.site</span>.
         </p>
 
-        {/* Composer */}
         <form action="/chat" method="get" className="mx-auto mt-9 max-w-[640px]">
           <div className="rounded-[20px] border border-[#e8e7f0] bg-white p-2 shadow-[0_16px_48px_-20px_rgba(80,70,160,0.22)]">
             <input
@@ -183,7 +181,6 @@ export default async function MePage() {
           </div>
         </form>
 
-        {/* Action cards */}
         <div className="mx-auto mt-8 grid max-w-[720px] gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {ACTIONS.map((a) => {
             const Icon = a.Icon;
@@ -213,7 +210,6 @@ export default async function MePage() {
           })}
         </div>
 
-        {/* Recent projects */}
         <div className="mx-auto mt-14 max-w-[920px]">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[15px] font-semibold text-[#1a1a24]">
@@ -240,7 +236,7 @@ export default async function MePage() {
                     {r.title || "Untitled"}
                   </p>
                   <p className="mt-0.5 text-[11.5px] text-[#8b8b9a]">
-                    {typeLabel(r.kind)} · {relativeTime(r.at)}
+                    {typeLabel(r.kind)} · {relativeTime(r.createdAt)}
                   </p>
                 </div>
               </Link>
@@ -248,7 +244,7 @@ export default async function MePage() {
 
             <Link
               href="/chat"
-              className="flex aspect-[4/3] min-h-[120px] flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#d8d6e4] bg-white/60 text-[#8b8b9a] transition hover:border-[#5b4cdb]/40 hover:bg-[#f8f6ff] hover:text-[#5b4cdb] sm:aspect-auto sm:min-h-0"
+              className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#d8d6e4] bg-white/60 text-[#8b8b9a] transition hover:border-[#5b4cdb]/40 hover:bg-[#f8f6ff] hover:text-[#5b4cdb]"
             >
               <span className="grid h-9 w-9 place-items-center rounded-full bg-[#f0eef8]">
                 <FiPlus size={18} />
