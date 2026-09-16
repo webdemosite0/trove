@@ -26,8 +26,7 @@ import {
   TbMessageCircle,
   TbPlugConnected,
 } from "@/components/ui/icons";
-import { TroveOrb } from "@/components/brand/orb";
-import { Wordmark } from "@/components/brand/logo";
+import { BrandLockup, TroveIcon } from "@/components/brand/logo";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
 import { ThemeToggle } from "@/components/shell/theme";
@@ -93,16 +92,12 @@ function NavRow({
         compact && "justify-center px-0",
       )}
     >
-      {/* Icons darker than labels for hierarchy */}
       <Ico
         icon={item.icon}
         motion={item.motion}
         active={active}
         size={18}
-        className={cn(
-          "shrink-0",
-          active ? "text-accent" : "text-ink",
-        )}
+        className={cn("shrink-0", active ? "text-accent" : "text-ink")}
       />
       {!compact ? (
         <span className={cn("truncate", active ? "text-accent" : "text-ink-3")}>
@@ -150,10 +145,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
         </span>
         <FiChevronRight
           size={14}
-          className={cn(
-            "shrink-0 text-ink-4 transition-transform",
-            open && "rotate-90",
-          )}
+          className={cn("shrink-0 text-ink-4 transition-transform", open && "rotate-90")}
         />
       </button>
 
@@ -223,8 +215,7 @@ function RailBody({
           aria-label="Trove home"
           className="inline-flex items-center gap-2"
         >
-          <TroveOrb size={26} state="idle" />
-          <Wordmark size={15} sweep={false} />
+          <BrandLockup orbSize={26} wordSize={15} sweep={false} />
         </Link>
         {onCollapse ? (
           <button
@@ -389,7 +380,7 @@ export function Sidebar({
         ) : (
           <div className="flex h-full flex-col items-center gap-1 py-3">
             <Link href="/dashboard" aria-label="Trove home" className="mb-1">
-              <TroveOrb size={28} state="idle" />
+              <TroveIcon size={28} />
             </Link>
             <button
               onClick={() => setCollapsed(false)}
