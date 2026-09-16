@@ -33,8 +33,12 @@ function projectIdFromUrl() {
   const queryId = url.searchParams.get("c")?.trim();
   if (queryId) return queryId;
 
-  const match = url.pathname.match(/^\/websites\/project\/([^/]+)(?:\/|$)/i);
-  if (match?.[1]) return decodeURIComponent(match[1]).trim();
+  const topLevel = url.pathname.match(/^\/project\/([^/]+)(?:\/|$)/i);
+  if (topLevel?.[1]) return decodeURIComponent(topLevel[1]).trim();
+
+  // Keep legacy project URLs readable during migration.
+  const legacy = url.pathname.match(/^\/websites\/project\/([^/]+)(?:\/|$)/i);
+  if (legacy?.[1]) return decodeURIComponent(legacy[1]).trim();
 
   const rootId = document
     .querySelector<HTMLElement>("[data-trove-project-id]")
@@ -208,6 +212,7 @@ export async function syncLocalProject(files: ProjectFile[], explicitProjectId?:
   await store.syncPromise;
 }
 
+/** Backend-agent shell bridge. No user-facing terminal route consumes this. */
 export async function runLocalCommand(command: string, explicitProjectId?: string | null) {
   const value = command.trim();
   if (!value) return;
