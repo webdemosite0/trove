@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import {
-  connectOrCreateSandbox,
+  connectExistingSandbox,
   e2bCookieName,
   runE2BCommand,
 } from "@/lib/e2b-runtime";
@@ -42,13 +42,13 @@ export async function POST(req: Request) {
 
   if (!sandboxId) {
     return NextResponse.json(
-      { error: "Start Preview once before using the terminal." },
+      { error: "Open Preview once before using the terminal." },
       { status: 409 },
     );
   }
 
   try {
-    const { sandbox } = await connectOrCreateSandbox(sandboxId);
+    const sandbox = await connectExistingSandbox(sandboxId);
     const result = await runE2BCommand(sandbox, command);
     const response = NextResponse.json({
       ok: true,
@@ -67,8 +67,13 @@ export async function POST(req: Request) {
     });
 
     return response;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Terminal command failed.";
-    return NextResponse.json({ error: message, runtime: "e2b" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      {
+        error: "Preview sandbox expired. Open Preview to restore the project, then run the command again.",
+        runtime: "e2b",
+      },
+      { status: 409 },
+    );
   }
 }
