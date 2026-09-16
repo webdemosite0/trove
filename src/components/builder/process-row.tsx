@@ -1,8 +1,19 @@
 "use client";
 
-import { TroveOrb } from "@/components/brand/orb";
+import { ThinkingOrb } from "thinking-orbs";
 import { ServiceMark } from "@/components/integrations/service-mark";
 import { cn } from "@/lib/utils";
+
+type OrbState =
+  | "working"
+  | "searching"
+  | "solving"
+  | "listening"
+  | "connecting"
+  | "weaving"
+  | "composing"
+  | "breathing"
+  | "shaping";
 
 /** Pure chat process line — Grok-style Ran command / Wrote / Used */
 export function ProcessRow({
@@ -20,7 +31,9 @@ export function ProcessRow({
   const id =
     connectorId ??
     (kind === "tool" || kind === "connect"
-      ? label.match(/\b(github|vercel|figma|slack|notion|linear|supabase|gmail|netlify|gitlab|stripe)\b/i)?.[1]
+      ? label.match(
+          /\b(github|vercel|figma|slack|notion|linear|supabase|gmail|netlify|gitlab|stripe)\b/i,
+        )?.[1]
       : undefined);
 
   return (
@@ -85,13 +98,21 @@ export function ProcessRow({
   );
 }
 
-export function WorkingTimer({ secs }: { secs: number }) {
+export function WorkingTimer({
+  secs,
+  orbState = "working",
+}: {
+  secs: number;
+  orbState?: OrbState;
+}) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
   return (
     <div className="flex items-center gap-2 pl-1 pt-2">
-      <TroveOrb size={14} state="thinking" />
+      <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
+        <ThinkingOrb state={orbState} size={20} theme="auto" />
+      </span>
       <span className="text-[12px] tabular-nums text-ink-4">Working for {label}</span>
     </div>
   );
