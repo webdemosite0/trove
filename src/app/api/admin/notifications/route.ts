@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 import { run, uid } from "@/lib/db";
 
 export const runtime = "nodejs";
-
-function isAdminEmail(email: string) {
-  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
-  const list = raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return list.includes(email.toLowerCase());
-}
 
 export async function POST(req: NextRequest) {
   const user = await currentUser();
