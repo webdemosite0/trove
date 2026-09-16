@@ -1,84 +1,60 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Keeps signed-out visitors out of the app.
- *
- * This used to do the opposite: it handed every visitor a guest cookie which
- * the app turned into a real user row, so anyone could mint an account — and
- * its monthly credit grant — by clearing cookies, any number of times. Using
- * Trove now requires an account.
- *
- * The check here is only "is there a session cookie", because middleware runs
- * on the edge with no database. A cookie that is expired, revoked or forged
- * gets past this and is rejected by the shell layout, which does look it up.
- * This exists to send people to the sign-in page instead of rendering a shell
- * around nothing — it is not the security boundary.
- */
-
 /** Reachable without an account. Everything else needs one. */
 const PUBLIC_PAGES = new Set(["/", "/login", "/signup", "/pricing", "/about"]);
 
 const PUBLIC_PREFIXES = [
-  "/features/", // the public capability pages — the only indexable content
-  "/verify-email", // opened from an email, in whatever browser
-  "/api/auth/", // the sign-in and OAuth callback routes themselves
-  "/api/health", // has to answer when the database is down
-  "/api/billing/webhook", // Stripe calls this server-to-server; it has no cookie
-  "/api/site/", // published sites ({slug}.troveai.site rewrites here — pure HTML)
-  "/s/", // legacy published-site path
+  "/features/",
+  "/verify-email",
+  "/api/auth/",
+  "/api/health",
+  "/api/billing/webhook",
+  "/api/site/",
+  "/s/",
 ];
+
+const PUBLISH_ROOT_DOMAIN = String(
+  process.env.NEXT_PUBLIC_PUBLISH_ROOT_DOMAIN || "troveai.site",
+)
+  .trim()
+  .toLowerCase()
+  .replace(/^https?:\/\//, "")
+  .replace(/^\*\./, "")
+  .replace(/\/$/, "");
 
 function isPublic(pathname: string) {
   if (PUBLIC_PAGES.has(pathname)) return true;
-  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 /**
  * Pins the UI when ?ui=mobile or ?ui=desktop is on the URL.
- *
- * Only writes the cookie; lib/device.ts reads it. That keeps the decision in
- * one place and means middleware does not have to rewrite request headers,
- * which is the fiddly way to get a value from here into a server component.
- *
- * Exists so the phone UI can be opened from a laptop. Without a pin, the
- * device is decided from the user agent.
+ * lib/device.ts reads the resulting cookie.
  */
 function pinUi(req: NextRequest, res: NextResponse): NextResponse {
   const asked = req.nextUrl.searchParams.get("ui");
   if (asked === "mobile" || asked === "desktop") {
-    res.cookies.set("nx_ui", asked, { path: "/", maxAge: 60 * 60 * 24 * 30, sameSite: "lax" });
+    res.cookies.set("nx_ui", asked, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
+    });
   } else if (asked === "auto") {
-    // Without this the pin is a trap: ?ui=desktop on a phone lasts a month and
-    // there is no way back to letting the device decide.
     res.cookies.delete("nx_ui");
   }
   return res;
 }
 
-/**
- * One hostname, permanently.
- *
- * www.troveai.site served the whole site as happily as the apex did, with no
- * redirect between them, so Google indexed both — /team appeared under www and
- * the landing page under the apex, splitting every ranking signal the domain
- * has between two addresses it thinks are different sites.
- *
- * 308 rather than 302: permanent is the true answer, and it is the only one
- * that makes Google consolidate the two into one. The method is preserved,
- * which matters because a POST to a form on www must not silently become a GET.
- */
+/** Keep one canonical app hostname instead of splitting SEO signals with www. */
 function canonicalHost(req: NextRequest): NextResponse | null {
   const host = req.headers.get("host");
   if (!host?.startsWith("www.")) return null;
 
   const url = req.nextUrl.clone();
   url.host = host.slice(4);
-  // The port is dropped with the prefix: this only ever fires on the deployed
-  // domain, and carrying a stray :3000 here would send people nowhere.
   url.port = "";
   return NextResponse.redirect(url, 308);
 }
-
 
 /** System hosts that must never be treated as a user-published site. */
 const RESERVED_HOST_SLUGS = new Set([
@@ -104,31 +80,38 @@ const RESERVED_HOST_SLUGS = new Set([
   "studio",
   "sites",
   "trove",
+  "preview",
+  "local",
+  "localhost",
 ]);
 
+/**
+ * xyz.<publish-root-domain> -> /api/site/xyz
+ *
+ * Only one label is allowed in front of the configured root domain. This keeps
+ * every claimed website address unambiguous and matches the one-project/one-domain
+ * constraint in the database.
+ */
 function subdomainRewrite(req: NextRequest): NextResponse | null {
   const host = (req.headers.get("host") || "").split(":")[0].toLowerCase();
-  if (!host.endsWith(".troveai.site")) return null;
-  const parts = host.split(".");
-  // slug.troveai.site → 3 parts; ignore apex (troveai.site) and www
-  if (parts.length < 3) return null;
-  const slug = parts[0];
-  if (!slug || RESERVED_HOST_SLUGS.has(slug)) return null;
+  const suffix = `.${PUBLISH_ROOT_DOMAIN}`;
+  if (!host.endsWith(suffix)) return null;
+
+  const slug = host.slice(0, -suffix.length);
+  if (!slug || slug.includes(".") || RESERVED_HOST_SLUGS.has(slug)) return null;
+
   const url = req.nextUrl.clone();
-  // Already rewritten to the public site API or /s/
   if (url.pathname.startsWith("/api/site/") || url.pathname.startsWith("/s/")) {
     return null;
   }
-  // clinilamp.troveai.site → /api/site/clinilamp
-  // Use a Route Handler so the response is NEVER the Trove app layout.
-  // Nested paths (SPA) still hit the same handler; client routers take over.
+
   url.pathname = `/api/site/${slug}`;
   return NextResponse.rewrite(url);
 }
 
 export function middleware(req: NextRequest) {
-  const sub = subdomainRewrite(req);
-  if (sub) return sub;
+  const subdomain = subdomainRewrite(req);
+  if (subdomain) return subdomain;
 
   const { pathname, search } = req.nextUrl;
 
@@ -137,15 +120,12 @@ export function middleware(req: NextRequest) {
 
   if (isPublic(pathname)) {
     const res = pinUi(req, NextResponse.next());
-    // Clear the old guest identity wherever one is still lying around, so it
-    // stops being sent on every request for the next year.
     if (req.cookies.has("nx_guest")) res.cookies.delete("nx_guest");
     return res;
   }
 
   if (req.cookies.has("nx_session")) return pinUi(req, NextResponse.next());
 
-  // An API call gets a status it can act on; a page gets the sign-in screen.
   if (pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   }
@@ -153,7 +133,6 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   url.pathname = "/login";
   url.search = "";
-  // Come back to where they were headed once they are in.
   if (pathname !== "/") url.searchParams.set("next", pathname + search);
 
   const res = pinUi(req, NextResponse.redirect(url));
@@ -162,18 +141,6 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  /**
-   * `google...html` is the Search Console ownership file in public/.
-   *
-   * Without it here the auth gate answered Google's fetch with a 307 to
-   * /login, so the file was never read and the domain could not be verified —
-   * a failure that looks like Google's problem and is entirely ours. Any
-   * verification file dropped into public/ later is covered by the same
-   * pattern.
-   *
-   * It is safe to expose: the token is public by design and proves ownership
-   * only to whoever already controls the Search Console property.
-   */
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|icon|opengraph-image|robots.txt|sitemap.xml|manifest.webmanifest|llms.txt|google[0-9a-z]+\\.html).*)",
   ],

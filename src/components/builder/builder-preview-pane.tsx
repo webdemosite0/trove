@@ -1,114 +1,122 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BrowserFrame } from "@/components/builder/browser-frame";
+import type { ProjectFile } from "@/lib/builder";
+import {
+  getLocalRuntimeSnapshot,
+  subscribeLocalRuntime,
+  syncLocalProject,
+} from "@/lib/browser-runtime";
 
 /**
- * Full-height builder preview.
- * Prefer the live E2B sandbox URL when available (it works in a new tab).
- * Fall back to bundled HTML (srcDoc) when the sandbox is missing or fails.
+ * Full-height project preview.
+ *
+ * The generated Vite app runs inside the browser-local runtime. The UI always
+ * presents the project as localhost instead of leaking a sandbox-provider URL.
+ * While dependencies boot (or when the browser cannot run WebContainers), the
+ * exact bundled HTML remains available as an instant snapshot fallback.
  */
 export function BuilderPreviewPane({
   preview,
-  sandboxUrl,
-  onSandboxError,
+  files = [],
   onRefresh,
 }: {
   preview: string | null;
-  sandboxUrl: string | null;
+  files?: ProjectFile[];
+  /** Kept optional for source compatibility with older BuilderView callers. */
+  sandboxUrl?: string | null;
   onSandboxError?: () => void;
   onRefresh?: () => void;
 }) {
-  const [sandboxFailed, setSandboxFailed] = useState(false);
-  const [mode, setMode] = useState<"live" | "snapshot">("live");
+  const [runtime, setRuntime] = useState(getLocalRuntimeSnapshot());
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const hasSandbox = Boolean(sandboxUrl) && !sandboxFailed;
-  const useLive = hasSandbox && mode === "live";
-  const useSnapshot = Boolean(preview) && (mode === "snapshot" || !hasSandbox);
+  useEffect(() => subscribeLocalRuntime(setRuntime), []);
 
-  const displayUrl = useLive
-    ? String(sandboxUrl).replace(/^https?:\/\//, "").replace(/\/$/, "")
-    : useSnapshot
-      ? "localhost:preview"
+  const filesKey = useMemo(
+    () => files.map((file) => `${file.path}:${file.content.length}`).join("|"),
+    [files],
+  );
+
+  useEffect(() => {
+    if (!files.length) return;
+    void syncLocalProject(files);
+  }, [files, filesKey]);
+
+  const useLocal = runtime.status === "ready" && Boolean(runtime.url);
+  const useSnapshot = Boolean(preview) && !useLocal;
+  const displayUrl = useLocal
+    ? `localhost:${runtime.port || 5173}`
+    : preview
+      ? "localhost:5173"
       : "about:blank";
 
-  const openExternal = () => {
-    if (sandboxUrl) {
-      window.open(sandboxUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
+  const openSnapshot = () => {
     if (!preview) return;
     const blob = new Blob([preview], { type: "text/html;charset=utf-8" });
-    const u = URL.createObjectURL(blob);
-    window.open(u, "_blank", "noopener,noreferrer");
-    setTimeout(() => URL.revokeObjectURL(u), 60_000);
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener,noreferrer");
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
-  const handleSandboxError = () => {
-    setSandboxFailed(true);
-    setMode("snapshot");
-    onSandboxError?.();
-  };
+  const statusLabel =
+    runtime.status === "booting"
+      ? "Starting local runtime"
+      : runtime.status === "installing"
+        ? "Installing packages"
+        : runtime.status === "starting"
+          ? "Starting localhost"
+          : runtime.status === "syncing"
+            ? "Syncing files"
+            : runtime.status === "error"
+              ? "Snapshot fallback"
+              : useLocal
+                ? "Local · live"
+                : "Local preview";
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-1 flex-col gap-1.5 p-1.5 md:p-2">
-      {sandboxUrl && preview ? (
-        <div className="flex shrink-0 items-center gap-1 px-0.5">
-          <button
-            type="button"
-            onClick={() => {
-              setSandboxFailed(false);
-              setMode("live");
-            }}
-            className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-              useLive
-                ? "bg-accent/15 text-accent"
-                : "text-ink-4 hover:bg-hover hover:text-ink"
-            }`}
-          >
-            Live sandbox
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("snapshot")}
-            className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-              useSnapshot && !useLive
-                ? "bg-accent/15 text-accent"
-                : "text-ink-4 hover:bg-hover hover:text-ink"
-            }`}
-          >
-            Snapshot
-          </button>
-        </div>
-      ) : null}
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col gap-2 bg-sunk p-1.5 md:p-2">
+      <div className="flex shrink-0 items-center gap-2 px-1">
+        <span
+          className={`size-1.5 rounded-full ${
+            useLocal
+              ? "bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,.12)]"
+              : runtime.status === "error"
+                ? "bg-amber-400"
+                : "animate-pulse bg-accent"
+          }`}
+        />
+        <span className="text-[11px] font-medium text-ink-3">{statusLabel}</span>
+        <span className="flex-1" />
+        <span className="hidden rounded-full border border-line bg-raised px-2 py-0.5 font-mono text-[10px] text-ink-4 sm:inline-flex">
+          localhost:{runtime.port || 5173}
+        </span>
+      </div>
 
       <BrowserFrame
         url={displayUrl}
-        onOpen={preview || sandboxUrl ? openExternal : undefined}
+        onOpen={preview ? openSnapshot : undefined}
         onRefresh={() => {
-          if (hasSandbox) {
-            setSandboxFailed(false);
-            setMode("live");
-          }
+          setRefreshKey((value) => value + 1);
+          if (files.length) void syncLocalProject(files);
           onRefresh?.();
         }}
-        className="h-full min-h-0 shadow-md"
+        className="h-full min-h-0 shadow-[0_16px_50px_rgba(15,23,42,.08)]"
       >
-        {useLive && sandboxUrl ? (
+        {useLocal && runtime.url ? (
           <iframe
-            key={sandboxUrl}
-            title="Live Preview"
-            src={sandboxUrl}
+            key={`${runtime.url}:${refreshKey}`}
+            title="Local live preview"
+            src={runtime.url}
             className="absolute inset-0 h-full w-full border-0 bg-white"
-            allow="accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
+            allow="cross-origin-isolated; accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
             referrerPolicy="no-referrer"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-presentation"
-            onError={handleSandboxError}
           />
         ) : useSnapshot && preview ? (
           <iframe
-            key={preview.slice(0, 80)}
-            title="Preview"
+            key={`${preview.slice(0, 80)}:${refreshKey}`}
+            title="Local preview"
             srcDoc={preview}
             className="absolute inset-0 h-full w-full border-0 bg-white"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
@@ -116,24 +124,24 @@ export function BuilderPreviewPane({
           />
         ) : (
           <div className="grid h-full min-h-[280px] place-items-center px-6 text-center">
-            <div>
-              <p className="text-[16px] font-semibold text-ink">Preview</p>
-              <p className="mt-2 max-w-sm text-[13px] text-ink-4">
-                After the first build, your site appears here. If the live sandbox opens in a new tab but not here, use the Open button above — some hosts block embedding.
+            <div className="max-w-sm">
+              <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-line bg-raised shadow-sm">
+                <span className="font-mono text-[15px] font-semibold text-accent">{"//"}</span>
+              </div>
+              <p className="text-[16px] font-semibold tracking-tight text-ink">Local preview</p>
+              <p className="mt-2 text-[13px] leading-5 text-ink-4">
+                Build your project and Trove will run it in a browser-local Node runtime at localhost:5173.
               </p>
-              {sandboxUrl ? (
-                <button
-                  type="button"
-                  onClick={openExternal}
-                  className="mt-4 rounded-full bg-accent px-4 py-2 text-[13px] font-medium text-white"
-                >
-                  Open live preview
-                </button>
-              ) : null}
             </div>
           </div>
         )}
       </BrowserFrame>
+
+      {runtime.status === "error" && runtime.error ? (
+        <p className="shrink-0 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-700 dark:text-amber-200">
+          Local runtime unavailable: {runtime.error}. Trove is showing the instant snapshot instead.
+        </p>
+      ) : null}
     </div>
   );
 }

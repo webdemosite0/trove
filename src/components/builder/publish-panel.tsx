@@ -1,35 +1,48 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FiCheck, FiCopy, FiExternalLink, FiLink, FiShield, FiGlobe } from "@/components/ui/icons";
+import {
+  FiCheck,
+  FiCopy,
+  FiExternalLink,
+  FiLink,
+  FiShield,
+  FiGlobe,
+} from "@/components/ui/icons";
 import type { ProjectFile } from "@/lib/builder";
 import { bundle } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 
+const ROOT_DOMAIN =
+  process.env.NEXT_PUBLIC_PUBLISH_ROOT_DOMAIN?.trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/^\*\./, "")
+    .replace(/\/$/, "") || "troveai.site";
+
 function slugify(title: string) {
-  return (title || "site")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40) || `site-${Date.now().toString(36)}`;
+  return (
+    (title || "site")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40) || `site-${Date.now().toString(36)}`
+  );
 }
 
-/**
- * Lovable-style Publish popover.
- * One click → live at {slug}.troveai.site
- */
+/** One saved project -> one permanently claimed public subdomain. */
 export function PublishPanel({
   files,
+  projectId,
   title,
   publishedUrl,
   previewHtml,
   onPublished,
 }: {
   files: ProjectFile[];
+  projectId?: string | null;
   title?: string;
   publishedUrl?: string | null;
-  /** Same HTML the builder preview iframe uses — preferred over re-bundling. */
   previewHtml?: string | null;
   onPublished?: (url: string, slug: string) => void;
 }) {
@@ -40,7 +53,15 @@ export function PublishPanel({
   const [slug, setSlug] = useState(() => slugify(title || "site"));
   const [copied, setCopied] = useState(false);
   const [publishedAt, setPublishedAt] = useState<number | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [availability, setAvailability] = useState<{
+    available: boolean;
+    reason?: string;
+  } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
+
+  const hasContent = Boolean(files.length || previewHtml);
+  const readyToPublish = Boolean(projectId) && hasContent;
 
   useEffect(() => {
     if (publishedUrl) setUrl(publishedUrl);
@@ -48,11 +69,11 @@ export function PublishPanel({
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+    const onDown = (event: MouseEvent) => {
+      if (wrap.current && !wrap.current.contains(event.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -62,16 +83,48 @@ export function PublishPanel({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || url || !projectId) return;
+    const clean = slugify(slug || title || "site");
+    if (clean.length < 2) {
+      setAvailability(null);
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      setChecking(true);
+      try {
+        const params = new URLSearchParams({ slug: clean, projectId });
+        const res = await fetch(`/api/publish/check-slug?${params.toString()}`);
+        const data = await res.json().catch(() => null);
+        if (res.ok && data) {
+          setAvailability({
+            available: Boolean(data.available),
+            reason: data.reason || undefined,
+          });
+        }
+      } catch {
+        setAvailability(null);
+      } finally {
+        setChecking(false);
+      }
+    }, 320);
+    return () => window.clearTimeout(timer);
+  }, [open, projectId, slug, title, url]);
+
   const publish = useCallback(async () => {
-    if ((!files.length && !previewHtml) || busy) return;
+    if (busy || !hasContent) return;
+    if (!projectId) {
+      setError("Trove is still saving this project. Publish will unlock when it is ready.");
+      return;
+    }
+
     setBusy(true);
     setError(null);
     try {
-      // Prefer the exact HTML the preview pane is showing so published matches preview.
       let html = (previewHtml && previewHtml.trim()) || "";
       if (!html) {
         const htmlFile = files.find(
-          (f) => f.path === "index.html" || f.path.endsWith("/index.html"),
+          (file) => file.path === "index.html" || file.path.endsWith("/index.html"),
         );
         html = htmlFile?.content ?? "";
       }
@@ -83,15 +136,16 @@ export function PublishPanel({
         }
       }
       if (!html?.trim()) {
-        throw new Error("No HTML to publish yet. Build the site in preview first, then Publish.");
+        throw new Error("Build the website in Preview before publishing.");
       }
 
       const clean = slugify(slug || title || "site");
-      const res = await fetch("/api/deploy", {
+      const res = await fetch("/api/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: clean,
+          projectId,
           title: title || clean,
           html,
           files,
@@ -100,155 +154,206 @@ export function PublishPanel({
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? `Publish failed (${res.status})`);
 
-      const live = data.url as string;
+      const live = String(data.url || `https://${clean}.${ROOT_DOMAIN}`);
       setUrl(live);
-      setSlug(clean);
+      setSlug(String(data.slug || clean));
       setPublishedAt(Date.now());
-      onPublished?.(live, clean);
+      setAvailability({ available: true });
+      onPublished?.(live, String(data.slug || clean));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Publish failed");
     } finally {
       setBusy(false);
     }
-  }, [files, title, slug, busy, onPublished, previewHtml]);
+  }, [busy, files, hasContent, onPublished, previewHtml, projectId, slug, title]);
 
-  const copy = () => {
+  const copy = async () => {
     if (!url) return;
-    navigator.clipboard?.writeText(url);
+    await navigator.clipboard?.writeText(url);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    window.setTimeout(() => setCopied(false), 1500);
   };
 
-  const since =
-    publishedAt != null
-      ? "Just published"
-      : url
-        ? "Published"
-        : "Not published yet";
+  const since = publishedAt != null ? "Just published" : url ? "Live" : "Draft";
+  const blocked = !url && availability?.available === false;
 
   return (
     <div ref={wrap} className="relative">
-      {/* Header trigger — Lovable-style publish control */}
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        disabled={!files.length && !previewHtml}
-        aria-label="Publish"
+        onClick={() => setOpen((value) => !value)}
+        disabled={!readyToPublish}
+        aria-label={projectId ? "Publish" : "Saving project"}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition",
-          open || url
-            ? "bg-accent text-white shadow-[0_0_0_3px_rgba(99,102,241,0.25)]"
-            : "bg-accent text-white hover:brightness-110",
-          !files.length && !previewHtml && "opacity-40",
+          "inline-flex h-8 items-center gap-1.5 rounded-full bg-accent px-3 text-[12.5px] font-semibold text-white shadow-sm transition hover:brightness-105 active:scale-[.98]",
+          open && "ring-4 ring-accent/10",
+          !readyToPublish && "opacity-40",
         )}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M12 19V5" />
           <path d="M5 12l7-7 7 7" />
         </svg>
-        Publish
+        {hasContent && !projectId ? "Saving…" : "Publish"}
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[320px] overflow-hidden rounded-[16px] border border-line bg-raised shadow-[0_16px_48px_rgba(0,0,0,0.45)]">
-          {/* Title row */}
-          <div className="flex items-center gap-2 border-b border-line px-4 py-3">
-            <span className="size-2 rounded-full bg-accent" />
-            <span className="text-[14px] font-medium text-ink">Publish</span>
+        <div className="fixed inset-x-3 bottom-[calc(5.45rem+env(safe-area-inset-bottom))] z-[70] overflow-hidden rounded-[22px] border border-line bg-raised shadow-[0_24px_80px_rgba(15,23,42,.24)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[348px] sm:rounded-[18px]">
+          <div className="flex items-center gap-2 border-b border-line px-4 py-3.5">
+            <span className="grid size-8 place-items-center rounded-xl bg-accent/10 text-accent">
+              <FiGlobe size={14} />
+            </span>
+            <div>
+              <p className="text-[13.5px] font-semibold tracking-tight text-ink">Publish website</p>
+              <p className="text-[10.5px] text-ink-4">One permanent domain for this project</p>
+            </div>
             <span className="flex-1" />
-            <span className="text-[11.5px] text-ink-4">{since}</span>
+            <span className="rounded-full border border-line bg-sunk px-2 py-0.5 text-[10px] font-medium text-ink-4">
+              {since}
+            </span>
           </div>
 
-          <div className="space-y-3 p-4">
-            {/* Website URL */}
+          <div className="space-y-3.5 p-4">
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <p className="text-[12px] font-medium text-ink-3">Website URL</p>
+                <p className="text-[11.5px] font-medium text-ink-3">Your domain</p>
+                {!url ? (
+                  <span
+                    className={cn(
+                      "text-[10.5px]",
+                      checking
+                        ? "text-ink-4"
+                        : availability?.available
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : blocked
+                            ? "text-negative"
+                            : "text-ink-4",
+                    )}
+                  >
+                    {checking
+                      ? "Checking…"
+                      : availability?.available
+                        ? "Available"
+                        : blocked
+                          ? "Unavailable"
+                          : "Choose a name"}
+                  </span>
+                ) : (
+                  <span className="text-[10.5px] font-medium text-emerald-600 dark:text-emerald-300">
+                    Claimed
+                  </span>
+                )}
               </div>
 
-              <div className="flex items-center gap-2 rounded-[12px] border border-line bg-sunk px-3 py-2.5">
+              <div
+                className={cn(
+                  "flex items-center gap-2 rounded-[13px] border bg-sunk px-3 py-2.5 transition",
+                  blocked
+                    ? "border-negative/40"
+                    : url
+                      ? "border-emerald-500/25"
+                      : "border-line focus-within:border-accent/45",
+                )}
+              >
                 <FiLink size={13} className="shrink-0 text-ink-4" />
                 <input
                   value={slug}
-                  onChange={(e) =>
+                  disabled={Boolean(url)}
+                  onChange={(event) => {
+                    setAvailability(null);
                     setSlug(
-                      e.target.value
+                      event.target.value
                         .toLowerCase()
                         .replace(/[^a-z0-9-]/g, "-")
+                        .replace(/-+/g, "-")
                         .slice(0, 40),
-                    )
-                  }
+                    );
+                  }}
                   placeholder="your-site"
-                  className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-ink outline-none placeholder:text-ink-4"
+                  className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-ink outline-none placeholder:text-ink-4 disabled:cursor-default"
                   aria-label="Domain slug"
                 />
-                <span className="shrink-0 text-[12px] text-ink-4">.troveai.site</span>
+                <span className="shrink-0 text-[11.5px] text-ink-4">.{ROOT_DOMAIN}</span>
               </div>
-              {url ? (
-                <div className="mt-2 flex items-center gap-2 rounded-[12px] border border-positive/25 bg-positive/10 px-3 py-2">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent/15 text-accent">
-                    <FiGlobe size={12} />
-                  </span>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink hover:text-accent"
-                  >
-                    {url.replace(/^https?:\/\//, "")}
-                  </a>
-                  <button
-                    type="button"
-                    onClick={copy}
-                    className="grid size-7 shrink-0 place-items-center rounded-md text-ink-4 hover:bg-hover hover:text-ink"
-                    aria-label="Copy URL"
-                  >
-                    {copied ? <FiCheck size={13} className="text-positive" /> : <FiCopy size={13} />}
-                  </button>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="grid size-7 shrink-0 place-items-center rounded-md text-ink-4 hover:bg-hover hover:text-ink"
-                    aria-label="Open"
-                  >
-                    <FiExternalLink size={13} />
-                  </a>
+              {!url && blocked && availability?.reason ? (
+                <p className="mt-1.5 text-[10.5px] leading-4 text-negative">{availability.reason}</p>
+              ) : (
+                <p className="mt-1.5 text-[10.5px] leading-4 text-ink-4">
+                  After the first publish this name is locked to this project.
+                </p>
+              )}
+            </div>
+
+            {url ? (
+              <div className="flex items-center gap-2 rounded-[13px] border border-emerald-500/20 bg-emerald-500/[0.07] px-3 py-2.5">
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+                  <FiCheck size={13} />
+                </span>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 flex-1 truncate text-[12px] font-semibold text-ink hover:text-accent"
+                >
+                  {url.replace(/^https?:\/\//, "")}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => void copy()}
+                  className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
+                  aria-label="Copy URL"
+                >
+                  {copied ? <FiCheck size={13} /> : <FiCopy size={13} />}
+                </button>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
+                  aria-label="Open website"
+                >
+                  <FiExternalLink size={13} />
+                </a>
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-[12px] border border-line bg-sunk/45 px-3 py-2.5">
+                <div className="mb-1 flex items-center gap-1.5 text-[10.5px] font-medium text-ink-4">
+                  <FiGlobe size={11} /> Access
                 </div>
-              ) : null}
-            </div>
-
-            {/* Visibility */}
-            <div className="flex items-center gap-2.5 rounded-[12px] border border-line bg-sunk/40 px-3 py-2.5">
-              <FiGlobe size={14} className="text-ink-3" />
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] text-ink">Visible to anyone with the link</p>
+                <p className="text-[11.5px] font-medium text-ink">Public</p>
               </div>
-            </div>
-
-            {/* Security */}
-            <div className="flex items-center gap-2 px-1">
-              <FiShield size={13} className="text-positive" />
-              <p className="text-[12px] text-ink-3">No security issues found</p>
+              <div className="rounded-[12px] border border-line bg-sunk/45 px-3 py-2.5">
+                <div className="mb-1 flex items-center gap-1.5 text-[10.5px] font-medium text-ink-4">
+                  <FiShield size={11} /> Domain
+                </div>
+                <p className="text-[11.5px] font-medium text-ink">Unique claim</p>
+              </div>
             </div>
 
             {error ? (
-              <p className="rounded-[10px] border border-negative/30 bg-negative/10 px-3 py-2 text-[12.5px] text-negative">
+              <p className="rounded-[11px] border border-negative/25 bg-negative/10 px-3 py-2 text-[11.5px] leading-4 text-negative">
                 {error}
               </p>
             ) : null}
 
-            {/* Primary action */}
             <button
               type="button"
               onClick={() => void publish()}
-              disabled={busy || (!files.length && !previewHtml)}
-              className={cn(
-                "flex w-full items-center justify-center gap-2 rounded-[12px] px-4 py-2.5 text-[13.5px] font-medium transition",
-                "bg-accent text-white hover:brightness-110 disabled:opacity-50",
-              )}
+              disabled={busy || blocked || checking || !readyToPublish}
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-[12px] bg-accent px-4 text-[13px] font-semibold text-white shadow-sm transition hover:brightness-105 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {busy ? "Publishing…" : url ? "Publish changes" : "Publish"}
+              {busy ? "Publishing…" : url ? "Publish changes" : "Publish to domain"}
             </button>
           </div>
         </div>

@@ -31,7 +31,7 @@ export const TARGETS: Record<TargetId, Target> = {
   react: {
     id: "react",
     label: "React app",
-    blurb: "Vite + React. Live Preview via sandbox after build.",
+    blurb: "Vite + React with browser-local localhost preview.",
     previewable: true,
     entry: "src/App.jsx",
     commands: ["npm install", "npm run dev"],
@@ -40,14 +40,13 @@ export const TARGETS: Record<TargetId, Target> = {
 
 This is the DEFAULT for website products in Trove.
 
-Runs after npm install && npm run dev. Preview uses the E2B sandbox live URL.
+Runs after npm install && npm run dev inside Trove's browser-local Node runtime.
+Preview is presented as http://localhost:5173 and shares one filesystem with the Terminal tab.
 
 Required files (minimum):
   package.json, vite.config.js, index.html, src/main.jsx, src/App.jsx, src/index.css
   Plus pages/components as needed (Home, About, etc.).
-vite.config.js MUST include:
-  server: { host: "0.0.0.0", port: 5173, allowedHosts: true }
-  so E2B preview hosts (*.e2b.app) are not blocked.
+vite.config.js should bind the dev server to 0.0.0.0 on port 5173 so the local runtime can expose it to the preview iframe.
 
 Pinned versions only. Fully working UI — no dead buttons.
 No remote stock photos — CSS gradients, SVG, solid color blocks only.
@@ -56,21 +55,21 @@ Multi-page products use React Router or simple state routing.`,
 
   node: {
     id: "node",
-    label: "Node API",
-    blurb: "Express API with sandbox Preview.",
+    label: "Node app",
+    blurb: "Node.js app for the browser-local runtime.",
     previewable: true,
     entry: "server.js",
     commands: ["npm install", "npm start"],
     serves: "http://localhost:3000",
-    prompt: `STACK — Node.js Express 4, ES modules.
-Working CRUD, validation, JSON store, README with curl examples.`,
+    prompt: `STACK — Node.js, ES modules.
+Working routes, validation, local persistence where appropriate, and a complete README.`,
   },
 
   python: {
     id: "python",
-    label: "Python API",
-    blurb: "FastAPI with sandbox Preview.",
-    previewable: true,
+    label: "Python project",
+    blurb: "FastAPI project files. Local web preview is React/Node-first.",
+    previewable: false,
     entry: "main.py",
     commands: [
       "python -m venv .venv",
@@ -80,16 +79,12 @@ Working CRUD, validation, JSON store, README with curl examples.`,
     ],
     serves: "http://127.0.0.1:8000",
     prompt: `STACK — Python 3.11, FastAPI, Pydantic v2.
-Working endpoints, typed models, JSON persistence.`,
+Working endpoints, typed models, JSON persistence and clear local run instructions.`,
   },
 };
 
 /** Shown in the Sites builder — no plain HTML static. */
-export const TARGET_LIST: Target[] = [
-  TARGETS.react,
-  TARGETS.node,
-  TARGETS.python,
-];
+export const TARGET_LIST: Target[] = [TARGETS.react, TARGETS.node, TARGETS.python];
 
 export function targetFor(id: unknown): Target {
   if (id && typeof id === "string" && id in TARGETS) {

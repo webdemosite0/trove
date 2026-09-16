@@ -3,7 +3,16 @@ import "server-only";
 import { one, run, uid } from "@/lib/db";
 import { bundle, type ProjectFile } from "@/lib/builder";
 
-export const ROOT_DOMAIN = "troveai.site";
+function cleanRootDomain(value: string | undefined) {
+  return String(value || "troveai.site")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^\*\./, "")
+    .replace(/\/$/, "") || "troveai.site";
+}
+
+export const ROOT_DOMAIN = cleanRootDomain(process.env.NEXT_PUBLIC_PUBLISH_ROOT_DOMAIN);
 
 /** System subdomains that must never be claimed by a user project. */
 export const RESERVED_SLUGS = new Set([
@@ -30,6 +39,9 @@ export const RESERVED_SLUGS = new Set([
   "studio",
   "sites",
   "trove",
+  "preview",
+  "local",
+  "localhost",
   "null",
   "undefined",
 ]);
@@ -109,11 +121,29 @@ export async function ensurePublishTables(): Promise<void> {
       UNIQUE(slug, version)
     )
   `);
+
+  /**
+   * Domain claims are intentionally separate from deployment status.
+   * Unpublishing a site does NOT free the name for somebody else.
+   * A project can own exactly one slug and a slug can belong to exactly one project.
+   */
+  await run(`
+    CREATE TABLE IF NOT EXISTS published_domain_claims (
+      slug TEXT PRIMARY KEY,
+      project_id TEXT UNIQUE,
+      user_id TEXT NOT NULL,
+      claimed_at INTEGER NOT NULL
+    )
+  `);
+
   await run(
     `CREATE INDEX IF NOT EXISTS published_sites_by_user ON published_sites (user_id, updated_at DESC)`,
   ).catch(() => null);
   await run(
     `CREATE INDEX IF NOT EXISTS published_deployments_by_slug ON published_deployments (slug, version DESC)`,
+  ).catch(() => null);
+  await run(
+    `CREATE INDEX IF NOT EXISTS published_claims_by_user ON published_domain_claims (user_id, claimed_at DESC)`,
   ).catch(() => null);
 
   for (const stmt of [
@@ -125,9 +155,17 @@ export async function ensurePublishTables(): Promise<void> {
     try {
       await run(stmt);
     } catch {
-      /* column already exists */
+      // Column already exists.
     }
   }
+
+  // Preserve existing live domains as claims where project identity is known.
+  await run(`
+    INSERT OR IGNORE INTO published_domain_claims (slug, project_id, user_id, claimed_at)
+    SELECT slug, project_id, user_id, COALESCE(published_at, updated_at)
+    FROM published_sites
+    WHERE project_id IS NOT NULL AND project_id <> ''
+  `).catch(() => null);
 }
 
 function rowToSite(row: Record<string, unknown>): PublishedSite {
@@ -155,6 +193,7 @@ export async function getPublishedBySlug(slug: string): Promise<PublishedSite | 
 export async function checkSlugAvailability(
   slug: string,
   userId?: string,
+  projectId?: string | null,
 ): Promise<{ available: boolean; reason?: string; normalized: string }> {
   const normalized = normalizeSlug(slug);
   if (!isValidSlug(normalized)) {
@@ -167,15 +206,124 @@ export async function checkSlugAvailability(
   if (isReservedSlug(normalized)) {
     return { available: false, reason: "This name is reserved.", normalized };
   }
+
   await ensurePublishTables();
-  const existing = await one(`SELECT user_id, status FROM published_sites WHERE slug = ?`, [
-    normalized,
-  ]).catch(() => null);
+  const project = String(projectId || "").trim();
+
+  if (project) {
+    const projectClaim = await one(
+      `SELECT slug, user_id FROM published_domain_claims WHERE project_id = ?`,
+      [project],
+    ).catch(() => null);
+    if (projectClaim) {
+      const claimedSlug = String(projectClaim.slug || "");
+      if (claimedSlug === normalized && (!userId || String(projectClaim.user_id) === userId)) {
+        return { available: true, normalized };
+      }
+      return {
+        available: false,
+        reason: `This project already owns ${claimedSlug}.${ROOT_DOMAIN}.`,
+        normalized,
+      };
+    }
+  }
+
+  const claim = await one(
+    `SELECT project_id, user_id FROM published_domain_claims WHERE slug = ?`,
+    [normalized],
+  ).catch(() => null);
+  if (claim) {
+    if (
+      project &&
+      String(claim.project_id || "") === project &&
+      (!userId || String(claim.user_id) === userId)
+    ) {
+      return { available: true, normalized };
+    }
+    return { available: false, reason: "This URL has already been claimed.", normalized };
+  }
+
+  // Legacy rows may predate the claims table. Treat them as already claimed.
+  const existing = await one(
+    `SELECT user_id, project_id FROM published_sites WHERE slug = ?`,
+    [normalized],
+  ).catch(() => null);
   if (!existing) return { available: true, normalized };
-  if (userId && String(existing.user_id) === userId) {
+
+  const existingUser = String(existing.user_id || "");
+  const existingProject = String(existing.project_id || "");
+  if (project && existingProject === project && (!userId || existingUser === userId)) {
     return { available: true, normalized };
   }
-  return { available: false, reason: "This URL is already taken.", normalized };
+  if (!project && userId && existingUser === userId && !existingProject) {
+    return { available: true, normalized };
+  }
+  return { available: false, reason: "This URL has already been claimed.", normalized };
+}
+
+async function claimDomain(opts: { slug: string; userId: string; projectId?: string | null }) {
+  const projectId = String(opts.projectId || "").trim();
+  if (!projectId) return;
+
+  const existingForProject = await one(
+    `SELECT slug, user_id FROM published_domain_claims WHERE project_id = ?`,
+    [projectId],
+  ).catch(() => null);
+  if (existingForProject) {
+    if (
+      String(existingForProject.slug) !== opts.slug ||
+      String(existingForProject.user_id) !== opts.userId
+    ) {
+      const err = new Error(
+        `This project already owns ${String(existingForProject.slug)}.${ROOT_DOMAIN}.`,
+      ) as Error & { status?: number };
+      err.status = 409;
+      throw err;
+    }
+    return;
+  }
+
+  const existingForSlug = await one(
+    `SELECT project_id, user_id FROM published_domain_claims WHERE slug = ?`,
+    [opts.slug],
+  ).catch(() => null);
+  if (existingForSlug) {
+    if (
+      String(existingForSlug.project_id || "") === projectId &&
+      String(existingForSlug.user_id) === opts.userId
+    ) {
+      return;
+    }
+    const err = new Error("This URL has already been claimed.") as Error & { status?: number };
+    err.status = 409;
+    throw err;
+  }
+
+  try {
+    await run(
+      `INSERT INTO published_domain_claims (slug, project_id, user_id, claimed_at) VALUES (?, ?, ?, ?)`,
+      [opts.slug, projectId, opts.userId, Date.now()],
+    );
+  } catch {
+    // Re-read after a uniqueness race and return a useful conflict instead of a DB error.
+    const winner = await one(
+      `SELECT slug, project_id, user_id FROM published_domain_claims WHERE slug = ? OR project_id = ? LIMIT 1`,
+      [opts.slug, projectId],
+    ).catch(() => null);
+    if (
+      winner &&
+      String(winner.slug) === opts.slug &&
+      String(winner.project_id || "") === projectId &&
+      String(winner.user_id) === opts.userId
+    ) {
+      return;
+    }
+    const err = new Error("That domain was just claimed by another project.") as Error & {
+      status?: number;
+    };
+    err.status = 409;
+    throw err;
+  }
 }
 
 export function isViteShell(html: string): boolean {
@@ -203,11 +351,11 @@ export function buildPublishHtml(
         out = rebuilt;
       }
     } catch {
-      /* keep out */
+      // Keep the HTML supplied by the builder.
     }
     if (!out.trim() || isViteShell(out)) {
       const index = files.find(
-        (f) => f.path === "index.html" || f.path.endsWith("/index.html"),
+        (file) => file.path === "index.html" || file.path.endsWith("/index.html"),
       );
       if (index?.content && !isViteShell(index.content)) out = index.content;
     }
@@ -225,9 +373,7 @@ export function buildPublishHtml(
   return out;
 }
 
-/** Escape for safe injection into HTML text/attributes. */
 function escapeHtml(s: string) {
-  // Build entities via concat so the source cannot be corrupted by HTML decoding.
   const amp = "&" + "amp;";
   const lt = "&" + "lt;";
   const gt = "&" + "gt;";
@@ -249,12 +395,13 @@ export async function publishSite(opts: {
 }): Promise<PublishResult> {
   await ensurePublishTables();
 
-  const check = await checkSlugAvailability(opts.slug, opts.userId);
+  const check = await checkSlugAvailability(opts.slug, opts.userId, opts.projectId);
   if (!check.available) {
     const err = new Error(check.reason || "Slug unavailable") as Error & { status?: number };
     err.status = 409;
     throw err;
   }
+
   const slug = check.normalized;
   const title = String(opts.title || slug).slice(0, 120);
   const html = buildPublishHtml(opts.html, opts.files, title);
@@ -269,24 +416,37 @@ export async function publishSite(opts: {
   const filesJson =
     Array.isArray(opts.files) && opts.files.length
       ? JSON.stringify(
-          opts.files.map((f) => ({
-            path: String(f.path || "").replace(/^\/+/, "").slice(0, 240),
-            content: String(f.content ?? "").slice(0, 500_000),
+          opts.files.map((file) => ({
+            path: String(file.path || "").replace(/^\/+/, "").slice(0, 240),
+            content: String(file.content ?? "").slice(0, 500_000),
           })),
         )
       : null;
 
-  const now = Date.now();
-  const existing = await one(`SELECT version, user_id FROM published_sites WHERE slug = ?`, [
-    slug,
-  ]).catch(() => null);
+  const existing = await one(
+    `SELECT version, user_id, project_id FROM published_sites WHERE slug = ?`,
+    [slug],
+  ).catch(() => null);
 
   if (existing && String(existing.user_id) !== opts.userId) {
-    const err = new Error("Slug taken") as Error & { status?: number };
+    const err = new Error("This URL has already been claimed.") as Error & { status?: number };
     err.status = 409;
     throw err;
   }
 
+  const existingProject = String(existing?.project_id || "");
+  const incomingProject = String(opts.projectId || "").trim();
+  if (existingProject && existingProject !== incomingProject) {
+    const err = new Error("This domain belongs to another project and cannot be reassigned.") as Error & {
+      status?: number;
+    };
+    err.status = 409;
+    throw err;
+  }
+
+  await claimDomain({ slug, userId: opts.userId, projectId: incomingProject || null });
+
+  const now = Date.now();
   const nextVersion = existing ? Number(existing.version || 0) + 1 : 1;
   const deploymentId = uid("dep");
 
@@ -305,7 +465,7 @@ export async function publishSite(opts: {
        title = excluded.title,
        html = excluded.html,
        files_json = excluded.files_json,
-       project_id = COALESCE(excluded.project_id, published_sites.project_id),
+       project_id = COALESCE(published_sites.project_id, excluded.project_id),
        status = 'published',
        version = excluded.version,
        published_at = excluded.published_at,
@@ -316,7 +476,7 @@ export async function publishSite(opts: {
       html,
       filesJson,
       opts.userId,
-      opts.projectId || null,
+      incomingProject || null,
       nextVersion,
       now,
       now,
@@ -372,10 +532,10 @@ export async function getPublishStatusForUser(
   await ensurePublishTables();
   let row: Record<string, unknown> | null = null;
   if (slug) {
-    const s = normalizeSlug(slug);
+    const normalized = normalizeSlug(slug);
     row = (await one(
       `SELECT * FROM published_sites WHERE slug = ? AND user_id = ?`,
-      [s, userId],
+      [normalized, userId],
     ).catch(() => null)) as Record<string, unknown> | null;
   } else {
     row = (await one(
@@ -415,14 +575,13 @@ export async function resolveLiveHtml(slug: string): Promise<{
   if (!site || site.status !== "published") return null;
 
   let html = site.html;
-
   if ((!html.trim() || isViteShell(html)) && site.filesJson) {
     try {
       const files = JSON.parse(site.filesJson) as ProjectFile[];
       const rebuilt = buildPublishHtml("", files, site.title);
       if (rebuilt.trim()) html = rebuilt;
     } catch {
-      /* keep */
+      // Keep persisted HTML.
     }
   }
 
@@ -479,7 +638,9 @@ export function brandedUnavailablePage(
     "</p>\n" +
     '    <p class="foot"><a href="https://' +
     ROOT_DOMAIN +
-    '">troveai.site</a></p>\n' +
+    '">' +
+    ROOT_DOMAIN +
+    "</a></p>\n" +
     "  </div>\n" +
     "</body>\n" +
     "</html>"
