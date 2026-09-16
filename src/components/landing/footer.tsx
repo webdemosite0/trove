@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Wordmark } from "@/components/brand/logo";
+import { BrandLockup } from "@/components/brand/logo";
 import { FEATURES } from "@/lib/features";
 import { site } from "@/lib/site";
 
@@ -13,7 +13,7 @@ export function Footer() {
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="max-w-[280px]">
             <Link href="/" aria-label="Trove home" className="inline-flex">
-              <Wordmark size={19} sweep={false} />
+              <BrandLockup orbSize={22} wordSize={18} sweep={false} />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-3">
               Trove doesn't just generate work. It keeps building with you
