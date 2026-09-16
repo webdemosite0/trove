@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FiX, FiExternalLink, FiLock, FiLoader, FiAlertCircle } from "@/components/ui/icons";
 import { connect, type ConnectState } from "@/app/actions/connections";
 import { Ico } from "@/components/ui/ico";
+import { ServiceMark } from "@/components/integrations/service-mark";
 
 /**
  * Asks for one credential and verifies it against the real provider before
@@ -61,8 +62,14 @@ export function ConnectDialog({
           <Ico icon={FiX} motion="shake" size={16} />
         </button>
 
-        <h2 className="text-[17px] font-semibold text-ink">Connect {name}</h2>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-3">{help}</p>
+        <div className="flex items-center gap-3 pr-10">
+          <ServiceMark id={service} name={name} size={38} />
+          <div className="min-w-0">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">Integration</p>
+            <h2 className="truncate text-[17px] font-semibold text-ink">Connect {name}</h2>
+          </div>
+        </div>
+        <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">{help}</p>
 
         {docs ? (
           <a
