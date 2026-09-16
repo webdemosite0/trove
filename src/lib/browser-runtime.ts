@@ -34,7 +34,12 @@ function projectIdFromUrl() {
   if (queryId) return queryId;
 
   const match = url.pathname.match(/^\/websites\/project\/([^/]+)(?:\/|$)/i);
-  return match?.[1] ? decodeURIComponent(match[1]).trim() : "";
+  if (match?.[1]) return decodeURIComponent(match[1]).trim();
+
+  const rootId = document
+    .querySelector<HTMLElement>("[data-trove-project-id]")
+    ?.dataset.troveProjectId?.trim();
+  return rootId || "";
 }
 
 function createStore(scope: string): RuntimeStore {
