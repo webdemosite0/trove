@@ -104,11 +104,13 @@ export function ServiceMark({
   name,
   size = 28,
   className,
+  monochrome = false,
 }: {
   id: string;
   name?: string;
   size?: number;
   className?: string;
+  monochrome?: boolean;
 }) {
   const key = id.toLowerCase().replace(/^@/, "").trim();
   const slug = SIMPLE_ICON[key];
@@ -123,12 +125,13 @@ export function ServiceMark({
       title={name ?? id}
       className={cn(
         "relative inline-grid shrink-0 place-items-center overflow-hidden rounded-[8px] border border-black/[0.07] bg-white font-semibold tracking-tight shadow-[inset_0_1px_0_rgba(255,255,255,.7)] dark:border-white/10",
+        monochrome && "border-zinc-200 bg-white text-black shadow-none",
         className,
       )}
       style={{
         width: size,
         height: size,
-        color: "#52525b",
+        color: monochrome ? "#000000" : "#52525b",
         fontSize: font,
       }}
     >
@@ -145,11 +148,11 @@ export function ServiceMark({
           referrerPolicy="no-referrer"
           className={cn(
             "relative z-[1] block object-contain",
-            MULTICOLOR.has(key) && "scale-[1.02]",
+            !monochrome && MULTICOLOR.has(key) && "scale-[1.02]",
+            monochrome && "grayscale brightness-0",
           )}
           style={{ width: iconSize, height: iconSize }}
           onError={(event) => {
-            // Keep the already-rendered initials as a graceful last resort.
             event.currentTarget.style.display = "none";
           }}
         />
