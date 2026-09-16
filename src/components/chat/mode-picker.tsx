@@ -21,7 +21,6 @@ const ICON: Record<ModeId, IconType> = {
   creative: TbSparkles,
 };
 
-/** Short speed/quality cue — scannable under cognitive load. */
 const CUE: Record<ModeId, string> = {
   fast: "Quick · lighter",
   balanced: "Default · solid",
@@ -124,11 +123,11 @@ export function ModePicker({
       >
         <span
           className={cn(
-            "grid place-items-center rounded-full bg-accent-soft text-accent",
+            "grid place-items-center rounded-full bg-sunk text-ink",
             touch || !compact ? "size-6" : "size-5",
           )}
         >
-          <Glyph size={touch ? 14 : compact ? 11 : 13} />
+          <Glyph size={touch ? 14 : compact ? 11 : 13} className="text-ink" />
         </span>
         <span className={cn("font-medium", touch ? "" : "hidden sm:inline")}>
           {MODES[value].label}
@@ -172,13 +171,13 @@ export function ModePicker({
             } else if (e.key === "Tab") close({ restore: false });
           }}
           className={cn(
-            "nx-in z-50 overflow-hidden border border-line bg-raised shadow-[var(--elev-lift)]",
+            "nx-in z-[80] overflow-hidden border border-line bg-white shadow-xl dark:bg-raised",
             touch
               ? "fixed inset-x-3 bottom-3 rounded-[var(--r-card)]"
-              : "absolute bottom-full left-0 mb-2 w-[288px] rounded-[var(--r-panel)]",
+              : "absolute bottom-full left-0 mb-2 w-[300px] rounded-2xl",
           )}
         >
-          <div className="border-b border-line bg-sunk/50 px-3.5 py-2.5">
+          <div className="border-b border-line bg-sunk/40 px-3.5 py-2.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
               Response style
             </p>
@@ -187,58 +186,60 @@ export function ModePicker({
             </p>
           </div>
 
-          {MODE_LIST.map((m, i) => {
-            const active = m.id === value;
-            const Icon = ICON[m.id];
-            return (
-              <button
-                key={m.id}
-                ref={(el) => {
-                  items.current[i] = el;
-                }}
-                type="button"
-                role="menuitemradio"
-                aria-checked={active}
-                tabIndex={active ? 0 : -1}
-                onClick={() => {
-                  onChange(m.id);
-                  close();
-                }}
-                className={cn(
-                  "flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors",
-                  active ? "bg-accent-soft/60" : "hover:bg-hover",
-                )}
-              >
-                <span
+          <div className="max-h-[320px] overflow-y-auto py-1">
+            {MODE_LIST.map((m, i) => {
+              const active = m.id === value;
+              const Icon = ICON[m.id];
+              return (
+                <button
+                  key={m.id}
+                  ref={(el) => {
+                    items.current[i] = el;
+                  }}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={active}
+                  tabIndex={active ? 0 : -1}
+                  onClick={() => {
+                    onChange(m.id);
+                    close();
+                  }}
                   className={cn(
-                    "mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl",
-                    active
-                      ? "bg-accent text-white shadow-sm shadow-[var(--btn-glow)]"
-                      : "bg-sunk text-ink-3",
+                    "flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors",
+                    active ? "bg-accent-soft/60" : "hover:bg-hover",
                   )}
                 >
-                  <Icon size={15} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-semibold text-ink">{m.label}</span>
-                    <span className="text-[11px] text-ink-4">{CUE[m.id]}</span>
+                  <span
+                    className={cn(
+                      "mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl",
+                      active
+                        ? "bg-accent text-white shadow-sm"
+                        : "bg-sunk text-ink",
+                    )}
+                  >
+                    <Icon size={15} className={active ? "text-white" : "text-ink"} />
                   </span>
-                  <span className="mt-0.5 block text-[12px] leading-snug text-ink-3">
-                    {m.blurb}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <span className="text-[13.5px] font-semibold text-ink">{m.label}</span>
+                      <span className="text-[11px] text-ink-4">{CUE[m.id]}</span>
+                    </span>
+                    <span className="mt-0.5 block text-[12px] leading-snug text-ink-3">
+                      {m.blurb}
+                    </span>
                   </span>
-                </span>
-                {active ? (
-                  <Ico
-                    icon={FiCheck}
-                    motion="check"
-                    size={14}
-                    className="mt-1.5 shrink-0 text-accent"
-                  />
-                ) : null}
-              </button>
-            );
-          })}
+                  {active ? (
+                    <Ico
+                      icon={FiCheck}
+                      motion="check"
+                      size={14}
+                      className="mt-1.5 shrink-0 text-accent"
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </div>
