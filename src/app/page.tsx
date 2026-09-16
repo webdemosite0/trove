@@ -9,12 +9,12 @@ import {
   FeatureGrid,
   ProductMockup,
   HubDiagram,
-  WhyGallery,
 } from "@/components/landing/showcase";
 import { LandingTrustedBar } from "@/components/landing/trusted-bar";
 import { PricingPreview, FinalCta } from "@/components/landing/sections";
 import { ProductProof } from "@/components/landing/product-proof";
 import { TrustSection } from "@/components/landing/trust";
+import { Testimonials } from "@/components/landing/testimonials";
 import { Faq } from "@/components/landing/faq";
 import { PLANS } from "@/lib/credits";
 import { availableChatModels } from "@/lib/chat-models.server";
@@ -46,7 +46,7 @@ export default async function Landing() {
         <FeatureGrid />
         <HubDiagram />
         <TrustSection />
-        <WhyGallery />
+        <Testimonials />
         <div id="pricing">
           <PricingPreview plans={PLANS} />
         </div>
