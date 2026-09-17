@@ -1,0 +1,2 @@
+Removed. Lovable-style preview chrome lives only in git history.
+Deploy must pick up browser-frame.tsx + builder-preview-pane.tsx from main.
