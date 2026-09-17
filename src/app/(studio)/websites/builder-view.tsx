@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BuilderView as WorkspaceBuilderView } from "./builder-workspace";
+import { AgenticBuilderWorkspace } from "./agentic-builder-workspace";
 
 /** User-facing site panes. Terminal/console is backend-only and never a route. */
 export type SiteView = "chat" | "preview" | "files" | "code";
@@ -205,7 +205,7 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
 
       const mobileButtons = Array.from(root.querySelectorAll<HTMLButtonElement>("nav button"));
       const activeMobile = mobileButtons.find((button) =>
-        button.className.includes("bg-accent/12"),
+        button.className.includes("bg-[#171719]"),
       );
       if (activeMobile) {
         const found = (Object.keys(MOBILE_LABELS) as SiteView[]).find(
@@ -223,7 +223,7 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
         root.querySelectorAll<HTMLButtonElement>("button.trove-tab-active"),
       );
       const activeIndex = desktopTabs.findIndex((button) =>
-        button.className.includes("bg-accent/15"),
+        button.className.includes("bg-black/[0.07]"),
       );
       if (activeIndex >= 0 && !initialRoutePending.current) {
         const found = (Object.keys(DESKTOP_INDEX) as SiteView[]).find(
@@ -299,11 +299,11 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
 
   if (!identityReady) {
     return (
-      <div className="grid h-full min-h-[60vh] place-items-center bg-canvas px-6 text-center">
+      <div className="grid h-full min-h-[60vh] place-items-center bg-[#f7f6f3] px-6 text-center text-[#171719]">
         <div>
-          <div className="mx-auto mb-3 size-5 animate-spin rounded-full border-2 border-accent/20 border-t-accent" />
-          <p className="text-[13px] font-medium text-ink">Creating this site's workspace…</p>
-          <p className="mt-1 text-[11.5px] text-ink-4">One project, one page, one isolated runtime.</p>
+          <div className="mx-auto mb-3 size-5 animate-spin rounded-full border-2 border-black/10 border-t-black/70" />
+          <p className="text-[13px] font-medium">Creating this site's workspace…</p>
+          <p className="mt-1 text-[11.5px] text-black/38">One project, one page, one isolated runtime.</p>
         </div>
       </div>
     );
@@ -311,10 +311,10 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
 
   if (identityError || !identity) {
     return (
-      <div className="grid h-full min-h-[60vh] place-items-center bg-canvas px-6 text-center">
-        <div className="max-w-sm rounded-2xl border border-line bg-raised p-5 shadow-sm">
-          <p className="text-[14px] font-semibold text-ink">Could not create site workspace</p>
-          <p className="mt-2 text-[12.5px] leading-5 text-ink-4">
+      <div className="grid h-full min-h-[60vh] place-items-center bg-[#f7f6f3] px-6 text-center text-[#171719]">
+        <div className="max-w-sm rounded-2xl border border-black/[0.07] bg-white p-5 shadow-sm">
+          <p className="text-[14px] font-semibold">Could not create site workspace</p>
+          <p className="mt-2 text-[12.5px] leading-5 text-black/44">
             {identityError || "Please reload and try again."}
           </p>
         </div>
@@ -324,22 +324,17 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
 
   const previewRouteClass =
     view === "preview"
-      ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>nav]:hidden [&>div>div>main]:bg-[#1b1b1c]"
+      ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>div>main]:bg-[#1b1b1c]"
       : "";
-
-  // Terminal execution remains available to Trove's backend agent, but there is
-  // intentionally no user-facing terminal tab or route.
-  const terminalHiddenClass =
-    "[&_.trove-tab-active:last-of-type]:!hidden [&>div>nav>div]:!grid-cols-4 [&>div>nav>div>button:last-child]:!hidden";
 
   return (
     <div
       ref={rootRef}
       data-trove-site-view={view}
       data-trove-project-id={identity.id}
-      className={`h-full min-h-0 ${previewRouteClass} ${terminalHiddenClass}`}
+      className={`h-full min-h-0 ${previewRouteClass}`}
     >
-      <WorkspaceBuilderView {...props} restored={identity} />
+      <AgenticBuilderWorkspace {...props} restored={identity} />
     </div>
   );
 }
