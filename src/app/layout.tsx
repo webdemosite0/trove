@@ -9,6 +9,7 @@ import "./builder-motion.css";
 import "./theme-backdrop.css";
 import "./onboarding-motion.css";
 import "./app-motion.css";
+import "@/styles/sidebar-dark.css";
 
 const inter = Inter({
   variable: "--font-inter",
