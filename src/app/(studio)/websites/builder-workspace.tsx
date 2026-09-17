@@ -1,1 +1,3 @@
-PLACEHOLDER_WILL_FAIL
+"use client";
+
+export { BuilderView } from "@/lib/builder-workspace-view";
