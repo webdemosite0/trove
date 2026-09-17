@@ -15,9 +15,8 @@ import {
 } from "@/lib/browser-runtime";
 
 /**
- * Full-height project preview backed by the reusable E2B runtime.
- * Every site is keyed to its own project id so one project's sandbox/preview
- * can never become another project's live iframe.
+ * Full-height project preview backed by the reusable runtime.
+ * Technical runtime errors stay internal; users only see a clean preview status.
  */
 export function BuilderPreviewPane({
   preview,
@@ -192,23 +191,23 @@ export function BuilderPreviewPane({
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="grid h-full min-h-[280px] place-items-center bg-white px-6 text-center text-[#242427]">
+          <div className="grid h-full min-h-[280px] place-items-center bg-white px-6 text-center text-[#111]">
             <div className="max-w-sm">
               <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-black/[0.08] bg-[#f7f7f8] shadow-sm">
                 <span className="font-mono text-[15px] font-semibold text-[#6f45ff]">{"//"}</span>
               </div>
-              <p className="text-[16px] font-semibold tracking-tight">Live preview</p>
-              <p className="mt-2 text-[13px] leading-5 text-black/45">
-                Build this project and Trove will start its own isolated Vite workspace.
+              <p className="text-[16px] font-semibold tracking-tight text-black">Live preview</p>
+              <p className="mt-2 text-[13px] leading-5 text-black/55">
+                Build this project and Trove will prepare the preview here.
               </p>
             </div>
           </div>
         )}
       </BrowserFrame>
 
-      {runtime.status === "error" && runtime.error ? (
-        <div className="pointer-events-none absolute bottom-5 left-6 z-50 max-w-[360px] rounded-2xl border border-amber-400/20 bg-[#242426]/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-amber-100 shadow-2xl backdrop-blur-xl">
-          Live runtime unavailable: {runtime.error}. Showing this project's saved snapshot.
+      {runtime.status === "error" ? (
+        <div className="pointer-events-none absolute bottom-5 left-6 z-50 max-w-[360px] rounded-2xl border border-black/10 bg-white/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-black shadow-xl backdrop-blur-xl">
+          Preview is reconnecting. Showing the saved preview for now.
         </div>
       ) : null}
     </div>
