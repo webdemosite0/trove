@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { applySubscription, userIdForCustomer } from "@/lib/billing";
 import { planForPrice, stripe, stripeConfigured } from "@/lib/stripe";
+import { alertOps } from "@/lib/ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ const HANDLED = new Set([
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
+  "invoice.payment_failed",
 ]);
 
 export async function POST(req: Request) {
@@ -64,6 +66,11 @@ export async function POST(req: Request) {
     // 500 so Stripe retries. A database blip should not silently cost someone
     // the plan they just paid for.
     console.error(`[billing] handling ${event.type} failed:`, err);
+    await alertOps({
+      key: `stripe-handler-${event.type}`,
+      subject: "Stripe webhook handling failed",
+      message: `Event ${event.type} could not be applied. Stripe should retry the delivery.`,
+    }).catch(() => false);
     return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
 
@@ -72,6 +79,18 @@ export async function POST(req: Request) {
 
 async function handle(event: Stripe.Event) {
   const sdk = stripe();
+
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as Stripe.Invoice;
+    const customerId = idOf(invoice.customer);
+    await alertOps({
+      key: `stripe-payment-failed-${customerId || event.id}`,
+      subject: "Stripe subscription payment failed",
+      message: `Stripe reported a failed subscription payment. Customer id: ${customerId || "(missing)"}.`,
+      cooldownMs: 60 * 60 * 1000,
+    }).catch(() => false);
+    return;
+  }
 
   let subscriptionId = "";
   let customerId = "";
@@ -97,6 +116,11 @@ async function handle(event: Stripe.Event) {
     // Someone else's Stripe account, or an account deleted since paying.
     // Not an error worth retrying — a retry would find nothing either.
     console.error(`[billing] no account for stripe customer ${customerId}`);
+    await alertOps({
+      key: `stripe-no-user-${customerId}`,
+      subject: "Stripe payment has no Trove account",
+      message: `A Stripe subscription event could not be matched to a Trove user. Customer id: ${customerId}.`,
+    }).catch(() => false);
     return;
   }
 
@@ -128,6 +152,11 @@ async function handle(event: Stripe.Event) {
     console.error(
       `[billing] price ${priceId || "(none)"} maps to no plan; not changing plan for ${userId}`,
     );
+    await alertOps({
+      key: `stripe-unmapped-price-${priceId || "none"}`,
+      subject: "Stripe price is not mapped",
+      message: `A paid Stripe subscription used price ${priceId || "(missing)"}, but Trove could not map it to a plan.`,
+    }).catch(() => false);
     return;
   }
 
