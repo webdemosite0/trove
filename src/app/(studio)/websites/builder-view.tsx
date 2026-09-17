@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BuilderView as WorkspaceBuilderView } from "./builder-workspace";
-import { BuilderCommandCenter } from "@/components/builder/builder-command-center";
 
 /** User-facing site panes. Preview is an internal builder pane, not a page. */
 export type SiteView = "chat" | "preview" | "files" | "code";
@@ -200,7 +199,6 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       className={`h-full min-h-0 ${terminalHiddenClass}`}
     >
       <WorkspaceBuilderView {...props} restored={identity} />
-      {!props.mobile ? <BuilderCommandCenter /> : null}
     </div>
   );
 }
