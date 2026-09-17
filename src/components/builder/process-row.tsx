@@ -1,6 +1,6 @@
 "use client";
 
-import { ThinkingOrb } from "thinking-orbs";
+import { ThinkingOrb, type BuilderActivityKind } from "@/components/builder/builder-activity";
 import { ServiceMark } from "@/components/integrations/service-mark";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ type OrbState =
   | "breathing"
   | "shaping";
 
-/** Pure chat process line — Grok-style Ran command / Wrote / Used */
+/** Pure chat process line — Ran command / Wrote / Used */
 export function ProcessRow({
   kind,
   label,
@@ -25,7 +25,6 @@ export function ProcessRow({
   kind: "cmd" | "file" | "think" | "tool" | "ok" | "connect";
   label: string;
   active?: boolean;
-  /** When set, shows brand mark (e.g. github) for Used / Connected rows */
   connectorId?: string;
 }) {
   const id =
@@ -52,7 +51,9 @@ export function ProcessRow({
         )}
         aria-hidden
       >
-        {id ? (
+        {active && !id ? (
+          <ThinkingOrb kind={kind === "cmd" ? "command" : kind === "file" ? "writing" : "thinking"} variant={label.length} size={16} />
+        ) : id ? (
           <ServiceMark id={id} name={id} size={16} />
         ) : kind === "cmd" || kind === "connect" ? (
           "▸"
@@ -68,28 +69,13 @@ export function ProcessRow({
       </span>
       <span className="min-w-0 flex-1 pt-[1px]">
         {kind === "cmd" ? (
-          <>
-            <span className="text-ink-4">Ran command</span>
-            <span className="text-ink-2"> {label}</span>
-          </>
+          <><span className="text-ink-4">Ran command</span><span className="text-ink-2"> {label}</span></>
         ) : kind === "file" ? (
-          <>
-            <span className="text-ink-4">Wrote</span>
-            <span className="font-mono text-[12.5px] text-ink-2"> {label}</span>
-          </>
+          <><span className="text-ink-4">Wrote</span><span className="font-mono text-[12.5px] text-ink-2"> {label}</span></>
         ) : kind === "tool" ? (
-          <>
-            <span className="text-ink-4">Used</span>
-            <span className="text-ink-2"> {label}</span>
-            {!/\bconnector\b/i.test(label) && id ? (
-              <span className="text-ink-4"> Connector</span>
-            ) : null}
-          </>
+          <><span className="text-ink-4">Used</span><span className="text-ink-2"> {label}</span>{!/\bconnector\b/i.test(label) && id ? <span className="text-ink-4"> Connector</span> : null}</>
         ) : kind === "connect" ? (
-          <>
-            <span className="text-ink-4">Connected</span>
-            <span className="text-ink-2"> {label}</span>
-          </>
+          <><span className="text-ink-4">Connected</span><span className="text-ink-2"> {label}</span></>
         ) : (
           <span className={active ? "text-ink-2" : "text-ink-4"}>{label}</span>
         )}
@@ -98,20 +84,15 @@ export function ProcessRow({
   );
 }
 
-export function WorkingTimer({
-  secs,
-  orbState = "working",
-}: {
-  secs: number;
-  orbState?: OrbState;
-}) {
+export function WorkingTimer({ secs, orbState = "working" }: { secs: number; orbState?: OrbState }) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
+  const kind: BuilderActivityKind = orbState === "searching" ? "searching" : orbState === "connecting" ? "tool" : orbState === "composing" || orbState === "shaping" ? "writing" : "thinking";
   return (
     <div className="flex items-center gap-2 pl-1 pt-2">
       <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
-        <ThinkingOrb state={orbState} size={20} theme="auto" />
+        <ThinkingOrb kind={kind} variant={secs} size={20} />
       </span>
       <span className="text-[12px] tabular-nums text-ink-4">Working for {label}</span>
     </div>
