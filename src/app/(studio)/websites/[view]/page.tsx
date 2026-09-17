@@ -4,10 +4,9 @@ import { isMobile } from "@/lib/device";
 import { loadConversation } from "@/lib/conversations";
 import { loadProject } from "@/lib/projects";
 
-/** Only user-facing site panes. Terminal/console is backend-only. */
+/** Preview is an internal builder pane, not a standalone page. */
 const VIEW_MAP: Record<string, SiteView> = {
   chat: "chat",
-  preview: "preview",
   files: "files",
   code: "code",
 };
@@ -20,8 +19,8 @@ export async function generateMetadata({
   const { view } = await params;
   const requested = view.toLowerCase();
   const label =
-    requested === "terminal" || requested === "console"
-      ? "Preview"
+    requested === "preview" || requested === "terminal" || requested === "console"
+      ? "Chat"
       : view.charAt(0).toUpperCase() + view.slice(1);
   return { title: `${label} · Sites` };
 }
@@ -36,12 +35,12 @@ export default async function WebsiteSectionPage({
   const [{ view }, { q, c }] = await Promise.all([params, searchParams]);
   const requested = view.toLowerCase();
 
-  // Terminal is not a user-facing destination anymore.
-  if (requested === "terminal" || requested === "console") {
+  // The old full-page Preview and terminal destinations no longer exist.
+  if (requested === "preview" || requested === "terminal" || requested === "console") {
     if (typeof c === "string" && c.trim()) {
-      redirect(`/project/${encodeURIComponent(c.trim())}/preview`);
+      redirect(`/project/${encodeURIComponent(c.trim())}/chat`);
     }
-    redirect("/websites");
+    redirect("/websites/chat");
   }
 
   const initialView = VIEW_MAP[requested];
