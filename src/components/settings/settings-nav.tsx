@@ -42,6 +42,10 @@ const WORKSPACE: Section[] = [
   { href: "/projects", label: "Projects", icon: FiGrid, away: true },
 ];
 
+const SUPPORT: Section[] = [
+  { href: "/help", label: "Help & support", icon: FiFileText, away: true },
+];
+
 function SettingsSection({ title, items }: { title: string; items: Section[] }) {
   const pathname = usePathname();
   return (
@@ -82,6 +86,7 @@ export function SettingsNav() {
       <SettingsSection title="Account" items={ACCOUNT} />
       <SettingsSection title="Billing" items={BILLING} />
       <SettingsSection title="Workspace" items={WORKSPACE} />
+      <SettingsSection title="Support" items={SUPPORT} />
     </nav>
   );
 }
