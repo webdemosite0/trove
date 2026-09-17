@@ -24,6 +24,7 @@ const eslintConfig = defineConfig([
     files: [
       "src/app/(studio)/websites/builder-workspace.tsx",
       "src/app/(studio)/websites/agentic-builder-workspace.tsx",
+      "src/lib/builder-workspace-view.tsx",
     ],
     rules: {
       // Builder step events are newline-delimited JSON supplied by multiple AI
