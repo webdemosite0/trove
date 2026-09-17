@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
-import { planById } from "@/lib/credits";
+import { planById, type BillingInterval } from "@/lib/credits";
 import { saveCustomerId, subscriptionFor } from "@/lib/billing";
 import {
   createLemonCheckout,
@@ -14,12 +14,6 @@ import { site } from "@/lib/site";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * Starts checkout for a paid plan.
- * Prefers Lemon Squeezy (better international / PK card support),
- * falls back to Stripe when Lemon is not configured.
- * Plan is only granted by the webhook after payment confirms.
- */
 export async function POST(req: Request) {
   const user = await currentUser();
   if (!user) {
@@ -27,8 +21,11 @@ export async function POST(req: Request) {
   }
 
   let planId = "";
+  let interval: BillingInterval = "month";
   try {
-    planId = String(((await req.json()) as { plan?: unknown })?.plan ?? "");
+    const body = (await req.json()) as { plan?: unknown; interval?: unknown };
+    planId = String(body?.plan ?? "");
+    interval = body?.interval === "year" ? "year" : "month";
   } catch {
     return NextResponse.json({ error: "Malformed request." }, { status: 400 });
   }
@@ -38,16 +35,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "That is not a paid plan." }, { status: 400 });
   }
 
-  // —— Lemon Squeezy (primary) ————————————————————————————————
   if (lemonConfigured()) {
-    if (!lemonPurchasable(plan.id)) {
-      const missing = variantFor(plan.id);
-      console.error(
-        `[billing] lemon missing variant for plan=${plan.id} LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}=${missing ? "set" : "MISSING"}`,
-      );
+    if (!lemonPurchasable(plan.id, interval)) {
+      const key =
+        interval === "year"
+          ? `LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}_YEARLY`
+          : `LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}`;
+      console.error(`[billing] lemon missing variant plan=${plan.id} interval=${interval}`);
       return NextResponse.json(
         {
-          error: `Lemon Squeezy variant for ${plan.name} is not configured. Set LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()} in Vercel env.`,
+          error: `Lemon Squeezy ${interval}ly variant for ${plan.name} is not configured. Set ${key} in Vercel env.`,
         },
         { status: 503 },
       );
@@ -56,31 +53,31 @@ export async function POST(req: Request) {
     try {
       const { url } = await createLemonCheckout({
         planId: plan.id,
+        interval,
         userId: user.id,
         email: user.email,
         name: user.name || undefined,
         successUrl: `${site.url}/plans?checkout=done`,
       });
-      return NextResponse.json({ url, provider: "lemon" });
+      return NextResponse.json({ url, provider: "lemon", interval });
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[billing] lemon checkout failed:", detail);
       return NextResponse.json(
         {
           error: `Lemon checkout failed: ${detail}`,
-          hint: "Check LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, and LEMONSQUEEZY_VARIANT_PRO / _TEAM match your Lemon dashboard (same mode: test vs live).",
+          hint: "Check API key, store id, and monthly/yearly variant ids (same Test/Live mode).",
         },
         { status: 502 },
       );
     }
   }
 
-  // —— Stripe (fallback) ——————————————————————————————————————
   if (!stripeConfigured()) {
     return NextResponse.json(
       {
         error:
-          "Payments are not set up yet. Add Lemon Squeezy env vars (LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, LEMONSQUEEZY_VARIANT_PRO, LEMONSQUEEZY_VARIANT_TEAM) in Vercel.",
+          "Payments are not set up yet. Add Lemon Squeezy env vars in Vercel.",
       },
       { status: 503 },
     );
@@ -99,7 +96,6 @@ export async function POST(req: Request) {
     const sdk = stripe();
 
     let customerId = sub.customerId;
-    // Only reuse Stripe customers (ids start with cus_)
     if (customerId && !customerId.startsWith("cus_")) customerId = "";
 
     if (!customerId) {
@@ -117,8 +113,10 @@ export async function POST(req: Request) {
       customer: customerId,
       line_items: [{ price, quantity: 1 }],
       client_reference_id: user.id,
-      metadata: { troveUserId: user.id, plan: plan.id },
-      subscription_data: { metadata: { troveUserId: user.id, plan: plan.id } },
+      metadata: { troveUserId: user.id, plan: plan.id, interval },
+      subscription_data: {
+        metadata: { troveUserId: user.id, plan: plan.id, interval },
+      },
       allow_promotion_codes: true,
       success_url: `${site.url}/plans?checkout=done`,
       cancel_url: `${site.url}/plans?checkout=cancelled`,
@@ -131,7 +129,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ url: session.url, provider: "stripe" });
+    return NextResponse.json({ url: session.url, provider: "stripe", interval });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[billing] stripe checkout failed:", detail);
