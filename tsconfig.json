@@ -21,7 +21,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "border-beam": ["./src/components/ui/border-beam.tsx"],
-      "thinking-orbs": ["./src/components/ui/thinking-orbs-compat.tsx"]
+      "thinking-orbs": ["./src/components/ui/thinking-orbs-compat.tsx"],
+      "liquid-gooey": ["./src/components/ui/liquid-gooey.tsx"]
     }
   },
   "include": [
