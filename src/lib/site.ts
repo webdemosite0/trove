@@ -71,4 +71,29 @@ export const publicRoutes = [
   { path: "/terms", priority: 0.4, changeFrequency: "yearly" as const },
 ];
 
-export const privateRoutes = ["/settings", "/dashboard", "/api/"];
+/**
+ * Account, workspace and machine-facing routes that should never be indexed.
+ * Keep this list centralized so robots.ts and any future noindex helpers use
+ * the same canonical privacy boundary.
+ */
+export const privateRoutes = [
+  "/api/",
+  "/admin",
+  "/agents",
+  "/chat",
+  "/dashboard",
+  "/integrations",
+  "/launching",
+  "/plans",
+  "/project/",
+  "/projects",
+  "/reminders",
+  "/settings",
+  "/skills",
+  "/team",
+  "/websites",
+  "/workflows",
+  "/login",
+  "/signup",
+  "/verify",
+];
