@@ -10,7 +10,6 @@ import {
   TbTerminal2,
   TbCode,
   TbFiles,
-  TbMessageCircle,
 } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
@@ -35,13 +34,6 @@ import { cn } from "@/lib/utils";
 import { useNav } from "@/components/shell/nav-state";
 import { ProcessRow } from "@/components/builder/process-row";
 import { BuildConsole } from "@/components/builder/console";
-import {
-  loadBuilderLocal,
-  loadLastBuilderLocal,
-  newLocalProjectId,
-  saveBuilderLocal,
-  type BuilderLocalSnapshot,
-} from "@/lib/builder-local-store";
 
 type Phase = "idle" | "asking" | "planning" | "review" | "building" | "ready";
 type Pane = "chat" | "preview" | "files" | "code" | "console";
@@ -94,20 +86,6 @@ export function BuilderView({
   const hydrated = useRef(false);
   const busy = phase === "asking" || phase === "planning" || phase === "building";
 
-  const ensureProjectId = useCallback(() => {
-    if (projectId) return projectId;
-    const id = newLocalProjectId();
-    setProjectId(id);
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set("c", id);
-      window.history.replaceState(null, "", url.toString());
-    } catch {
-      /* ignore */
-    }
-    return id;
-  }, [projectId]);
-
   useEffect(() => {
     if (phase !== "idle") setCollapsed(true);
   }, [phase, setCollapsed]);
@@ -122,47 +100,10 @@ export function BuilderView({
     }
   }, [files]);
 
+  /** Restore only from the database for the signed-in user. */
   useEffect(() => {
     if (hydrated.current) return;
     hydrated.current = true;
-
-    const applyLocal = (snap: BuilderLocalSnapshot) => {
-      setProjectId(snap.projectId);
-      if (snap.idea) setIdea(snap.idea);
-      if (snap.messages?.length) {
-        setMessages(snap.messages as ChatMsg[]);
-        msgId.current = snap.messages.length + 10;
-      }
-      if (snap.files?.length) {
-        setFiles(snap.files);
-        setPhase(snap.phase === "idle" ? "ready" : ((snap.phase as Phase) || "ready"));
-        setFinalMsg("Restored from this browser. Ask for changes anytime.");
-      } else if (snap.phase && snap.phase !== "idle") {
-        setPhase(snap.phase as Phase);
-      }
-      if (snap.preview) setPreview(snap.preview);
-      else if (snap.files?.length) {
-        try {
-          const html = bundle(snap.files);
-          if (html) setPreview(html);
-        } catch {
-          /* ignore */
-        }
-      }
-      if (snap.plan) setPlan(snap.plan);
-      if (snap.answers) setAnswers(snap.answers);
-      if (snap.storage) setStorage(snap.storage);
-      if (snap.pane && mobile) setPane(snap.pane as Pane);
-      try {
-        const url = new URL(window.location.href);
-        if (url.searchParams.get("c") !== snap.projectId) {
-          url.searchParams.set("c", snap.projectId);
-          window.history.replaceState(null, "", url.toString());
-        }
-      } catch {
-        /* ignore */
-      }
-    };
 
     let fromUrl: string | null = null;
     try {
@@ -170,76 +111,86 @@ export function BuilderView({
     } catch {
       fromUrl = null;
     }
-    const id = restored?.id || fromUrl || projectId;
-    const local = (id && loadBuilderLocal(id)) || (!id ? loadLastBuilderLocal() : null);
-    if (local) applyLocal(local);
-
-    const serverId = restored?.id || id || local?.projectId;
+    const serverId = restored?.id || fromUrl;
     if (!serverId) return;
 
     let cancelled = false;
     void (async () => {
       try {
         const res = await fetch(`/api/builder/projects?id=${encodeURIComponent(serverId)}`);
-        if (!res.ok || cancelled) return;
+        if (!res.ok || cancelled) {
+          if (res.status === 401 || res.status === 404) {
+            setError("Sign in with the same Google or email account to restore this project.");
+          }
+          return;
+        }
         const data = await res.json().catch(() => null);
         const project = data?.project;
         if (!project || cancelled) return;
+
         setProjectId(project.id);
         if (project.prompt) setIdea(project.prompt);
+
+        if (Array.isArray(project.messages) && project.messages.length) {
+          setMessages(
+            project.messages.map((m: ChatMsg) => ({
+              id: String(m.id),
+              role: m.role === "assistant" || m.role === "system" ? m.role : "user",
+              text: String(m.text || ""),
+              at: Number(m.at) || 0,
+            })),
+          );
+          msgId.current = project.messages.length + 10;
+        }
+
         if (Array.isArray(project.files) && project.files.length) {
           setFiles(project.files);
           setPhase("ready");
-          setFinalMsg("Restored your saved website. Ask for changes anytime.");
+          setFinalMsg("Restored from your account. Ask for changes anytime.");
           if (mobile) setPane("preview");
         }
+
         if (project.previewHtml) setPreview(project.previewHtml);
-        if (project.name) {
-          setPlan(
-            (prev) =>
-              prev ?? {
-                title: project.name,
-                summary: project.prompt || "",
-                requirements: { overview: "", features: [], pages: [], rules: [] },
-                style: { name: "clean", mood: "", palette: [], type: "" },
-                steps: [],
-              },
+        else if (Array.isArray(project.files) && project.files.length) {
+          try {
+            const html = bundle(project.files);
+            if (html) setPreview(html);
+          } catch {
+            /* keep */
+          }
+        }
+
+        if (project.buildPlan) setPlan(project.buildPlan);
+        else if (project.name) {
+          setPlan((prev) =>
+            prev ?? {
+              title: project.name,
+              summary: project.prompt || "",
+              requirements: { overview: "", features: [], pages: [], rules: [] },
+              style: { name: "clean", mood: "", palette: [], type: "" },
+              steps: [],
+            },
           );
         }
+
+        try {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get("c") !== project.id) {
+            url.searchParams.set("c", project.id);
+            window.history.replaceState(null, "", url.toString());
+          }
+        } catch {
+          /* ignore */
+        }
       } catch {
-        /* local is enough */
+        setError("Could not load project. Check you are signed in.");
       }
     })();
+
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mobile, restored?.id]);
-
-  useEffect(() => {
-    if (!hydrated.current) return;
-    if (!projectId && !files.length && !messages.length) return;
-    const id = projectId || (files.length || messages.length ? ensureProjectId() : null);
-    if (!id) return;
-    const t = window.setTimeout(() => {
-      saveBuilderLocal({
-        v: 1,
-        projectId: id,
-        idea,
-        phase,
-        messages,
-        files,
-        preview,
-        plan,
-        answers,
-        storage,
-        pane,
-        title: plan?.title,
-        updatedAt: Date.now(),
-      });
-    }, 280);
-    return () => window.clearTimeout(t);
-  }, [projectId, idea, phase, messages, files, preview, plan, answers, storage, pane, ensureProjectId]);
 
   const log = useCallback((text: string, level: LogLine["level"] = "info") => {
     const id = ++logId.current;
@@ -251,37 +202,31 @@ export function BuilderView({
     setLogs((prev) => [...prev.slice(-80), { id, text, level, at }]);
   }, []);
 
+  /** Save chat + files + preview to the DB for this signed-in user. */
   const persistProject = useCallback(
-    async (nextFiles: ProjectFile[], nextPreview: string | null, title?: string) => {
-      if (!nextFiles.length && !nextPreview) return;
-      const id = projectId || ensureProjectId();
-      saveBuilderLocal({
-        v: 1,
-        projectId: id,
-        idea,
-        phase: "ready",
-        messages,
-        files: nextFiles,
-        preview: nextPreview,
-        plan,
-        answers,
-        storage,
-        pane,
-        title: title || plan?.title,
-        updatedAt: Date.now(),
-      });
+    async (
+      nextFiles: ProjectFile[],
+      nextPreview: string | null,
+      title?: string,
+      nextMessages?: ChatMsg[],
+    ) => {
+      const msgs = nextMessages ?? messages;
+      if (!nextFiles.length && !nextPreview && !msgs.length) return;
+
       try {
         const res = await fetch("/api/builder/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id,
+            id: projectId,
             name: title || plan?.title || idea.slice(0, 60) || "Untitled site",
             prompt: idea,
             target: targetId,
-            status: "ready",
+            status: nextFiles.length ? "ready" : "draft",
             files: nextFiles,
             previewHtml: nextPreview,
+            buildPlan: plan,
+            messages: msgs,
           }),
         });
         const data = await res.json().catch(() => null);
@@ -297,14 +242,17 @@ export function BuilderView({
             /* ignore */
           }
           log(`saved · ${data.id}`, "ok");
+        } else if (res.status === 401) {
+          log("Sign in with Google or email to save across devices.", "warn");
+          setError("Sign in to save this project to your account.");
         } else if (!res.ok) {
           log(data?.error || "Could not save website", "warn");
         }
       } catch {
-        log("Saved in this browser (offline).", "warn");
+        log("Could not reach the server to save.", "warn");
       }
     },
-    [projectId, plan, idea, targetId, log, ensureProjectId, messages, answers, storage, pane],
+    [projectId, plan, idea, targetId, log, messages],
   );
 
   const runStep = useCallback(
@@ -417,26 +365,29 @@ export function BuilderView({
         );
         setPlan(data.plan);
         setPhase("review");
-        setMessages((value) => [
-          ...value,
-          {
-            id: `a${++msgId.current}`,
-            role: "assistant",
-            text: data.plan?.summary || "Plan ready.",
-            at: Date.now(),
-          },
-        ]);
+        setMessages((value) => {
+          const next = [
+            ...value,
+            {
+              id: `a${++msgId.current}`,
+              role: "assistant" as const,
+              text: data.plan?.summary || "Plan ready.",
+              at: Date.now(),
+            },
+          ];
+          void persistProject(files, preview, data.plan?.title, next);
+          return next;
+        });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Plan failed");
         setPhase("idle");
       }
     },
-    [mobile, targetId],
+    [mobile, targetId, persistProject, files, preview],
   );
 
   const ask = useCallback(
     async (text: string) => {
-      ensureProjectId();
       const value = text.trim();
       if (!value || busy) return;
       setIdea(value);
@@ -450,7 +401,7 @@ export function BuilderView({
       setCollapsed(true);
       await plan_(value, {});
     },
-    [busy, mobile, plan_, setCollapsed, ensureProjectId],
+    [busy, mobile, plan_, setCollapsed],
   );
 
   const generate = useCallback(async () => {
@@ -482,7 +433,7 @@ export function BuilderView({
       }
       setFiles(current);
       setPhase("ready");
-      setFinalMsg("Build complete. Preview is ready and saved in this browser.");
+      setFinalMsg("Build complete. Saved to your account.");
       let html: string | null = null;
       try {
         html = bundle(current) || null;
@@ -502,10 +453,11 @@ export function BuilderView({
     async (text: string) => {
       const value = text.trim();
       if (!value || busy) return;
-      setMessages((current) => [
-        ...current,
+      const withUser: ChatMsg[] = [
+        ...messages,
         { id: `u${++msgId.current}`, role: "user", text: value, at: Date.now() },
-      ]);
+      ];
+      setMessages(withUser);
       setPhase("building");
       setError(null);
       try {
@@ -520,15 +472,16 @@ export function BuilderView({
           index: 0,
           total: 1,
         });
-        setMessages((current) => [
-          ...current,
+        const withAssistant: ChatMsg[] = [
+          ...withUser,
           {
             id: `a${++msgId.current}`,
             role: "assistant",
-            text: "Updated. Preview refreshed and saved.",
+            text: "Updated. Preview refreshed and saved to your account.",
             at: Date.now(),
           },
-        ]);
+        ];
+        setMessages(withAssistant);
         setPhase("ready");
         let html: string | null = null;
         try {
@@ -537,13 +490,13 @@ export function BuilderView({
         } catch {
           /* keep */
         }
-        void persistProject(next, html, plan?.title);
+        void persistProject(next, html, plan?.title, withAssistant);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Edit failed");
         setPhase("ready");
       }
     },
-    [busy, files, plan, runStep, persistProject],
+    [busy, files, plan, runStep, persistProject, messages],
   );
 
   const sendFromComposer = useCallback(
@@ -563,7 +516,8 @@ export function BuilderView({
           What should we build?
         </h1>
         <p className="mt-2 max-w-md text-center text-[14px] text-ink-3">
-          Chat, files, and preview are saved in this browser and come back after refresh.
+          Chat, files, and preview are saved to your account (Google or email). Sign in so they
+          restore on any device after refresh.
         </p>
         <div className="mt-6 w-full max-w-xl">
           {mobile ? (
@@ -599,7 +553,7 @@ export function BuilderView({
             {plan?.title || idea.slice(0, 40) || "Site"}
           </span>
           {phase === "ready" ? (
-            <span className="ml-auto text-[11px] text-positive">Saved locally</span>
+            <span className="ml-auto text-[11px] text-positive">Saved to account</span>
           ) : null}
         </div>
         <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
