@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { toParts, type Attachment } from "@/lib/attachments";
-import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { requireCredits, spend, OutOfCredits, RateWindowExceeded } from "@/lib/credits";
 import { SKILL_LIST, type SkillId } from "@/lib/skills";
 import { targetFor } from "@/lib/targets";
 import { safeProjectPath } from "@/lib/builder";
@@ -110,6 +110,9 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof OutOfCredits) {
       return Response.json({ error: e.message }, { status: 402 });
+    }
+    if (e instanceof RateWindowExceeded) {
+      return Response.json({ error: e.message }, { status: 429 });
     }
     return Response.json({ error: "Sign in to plan." }, { status: 401 });
   }
