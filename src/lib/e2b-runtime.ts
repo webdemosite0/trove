@@ -103,10 +103,23 @@ async function stopPreviewServer(sandbox: Sandbox) {
 }
 
 async function startPreviewServer(sandbox: Sandbox) {
-  await sandbox.commands.run(
-    `bash -lc 'cd ${PROJECT_ROOT} && nohup npm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort > /tmp/trove-vite.log 2>&1 < /dev/null & echo $! > /tmp/trove-vite.pid'`,
-    { timeoutMs: 10_000 },
+  // Vite is a long-running process. Start it through E2B's background process
+  // API instead of shelling out to `nohup ... &`, which can keep the RPC
+  // command stream alive and eventually surface DEADLINE_EXCEEDED.
+  const process = await sandbox.commands.run(
+    `bash -lc 'npm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort > /tmp/trove-vite.log 2>&1'`,
+    {
+      cwd: PROJECT_ROOT,
+      background: true,
+      timeoutMs: 0,
+    },
   );
+
+  // Detach the SDK stream; E2B keeps the background process alive inside the
+  // sandbox and Trove can reconnect on the next request.
+  if (typeof process.disconnect === "function") {
+    await process.disconnect();
+  }
 
   try {
     await sandbox.commands.run(
@@ -192,7 +205,7 @@ export async function syncE2BProject(sandbox: Sandbox, projectFiles: ProjectFile
   if (packageChanged) {
     await sandbox.commands.run("npm install --no-audit --no-fund", {
       cwd: PROJECT_ROOT,
-      timeoutMs: 180_000,
+      timeoutMs: 240_000,
     });
     await sandbox.files.write(packageHashPath, packageHash);
   }

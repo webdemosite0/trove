@@ -21,7 +21,7 @@ export function EmbeddedBrowserFrame({
   const [mobileViewport, setMobileViewport] = useState(false);
 
   return (
-    <div className={cn("flex h-full min-h-0 flex-col overflow-hidden bg-[#f7f6f3] text-[#171719]", className)}>
+    <div className={cn("flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-[#f7f6f3] text-[#171719]", className)}>
       <div className="flex h-[58px] shrink-0 items-center border-b border-black/[0.055] bg-white/88 px-3 backdrop-blur-xl">
         <div className="flex items-center gap-1">
           <button type="button" className="grid size-9 place-items-center rounded-[13px] bg-black/[0.045] text-black/75" aria-label="Preview">
@@ -32,18 +32,18 @@ export function EmbeddedBrowserFrame({
           </button>
         </div>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex min-w-0 items-center gap-1">
           <span className={cn(
-            "mr-1 size-1.5 rounded-full",
+            "mr-1 size-1.5 shrink-0 rounded-full",
             status === "ready" ? "bg-emerald-400" : status === "error" ? "bg-red-400" : status === "working" ? "animate-pulse bg-amber-400" : "bg-black/20",
           )} />
-          <button type="button" onClick={onOpen} disabled={!onOpen} className="grid size-9 place-items-center rounded-[13px] text-black/45 transition hover:bg-black/[0.04] hover:text-black/75 disabled:opacity-25" aria-label="Open preview">
+          <button type="button" onClick={onOpen} disabled={!onOpen} className="grid size-9 shrink-0 place-items-center rounded-[13px] text-black/45 transition hover:bg-black/[0.04] hover:text-black/75 disabled:opacity-25" aria-label="Open preview">
             <ExpandIcon />
           </button>
-          <button type="button" onClick={() => setMobileViewport((value) => !value)} className={cn("grid size-9 place-items-center rounded-[13px] text-black/45 transition hover:bg-black/[0.04] hover:text-black/75", mobileViewport && "bg-black/[0.045] text-black/80")} aria-label="Toggle device preview">
+          <button type="button" onClick={() => setMobileViewport((value) => !value)} className={cn("grid size-9 shrink-0 place-items-center rounded-[13px] text-black/45 transition hover:bg-black/[0.04] hover:text-black/75", mobileViewport && "bg-black/[0.045] text-black/80")} aria-label="Toggle device preview">
             <SplitIcon />
           </button>
-          {publishControl ? <div className="ml-1 [&>div>button]:h-8 [&>div>button]:rounded-full [&>div>button]:px-3 [&>div>button]:text-[11px]">{publishControl}</div> : null}
+          {publishControl ? <div className="ml-1 shrink-0 [&>div>button]:h-8 [&>div>button]:rounded-full [&>div>button]:px-3 [&>div>button]:text-[11px]">{publishControl}</div> : null}
         </div>
       </div>
 
@@ -57,11 +57,11 @@ export function EmbeddedBrowserFrame({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 p-2.5 sm:p-3">
-        <div className="flex h-full min-h-0 items-stretch justify-center">
+      <div className="min-h-0 min-w-0 flex-1 p-2.5 sm:p-3">
+        <div className="flex h-full min-h-0 min-w-0 w-full items-stretch justify-center">
           <div className={cn(
-            "relative h-full min-h-0 overflow-hidden rounded-[24px] border border-black/[0.075] bg-white shadow-[0_18px_70px_-46px_rgba(15,23,42,.35)] transition-[width,max-width] duration-300",
-            mobileViewport ? "w-full max-w-[410px]" : "w-full",
+            "relative h-full min-h-0 min-w-0 overflow-hidden rounded-[24px] border border-black/[0.075] bg-white shadow-[0_18px_70px_-46px_rgba(15,23,42,.35)] transition-[width,max-width] duration-300",
+            mobileViewport ? "w-full max-w-[410px]" : "w-full max-w-none flex-1",
           )}>
             {children}
           </div>
