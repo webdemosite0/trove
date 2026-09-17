@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 import { privateRoutes, site } from "@/lib/site";
 
 /**
- * AI crawlers are allowed on purpose: being quotable by assistants is a
- * discovery channel, and everything public here is marketing surface. Private
- * routes are blocked for every agent, human or machine.
+ * Public marketing pages stay crawlable by search engines and AI discovery
+ * bots. Authenticated workspaces, project builders, APIs and account surfaces
+ * are explicitly excluded so private/user-specific URLs do not enter search.
  */
 const AI_CRAWLERS = [
   "GPTBot",
@@ -26,15 +26,16 @@ const AI_CRAWLERS = [
   "YouBot",
 ];
 
+const publicRule = {
+  allow: ["/", "/about", "/pricing", "/privacy", "/terms", "/features/"],
+  disallow: privateRoutes,
+};
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: "*", allow: "/", disallow: privateRoutes },
-      ...AI_CRAWLERS.map((userAgent) => ({
-        userAgent,
-        allow: "/",
-        disallow: privateRoutes,
-      })),
+      { userAgent: "*", ...publicRule },
+      ...AI_CRAWLERS.map((userAgent) => ({ userAgent, ...publicRule })),
     ],
     sitemap: `${site.url}/sitemap.xml`,
     host: site.url,
