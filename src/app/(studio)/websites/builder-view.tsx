@@ -32,8 +32,9 @@ const ROUTES: Record<SiteView, string> = {
   code: "code",
 };
 
-const SPLIT_STORAGE_KEY = "trove.builder.chat-width.v2";
-const DEFAULT_CHAT_PERCENT = 42;
+// New key intentionally resets the old fixed-looking split stored by early builds.
+const SPLIT_STORAGE_KEY = "trove.builder.chat-width.v3";
+const DEFAULT_CHAT_PERCENT = 40;
 
 function viewFromPath(pathname: string): SiteView | null {
   const parts = pathname.split("/").filter(Boolean);
@@ -66,13 +67,14 @@ function routeUrl(view: SiteView, projectId?: string | null) {
 }
 
 function clampSplit(value: number, width?: number) {
-  // Keep both the conversation and the work surface useful on normal laptops.
-  // On very wide screens the percentage itself remains the constraint.
-  if (!width || width <= 0) return Math.min(62, Math.max(30, value));
-  const minChatPercent = (320 / width) * 100;
-  const maxChatPercent = ((width - 360) / width) * 100;
+  if (!width || width <= 0) return Math.min(58, Math.max(30, value));
+
+  // Keep a useful conversation width while guaranteeing the preview/work area
+  // always has enough room for a real desktop browser surface.
+  const minChatPercent = (340 / width) * 100;
+  const maxChatPercent = ((width - 500) / width) * 100;
   const low = Math.max(28, minChatPercent);
-  const high = Math.min(62, Math.max(low, maxChatPercent));
+  const high = Math.min(58, Math.max(low, maxChatPercent));
   return Math.min(high, Math.max(low, value));
 }
 
@@ -99,6 +101,27 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       setChatPercent(next);
     }
   }, []);
+
+  // Re-clamp when the Trove navigation collapses/expands or the browser resizes.
+  // This prevents stale pixel-like proportions after the outer shell changes width.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof ResizeObserver === "undefined") return;
+
+    const apply = () => {
+      const width = root.getBoundingClientRect().width;
+      const next = clampSplit(splitRef.current, width);
+      if (Math.abs(next - splitRef.current) > 0.05) {
+        splitRef.current = next;
+        setChatPercent(next);
+      }
+    };
+
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [collapsed]);
 
   useEffect(() => {
     desiredView.current = view;
@@ -187,9 +210,9 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
     [setAddress],
   );
 
-  // The builder itself reads the URL to choose its right-hand surface. We only
-  // translate deliberate UI clicks into history changes; there is no DOM
-  // mutation observer and no programmatic button clicking anymore.
+  // Keep the URL in sync with the builder's own pane controls without querying
+  // active CSS classes or clicking hidden elements. The builder remains the UI
+  // source of truth; this wrapper only updates browser history.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -304,9 +327,6 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
   const previewRouteClass = dedicatedPreview
     ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>div>main]:bg-[#1b1b1c]"
     : "";
-  const splitClass = !props.mobile && !dedicatedPreview
-    ? "[&>div>div>aside]:!w-[var(--trove-chat-width)] [&>div>div>aside]:!min-w-0 [&>div>div>aside]:!max-w-none [&>div>div>aside]:!flex-none [&>div>div>main]:min-w-[320px]"
-    : "";
 
   return (
     <div
@@ -315,7 +335,8 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       data-trove-project-id={identity.id}
       data-shell-collapsed={collapsed ? "true" : "false"}
       data-resizing={resizing ? "true" : "false"}
-      className={cn("relative h-full min-h-0 overflow-hidden", previewRouteClass, splitClass)}
+      data-dedicated-preview={dedicatedPreview ? "true" : "false"}
+      className={cn("relative h-full min-h-0 min-w-0 overflow-hidden", previewRouteClass)}
       style={{ "--trove-chat-width": `${chatPercent}%` } as CSSProperties}
     >
       <AgenticBuilderWorkspace {...props} restored={identity} />
@@ -326,10 +347,16 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
           aria-label="Resize chat and work area"
           aria-orientation="vertical"
           aria-valuemin={30}
-          aria-valuemax={62}
+          aria-valuemax={58}
           aria-valuenow={Math.round(chatPercent)}
           tabIndex={0}
           onPointerDown={beginResize}
+          onDoubleClick={() => {
+            const next = clampSplit(DEFAULT_CHAT_PERCENT, rootRef.current?.getBoundingClientRect().width);
+            splitRef.current = next;
+            setChatPercent(next);
+            window.localStorage.setItem(SPLIT_STORAGE_KEY, String(next));
+          }}
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft") {
               event.preventDefault();
@@ -339,27 +366,76 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
               nudgeSplit(2);
             } else if (event.key === "Home") {
               event.preventDefault();
-              const next = clampSplit(34, rootRef.current?.getBoundingClientRect().width);
+              const next = clampSplit(32, rootRef.current?.getBoundingClientRect().width);
               splitRef.current = next;
               setChatPercent(next);
             } else if (event.key === "End") {
               event.preventDefault();
-              const next = clampSplit(54, rootRef.current?.getBoundingClientRect().width);
+              const next = clampSplit(52, rootRef.current?.getBoundingClientRect().width);
               splitRef.current = next;
               setChatPercent(next);
             }
           }}
           className={cn(
-            "group absolute bottom-0 top-[52px] z-20 w-2 -translate-x-1/2 cursor-col-resize touch-none outline-none",
-            "after:absolute after:bottom-0 after:left-1/2 after:top-0 after:w-px after:-translate-x-1/2 after:bg-transparent after:transition-colors",
-            "hover:after:bg-black/12 focus-visible:after:bg-black/22",
-            resizing && "after:bg-black/20",
+            "group absolute bottom-0 top-[52px] z-30 w-3 -translate-x-1/2 cursor-col-resize touch-none outline-none",
+            "after:absolute after:bottom-0 after:left-1/2 after:top-0 after:w-px after:-translate-x-1/2 after:bg-black/[0.055] after:transition-colors",
+            "hover:after:bg-black/18 focus-visible:after:bg-black/28",
+            resizing && "after:bg-black/25",
           )}
           style={{ left: `${chatPercent}%` }}
         >
-          <span className="pointer-events-none absolute left-1/2 top-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/0 transition-colors group-hover:bg-black/12 group-focus-visible:bg-black/18" />
+          <span className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/0 transition-colors group-hover:bg-black/14 group-focus-visible:bg-black/20" />
         </div>
       ) : null}
+
+      <style jsx global>{`
+        @media (min-width: 768px) {
+          [data-trove-project-id][data-dedicated-preview="false"] > div > div:nth-child(2) {
+            display: grid !important;
+            grid-template-columns: var(--trove-chat-width) minmax(0, 1fr) !important;
+            min-width: 0 !important;
+            width: 100% !important;
+          }
+
+          [data-trove-project-id][data-dedicated-preview="false"] > div > div:nth-child(2) > aside {
+            display: flex !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            overflow: hidden !important;
+          }
+
+          [data-trove-project-id][data-dedicated-preview="false"] > div > div:nth-child(2) > main {
+            display: flex !important;
+            position: relative !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            overflow: hidden !important;
+          }
+
+          [data-trove-project-id][data-dedicated-preview="false"] > div > div:nth-child(2) > main > div {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            flex: 1 1 auto !important;
+          }
+
+          [data-trove-project-id][data-dedicated-preview="false"] .composer {
+            border-radius: 20px !important;
+            box-shadow: 0 8px 30px -24px rgba(15, 23, 42, 0.35) !important;
+          }
+
+          [data-trove-project-id][data-dedicated-preview="false"] aside .composer textarea {
+            height: 58px !important;
+            min-height: 58px !important;
+            max-height: 128px !important;
+            padding: 15px 16px 8px !important;
+            font-size: 14px !important;
+            line-height: 1.45 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
