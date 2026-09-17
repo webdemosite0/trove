@@ -517,27 +517,28 @@ export function BuilderView({
     return (
       <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-canvas px-4">
         <TroveOrb size={48} />
-        <h1 className="mt-5 text-center text-[28px] font-semibold tracking-tight text-ink">
+        <h1 className="mt-5 text-center text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]">
           What should we build?
         </h1>
-        <p className="mt-2 max-w-md text-center text-[14px] text-ink-3">
+        <p className="mt-2 max-w-md text-center text-[13px] text-ink-3 sm:text-[14px]">
           Chat, files, and preview are saved to your account (Google or email). Sign in so they
           restore on any device after refresh.
         </p>
-        <div className="mt-6 w-full max-w-xl">
-          {mobile ? (
+        <div className="mt-6 w-full max-w-xl px-1 sm:px-0">
+          <div className="md:hidden">
             <MobileComposer onSend={sendFromComposer} placeholder="Build a modern SaaS landing page…" />
-          ) : (
+          </div>
+          <div className="hidden md:block">
             <Composer onSend={sendFromComposer} placeholder="Build a modern SaaS landing page…" autoFocus />
-          )}
+          </div>
         </div>
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2 px-1">
           {IDEAS.map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => void ask(item)}
-              className="rounded-full border border-line bg-raised px-3.5 py-2 text-[12px] text-ink-3 hover:bg-hover"
+              className="rounded-full border border-line bg-raised px-3 py-2 text-[11.5px] text-ink-3 hover:bg-hover sm:px-3.5 sm:text-[12px]"
             >
               {item}
             </button>
@@ -549,31 +550,39 @@ export function BuilderView({
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-canvas lg:flex-row">
-      <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-b border-line lg:w-[380px] lg:border-b-0 lg:border-r">
-        <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b border-line bg-canvas/95 px-3 backdrop-blur-md">
+      <aside
+        className={cn(
+          "flex min-h-0 w-full shrink-0 flex-col border-line bg-canvas",
+          "h-[min(48dvh,420px)] border-b sm:h-[min(52dvh,480px)]",
+          "lg:h-full lg:w-[min(400px,38vw)] lg:border-b-0 lg:border-r",
+          mobile && pane === "chat" && "h-full border-b-0",
+          mobile && pane !== "chat" && "hidden",
+        )}
+      >
+        <header className="sticky top-0 z-20 flex h-11 shrink-0 items-center gap-2 border-b border-line bg-canvas/95 px-2.5 backdrop-blur-md sm:h-12 sm:px-3">
           <Link href="/dashboard" className="text-ink-3 hover:text-ink" aria-label="Back">
             <FiArrowLeft size={16} />
           </Link>
-          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
+          <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink sm:text-[13px]">
             {plan?.title || idea.slice(0, 40) || "Site"}
           </span>
           {phase === "ready" ? (
-            <span className="shrink-0 text-[11px] text-positive">Saved to account</span>
+            <span className="shrink-0 text-[10.5px] text-positive sm:text-[11px]">Saved</span>
           ) : phase === "building" || phase === "planning" || phase === "asking" ? (
-            <span className="shrink-0 text-[11px] text-ink-3">Working…</span>
+            <span className="shrink-0 text-[10.5px] text-ink-3 sm:text-[11px]">Working…</span>
           ) : null}
         </header>
         <div
           ref={chatScrollRef}
-          className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3"
+          className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain p-2.5 sm:space-y-3 sm:p-3"
         >
           {error ? <FailureNote error={error} /> : null}
-          {finalMsg ? <p className="text-[13px] text-ink-3">{finalMsg}</p> : null}
+          {finalMsg ? <p className="text-[12.5px] text-ink-3 sm:text-[13px]">{finalMsg}</p> : null}
           {messages.map((m) => (
             <div
               key={m.id}
               className={cn(
-                "rounded-[var(--r-panel)] px-3 py-2 text-[13.5px] leading-relaxed",
+                "rounded-[var(--r-panel)] px-2.5 py-2 text-[13px] leading-relaxed sm:px-3 sm:text-[13.5px]",
                 m.role === "user" ? "bg-accent/10 text-ink" : "bg-rail text-ink-2",
               )}
             >
@@ -609,17 +618,30 @@ export function BuilderView({
             />
           ) : null}
         </div>
-        <footer className="sticky bottom-0 z-20 shrink-0 border-t border-line bg-canvas/95 p-2 backdrop-blur-md">
-          {mobile ? (
-            <MobileComposer onSend={sendFromComposer} disabled={busy} />
-          ) : (
-            <Composer onSend={sendFromComposer} disabled={busy} compact />
+        <footer
+          className={cn(
+            "sticky bottom-0 z-20 shrink-0 border-t border-line bg-canvas/95 backdrop-blur-md",
+            "px-2 pt-2",
+            "pb-[max(0.5rem,env(safe-area-inset-bottom))]",
+            "sm:px-2.5 sm:pb-2.5",
           )}
+        >
+          <div className="md:hidden">
+            <MobileComposer onSend={sendFromComposer} disabled={busy} />
+          </div>
+          <div className="hidden md:block">
+            <Composer onSend={sendFromComposer} disabled={busy} compact />
+          </div>
         </footer>
       </aside>
 
-      <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
-        <div className="absolute right-3 top-3 z-10 flex gap-1 rounded-full border border-line bg-raised/90 p-1 shadow-sm backdrop-blur">
+      <main
+        className={cn(
+          "relative min-h-0 min-w-0 flex-1 overflow-hidden",
+          mobile && pane === "chat" && "hidden",
+        )}
+      >
+        <div className="absolute right-2 top-2 z-10 flex gap-1 rounded-full border border-line bg-raised/90 p-1 shadow-sm backdrop-blur sm:right-3 sm:top-3">
           {DESKTOP_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -652,7 +674,7 @@ export function BuilderView({
           />
         ) : null}
         {pane === "files" ? (
-          <ul className="h-full overflow-auto p-4">
+          <ul className="h-full overflow-auto p-3 sm:p-4">
             {files.map((f) => (
               <li key={f.path}>
                 <button
@@ -664,7 +686,7 @@ export function BuilderView({
                   }}
                 >
                   <FiFile size={14} className="text-ink-4" />
-                  <span className="font-mono text-[12.5px]">{f.path}</span>
+                  <span className="font-mono text-[12px] sm:text-[12.5px]">{f.path}</span>
                 </button>
               </li>
             ))}
@@ -672,7 +694,7 @@ export function BuilderView({
           </ul>
         ) : null}
         {pane === "code" ? (
-          <pre className="h-full overflow-auto bg-[#0d0d0f] p-4 font-mono text-[12px] text-white/80">
+          <pre className="h-full overflow-auto bg-[#0d0d0f] p-3 font-mono text-[11.5px] text-white/80 sm:p-4 sm:text-[12px]">
             {files.find((f) => f.path === openFile)?.content || "// Select a file"}
           </pre>
         ) : null}
