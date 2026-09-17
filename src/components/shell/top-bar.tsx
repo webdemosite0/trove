@@ -40,7 +40,7 @@ export function TopBar({
       >
         <Ico icon={TbSearch} motion="scan" size={16} className="shrink-0 text-ink-4" />
         <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink-4">
-          Search anything…
+          Jump to…
         </span>
         <kbd className="shrink-0 rounded-[var(--r-tight)] border border-line px-1.5 py-0.5 text-[10.5px] tabular-nums text-ink-4">
           ⌘K
