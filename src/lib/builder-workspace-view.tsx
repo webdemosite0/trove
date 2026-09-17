@@ -525,12 +525,11 @@ export function BuilderView({
           restore on any device after refresh.
         </p>
         <div className="mt-6 w-full max-w-xl px-1 sm:px-0">
-          <div className="md:hidden">
+          {mobile ? (
             <MobileComposer onSend={sendFromComposer} placeholder="Build a modern SaaS landing page…" />
-          </div>
-          <div className="hidden md:block">
+          ) : (
             <Composer onSend={sendFromComposer} placeholder="Build a modern SaaS landing page…" autoFocus />
-          </div>
+          )}
         </div>
         <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2 px-1">
           {IDEAS.map((item) => (
@@ -549,99 +548,82 @@ export function BuilderView({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-canvas lg:flex-row">
-      <aside
-        className={cn(
-          "flex min-h-0 w-full shrink-0 flex-col border-line bg-canvas",
-          "h-[min(48dvh,420px)] border-b sm:h-[min(52dvh,480px)]",
-          "lg:h-full lg:w-[min(400px,38vw)] lg:border-b-0 lg:border-r",
-          mobile && pane === "chat" && "h-full border-b-0",
-          mobile && pane !== "chat" && "hidden",
-        )}
-      >
-        <header className="sticky top-0 z-20 flex h-11 shrink-0 items-center gap-2 border-b border-line bg-canvas/95 px-2.5 backdrop-blur-md sm:h-12 sm:px-3">
-          <Link href="/dashboard" className="text-ink-3 hover:text-ink" aria-label="Back">
+    <div className="flex h-full min-h-0 w-full flex-col bg-canvas lg:flex-row">
+      <aside className="flex h-full min-h-0 w-full flex-col overflow-hidden border-b border-line lg:w-[380px] lg:shrink-0 lg:border-b-0 lg:border-r">
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-canvas px-3">
+          <Link href="/dashboard" className="shrink-0 text-ink-3 hover:text-ink" aria-label="Back">
             <FiArrowLeft size={16} />
           </Link>
-          <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink sm:text-[13px]">
+          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
             {plan?.title || idea.slice(0, 40) || "Site"}
           </span>
           {phase === "ready" ? (
-            <span className="shrink-0 text-[10.5px] text-positive sm:text-[11px]">Saved</span>
+            <span className="shrink-0 text-[11px] text-positive">Saved to account</span>
           ) : phase === "building" || phase === "planning" || phase === "asking" ? (
-            <span className="shrink-0 text-[10.5px] text-ink-3 sm:text-[11px]">Working…</span>
-          ) : null}
-        </header>
-        <div
-          ref={chatScrollRef}
-          className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain p-2.5 sm:space-y-3 sm:p-3"
-        >
-          {error ? <FailureNote error={error} /> : null}
-          {finalMsg ? <p className="text-[12.5px] text-ink-3 sm:text-[13px]">{finalMsg}</p> : null}
-          {messages.map((m) => (
-            <div
-              key={m.id}
-              className={cn(
-                "rounded-[var(--r-panel)] px-2.5 py-2 text-[13px] leading-relaxed sm:px-3 sm:text-[13.5px]",
-                m.role === "user" ? "bg-accent/10 text-ink" : "bg-rail text-ink-2",
-              )}
-            >
-              {m.text}
-            </div>
-          ))}
-          {tasks.map((t) => (
-            <ProcessRow
-              key={t.id}
-              kind={t.kind === "write" ? "file" : "think"}
-              label={t.label}
-              active={t.state === "run"}
-            />
-          ))}
-          {questionsOpen && questions.length ? (
-            <QuestionBox
-              questions={questions}
-              busy={busy}
-              onSubmit={(ans) => {
-                setAnswers(ans);
-                void plan_(idea, ans);
-              }}
-              onSkip={() => void plan_(idea, answers)}
-            />
-          ) : null}
-          {plan && phase === "review" ? (
-            <PlanPanel
-              plan={plan}
-              storage={storage}
-              onStorage={setStorage}
-              onGenerate={() => void generate()}
-              busy={busy}
-            />
+            <span className="shrink-0 text-[11px] text-ink-3">Working…</span>
           ) : null}
         </div>
-        <footer
-          className={cn(
-            "sticky bottom-0 z-20 shrink-0 border-t border-line bg-canvas/95 backdrop-blur-md",
-            "px-2 pt-2",
-            "pb-[max(0.5rem,env(safe-area-inset-bottom))]",
-            "sm:px-2.5 sm:pb-2.5",
-          )}
+
+        <div
+          ref={chatScrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-3"
         >
-          <div className="md:hidden">
+          <div className="flex flex-col gap-3">
+            {error ? <FailureNote error={error} /> : null}
+            {finalMsg ? <p className="text-[13px] text-ink-3">{finalMsg}</p> : null}
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={cn(
+                  "rounded-[var(--r-panel)] px-3 py-2 text-[13.5px] leading-relaxed",
+                  m.role === "user" ? "bg-accent/10 text-ink" : "bg-rail text-ink-2",
+                )}
+              >
+                {m.text}
+              </div>
+            ))}
+            {tasks.map((t) => (
+              <ProcessRow
+                key={t.id}
+                kind={t.kind === "write" ? "file" : "think"}
+                label={t.label}
+                active={t.state === "run"}
+              />
+            ))}
+            {questionsOpen && questions.length ? (
+              <QuestionBox
+                questions={questions}
+                busy={busy}
+                onSubmit={(ans) => {
+                  setAnswers(ans);
+                  void plan_(idea, ans);
+                }}
+                onSkip={() => void plan_(idea, answers)}
+              />
+            ) : null}
+            {plan && phase === "review" ? (
+              <PlanPanel
+                plan={plan}
+                storage={storage}
+                onStorage={setStorage}
+                onGenerate={() => void generate()}
+                busy={busy}
+              />
+            ) : null}
+          </div>
+        </div>
+
+        <div className="shrink-0 border-t border-line bg-canvas p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          {mobile ? (
             <MobileComposer onSend={sendFromComposer} disabled={busy} />
-          </div>
-          <div className="hidden md:block">
+          ) : (
             <Composer onSend={sendFromComposer} disabled={busy} compact />
-          </div>
-        </footer>
+          )}
+        </div>
       </aside>
 
-      <main
-        className={cn(
-          "relative min-h-0 min-w-0 flex-1 overflow-hidden",
-          mobile && pane === "chat" && "hidden",
-        )}
-      >
-        <div className="absolute right-2 top-2 z-10 flex gap-1 rounded-full border border-line bg-raised/90 p-1 shadow-sm backdrop-blur sm:right-3 sm:top-3">
+      <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div className="absolute right-3 top-3 z-10 flex gap-1 rounded-full border border-line bg-raised/90 p-1 shadow-sm backdrop-blur">
           {DESKTOP_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -658,23 +640,25 @@ export function BuilderView({
           ))}
         </div>
         {pane === "preview" || pane === "chat" ? (
-          <BuilderPreviewPane
-            preview={preview}
-            files={files}
-            publishControl={
-              <PublishPanel
-                files={files}
-                projectId={projectId}
-                title={plan?.title || idea.slice(0, 48) || "Website"}
-                previewHtml={preview}
-                publishedUrl={publishedUrl}
-                onPublished={(url) => setPublishedUrl(url)}
-              />
-            }
-          />
+          <div className="h-full min-h-0 overflow-hidden">
+            <BuilderPreviewPane
+              preview={preview}
+              files={files}
+              publishControl={
+                <PublishPanel
+                  files={files}
+                  projectId={projectId}
+                  title={plan?.title || idea.slice(0, 48) || "Website"}
+                  previewHtml={preview}
+                  publishedUrl={publishedUrl}
+                  onPublished={(url) => setPublishedUrl(url)}
+                />
+              }
+            />
+          </div>
         ) : null}
         {pane === "files" ? (
-          <ul className="h-full overflow-auto p-3 sm:p-4">
+          <ul className="h-full overflow-y-auto p-4">
             {files.map((f) => (
               <li key={f.path}>
                 <button
@@ -686,7 +670,7 @@ export function BuilderView({
                   }}
                 >
                   <FiFile size={14} className="text-ink-4" />
-                  <span className="font-mono text-[12px] sm:text-[12.5px]">{f.path}</span>
+                  <span className="font-mono text-[12.5px]">{f.path}</span>
                 </button>
               </li>
             ))}
@@ -694,7 +678,7 @@ export function BuilderView({
           </ul>
         ) : null}
         {pane === "code" ? (
-          <pre className="h-full overflow-auto bg-[#0d0d0f] p-3 font-mono text-[11.5px] text-white/80 sm:p-4 sm:text-[12px]">
+          <pre className="h-full overflow-y-auto bg-[#0d0d0f] p-4 font-mono text-[12px] text-white/80">
             {files.find((f) => f.path === openFile)?.content || "// Select a file"}
           </pre>
         ) : null}
