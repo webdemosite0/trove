@@ -1,7 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { AgenticBuilderWorkspace } from "./agentic-builder-workspace";
+import { useNav } from "@/components/shell/nav-state";
+import { cn } from "@/lib/utils";
 
 /** User-facing site panes. Terminal/console is backend-only and never a route. */
 export type SiteView = "chat" | "preview" | "files" | "code";
@@ -23,18 +32,8 @@ const ROUTES: Record<SiteView, string> = {
   code: "code",
 };
 
-const MOBILE_LABELS: Record<SiteView, string> = {
-  chat: "Chat",
-  preview: "Preview",
-  files: "Files",
-  code: "Code",
-};
-
-const DESKTOP_INDEX: Partial<Record<SiteView, number>> = {
-  preview: 0,
-  files: 1,
-  code: 2,
-};
+const SPLIT_STORAGE_KEY = "trove.builder.chat-width.v2";
+const DEFAULT_CHAT_PERCENT = 42;
 
 function viewFromPath(pathname: string): SiteView | null {
   const parts = pathname.split("/").filter(Boolean);
@@ -47,11 +46,11 @@ function viewFromPath(pathname: string): SiteView | null {
     segment = parts[1]?.toLowerCase() || "";
   }
 
-  if (segment === "chat") return "chat";
-  if (segment === "preview") return "preview";
-  if (segment === "files") return "files";
-  if (segment === "code") return "code";
-  return null;
+  return isSiteView(segment) ? segment : null;
+}
+
+function isSiteView(value: string): value is SiteView {
+  return value === "chat" || value === "preview" || value === "files" || value === "code";
 }
 
 function routeUrl(view: SiteView, projectId?: string | null) {
@@ -66,15 +65,44 @@ function routeUrl(view: SiteView, projectId?: string | null) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+function clampSplit(value: number, width?: number) {
+  // Keep both the conversation and the work surface useful on normal laptops.
+  // On very wide screens the percentage itself remains the constraint.
+  if (!width || width <= 0) return Math.min(62, Math.max(30, value));
+  const minChatPercent = (320 / width) * 100;
+  const maxChatPercent = ((width - 360) / width) * 100;
+  const low = Math.max(28, minChatPercent);
+  const high = Math.min(62, Math.max(low, maxChatPercent));
+  return Math.min(high, Math.max(low, value));
+}
+
 export function BuilderView({ initialView, ...props }: BuilderProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const { collapsed } = useNav();
   const startingView = initialView ?? (props.restored ? (props.mobile ? "chat" : "preview") : "chat");
   const desiredView = useRef<SiteView>(startingView);
-  const initialRoutePending = useRef(Boolean(initialView));
+  const rootRef = useRef<HTMLDivElement>(null);
+  const splitRef = useRef(DEFAULT_CHAT_PERCENT);
+
   const [view, setView] = useState<SiteView>(startingView);
   const [identity, setIdentity] = useState<RestoredSite | null>(props.restored ?? null);
   const [identityReady, setIdentityReady] = useState(Boolean(props.restored));
   const [identityError, setIdentityError] = useState<string | null>(null);
+  const [chatPercent, setChatPercent] = useState(DEFAULT_CHAT_PERCENT);
+  const [resizing, setResizing] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = Number(window.localStorage.getItem(SPLIT_STORAGE_KEY));
+    if (Number.isFinite(saved) && saved > 0) {
+      const next = clampSplit(saved, rootRef.current?.getBoundingClientRect().width);
+      splitRef.current = next;
+      setChatPercent(next);
+    }
+  }, []);
+
+  useEffect(() => {
+    desiredView.current = view;
+  }, [view]);
 
   useEffect(() => {
     if (props.restored) {
@@ -150,102 +178,18 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
     [identity?.id],
   );
 
-  const clickView = useCallback((next: SiteView) => {
-    const root = rootRef.current;
-    if (!root) return false;
-
-    const mobileButtons = Array.from(root.querySelectorAll<HTMLButtonElement>("nav button"));
-    const mobileButton = mobileButtons.find(
-      (button) => button.textContent?.trim() === MOBILE_LABELS[next],
-    );
-    if (mobileButton) {
-      mobileButton.click();
-      return true;
-    }
-
-    if (next === "chat") return true;
-    const index = DESKTOP_INDEX[next];
-    const desktopTabs = Array.from(
-      root.querySelectorAll<HTMLButtonElement>("button.trove-tab-active"),
-    );
-    const desktopButton = typeof index === "number" ? desktopTabs[index] : undefined;
-    if (desktopButton) {
-      desktopButton.click();
-      return true;
-    }
-    return false;
-  }, []);
-
   const selectView = useCallback(
-    (next: SiteView, historyMode?: "push" | "replace") => {
+    (next: SiteView, mode: "push" | "replace" = "push") => {
       desiredView.current = next;
       setView(next);
-      if (historyMode) setAddress(next, historyMode);
-      return clickView(next);
+      setAddress(next, mode);
     },
-    [clickView, setAddress],
+    [setAddress],
   );
 
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const applyInitialRoute = () => {
-      if (!initialRoutePending.current) return;
-      if (clickView(desiredView.current)) {
-        window.setTimeout(() => {
-          initialRoutePending.current = false;
-        }, 120);
-      }
-    };
-
-    applyInitialRoute();
-    const observer = new MutationObserver(() => {
-      applyInitialRoute();
-
-      const mobileButtons = Array.from(root.querySelectorAll<HTMLButtonElement>("nav button"));
-      const activeMobile = mobileButtons.find((button) =>
-        button.className.includes("bg-[#171719]"),
-      );
-      if (activeMobile) {
-        const found = (Object.keys(MOBILE_LABELS) as SiteView[]).find(
-          (key) => activeMobile.textContent?.trim() === MOBILE_LABELS[key],
-        );
-        if (found && !initialRoutePending.current && found !== desiredView.current) {
-          desiredView.current = found;
-          setView(found);
-          setAddress(found, "replace");
-        }
-        return;
-      }
-
-      const desktopTabs = Array.from(
-        root.querySelectorAll<HTMLButtonElement>("button.trove-tab-active"),
-      );
-      const activeIndex = desktopTabs.findIndex((button) =>
-        button.className.includes("bg-black/[0.07]"),
-      );
-      if (activeIndex >= 0 && !initialRoutePending.current) {
-        const found = (Object.keys(DESKTOP_INDEX) as SiteView[]).find(
-          (key) => DESKTOP_INDEX[key] === activeIndex,
-        );
-        if (found && found !== desiredView.current) {
-          desiredView.current = found;
-          setView(found);
-          setAddress(found, "replace");
-        }
-      }
-    });
-
-    observer.observe(root, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => observer.disconnect();
-  }, [clickView, setAddress]);
-
+  // The builder itself reads the URL to choose its right-hand surface. We only
+  // translate deliberate UI clicks into history changes; there is no DOM
+  // mutation observer and no programmatic button clicking anymore.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -253,49 +197,83 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
     const onClick = (event: MouseEvent) => {
       const button = (event.target as HTMLElement | null)?.closest("button");
       if (!button || !root.contains(button)) return;
+      const label = button.textContent?.trim().toLowerCase() || "";
 
-      if (button.closest("nav")) {
-        const found = (Object.keys(MOBILE_LABELS) as SiteView[]).find(
-          (key) => button.textContent?.trim() === MOBILE_LABELS[key],
-        );
-        if (found) {
-          desiredView.current = found;
-          initialRoutePending.current = false;
-          setView(found);
-          setAddress(found, "push");
-        }
-        return;
+      let next: SiteView | null = null;
+      if ((button.closest("nav") || button.classList.contains("trove-tab-active")) && isSiteView(label)) {
+        next = label;
+      } else if (label === "open preview") {
+        next = "preview";
+      } else if (view === "code" && label === "files") {
+        next = "files";
+      } else if (view === "files" && button.querySelector("span.font-mono")) {
+        next = "code";
       }
 
-      if (button.classList.contains("trove-tab-active")) {
-        const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>("button.trove-tab-active"));
-        const index = tabs.indexOf(button as HTMLButtonElement);
-        const found = (Object.keys(DESKTOP_INDEX) as SiteView[]).find(
-          (key) => DESKTOP_INDEX[key] === index,
-        );
-        if (found) {
-          desiredView.current = found;
-          initialRoutePending.current = false;
-          setView(found);
-          setAddress(found, "push");
-        }
-      }
+      if (next && next !== desiredView.current) selectView(next, "push");
     };
 
     root.addEventListener("click", onClick, true);
     return () => root.removeEventListener("click", onClick, true);
-  }, [setAddress]);
+  }, [selectView, view]);
 
   useEffect(() => {
     const onPopState = () => {
       const next = viewFromPath(window.location.pathname);
       if (!next) return;
-      initialRoutePending.current = false;
-      selectView(next);
+      desiredView.current = next;
+      setView(next);
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [selectView]);
+  }, []);
+
+  const beginResize = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (props.mobile || view === "preview") return;
+      const root = rootRef.current;
+      if (!root) return;
+      event.preventDefault();
+      const rect = root.getBoundingClientRect();
+      if (!rect.width) return;
+
+      setResizing(true);
+      const previousCursor = document.body.style.cursor;
+      const previousSelection = document.body.style.userSelect;
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      const onMove = (moveEvent: PointerEvent) => {
+        const raw = ((moveEvent.clientX - rect.left) / rect.width) * 100;
+        const next = clampSplit(raw, rect.width);
+        splitRef.current = next;
+        setChatPercent(next);
+      };
+
+      const finish = () => {
+        setResizing(false);
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousSelection;
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", finish);
+        window.localStorage.setItem(SPLIT_STORAGE_KEY, String(splitRef.current));
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", finish, { once: true });
+    },
+    [props.mobile, view],
+  );
+
+  const nudgeSplit = useCallback((delta: number) => {
+    const width = rootRef.current?.getBoundingClientRect().width;
+    const next = clampSplit(splitRef.current + delta, width);
+    splitRef.current = next;
+    setChatPercent(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(SPLIT_STORAGE_KEY, String(next));
+    }
+  }, []);
 
   if (!identityReady) {
     return (
@@ -322,19 +300,66 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
     );
   }
 
-  const previewRouteClass =
-    view === "preview"
-      ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>div>main]:bg-[#1b1b1c]"
-      : "";
+  const dedicatedPreview = view === "preview";
+  const previewRouteClass = dedicatedPreview
+    ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>div>main]:bg-[#1b1b1c]"
+    : "";
+  const splitClass = !props.mobile && !dedicatedPreview
+    ? "[&>div>div>aside]:!w-[var(--trove-chat-width)] [&>div>div>aside]:!min-w-0 [&>div>div>aside]:!max-w-none [&>div>div>aside]:!flex-none [&>div>div>main]:min-w-[320px]"
+    : "";
 
   return (
     <div
       ref={rootRef}
       data-trove-site-view={view}
       data-trove-project-id={identity.id}
-      className={`h-full min-h-0 ${previewRouteClass}`}
+      data-shell-collapsed={collapsed ? "true" : "false"}
+      data-resizing={resizing ? "true" : "false"}
+      className={cn("relative h-full min-h-0 overflow-hidden", previewRouteClass, splitClass)}
+      style={{ "--trove-chat-width": `${chatPercent}%` } as CSSProperties}
     >
       <AgenticBuilderWorkspace {...props} restored={identity} />
+
+      {!props.mobile && !dedicatedPreview ? (
+        <div
+          role="separator"
+          aria-label="Resize chat and work area"
+          aria-orientation="vertical"
+          aria-valuemin={30}
+          aria-valuemax={62}
+          aria-valuenow={Math.round(chatPercent)}
+          tabIndex={0}
+          onPointerDown={beginResize}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              nudgeSplit(-2);
+            } else if (event.key === "ArrowRight") {
+              event.preventDefault();
+              nudgeSplit(2);
+            } else if (event.key === "Home") {
+              event.preventDefault();
+              const next = clampSplit(34, rootRef.current?.getBoundingClientRect().width);
+              splitRef.current = next;
+              setChatPercent(next);
+            } else if (event.key === "End") {
+              event.preventDefault();
+              const next = clampSplit(54, rootRef.current?.getBoundingClientRect().width);
+              splitRef.current = next;
+              setChatPercent(next);
+            }
+          }}
+          className={cn(
+            "group absolute bottom-0 top-[52px] z-20 w-2 -translate-x-1/2 cursor-col-resize touch-none outline-none",
+            "after:absolute after:bottom-0 after:left-1/2 after:top-0 after:w-px after:-translate-x-1/2 after:bg-transparent after:transition-colors",
+            "hover:after:bg-black/12 focus-visible:after:bg-black/22",
+            resizing && "after:bg-black/20",
+          )}
+          style={{ left: `${chatPercent}%` }}
+        >
+          <span className="pointer-events-none absolute left-1/2 top-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/0 transition-colors group-hover:bg-black/12 group-focus-visible:bg-black/18" />
+        </div>
+      ) : null}
     </div>
   );
 }
