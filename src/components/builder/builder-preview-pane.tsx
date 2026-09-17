@@ -17,6 +17,16 @@ import {
 
 type PreviewRuntimeStatus = "idle" | "booting" | "syncing" | "installing" | "starting" | "ready" | "error";
 
+const RUNTIME_ACTIVITY: Record<PreviewRuntimeStatus, { kind: "thinking" | "reading" | "command" | "preview" | "error"; label: string; active: boolean }> = {
+  idle: { kind: "thinking", label: "Preview runtime is idle", active: false },
+  booting: { kind: "thinking", label: "Starting isolated project runtime", active: true },
+  syncing: { kind: "reading", label: "Syncing project files to runtime", active: true },
+  installing: { kind: "command", label: "Installing project dependencies", active: true },
+  starting: { kind: "command", label: "Starting Vite preview server", active: true },
+  ready: { kind: "preview", label: "localhost:5173 is ready", active: false },
+  error: { kind: "error", label: "Preview runtime failed", active: false },
+};
+
 /**
  * Full-height project preview backed by the reusable E2B runtime.
  * Every site is keyed to its own project id so one project's sandbox/preview
@@ -60,7 +70,19 @@ export function BuilderPreviewPane({
 
   useEffect(() => subscribeLocalRuntime(setRuntime, projectId), [projectId]);
   useEffect(() => {
-    onRuntimeState?.(runtime.status as PreviewRuntimeStatus, runtime.error || null);
+    const status = runtime.status as PreviewRuntimeStatus;
+    onRuntimeState?.(status, runtime.error || null);
+    const activity = RUNTIME_ACTIVITY[status];
+    if (activity && status !== "idle") {
+      window.dispatchEvent(new CustomEvent("trove:builder-runtime", {
+        detail: {
+          kind: activity.kind,
+          label: activity.label,
+          detail: runtime.error || null,
+          state: status === "error" ? "error" : activity.active ? "active" : "done",
+        },
+      }));
+    }
   }, [runtime.status, runtime.error, onRuntimeState]);
 
   const filesKey = useMemo(
