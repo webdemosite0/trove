@@ -65,16 +65,17 @@ export async function POST(req: Request) {
   return NextResponse.json({ received: true });
 }
 
+function asId(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  return "";
+}
+
 async function handle(eventName: string, event: LemonWebhookEvent) {
   const attrs = event.data?.attributes || {};
   const subscriptionId = String(event.data?.id || "");
-  const customerId = attrs.customer_id != null ? String(attrs.customer_id) : "";
-  const variantId =
-    attrs.variant_id != null
-      ? String(attrs.variant_id)
-      : attrs.variant_id === 0
-        ? "0"
-        : "";
+  const customerId = asId(attrs.customer_id);
+  const variantId = asId(attrs.variant_id);
   const status = String(attrs.status || "").toLowerCase();
   const endsAtRaw = attrs.renews_at || attrs.ends_at || attrs.trial_ends_at;
   const endsAt =
