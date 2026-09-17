@@ -90,7 +90,7 @@ export async function takeRateLimit(input: RateLimitInput): Promise<RateLimitDec
   }
 }
 
-export function requestIp(headers: Headers): string {
+export function requestIp(headers: { get(name: string): string | null }): string {
   const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const real = headers.get("x-real-ip")?.trim();
   return (forwarded || real || "unknown").slice(0, 120);
