@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BuilderView as WorkspaceBuilderView } from "./builder-workspace";
+import { BuilderCommandCenter } from "@/components/builder/builder-command-center";
 
 /** User-facing site panes. Terminal/console is backend-only and never a route. */
 export type SiteView = "chat" | "preview" | "files" | "code";
@@ -76,196 +77,65 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
   const [identityReady, setIdentityReady] = useState(Boolean(props.restored));
   const [identityError, setIdentityError] = useState<string | null>(null);
 
+  const setAddress = useCallback((next: SiteView, mode: "push" | "replace" = "push") => {
+    const projectId = identity?.id;
+    const href = routeUrl(next, projectId);
+    if (mode === "replace") window.history.replaceState({}, "", href);
+    else window.history.pushState({}, "", href);
+  }, [identity?.id]);
+
+  const selectView = useCallback(
+    (next: SiteView) => {
+      desiredView.current = next;
+      setView(next);
+    },
+    [],
+  );
+
   useEffect(() => {
     if (props.restored) {
       setIdentity(props.restored);
       setIdentityReady(true);
       return;
     }
-
     let cancelled = false;
-    void (async () => {
+    (async () => {
       try {
-        const idea = props.draft?.trim() || "";
-        const res = await fetch("/api/builder/projects", {
+        const res = await fetch("/api/sites/create", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: idea.slice(0, 60) || "Untitled site",
-            prompt: idea,
-            target: "react",
-            status: "draft",
-            files: [],
-            previewHtml: null,
-          }),
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ title: props.draft?.slice(0, 48) || "Untitled site", idea: props.draft || "" }),
         });
-        const data = await res.json().catch(() => null);
-        if (!res.ok || !data?.id) {
-          throw new Error(data?.error || "Could not create this site's workspace.");
+        const data = (await res.json()) as { id?: string; title?: string; idea?: string; error?: string };
+        if (cancelled) return;
+        if (!res.ok || !data.id) {
+          setIdentityError(data.error || "Could not create site");
+          setIdentityReady(true);
+          return;
         }
-        if (cancelled) return;
-
-        const created: RestoredSite = {
-          id: String(data.id),
-          title: idea.slice(0, 60) || "Untitled site",
-          idea,
-        };
-        setIdentity(created);
+        setIdentity({ id: data.id, title: data.title || "Untitled site", idea: data.idea || props.draft || "" });
         setIdentityReady(true);
-
-        const nextUrl = routeUrl(desiredView.current, created.id);
-        window.history.replaceState({ troveSiteView: desiredView.current }, "", nextUrl);
-      } catch (error) {
-        if (cancelled) return;
-        setIdentityError(
-          error instanceof Error ? error.message : "Could not create this site's workspace.",
-        );
-        setIdentityReady(true);
+      } catch (e) {
+        if (!cancelled) {
+          setIdentityError(e instanceof Error ? e.message : "Could not create site");
+          setIdentityReady(true);
+        }
       }
     })();
-
     return () => {
       cancelled = true;
     };
-  }, [props.draft, props.restored]);
-
-  useEffect(() => {
-    if (!identity?.id || typeof window === "undefined") return;
-    const current = window.location.pathname;
-    if (current.startsWith(`/project/${encodeURIComponent(identity.id)}/`)) return;
-
-    const nextUrl = routeUrl(desiredView.current, identity.id);
-    window.history.replaceState({ troveSiteView: desiredView.current }, "", nextUrl);
-  }, [identity?.id]);
-
-  const setAddress = useCallback(
-    (next: SiteView, mode: "push" | "replace" = "replace") => {
-      if (typeof window === "undefined") return;
-      const nextUrl = routeUrl(next, identity?.id);
-      const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-      if (nextUrl === current) return;
-      if (mode === "push") window.history.pushState({ troveSiteView: next }, "", nextUrl);
-      else window.history.replaceState({ troveSiteView: next }, "", nextUrl);
-    },
-    [identity?.id],
-  );
-
-  const clickView = useCallback((next: SiteView) => {
-    const root = rootRef.current;
-    if (!root) return false;
-
-    const mobileButtons = Array.from(root.querySelectorAll<HTMLButtonElement>("nav button"));
-    const mobileButton = mobileButtons.find(
-      (button) => button.textContent?.trim() === MOBILE_LABELS[next],
-    );
-    if (mobileButton) {
-      mobileButton.click();
-      return true;
-    }
-
-    if (next === "chat") return true;
-    const index = DESKTOP_INDEX[next];
-    const desktopTabs = Array.from(
-      root.querySelectorAll<HTMLButtonElement>("button.trove-tab-active"),
-    );
-    const desktopButton = typeof index === "number" ? desktopTabs[index] : undefined;
-    if (desktopButton) {
-      desktopButton.click();
-      return true;
-    }
-    return false;
-  }, []);
-
-  const selectView = useCallback(
-    (next: SiteView, historyMode?: "push" | "replace") => {
-      desiredView.current = next;
-      setView(next);
-      if (historyMode) setAddress(next, historyMode);
-      return clickView(next);
-    },
-    [clickView, setAddress],
-  );
-
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const applyInitialRoute = () => {
-      if (!initialRoutePending.current) return;
-      if (clickView(desiredView.current)) {
-        window.setTimeout(() => {
-          initialRoutePending.current = false;
-        }, 120);
-      }
-    };
-
-    applyInitialRoute();
-    const observer = new MutationObserver(() => {
-      applyInitialRoute();
-
-      const mobileButtons = Array.from(root.querySelectorAll<HTMLButtonElement>("nav button"));
-      const activeMobile = mobileButtons.find((button) =>
-        button.className.includes("bg-accent/12"),
-      );
-      if (activeMobile) {
-        const found = (Object.keys(MOBILE_LABELS) as SiteView[]).find(
-          (key) => activeMobile.textContent?.trim() === MOBILE_LABELS[key],
-        );
-        if (found && !initialRoutePending.current && found !== desiredView.current) {
-          desiredView.current = found;
-          setView(found);
-          setAddress(found, "replace");
-        }
-        return;
-      }
-
-      const desktopTabs = Array.from(
-        root.querySelectorAll<HTMLButtonElement>("button.trove-tab-active"),
-      );
-      const activeIndex = desktopTabs.findIndex((button) =>
-        button.className.includes("bg-accent/15"),
-      );
-      if (activeIndex >= 0 && !initialRoutePending.current) {
-        const found = (Object.keys(DESKTOP_INDEX) as SiteView[]).find(
-          (key) => DESKTOP_INDEX[key] === activeIndex,
-        );
-        if (found && found !== desiredView.current) {
-          desiredView.current = found;
-          setView(found);
-          setAddress(found, "replace");
-        }
-      }
-    });
-
-    observer.observe(root, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => observer.disconnect();
-  }, [clickView, setAddress]);
+  }, [props.restored, props.draft]);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
 
     const onClick = (event: MouseEvent) => {
-      const button = (event.target as HTMLElement | null)?.closest("button");
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const button = target.closest("button");
       if (!button || !root.contains(button)) return;
-
-      if (button.closest("nav")) {
-        const found = (Object.keys(MOBILE_LABELS) as SiteView[]).find(
-          (key) => button.textContent?.trim() === MOBILE_LABELS[key],
-        );
-        if (found) {
-          desiredView.current = found;
-          initialRoutePending.current = false;
-          setView(found);
-          setAddress(found, "push");
-        }
-        return;
-      }
 
       if (button.classList.contains("trove-tab-active")) {
         const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>("button.trove-tab-active"));
@@ -327,8 +197,6 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>nav]:hidden [&>div>div>main]:bg-[#1b1b1c]"
       : "";
 
-  // Terminal execution remains available to Trove's backend agent, but there is
-  // intentionally no user-facing terminal tab or route.
   const terminalHiddenClass =
     "[&_.trove-tab-active:last-of-type]:!hidden [&>div>nav>div]:!grid-cols-4 [&>div>nav>div>button:last-child]:!hidden";
 
@@ -340,6 +208,7 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       className={`h-full min-h-0 ${previewRouteClass} ${terminalHiddenClass}`}
     >
       <WorkspaceBuilderView {...props} restored={identity} />
+      {!props.mobile ? <BuilderCommandCenter /> : null}
     </div>
   );
 }
