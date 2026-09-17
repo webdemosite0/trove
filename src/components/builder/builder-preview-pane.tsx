@@ -15,8 +15,7 @@ import {
 } from "@/lib/browser-runtime";
 
 /**
- * Full-height project preview backed by the reusable runtime.
- * Technical runtime errors stay internal; users only see a clean preview status.
+ * Full-height project preview. Clean Trove chrome — no product-clone UI.
  */
 export function BuilderPreviewPane({
   preview,
@@ -24,7 +23,6 @@ export function BuilderPreviewPane({
   onRefresh,
   onNavigate,
   publishControl,
-  pageTitle = "Homepage",
 }: {
   preview: string | null;
   files?: ProjectFile[];
@@ -81,7 +79,7 @@ export function BuilderPreviewPane({
         const data = JSON.parse(packageFile.content) as { name?: string };
         if (data.name?.trim()) return data.name.trim().slice(0, 80);
       } catch {
-        // Keep the friendly fallback below.
+        // keep fallback
       }
     }
     return "Website";
@@ -157,10 +155,9 @@ export function BuilderPreviewPane({
     );
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#1b1b1c]">
+    <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-canvas">
       <BrowserFrame
         url={displayUrl}
-        pageTitle={pageTitle}
         status={chromeStatus}
         publishControl={realPublishControl}
         onNavigate={navigate}
@@ -191,14 +188,11 @@ export function BuilderPreviewPane({
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="grid h-full min-h-[280px] place-items-center bg-white px-6 text-center text-[#111]">
+          <div className="grid h-full min-h-[280px] place-items-center bg-canvas px-6 text-center">
             <div className="max-w-sm">
-              <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-black/[0.08] bg-[#f7f7f8] shadow-sm">
-                <span className="font-mono text-[15px] font-semibold text-[#6f45ff]">{"//"}</span>
-              </div>
-              <p className="text-[16px] font-semibold tracking-tight text-black">Live preview</p>
-              <p className="mt-2 text-[13px] leading-5 text-black/55">
-                Build this project and Trove will prepare the preview here.
+              <p className="text-[15px] font-semibold tracking-tight text-ink">No preview yet</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-ink-3">
+                Describe what to build in chat. When files are ready, the preview shows up here.
               </p>
             </div>
           </div>
@@ -206,8 +200,8 @@ export function BuilderPreviewPane({
       </BrowserFrame>
 
       {runtime.status === "error" ? (
-        <div className="pointer-events-none absolute bottom-5 left-6 z-50 max-w-[360px] rounded-2xl border border-black/10 bg-white/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-black shadow-xl backdrop-blur-xl">
-          Preview is reconnecting. Showing the saved preview for now.
+        <div className="pointer-events-none absolute bottom-4 left-4 z-50 max-w-[340px] rounded-[var(--r-panel)] border border-line bg-raised px-3.5 py-2.5 text-[12px] leading-relaxed text-ink-2 shadow-[var(--sh-2)]">
+          Preview is reconnecting. Showing the last saved snapshot if available.
         </div>
       ) : null}
     </div>
