@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       authenticatedLimit: 20,
       windowMs: 60_000,
     });
-    if (!gate.allowed) return rateLimitResponse(gate) as NextResponse;
+    if (!gate.allowed) return rateLimitResponse(gate);
 
     const idea = String(body.idea || "");
     const title = String(body.title || idea || "project");
