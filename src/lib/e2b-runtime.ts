@@ -8,6 +8,9 @@ const PROJECT_ROOT = "/home/user/project";
 const PREVIEW_PORT = 5173;
 const SANDBOX_TIMEOUT_MS = 30 * 60 * 1000;
 const MAX_FILES = 250;
+const PREVIEW_RUNTIME_VERSION = "vite-e2b-host-v2";
+const PREVIEW_RUNTIME_MARKER = `${PROJECT_ROOT}/.trove-preview-runtime`;
+const TROVE_VITE_CONFIG = `${PROJECT_ROOT}/.trove-vite.config.mjs`;
 
 function requireApiKey() {
   const apiKey = process.env.E2B_API_KEY?.trim();
@@ -87,6 +90,44 @@ function hashPackage(files: { path: string; content: string }[]) {
   return createHash("sha256").update(source).digest("hex");
 }
 
+function viteWrapperConfig(previewHost: string) {
+  const safeHost = JSON.stringify(previewHost);
+  return `import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { loadConfigFromFile, mergeConfig } from "vite";
+
+const candidates = [
+  "vite.config.ts",
+  "vite.config.js",
+  "vite.config.mjs",
+  "vite.config.cjs",
+  "vite.config.mts",
+  "vite.config.cts",
+];
+
+export default async function trovePreviewConfig(env) {
+  let base = {};
+
+  for (const name of candidates) {
+    const file = resolve(process.cwd(), name);
+    if (!existsSync(file)) continue;
+    const loaded = await loadConfigFromFile(env, file, process.cwd());
+    if (loaded?.config) base = loaded.config;
+    break;
+  }
+
+  return mergeConfig(base, {
+    server: {
+      host: "0.0.0.0",
+      port: ${PREVIEW_PORT},
+      strictPort: true,
+      allowedHosts: [".e2b.app", ${safeHost}],
+    },
+  });
+}
+`;
+}
+
 async function portIsUp(sandbox: Sandbox) {
   const result = await sandbox.commands.run(
     `bash -lc 'if (command -v ss >/dev/null 2>&1 && ss -ltn | grep -q ":${PREVIEW_PORT} ") || (echo >/dev/tcp/127.0.0.1/${PREVIEW_PORT}) >/dev/null 2>&1; then echo up; else echo down; fi'`,
@@ -105,11 +146,14 @@ async function stopPreviewServer(sandbox: Sandbox) {
 async function startPreviewServer(sandbox: Sandbox) {
   const previewHost = sandbox.getHost(PREVIEW_PORT);
 
-  // Vite validates the HTTP Host header. E2B exposes each sandbox through a
-  // unique *.e2b.app hostname, so allow only this sandbox's exact preview host
-  // instead of disabling host validation globally.
+  // Force the host allowlist at the Vite config layer so this works even for
+  // generated projects whose installed Vite version does not honor the
+  // additional-host environment variable consistently. The wrapper loads and
+  // merges the project's own Vite config, preserving React/plugins/settings.
+  await sandbox.files.write(TROVE_VITE_CONFIG, viteWrapperConfig(previewHost));
+
   const process = await sandbox.commands.run(
-    `bash -lc 'export __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS="${previewHost}"; npm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort > /tmp/trove-vite.log 2>&1'`,
+    `bash -lc 'export __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=".e2b.app,${previewHost}"; npm run dev -- --config .trove-vite.config.mjs --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort > /tmp/trove-vite.log 2>&1'`,
     {
       cwd: PROJECT_ROOT,
       background: true,
@@ -128,6 +172,7 @@ async function startPreviewServer(sandbox: Sandbox) {
       `bash -lc 'for i in $(seq 1 80); do if (command -v ss >/dev/null 2>&1 && ss -ltn | grep -q ":${PREVIEW_PORT} ") || (echo >/dev/tcp/127.0.0.1/${PREVIEW_PORT}) >/dev/null 2>&1; then exit 0; fi; sleep 0.25; done; exit 1'`,
       { timeoutMs: 25_000 },
     );
+    await sandbox.files.write(PREVIEW_RUNTIME_MARKER, PREVIEW_RUNTIME_VERSION);
   } catch (error) {
     const logs = await sandbox.commands
       .run("bash -lc 'tail -80 /tmp/trove-vite.log 2>/dev/null || true'", { timeoutMs: 10_000 })
@@ -185,15 +230,23 @@ export async function syncE2BProject(sandbox: Sandbox, projectFiles: ProjectFile
     previousHash = "";
   }
 
+  let runtimeVersion = "";
+  try {
+    runtimeVersion = String(await sandbox.files.read(PREVIEW_RUNTIME_MARKER)).trim();
+  } catch {
+    runtimeVersion = "";
+  }
+
   const packageChanged = previousHash !== packageHash;
+  const runtimeChanged = runtimeVersion !== PREVIEW_RUNTIME_VERSION;
   const wasRunning = await portIsUp(sandbox).catch(() => false);
 
-  if (packageChanged && wasRunning) {
+  if ((packageChanged || runtimeChanged) && wasRunning) {
     await stopPreviewServer(sandbox);
   }
 
   await sandbox.commands.run(
-    `bash -lc 'cd ${PROJECT_ROOT} && find . -mindepth 1 -maxdepth 1 ! -name node_modules ! -name .trove-package-hash -exec rm -rf {} +'`,
+    `bash -lc 'cd ${PROJECT_ROOT} && find . -mindepth 1 -maxdepth 1 ! -name node_modules ! -name .trove-package-hash ! -name .trove-preview-runtime ! -name .trove-vite.config.mjs -exec rm -rf {} +'`,
     { timeoutMs: 15_000 },
   );
 
