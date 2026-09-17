@@ -2,16 +2,11 @@ import { PlansView } from "./plans-view";
 import { currentUser } from "@/lib/auth";
 import { PLANS, myBalance, usageByKind } from "@/lib/credits";
 import { subscriptionFor } from "@/lib/billing";
-import { purchasable, stripeConfigured } from "@/lib/stripe";
+import { lemonConfigured, lemonPurchasable } from "@/lib/lemon";
+import { purchasable as stripePurchasable, stripeConfigured } from "@/lib/stripe";
 
 export const metadata = { title: "Plan" };
 
-/**
- * Whether a plan can actually be bought is decided here, on the server, and
- * passed down. The button label follows the deployment's real configuration
- * instead of assuming Stripe is set up — a Subscribe button that 503s on click
- * is worse than one that says what is missing.
- */
 export default async function PricingPage({
   searchParams,
 }: {
@@ -24,7 +19,12 @@ export default async function PricingPage({
   const subscription = user ? await subscriptionFor(user.id) : null;
 
   const canBuy: Record<string, boolean> = {};
-  for (const p of PLANS) canBuy[p.id] = p.price > 0 ? purchasable(p.id) : true;
+  for (const p of PLANS) {
+    canBuy[p.id] =
+      p.price > 0 ? lemonPurchasable(p.id) || stripePurchasable(p.id) : true;
+  }
+
+  const paymentsReady = lemonConfigured() || stripeConfigured();
 
   return (
     <PlansView
@@ -33,7 +33,7 @@ export default async function PricingPage({
       usage={usage}
       currentPlan={user?.plan ?? null}
       signedIn={Boolean(user)}
-      stripeReady={stripeConfigured()}
+      stripeReady={paymentsReady}
       purchasable={canBuy}
       subscription={subscription}
       checkout={checkout === "done" ? "done" : checkout === "cancelled" ? "cancelled" : null}
