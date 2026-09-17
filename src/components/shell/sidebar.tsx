@@ -239,7 +239,12 @@ function GooeyAddButton() {
             href="/chat"
             title="New chat"
             aria-label="New chat"
-            className="btn-grad grid size-9 place-items-center rounded-full text-white"
+            className={cn(
+              "grid size-9 place-items-center rounded-full text-white",
+              "bg-[linear-gradient(135deg,#7c3aed_0%,#2563eb_40%,#06b6d4_100%)]",
+              "ring-2 ring-offset-2 ring-offset-rail ring-sky-400/50",
+              "shadow-[0_6px_18px_-4px_rgba(37,99,235,0.55)]",
+            )}
           >
             <FiPlus size={16} />
           </Link>
@@ -292,12 +297,19 @@ function RailBody({
             <Link
               href="/chat"
               onClick={onNavigate}
-              className="group flex h-9 w-full items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
+              className={cn(
+                "group relative block rounded-[var(--r-control)] p-[1.5px]",
+                "bg-[linear-gradient(135deg,#7c3aed_0%,#2563eb_35%,#06b6d4_70%,#34d399_100%)]",
+                "shadow-[0_0_0_0_rgba(37,99,235,0)] transition-[box-shadow,transform] duration-200",
+                "hover:shadow-[0_0_18px_-4px_rgba(37,99,235,0.55)] hover:brightness-110 active:scale-[0.99]",
+              )}
             >
-              <span className="grid size-6 place-items-center rounded-full bg-accent/12 text-accent">
-                <Ico icon={FiPlus} motion="open" size={14} className="text-accent" />
+              <span className="flex h-9 w-full items-center gap-2.5 rounded-[calc(var(--r-control)-1.5px)] bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors group-hover:bg-hover">
+                <span className="grid size-6 place-items-center rounded-full bg-[linear-gradient(135deg,#7c3aed22,#2563eb22,#06b6d422)] text-accent">
+                  <Ico icon={FiPlus} motion="open" size={14} className="text-accent" />
+                </span>
+                New chat
               </span>
-              New chat
             </Link>
           </Liquid.Item>
         </Liquid>
