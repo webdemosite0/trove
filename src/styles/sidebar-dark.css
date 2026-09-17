@@ -1,0 +1,30 @@
+/* Sidebar — near-white icons & labels when the app is in dark mode */
+:root:not([data-theme="light"]) .nx-sidebar,
+:root[data-theme="dark"] .nx-sidebar {
+  color: #f4f4f4;
+}
+
+:root:not([data-theme="light"]) .nx-sidebar a,
+:root:not([data-theme="light"]) .nx-sidebar button,
+:root[data-theme="dark"] .nx-sidebar a,
+:root[data-theme="dark"] .nx-sidebar button {
+  color: #f4f4f4;
+}
+
+:root:not([data-theme="light"]) .nx-sidebar .ico,
+:root:not([data-theme="light"]) .nx-sidebar svg,
+:root[data-theme="dark"] .nx-sidebar .ico,
+:root[data-theme="dark"] .nx-sidebar svg {
+  color: #f4f4f4;
+  stroke: currentColor;
+}
+
+/* Active row keeps accent */
+:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"],
+:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"] .ico,
+:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"] span,
+:root[data-theme="dark"] .nx-sidebar [aria-current="page"],
+:root[data-theme="dark"] .nx-sidebar [aria-current="page"] .ico,
+:root[data-theme="dark"] .nx-sidebar [aria-current="page"] span {
+  color: var(--color-accent);
+}
