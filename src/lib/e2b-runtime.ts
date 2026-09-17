@@ -103,11 +103,13 @@ async function stopPreviewServer(sandbox: Sandbox) {
 }
 
 async function startPreviewServer(sandbox: Sandbox) {
-  // Vite is a long-running process. Start it through E2B's background process
-  // API instead of shelling out to `nohup ... &`, which can keep the RPC
-  // command stream alive and eventually surface DEADLINE_EXCEEDED.
+  const previewHost = sandbox.getHost(PREVIEW_PORT);
+
+  // Vite validates the HTTP Host header. E2B exposes each sandbox through a
+  // unique *.e2b.app hostname, so allow only this sandbox's exact preview host
+  // instead of disabling host validation globally.
   const process = await sandbox.commands.run(
-    `bash -lc 'npm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort > /tmp/trove-vite.log 2>&1'`,
+    `bash -lc 'export __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS="${previewHost}"; npm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort > /tmp/trove-vite.log 2>&1'`,
     {
       cwd: PROJECT_ROOT,
       background: true,
