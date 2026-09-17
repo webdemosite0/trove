@@ -548,9 +548,9 @@ export function BuilderView({
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col bg-canvas lg:flex-row">
-      <aside className="flex h-full min-h-0 w-full flex-col overflow-hidden border-b border-line lg:w-[380px] lg:shrink-0 lg:border-b-0 lg:border-r">
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-canvas px-3">
+    <div className="grid h-full min-h-0 w-full grid-cols-1 grid-rows-1 overflow-hidden bg-canvas lg:grid-cols-[380px_minmax(0,1fr)]">
+      <aside className="relative min-h-0 min-w-0 overflow-hidden border-b border-line lg:border-b-0 lg:border-r">
+        <div className="absolute inset-x-0 top-0 z-20 flex h-12 items-center gap-2 border-b border-line bg-canvas px-3">
           <Link href="/dashboard" className="shrink-0 text-ink-3 hover:text-ink" aria-label="Back">
             <FiArrowLeft size={16} />
           </Link>
@@ -566,9 +566,9 @@ export function BuilderView({
 
         <div
           ref={chatScrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-3"
+          className="absolute inset-x-0 top-12 bottom-[4.75rem] overflow-y-auto overscroll-contain px-3 py-3 sm:bottom-[5.25rem]"
         >
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 pb-2">
             {error ? <FailureNote error={error} /> : null}
             {finalMsg ? <p className="text-[13px] text-ink-3">{finalMsg}</p> : null}
             {messages.map((m) => (
@@ -613,7 +613,7 @@ export function BuilderView({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-line bg-canvas p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="absolute inset-x-0 bottom-0 z-20 border-t border-line bg-canvas px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {mobile ? (
             <MobileComposer onSend={sendFromComposer} disabled={busy} />
           ) : (
@@ -622,7 +622,7 @@ export function BuilderView({
         </div>
       </aside>
 
-      <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+      <main className="relative min-h-0 min-w-0 overflow-hidden">
         <div className="absolute right-3 top-3 z-10 flex gap-1 rounded-full border border-line bg-raised/90 p-1 shadow-sm backdrop-blur">
           {DESKTOP_TABS.map((tab) => (
             <button
