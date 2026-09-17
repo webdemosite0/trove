@@ -15,7 +15,27 @@ type OrbState =
   | "breathing"
   | "shaping";
 
-/** Pure chat process line — Grok-style Ran command / Wrote / Used */
+function cleanActivityLabel(label: string) {
+  const value = String(label || "").trim();
+  if (!value) return "project";
+
+  if (
+    /deadline|timed?\s*out|timeout|exception|stack|trace|exit\s*code|failed|error|429|500|502|503|model|provider|api\s*key/i.test(
+      value,
+    )
+  ) {
+    return "project";
+  }
+
+  return value
+    .replace(/^ran\s+command\s*/i, "")
+    .replace(/^wrote\s+/i, "")
+    .replace(/^read\s+/i, "")
+    .replace(/^used\s+/i, "")
+    .trim();
+}
+
+/** Simple user-facing build activity. Never expose raw terminal/provider errors. */
 export function ProcessRow({
   kind,
   label,
@@ -25,39 +45,32 @@ export function ProcessRow({
   kind: "cmd" | "file" | "think" | "tool" | "ok" | "connect";
   label: string;
   active?: boolean;
-  /** When set, shows brand mark (e.g. github) for Used / Connected rows */
   connectorId?: string;
 }) {
+  const safeLabel = cleanActivityLabel(label);
   const id =
     connectorId ??
     (kind === "tool" || kind === "connect"
-      ? label.match(
+      ? safeLabel.match(
           /\b(github|vercel|figma|slack|notion|linear|supabase|gmail|netlify|gitlab|stripe)\b/i,
         )?.[1]
       : undefined);
 
   return (
-    <div
-      className={cn(
-        "flex items-start gap-2.5 py-[4px] text-[13.5px] leading-snug",
-        active ? "text-ink-2" : "text-ink-4",
-      )}
-    >
+    <div className="flex items-start gap-2.5 py-[4px] text-[13.5px] leading-snug text-black">
       <span
         className={cn(
-          "mt-[1px] grid size-[20px] shrink-0 place-items-center overflow-hidden rounded-[6px] border border-white/[0.06] bg-white/[0.04] text-[11px]",
-          kind === "ok" && "border-positive/30 text-positive",
-          kind === "tool" && "border-accent/25 text-accent",
-          active && "border-accent/20 text-accent",
+          "mt-[1px] grid size-[20px] shrink-0 place-items-center overflow-hidden rounded-[6px] border border-black/[0.08] bg-black/[0.02] text-[11px] text-black",
+          active && "border-black/15",
         )}
         aria-hidden
       >
         {id ? (
           <ServiceMark id={id} name={id} size={16} />
         ) : kind === "cmd" || kind === "connect" ? (
-          "▸"
+          "›"
         ) : kind === "file" ? (
-          "⊞"
+          "＋"
         ) : kind === "tool" ? (
           "◎"
         ) : kind === "ok" ? (
@@ -66,32 +79,35 @@ export function ProcessRow({
           "○"
         )}
       </span>
-      <span className="min-w-0 flex-1 pt-[1px]">
-        {kind === "cmd" ? (
+
+      <span className="min-w-0 flex-1 pt-[1px] text-black">
+        {kind === "file" ? (
           <>
-            <span className="text-ink-4">Ran command</span>
-            <span className="text-ink-2"> {label}</span>
+            <span className="font-medium text-black">Making</span>
+            <span className="font-mono text-[12.5px] text-black"> {safeLabel}</span>
           </>
-        ) : kind === "file" ? (
+        ) : kind === "cmd" ? (
           <>
-            <span className="text-ink-4">Wrote</span>
-            <span className="font-mono text-[12.5px] text-ink-2"> {label}</span>
+            <span className="font-medium text-black">Checking</span>
+            <span className="text-black"> {safeLabel}</span>
           </>
         ) : kind === "tool" ? (
           <>
-            <span className="text-ink-4">Used</span>
-            <span className="text-ink-2"> {label}</span>
-            {!/\bconnector\b/i.test(label) && id ? (
-              <span className="text-ink-4"> Connector</span>
-            ) : null}
+            <span className="font-medium text-black">Using</span>
+            <span className="text-black"> {safeLabel}</span>
           </>
         ) : kind === "connect" ? (
           <>
-            <span className="text-ink-4">Connected</span>
-            <span className="text-ink-2"> {label}</span>
+            <span className="font-medium text-black">Connecting</span>
+            <span className="text-black"> {safeLabel}</span>
+          </>
+        ) : kind === "ok" ? (
+          <>
+            <span className="font-medium text-black">Finished</span>
+            <span className="text-black"> {safeLabel}</span>
           </>
         ) : (
-          <span className={active ? "text-ink-2" : "text-ink-4"}>{label}</span>
+          <span className="text-black">{safeLabel}</span>
         )}
       </span>
     </div>
@@ -109,11 +125,11 @@ export function WorkingTimer({
   const s = secs % 60;
   const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
   return (
-    <div className="flex items-center gap-2 pl-1 pt-2">
+    <div className="flex items-center gap-2 pl-1 pt-2 text-black">
       <span className="grid size-5 shrink-0 place-items-center" aria-hidden>
         <ThinkingOrb state={orbState} size={20} theme="auto" />
       </span>
-      <span className="text-[12px] tabular-nums text-ink-4">Working for {label}</span>
+      <span className="text-[12px] tabular-nums text-black">Working for {label}</span>
     </div>
   );
 }
