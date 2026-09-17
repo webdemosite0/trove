@@ -46,6 +46,23 @@ export default function TermsPage() {
           according to the plan description on the pricing page. We may change
           pricing with notice on the site.
         </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Cancellation and refunds</h2>
+        <p>
+          You can manage or cancel a recurring paid plan from the billing portal
+          in your account settings. Cancellation stops future renewals; paid
+          access may continue through the period already purchased, depending on
+          the payment provider. Charges are generally non-refundable except where
+          required by applicable law or where Trove explicitly states otherwise.
+          If you believe a charge was made in error, contact us promptly and we
+          will review it.
+        </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Account deletion</h2>
+        <p>
+          You can permanently delete your Trove account from Account &amp;
+          security. If a paid subscription could still renew, cancel it first.
+          Account deletion is permanent and removes first-party workspace data
+          associated with the account.
+        </p>
         <h2 className="pt-2 text-[17px] font-semibold text-ink">Disclaimer</h2>
         <p>
           The service is provided as available. AI output can be wrong. Review
