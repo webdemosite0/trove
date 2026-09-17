@@ -4,29 +4,36 @@ import { FEATURES } from "@/lib/features";
 import { publicRoutes, site } from "@/lib/site";
 
 /**
- * Every page a visitor can reach without an account, and nothing else.
- *
- * The capability pages are read from FEATURES rather than listed again, so a
- * page cannot be added to the site and forgotten here — the previous list was
- * maintained by hand and had drifted into advertising twelve routes that all
- * redirected to the sign-in form.
+ * Only canonical, indexable marketing URLs belong in the sitemap. Auth,
+ * dashboard, project, website-builder and API routes are intentionally omitted.
+ * Feature URLs come from the same registry that powers the marketing pages so
+ * newly-added public capabilities automatically become discoverable.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
+  const generatedAt = new Date();
 
-  const fixed = publicRoutes.map((r) => ({
-    url: `${site.url}${r.path}`,
-    lastModified: now,
-    changeFrequency: r.changeFrequency,
-    priority: r.priority,
+  const marketing: MetadataRoute.Sitemap = publicRoutes.map((route) => ({
+    url: new URL(route.path, site.url).toString(),
+    lastModified: generatedAt,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
   }));
 
-  const features = FEATURES.map((f) => ({
-    url: `${site.url}/features/${f.slug}`,
-    lastModified: now,
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
-  }));
+  const seen = new Set<string>();
+  const features: MetadataRoute.Sitemap = FEATURES.flatMap((feature) => {
+    const slug = feature.slug.trim();
+    if (!slug || seen.has(slug)) return [];
+    seen.add(slug);
 
-  return [...fixed, ...features];
+    return [
+      {
+        url: new URL(`/features/${encodeURIComponent(slug)}`, site.url).toString(),
+        lastModified: generatedAt,
+        changeFrequency: "monthly" as const,
+        priority: 0.8,
+      },
+    ];
+  });
+
+  return [...marketing, ...features];
 }
