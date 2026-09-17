@@ -3,10 +3,9 @@ import { BuilderView, type SiteView } from "../../../websites/builder-view";
 import { isMobile } from "@/lib/device";
 import { loadProject } from "@/lib/projects";
 
-/** User-facing panes only — terminal/console is not a SiteView. */
+/** Preview is an internal builder pane, not a standalone page. */
 const VIEW_MAP: Record<string, SiteView> = {
   chat: "chat",
-  preview: "preview",
   files: "files",
   code: "code",
 };
@@ -22,8 +21,8 @@ export async function generateMetadata({
   const initialView = VIEW_MAP[requested];
   const label = initialView
     ? initialView.charAt(0).toUpperCase() + initialView.slice(1)
-    : requested === "terminal" || requested === "console"
-      ? "Preview"
+    : requested === "preview" || requested === "terminal" || requested === "console"
+      ? "Chat"
       : "Project";
   return {
     title: project ? `${project.name} · ${label} · Trove` : `${label} · Trove`,
@@ -38,9 +37,9 @@ export default async function ProjectWorkspacePage({
   const { projectId, view } = await params;
   const requested = view.toLowerCase();
 
-  // Terminal is intentionally backend-only. Old terminal URLs land on Preview.
-  if (requested === "terminal" || requested === "console") {
-    redirect(`/project/${encodeURIComponent(projectId)}/preview`);
+  // Old standalone Preview and terminal URLs now land in the normal builder.
+  if (requested === "preview" || requested === "terminal" || requested === "console") {
+    redirect(`/project/${encodeURIComponent(projectId)}/chat`);
   }
 
   const initialView = VIEW_MAP[requested];
