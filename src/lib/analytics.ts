@@ -70,7 +70,8 @@ function cleanProperties(input?: Properties): Properties {
 
 /**
  * First-party, content-free product analytics.
- * Never put prompts, generated output, email addresses, secrets or raw errors in properties.
+ * Events contain operational metadata only; never put prompts, generated output,
+ * email addresses, secrets or raw errors in properties.
  */
 export async function trackEvent(input: TrackInput): Promise<void> {
   const event = cleanEvent(input.event);
