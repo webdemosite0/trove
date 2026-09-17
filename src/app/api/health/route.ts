@@ -59,7 +59,6 @@ export async function GET() {
     const warnings: string[] = [];
     if (!durable) warnings.push("database_not_durable");
     if (!configured.ai) warnings.push("ai_provider_missing");
-    if (!configured.e2b) warnings.push("site_preview_runtime_missing");
     if (billing.length > 0 && !configured.billingWebhook) {
       warnings.push("billing_webhook_missing");
     }
