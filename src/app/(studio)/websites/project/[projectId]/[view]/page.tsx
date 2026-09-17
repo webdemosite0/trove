@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-const SAFE_VIEWS = new Set(["chat", "preview", "files", "code"]);
+const SAFE_VIEWS = new Set(["chat", "files", "code"]);
 
 export default async function LegacyProjectWebsiteSectionPage({
   params,
@@ -10,8 +10,9 @@ export default async function LegacyProjectWebsiteSectionPage({
   const { projectId, view } = await params;
   const requested = view.toLowerCase();
 
-  // terminal/console and any unknown segment → preview
-  const safeView = SAFE_VIEWS.has(requested) ? requested : "preview";
+  // Preview is no longer a page. Old preview/terminal/unknown URLs return to
+  // the normal builder workspace, where Preview remains an internal pane.
+  const safeView = SAFE_VIEWS.has(requested) ? requested : "chat";
 
   redirect(`/project/${encodeURIComponent(projectId)}/${safeView}`);
 }
