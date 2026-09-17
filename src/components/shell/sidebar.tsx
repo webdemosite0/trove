@@ -37,6 +37,7 @@ import type { User } from "@/lib/auth";
 import type { Balance } from "@/lib/credits";
 import { CreditMeter } from "@/components/shell/credit-meter";
 import { Tooltip } from "@/components/ui/tooltip";
+import { Liquid } from "liquid-gooey";
 
 interface Item {
   href: string;
@@ -194,6 +195,57 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
   );
 }
 
+/** Collapsed-rail + with liquid-gooey melt (libraries.dev style). */
+function GooeyAddButton() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="relative mb-2 flex flex-col items-center"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+    >
+      <Liquid blur={8} contrast={18} className="relative h-[76px] w-11">
+        <Liquid.Item
+          x={0}
+          y={open ? 40 : 0}
+          transition="bouncy"
+          effect="melt"
+          className="absolute left-1/2 top-0 -translate-x-1/2"
+        >
+          <Link
+            href="/websites"
+            title="New site"
+            aria-label="New site"
+            tabIndex={open ? 0 : -1}
+            className="grid size-9 place-items-center rounded-full bg-accent text-white shadow-[0_8px_22px_rgba(99,102,241,.35)]"
+          >
+            <TbWorld size={15} />
+          </Link>
+        </Liquid.Item>
+        <Liquid.Item
+          x={0}
+          y={0}
+          transition="bouncy"
+          effect="morph"
+          className="absolute left-1/2 top-0 -translate-x-1/2"
+        >
+          <Link
+            href="/chat"
+            title="New chat"
+            aria-label="New chat"
+            className="btn-grad grid size-9 place-items-center rounded-full text-white"
+          >
+            <FiPlus size={16} />
+          </Link>
+        </Liquid.Item>
+      </Liquid>
+    </div>
+  );
+}
+
 function RailBody({
   user,
   balance,
@@ -232,14 +284,20 @@ function RailBody({
       </div>
 
       <div className="px-3 pt-3">
-        <Link
-          href="/chat"
-          onClick={onNavigate}
-          className="group flex h-9 items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
-        >
-          <Ico icon={FiPlus} motion="open" size={15} className="text-ink" />
-          New chat
-        </Link>
+        <Liquid blur={6} contrast={16} className="w-full">
+          <Liquid.Item transition="bouncy" effect="morph">
+            <Link
+              href="/chat"
+              onClick={onNavigate}
+              className="group flex h-9 w-full items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
+            >
+              <span className="grid size-6 place-items-center rounded-full bg-accent/12 text-accent">
+                <Ico icon={FiPlus} motion="open" size={14} className="text-accent" />
+              </span>
+              New chat
+            </Link>
+          </Liquid.Item>
+        </Liquid>
       </div>
 
       <nav
@@ -393,14 +451,7 @@ export function Sidebar({
               <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
             </button>
 
-            <Link
-              href="/chat"
-              title="New chat"
-              aria-label="New chat"
-              className="btn-grad mb-2 grid h-9 w-9 place-items-center rounded-[var(--r-control)]"
-            >
-              <FiPlus size={16} />
-            </Link>
+            <GooeyAddButton />
 
             <div className="flex flex-1 flex-col items-center gap-0.5 overflow-y-auto scrollbar-none">
               {PRIMARY.map((i) => (
