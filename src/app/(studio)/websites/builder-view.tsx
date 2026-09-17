@@ -59,7 +59,6 @@ async function readJson(res: Response): Promise<Record<string, unknown> | null> 
   try {
     return JSON.parse(text) as Record<string, unknown>;
   } catch {
-    // HTML error pages (404) produce "<!DOCTYPE…" — surface a clear message.
     return {
       error:
         res.status === 401
@@ -74,7 +73,6 @@ async function readJson(res: Response): Promise<Record<string, unknown> | null> 
 async function createSiteIdentity(title: string, idea: string) {
   const body = JSON.stringify({ title, idea, name: title, prompt: idea, status: "draft" });
 
-  // Primary endpoint
   let res = await fetch("/api/sites/create", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -82,7 +80,6 @@ async function createSiteIdentity(title: string, idea: string) {
   });
   let data = await readJson(res);
 
-  // Fallback if route is still missing on an old deployment
   if (res.status === 404 || (data && !data.id && String(data.error || "").includes("missing"))) {
     res = await fetch("/api/builder/projects", {
       method: "POST",
@@ -239,7 +236,7 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       ref={rootRef}
       data-trove-site-view={view}
       data-trove-project-id={identity.id}
-      className={`h-full min-h-0 ${terminalHiddenClass}`}
+      className={`relative h-full min-h-0 overflow-hidden ${terminalHiddenClass}`}
     >
       <WorkspaceBuilderView {...props} restored={identity} />
     </div>
