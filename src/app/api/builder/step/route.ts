@@ -5,6 +5,7 @@ import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { skillPrompts, skillLabel } from "@/lib/skills";
 import { targetFor } from "@/lib/targets";
 import { safeProjectPath } from "@/lib/builder";
+import { limitRequest, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -197,6 +198,15 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Sign in to build." }, { status: 401 });
   }
 
+  const gate = await limitRequest(req, {
+    scope: "builder-step",
+    userId: account?.userId,
+    anonymousLimit: 2,
+    authenticatedLimit: 10,
+    windowMs: 60_000,
+  });
+  if (!gate.allowed) return rateLimitResponse(gate);
+
   const files = Array.isArray(body.files) ? body.files : [];
   const idea = String(body.idea ?? "");
   const styleNote = String(body.style ?? "");
@@ -286,15 +296,6 @@ export async function POST(req: NextRequest) {
 
         const raw = await generateText({
           onUsage: (u) => account && spend(account.userId, "site", u.totalTokens),
-          onAttempt: ({ model, status, pass }) =>
-            send({
-              t: "log",
-              text:
-                status === 0
-                  ? `${model} timed out (pass ${pass}) — trying the next model`
-                  : `${model} returned ${status} (pass ${pass}) — trying the next model`,
-              level: "warn",
-            }),
           turns: [{ role: "user", text: prompt }],
           system,
           temperature: 0.65,
@@ -338,8 +339,11 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         const message = e instanceof Error ? e.message : "Unknown error";
         console.error("builder/step", message);
-        send({ t: "log", text: message, level: "warn" });
-        send({ t: "error", message });
+        send({ t: "log", text: "Build step paused", level: "warn" });
+        send({
+          t: "error",
+          message: "Trove could not finish this step right now. Please try again.",
+        });
         controller.close();
       }
     },
