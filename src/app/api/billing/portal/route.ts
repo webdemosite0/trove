@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { subscriptionFor } from "@/lib/billing";
+import { createLemonCustomerPortal, lemonConfigured } from "@/lib/lemon";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
 
@@ -8,27 +9,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Opens Stripe's customer portal: change card, download invoices, cancel.
- *
- * Cancelling, upgrading and refunds all live there rather than being rebuilt
- * here. Stripe's portal is already correct about proration and tax, and a
- * hand-rolled cancel button that only writes a local column would leave someone
- * still being charged.
- *
- * The customer id comes from the session user's own row, so this can only ever
- * open the portal for the person who asked.
+ * Opens the billing portal (Lemon Squeezy or Stripe) for the signed-in user.
  */
 export async function POST() {
   const user = await currentUser();
   if (!user) {
     return NextResponse.json({ error: "Log in first." }, { status: 401 });
-  }
-
-  if (!stripeConfigured()) {
-    return NextResponse.json(
-      { error: "Payments are not set up on this deployment yet." },
-      { status: 503 },
-    );
   }
 
   const sub = await subscriptionFor(user.id);
@@ -39,12 +25,27 @@ export async function POST() {
     );
   }
 
+  // Lemon customer ids are numeric strings; Stripe starts with cus_
+  const isStripe = sub.customerId.startsWith("cus_");
+
   try {
+    if (!isStripe && lemonConfigured()) {
+      const url = await createLemonCustomerPortal(sub.customerId);
+      return NextResponse.json({ url, provider: "lemon" });
+    }
+
+    if (!stripeConfigured()) {
+      return NextResponse.json(
+        { error: "Payments are not set up on this deployment yet." },
+        { status: 503 },
+      );
+    }
+
     const session = await stripe().billingPortal.sessions.create({
       customer: sub.customerId,
       return_url: `${site.url}/plans`,
     });
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url, provider: "stripe" });
   } catch (err) {
     console.error("[billing] portal failed:", err);
     return NextResponse.json(
