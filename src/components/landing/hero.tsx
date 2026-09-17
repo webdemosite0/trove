@@ -77,14 +77,14 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
       <div className="relative mx-auto max-w-[960px] text-center">
         <div className="lp-hero-in mb-5 inline-flex items-center rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-700 shadow-sm backdrop-blur-md sm:mb-7 sm:px-4 sm:text-[11px]">
-          AI THAT SHIP REAL FILES
+          FROM PROMPT TO FINISHED WORK
         </div>
 
         <h1
           className="lp-hero-in text-[clamp(2.05rem,1.55rem+3vw,4.35rem)] font-semibold leading-[1.02] tracking-[-0.038em] text-zinc-950"
           style={{ animationDelay: "60ms" }}
         >
-          Describe it once.
+          Describe what you want.
           <br />
           <span className="bg-gradient-to-r from-violet-600 via-indigo-500 to-fuchsia-500 bg-clip-text text-transparent">
             Trove builds it.
@@ -95,7 +95,8 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           className="lp-hero-in mx-auto mt-4 max-w-[50ch] text-[13.5px] leading-6 text-zinc-600 sm:mt-6 sm:text-[17px] sm:leading-relaxed lg:text-[18px]"
           style={{ animationDelay: "120ms" }}
         >
-          Real deliverables you can refine, export, and keep — websites, documents, spreadsheets, presentations, and code in the same project.
+          Turn one prompt into finished work you can actually use — websites,
+          documents, spreadsheets, decks, and code you can refine, export, or publish.
         </p>
 
         <div className="lp-hero-in mx-auto mt-7 max-w-[740px] sm:mt-11" style={{ animationDelay: "180ms" }}>
