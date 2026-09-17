@@ -3,8 +3,9 @@ import { BrandLockup } from "@/components/brand/logo";
 import { AuthIllustration } from "@/components/auth/auth-illustration";
 
 /**
- * Split auth layout matching product photo:
- * left form panel, right soft-lavender illustration scene.
+ * Premium auth shell: clean startup form on the left, immersive Trove product
+ * visual on the right. On phones the visual becomes a compact editorial card
+ * below the form instead of disappearing entirely.
  */
 export default function AuthLayout({
   children,
@@ -12,21 +13,36 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#ececf1] p-4 sm:p-6">
-      <div className="flex w-full max-w-[1080px] overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_-24px_rgba(15,23,42,0.18)] ring-1 ring-black/5">
-        {/* Left — form */}
-        <div className="flex w-full flex-col justify-center px-8 py-10 sm:px-12 lg:w-[46%] lg:px-14">
-          <Link href="/" className="mb-8 inline-flex w-fit">
-            <BrandLockup orbSize={34} wordSize={22} sweep={false} />
-          </Link>
-          <div className="w-full max-w-[360px]">{children}</div>
-        </div>
+    <main className="min-h-dvh bg-[#f4f4f6] p-2.5 sm:p-4 lg:p-5">
+      <div className="mx-auto grid min-h-[calc(100dvh-20px)] w-full max-w-[1240px] overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-[0_30px_100px_-38px_rgba(15,23,42,0.28)] sm:min-h-[calc(100dvh-32px)] sm:rounded-[34px] lg:min-h-[calc(100dvh-40px)] lg:grid-cols-[0.92fr_1.08fr]">
+        <section className="relative flex min-w-0 flex-col px-5 py-6 sm:px-9 sm:py-8 lg:px-12 lg:py-10 xl:px-16 xl:py-12">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_20%_0%,rgba(59,130,246,0.08),transparent_55%)]" />
 
-        {/* Right — illustration */}
-        <div className="relative hidden min-h-[640px] overflow-hidden lg:flex lg:w-[54%]">
+          <div className="relative flex items-center justify-between">
+            <Link href="/" className="inline-flex w-fit" aria-label="Trove home">
+              <BrandLockup orbSize={34} wordSize={22} sweep={false} />
+            </Link>
+            <span className="hidden items-center gap-1.5 rounded-full border border-black/[0.06] bg-[#fafafa] px-3 py-1.5 text-[11px] font-medium text-zinc-500 sm:inline-flex">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              Secure workspace
+            </span>
+          </div>
+
+          <div className="relative my-auto w-full max-w-[410px] py-10 sm:py-12 lg:py-10">
+            {children}
+          </div>
+
+          <div className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-black/[0.06] pt-4 text-[11px] text-zinc-400">
+            <span>© {new Date().getFullYear()} Trove</span>
+            <Link href="/privacy" className="transition hover:text-zinc-700">Privacy</Link>
+            <Link href="/terms" className="transition hover:text-zinc-700">Terms</Link>
+          </div>
+        </section>
+
+        <section className="relative min-h-[230px] border-t border-black/[0.06] lg:min-h-0 lg:border-l lg:border-t-0">
           <AuthIllustration />
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
