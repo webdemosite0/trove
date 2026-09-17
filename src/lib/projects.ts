@@ -4,6 +4,13 @@ import { all, one, run, uid } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import type { BuildPlan, ProjectFile } from "@/lib/builder";
 
+export type ProjectChatMessage = {
+  id: string;
+  role: "user" | "assistant" | "system";
+  text: string;
+  at: number;
+};
+
 export interface SavedProject {
   id: string;
   name: string;
@@ -14,6 +21,7 @@ export interface SavedProject {
   previewHtml: string | null;
   buildPlan: BuildPlan | null;
   completedStepIds: string[];
+  messages: ProjectChatMessage[];
   createdAt: number;
   updatedAt: number;
 }
@@ -39,6 +47,7 @@ export async function ensureProjectColumns(): Promise<void> {
     `ALTER TABLE builder_projects ADD COLUMN conversation_id TEXT`,
     `ALTER TABLE builder_projects ADD COLUMN build_plan_json TEXT`,
     `ALTER TABLE builder_projects ADD COLUMN completed_steps_json TEXT`,
+    `ALTER TABLE builder_projects ADD COLUMN messages_json TEXT`,
   ]) {
     try {
       await run(stmt);
@@ -86,6 +95,25 @@ function parseCompletedSteps(raw: unknown): string[] {
   }
 }
 
+function parseMessages(raw: unknown): ProjectChatMessage[] {
+  if (!raw || typeof raw !== "string") return [];
+  try {
+    const value = JSON.parse(raw);
+    if (!Array.isArray(value)) return [];
+    return value
+      .filter((m) => m && typeof m === "object" && typeof m.text === "string")
+      .map((m) => ({
+        id: String(m.id || `m${m.at || 0}`).slice(0, 64),
+        role: (m.role === "assistant" || m.role === "system" ? m.role : "user") as ProjectChatMessage["role"],
+        text: String(m.text).slice(0, 20_000),
+        at: Number(m.at) || 0,
+      }))
+      .slice(-200);
+  } catch {
+    return [];
+  }
+}
+
 function projectHref(id: string) {
   return `/project/${encodeURIComponent(id)}/preview`;
 }
@@ -121,6 +149,7 @@ export async function saveProject(opts: {
   conversationId?: string | null;
   buildPlan?: BuildPlan | null;
   completedStepIds?: string[];
+  messages?: ProjectChatMessage[] | null;
 }): Promise<{ id: string } | null> {
   const user = await currentUser();
   if (!user) return null;
@@ -142,6 +171,17 @@ export async function saveProject(opts: {
     : null;
   const buildPlanJson = opts.buildPlan ? JSON.stringify(opts.buildPlan).slice(0, 500_000) : null;
   const completedStepsJson = JSON.stringify((opts.completedStepIds || []).slice(0, 200));
+  const messagesJson =
+    opts.messages != null
+      ? JSON.stringify(
+          opts.messages.slice(-200).map((m) => ({
+            id: String(m.id || "").slice(0, 64),
+            role: m.role,
+            text: String(m.text || "").slice(0, 20_000),
+            at: Number(m.at) || Date.now(),
+          })),
+        ).slice(0, 1_500_000)
+      : null;
   const now = Date.now();
 
   let id = opts.id?.trim() || null;
@@ -162,6 +202,7 @@ export async function saveProject(opts: {
          conversation_id = COALESCE(?, conversation_id),
          build_plan_json = COALESCE(?, build_plan_json),
          completed_steps_json = ?,
+         messages_json = COALESCE(?, messages_json),
          updated_at = ?
        WHERE id = ? AND user_id = ?`,
       [
@@ -174,6 +215,7 @@ export async function saveProject(opts: {
         opts.conversationId || null,
         buildPlanJson,
         completedStepsJson,
+        messagesJson,
         now,
         id,
         user.id,
@@ -186,8 +228,8 @@ export async function saveProject(opts: {
   id = uid("proj");
   await run(
     `INSERT INTO builder_projects
-      (id, user_id, name, prompt, target, status, files_json, preview_html, conversation_id, build_plan_json, completed_steps_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, user_id, name, prompt, target, status, files_json, preview_html, conversation_id, build_plan_json, completed_steps_json, messages_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.id,
@@ -200,6 +242,7 @@ export async function saveProject(opts: {
       opts.conversationId || null,
       buildPlanJson,
       completedStepsJson,
+      messagesJson,
       now,
       now,
     ],
@@ -232,6 +275,7 @@ export async function loadProject(id: string): Promise<SavedProject | null> {
     previewHtml: row.preview_html != null ? String(row.preview_html) : null,
     buildPlan: parseBuildPlan(row.build_plan_json),
     completedStepIds: parseCompletedSteps(row.completed_steps_json),
+    messages: parseMessages(row.messages_json),
     createdAt: Number(row.created_at) || 0,
     updatedAt: Number(row.updated_at) || 0,
   };
