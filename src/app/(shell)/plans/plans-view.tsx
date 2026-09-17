@@ -16,7 +16,8 @@ import { choosePlan } from "@/app/actions/billing";
 import { Ico } from "@/components/ui/ico";
 import { FailureNote } from "@/components/ui/failure-note";
 import { cn } from "@/lib/utils";
-import type { Balance, Plan, UsageRow } from "@/lib/credits";
+import type { Balance, BillingInterval, Plan, UsageRow } from "@/lib/credits";
+import { priceForInterval, yearlyDiscountPercent } from "@/lib/credits";
 import { kindLabel } from "@/lib/kind-label";
 
 interface Subscription {
@@ -68,10 +69,16 @@ export function PlansView({
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [interval, setInterval] = useState<BillingInterval>("month");
 
   const paidNow = Boolean(currentPlan && currentPlan !== "free");
   const [waiting, setWaiting] = useState(checkout === "done" && !paidNow);
   const tries = useRef(0);
+
+  const maxYearlySave = Math.max(
+    0,
+    ...plans.filter((p) => p.price > 0).map((p) => yearlyDiscountPercent(p)),
+  );
 
   useEffect(() => {
     if (!waiting) return;
@@ -107,7 +114,9 @@ export function PlansView({
 
   function subscribe(id: string) {
     setBusyId(id);
-    void go("/api/billing/checkout", { plan: id }).finally(() => setBusyId(null));
+    void go("/api/billing/checkout", { plan: id, interval }).finally(() =>
+      setBusyId(null),
+    );
   }
 
   function manage() {
@@ -141,7 +150,7 @@ export function PlansView({
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[320px] opacity-70 [background:radial-gradient(60%_100%_at_50%_0%,var(--color-accent-soft),transparent_70%)]"
       />
 
-      <header className="mb-9 text-center">
+      <header className="mb-8 text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-rail px-3 py-1 text-[11.5px] font-medium text-ink-3">
           <Ico icon={FiZap} motion="sparkle" size={12} className="text-accent" live />
           Pay for what the model actually used
@@ -150,10 +159,57 @@ export function PlansView({
           Credits and plans
         </h1>
         <p className="mx-auto mt-2.5 max-w-[560px] text-[14.5px] leading-relaxed text-ink-3">
-          One credit is 1,000 tokens of real usage. Nothing is estimated and
-          nothing is charged per request — you are billed for what the model
-          reports, and a one-line question costs a fraction of a build.
+          One credit is 1,000 tokens of real usage. Nothing is estimated — you
+          are billed for what the model reports.
         </p>
+
+        {/* Monthly / Yearly switch */}
+        <div className="mt-7 flex flex-col items-center gap-2">
+          <div
+            role="tablist"
+            aria-label="Billing interval"
+            className="inline-flex items-center rounded-full border border-line bg-rail p-1 shadow-[var(--sh-1)]"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={interval === "month"}
+              onClick={() => setInterval("month")}
+              className={cn(
+                "relative rounded-full px-5 py-2 text-[13.5px] font-medium transition-all",
+                interval === "month"
+                  ? "bg-raised text-ink shadow-sm"
+                  : "text-ink-4 hover:text-ink-2",
+              )}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={interval === "year"}
+              onClick={() => setInterval("year")}
+              className={cn(
+                "relative inline-flex items-center gap-2 rounded-full px-5 py-2 text-[13.5px] font-medium transition-all",
+                interval === "year"
+                  ? "bg-raised text-ink shadow-sm"
+                  : "text-ink-4 hover:text-ink-2",
+              )}
+            >
+              Yearly
+              {maxYearlySave > 0 ? (
+                <span className="rounded-full bg-positive/15 px-2 py-0.5 text-[10.5px] font-semibold text-positive">
+                  Save up to {maxYearlySave}%
+                </span>
+              ) : null}
+            </button>
+          </div>
+          <p className="text-[12px] text-ink-4">
+            {interval === "year"
+              ? "Billed once a year. Same monthly credits either way."
+              : "Billed every month. Switch to yearly anytime for a discount."}
+          </p>
+        </div>
       </header>
 
       {checkout === "cancelled" ? (
@@ -297,6 +353,12 @@ export function PlansView({
           const paid = t.price > 0;
           const featured = t.id === "pro";
           const buyable = paid ? Boolean(purchasable[t.id]) : true;
+          const amount = priceForInterval(t, interval);
+          const savePct = yearlyDiscountPercent(t);
+          const perMonthYearly =
+            interval === "year" && t.priceYearly > 0
+              ? Math.round((t.priceYearly / 12) * 100) / 100
+              : null;
 
           return (
             <article
@@ -326,10 +388,29 @@ export function PlansView({
               <h2 className="text-[16px] font-semibold text-ink">{t.name}</h2>
               <p className="mt-1 min-h-[38px] text-[13px] leading-relaxed text-ink-3">{t.blurb}</p>
 
-              <div className="mt-4 flex items-baseline gap-1.5">
-                <span className="text-[36px] font-semibold tracking-tight text-ink">${t.price}</span>
-                <span className="text-[13px] text-ink-4">{t.price === 0 ? "forever" : "per month"}</span>
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+                <span className="text-[36px] font-semibold tracking-tight text-ink">
+                  ${amount % 1 === 0 ? amount : amount.toFixed(2)}
+                </span>
+                <span className="text-[13px] text-ink-4">
+                  {t.price === 0
+                    ? "forever"
+                    : interval === "year"
+                      ? "per year"
+                      : "per month"}
+                </span>
+                {interval === "year" && savePct > 0 ? (
+                  <span className="ml-1 rounded-full bg-positive/15 px-2 py-0.5 text-[11px] font-semibold text-positive">
+                    Save {savePct}%
+                  </span>
+                ) : null}
               </div>
+
+              {perMonthYearly != null ? (
+                <p className="mt-0.5 text-[12.5px] text-ink-4">
+                  ≈ ${perMonthYearly}/mo · was ${t.price}/mo
+                </p>
+              ) : null}
 
               <p className="mt-1 text-[12.5px] font-medium text-accent">
                 {t.monthly.toLocaleString()} credits a month
@@ -378,7 +459,8 @@ export function PlansView({
           or every provider is busy, nothing is deducted.
         </Note>
         <Note title="Payments via Lemon Squeezy">
-          Checkout runs on Lemon Squeezy (Stripe as fallback). Cards never touch Trove servers.
+          Checkout runs on Lemon Squeezy. Cards never touch Trove servers. Yearly
+          billing uses the yearly variant on the same product.
         </Note>
       </div>
 
