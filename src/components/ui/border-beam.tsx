@@ -15,10 +15,7 @@ const gradientByVariant: Record<BeamVariant, string> = {
     "conic-gradient(from 0deg, transparent 0deg, transparent 255deg, rgba(15,23,42,.12) 286deg, rgba(15,23,42,.65) 320deg, rgba(255,255,255,.72) 340deg, transparent 360deg)",
 };
 
-/**
- * Lightweight Trove-owned replacement for the old border-beam package.
- * It preserves the same call-site API while avoiding a runtime dependency.
- */
+/** Lightweight Trove-owned replacement for the old border-beam package. */
 export function BorderBeam({
   children,
   size = "md",
@@ -48,7 +45,7 @@ export function BorderBeam({
           opacity,
           padding: size === "lg" ? 2 : 1.25,
           background: gradientByVariant[colorVariant],
-          animation: active ? "trove-border-beam-spin 4.8s linear infinite" : undefined,
+          animation: active ? "spin 4.8s linear infinite" : undefined,
           WebkitMask:
             "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
           WebkitMaskComposite: "xor",
