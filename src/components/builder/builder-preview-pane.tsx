@@ -15,6 +15,8 @@ import {
   syncLocalProject,
 } from "@/lib/browser-runtime";
 
+type PreviewRuntimeStatus = "idle" | "booting" | "syncing" | "installing" | "starting" | "ready" | "error";
+
 /**
  * Full-height project preview backed by the reusable E2B runtime.
  * Every site is keyed to its own project id so one project's sandbox/preview
@@ -28,6 +30,7 @@ export function BuilderPreviewPane({
   publishControl,
   pageTitle = "Homepage",
   embedded = false,
+  onRuntimeState,
 }: {
   preview: string | null;
   files?: ProjectFile[];
@@ -39,6 +42,8 @@ export function BuilderPreviewPane({
   pageTitle?: string;
   /** Light browser chrome for the split builder; dark chrome for dedicated Preview. */
   embedded?: boolean;
+  /** Reports real E2B/Vite lifecycle states to the agent activity feed. */
+  onRuntimeState?: (status: PreviewRuntimeStatus, error?: string | null) => void;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -54,6 +59,9 @@ export function BuilderPreviewPane({
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => subscribeLocalRuntime(setRuntime, projectId), [projectId]);
+  useEffect(() => {
+    onRuntimeState?.(runtime.status as PreviewRuntimeStatus, runtime.error || null);
+  }, [runtime.status, runtime.error, onRuntimeState]);
 
   const filesKey = useMemo(
     () => files.map((file) => `${file.path}:${file.content.length}`).join("|"),
