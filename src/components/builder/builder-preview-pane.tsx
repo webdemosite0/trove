@@ -6,6 +6,7 @@ import {
   BrowserFrame,
   type PreviewDestination,
 } from "@/components/builder/browser-frame";
+import { EmbeddedBrowserFrame } from "@/components/builder/embedded-browser-frame";
 import { PublishPanel } from "@/components/builder/publish-panel";
 import type { ProjectFile } from "@/lib/builder";
 import {
@@ -26,6 +27,7 @@ export function BuilderPreviewPane({
   onNavigate,
   publishControl,
   pageTitle = "Homepage",
+  embedded = false,
 }: {
   preview: string | null;
   files?: ProjectFile[];
@@ -35,6 +37,8 @@ export function BuilderPreviewPane({
   onNavigate?: (destination: PreviewDestination) => void;
   publishControl?: ReactNode;
   pageTitle?: string;
+  /** Light browser chrome for the split builder; dark chrome for dedicated Preview. */
+  embedded?: boolean;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -157,57 +161,76 @@ export function BuilderPreviewPane({
       />
     );
 
+  const previewBody = useLive && runtime.url ? (
+    <iframe
+      key={`${projectId || "site"}:${runtime.url}:${refreshKey}`}
+      title="Live site preview"
+      src={runtime.url}
+      className="absolute inset-0 h-full w-full border-0 bg-white"
+      allow="accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
+      referrerPolicy="no-referrer"
+    />
+  ) : useSnapshot && preview ? (
+    <iframe
+      key={`${projectId || "site"}:${preview.slice(0, 80)}:${refreshKey}`}
+      title="Preview snapshot"
+      srcDoc={preview}
+      className="absolute inset-0 h-full w-full border-0 bg-white"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+      referrerPolicy="no-referrer"
+    />
+  ) : (
+    <div className="grid h-full min-h-[280px] place-items-center bg-white px-6 text-center text-[#242427]">
+      <div className="max-w-sm">
+        <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-black/[0.08] bg-[#f7f7f8] shadow-sm">
+          <span className="font-mono text-[15px] font-semibold text-black/65">{"//"}</span>
+        </div>
+        <p className="text-[15px] font-semibold tracking-tight">Live preview</p>
+        <p className="mt-2 text-[12.5px] leading-5 text-black/42">
+          Trove will show this project's isolated preview here as soon as the first files are ready.
+        </p>
+      </div>
+    </div>
+  );
+
+  const refresh = () => {
+    setRefreshKey((value) => value + 1);
+    if (files.length && projectId) void syncLocalProject(files, projectId);
+    onRefresh?.();
+  };
+
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#1b1b1c]">
-      <BrowserFrame
-        url={displayUrl}
-        pageTitle={pageTitle}
-        status={chromeStatus}
-        publishControl={realPublishControl}
-        onNavigate={navigate}
-        onOpen={useLive || preview ? openPreview : undefined}
-        onRefresh={() => {
-          setRefreshKey((value) => value + 1);
-          if (files.length && projectId) void syncLocalProject(files, projectId);
-          onRefresh?.();
-        }}
-        className="h-full min-h-0"
-      >
-        {useLive && runtime.url ? (
-          <iframe
-            key={`${projectId || "site"}:${runtime.url}:${refreshKey}`}
-            title="Live site preview"
-            src={runtime.url}
-            className="absolute inset-0 h-full w-full border-0 bg-white"
-            allow="accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
-            referrerPolicy="no-referrer"
-          />
-        ) : useSnapshot && preview ? (
-          <iframe
-            key={`${projectId || "site"}:${preview.slice(0, 80)}:${refreshKey}`}
-            title="Preview snapshot"
-            srcDoc={preview}
-            className="absolute inset-0 h-full w-full border-0 bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div className="grid h-full min-h-[280px] place-items-center bg-white px-6 text-center text-[#242427]">
-            <div className="max-w-sm">
-              <div className="mx-auto mb-4 grid size-11 place-items-center rounded-2xl border border-black/[0.08] bg-[#f7f7f8] shadow-sm">
-                <span className="font-mono text-[15px] font-semibold text-[#6f45ff]">{"//"}</span>
-              </div>
-              <p className="text-[16px] font-semibold tracking-tight">Live preview</p>
-              <p className="mt-2 text-[13px] leading-5 text-black/45">
-                Build this project and Trove will start its own isolated Vite workspace.
-              </p>
-            </div>
-          </div>
-        )}
-      </BrowserFrame>
+    <div className={embedded ? "relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#f7f6f3]" : "relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-[#1b1b1c]"}>
+      {embedded ? (
+        <EmbeddedBrowserFrame
+          status={chromeStatus}
+          publishControl={realPublishControl}
+          onOpen={useLive || preview ? openPreview : undefined}
+          onRefresh={refresh}
+          className="h-full min-h-0"
+        >
+          {previewBody}
+        </EmbeddedBrowserFrame>
+      ) : (
+        <BrowserFrame
+          url={displayUrl}
+          pageTitle={pageTitle}
+          status={chromeStatus}
+          publishControl={realPublishControl}
+          onNavigate={navigate}
+          onOpen={useLive || preview ? openPreview : undefined}
+          onRefresh={refresh}
+          className="h-full min-h-0"
+        >
+          {previewBody}
+        </BrowserFrame>
+      )}
 
       {runtime.status === "error" && runtime.error ? (
-        <div className="pointer-events-none absolute bottom-5 left-6 z-50 max-w-[360px] rounded-2xl border border-amber-400/20 bg-[#242426]/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-amber-100 shadow-2xl backdrop-blur-xl">
+        <div className={embedded
+          ? "pointer-events-none absolute bottom-4 left-4 z-50 max-w-[340px] rounded-2xl border border-amber-500/15 bg-white/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-amber-800 shadow-xl backdrop-blur-xl"
+          : "pointer-events-none absolute bottom-5 left-6 z-50 max-w-[360px] rounded-2xl border border-amber-400/20 bg-[#242426]/95 px-3.5 py-2.5 text-[11.5px] leading-5 text-amber-100 shadow-2xl backdrop-blur-xl"}
+        >
           Live runtime unavailable: {runtime.error}. Showing this project's saved snapshot.
         </div>
       ) : null}
