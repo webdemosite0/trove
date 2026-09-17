@@ -6,6 +6,7 @@ import {
   createLemonCheckout,
   lemonConfigured,
   lemonPurchasable,
+  variantFor,
 } from "@/lib/lemon";
 import { priceFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
@@ -38,7 +39,20 @@ export async function POST(req: Request) {
   }
 
   // —— Lemon Squeezy (primary) ————————————————————————————————
-  if (lemonConfigured() && lemonPurchasable(plan.id)) {
+  if (lemonConfigured()) {
+    if (!lemonPurchasable(plan.id)) {
+      const missing = variantFor(plan.id);
+      console.error(
+        `[billing] lemon missing variant for plan=${plan.id} LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}=${missing ? "set" : "MISSING"}`,
+      );
+      return NextResponse.json(
+        {
+          error: `Lemon Squeezy variant for ${plan.name} is not configured. Set LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()} in Vercel env.`,
+        },
+        { status: 503 },
+      );
+    }
+
     try {
       const { url } = await createLemonCheckout({
         planId: plan.id,
@@ -49,9 +63,13 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ url, provider: "lemon" });
     } catch (err) {
-      console.error("[billing] lemon checkout failed:", err);
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error("[billing] lemon checkout failed:", detail);
       return NextResponse.json(
-        { error: "Could not start checkout. Please try again in a moment." },
+        {
+          error: `Lemon checkout failed: ${detail}`,
+          hint: "Check LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, and LEMONSQUEEZY_VARIANT_PRO / _TEAM match your Lemon dashboard (same mode: test vs live).",
+        },
         { status: 502 },
       );
     }
@@ -60,7 +78,10 @@ export async function POST(req: Request) {
   // —— Stripe (fallback) ——————————————————————————————————————
   if (!stripeConfigured()) {
     return NextResponse.json(
-      { error: "Payments are not set up on this deployment yet." },
+      {
+        error:
+          "Payments are not set up yet. Add Lemon Squeezy env vars (LEMONSQUEEZY_API_KEY, LEMONSQUEEZY_STORE_ID, LEMONSQUEEZY_VARIANT_PRO, LEMONSQUEEZY_VARIANT_TEAM) in Vercel.",
+      },
       { status: 503 },
     );
   }
@@ -112,9 +133,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url, provider: "stripe" });
   } catch (err) {
-    console.error("[billing] stripe checkout failed:", err);
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[billing] stripe checkout failed:", detail);
     return NextResponse.json(
-      { error: "Could not start checkout. Please try again in a moment." },
+      { error: `Could not start checkout: ${detail}` },
       { status: 502 },
     );
   }
