@@ -6,6 +6,7 @@ import {
   verifyLemonSignature,
   type LemonWebhookEvent,
 } from "@/lib/lemon";
+import { alertOps } from "@/lib/ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +60,11 @@ export async function POST(req: Request) {
     await handle(name, event);
   } catch (err) {
     console.error(`[billing/lemon] handling ${name} failed:`, err);
+    await alertOps({
+      key: `lemon-handler-${name}`,
+      subject: "Lemon webhook handling failed",
+      message: `Event ${name || "(unknown)"} could not be applied. Lemon should retry the delivery.`,
+    }).catch(() => false);
     return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
 
@@ -91,6 +97,11 @@ async function handle(eventName: string, event: LemonWebhookEvent) {
 
   if (!userId) {
     console.error(`[billing/lemon] ${eventName}: no user for customer ${customerId}`);
+    await alertOps({
+      key: `lemon-no-user-${customerId || "unknown"}`,
+      subject: "Lemon payment has no Trove account",
+      message: `Event ${eventName} could not be matched to a Trove user. Customer id: ${customerId || "(missing)"}.`,
+    }).catch(() => false);
     return;
   }
 
@@ -126,7 +137,21 @@ async function handle(eventName: string, event: LemonWebhookEvent) {
     console.error(
       `[billing/lemon] variant ${variantId || "(none)"} maps to no plan; user ${userId}`,
     );
+    await alertOps({
+      key: `lemon-unmapped-variant-${variantId || "none"}`,
+      subject: "Lemon variant is not mapped",
+      message: `A paid Lemon event used variant ${variantId || "(missing)"}, but Trove could not map it to Pro or Team.`,
+    }).catch(() => false);
     return;
+  }
+
+  if (eventName === "subscription_payment_failed") {
+    await alertOps({
+      key: `lemon-payment-failed-${subscriptionId || customerId || userId}`,
+      subject: "Lemon subscription payment failed",
+      message: `A Lemon subscription payment failed. Subscription id: ${subscriptionId || "(missing)"}.`,
+      cooldownMs: 60 * 60 * 1000,
+    }).catch(() => false);
   }
 
   const active =
