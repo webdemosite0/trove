@@ -12,6 +12,7 @@ import {
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import { isChatModelId, type ChatModelId } from "@/lib/chat-models";
 import { listConnections, secretFor } from "@/lib/connections";
+import { limitRequest, rateLimitResponse } from "@/lib/rate-limit";
 import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 
 export const runtime = "nodejs";
@@ -128,6 +129,15 @@ async function handle(req: NextRequest) {
       path: "/chat",
     });
   }
+
+  const gate = await limitRequest(req, {
+    scope: "chat-request",
+    userId: account?.userId,
+    anonymousLimit: 8,
+    authenticatedLimit: 30,
+    windowMs: 60_000,
+  });
+  if (!gate.allowed) return rateLimitResponse(gate);
 
   const simple = isSimpleTurn(turns) && attachments.length === 0;
   const wantSearch = !simple;

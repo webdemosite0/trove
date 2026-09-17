@@ -1,10 +1,11 @@
 import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { toParts, type Attachment } from "@/lib/attachments";
-import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { requireCredits, spend, OutOfCredits, RateWindowExceeded } from "@/lib/credits";
 import { SKILL_LIST, type SkillId } from "@/lib/skills";
 import { targetFor } from "@/lib/targets";
 import { safeProjectPath } from "@/lib/builder";
+import { limitRequest, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -110,8 +111,20 @@ export async function POST(req: NextRequest) {
     if (e instanceof OutOfCredits) {
       return Response.json({ error: e.message }, { status: 402 });
     }
+    if (e instanceof RateWindowExceeded) {
+      return Response.json({ error: e.message }, { status: 429 });
+    }
     return Response.json({ error: "Sign in to plan." }, { status: 401 });
   }
+
+  const gate = await limitRequest(req, {
+    scope: "builder-plan",
+    userId: account?.userId,
+    anonymousLimit: 2,
+    authenticatedLimit: 8,
+    windowMs: 60_000,
+  });
+  if (!gate.allowed) return rateLimitResponse(gate);
 
   const depth = body?.depth === "quick" ? "quick" : "deep";
   const target = targetFor(body.target);
@@ -202,6 +215,9 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const message = e instanceof Error ? e.message : "Planner failed.";
     console.error("builder/plan", message);
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json(
+      { error: "Trove could not finish the plan right now. Please try again." },
+      { status: 500 },
+    );
   }
 }
