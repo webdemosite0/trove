@@ -27,6 +27,13 @@ export type BuilderActivity = {
   variant?: number;
 };
 
+type RuntimeActivityEvent = {
+  kind: BuilderActivityKind;
+  label: string;
+  detail?: string | null;
+  state?: "active" | "done" | "error";
+};
+
 const KIND_LABEL: Record<BuilderActivityKind, string> = {
   thinking: "Thinking",
   searching: "Searching",
@@ -67,11 +74,48 @@ export function BuilderActivityFeed({
   startedAt?: number | null;
   className?: string;
 }) {
-  const elapsed = useElapsed(active, startedAt);
-  const visible = useMemo(() => items.slice(-18), [items]);
-  const current = [...visible].reverse().find((item) => item.state === "active") ?? visible.at(-1);
+  const [runtimeItems, setRuntimeItems] = useState<BuilderActivity[]>([]);
+  const [runtimeStartedAt, setRuntimeStartedAt] = useState<number | null>(null);
 
-  if (!visible.length && !active) return null;
+  useEffect(() => {
+    let counter = 0;
+    const onRuntime = (event: Event) => {
+      const payload = (event as CustomEvent<RuntimeActivityEvent>).detail;
+      if (!payload?.label || !payload.kind) return;
+      const now = Date.now();
+      counter += 1;
+      setRuntimeItems((current) => {
+        const settled = current.map((item) => item.state === "active" ? { ...item, state: "done" as const } : item);
+        return [
+          ...settled.slice(-10),
+          {
+            id: `runtime-${now}-${counter}`,
+            kind: payload.kind,
+            label: payload.label,
+            detail: payload.detail || null,
+            state: payload.state || "done",
+            at: now,
+            variant: 60 + counter,
+          },
+        ];
+      });
+      if (payload.state === "active") setRuntimeStartedAt((value) => value || now);
+      else if (payload.kind === "preview" || payload.kind === "error") setRuntimeStartedAt(null);
+    };
+    window.addEventListener("trove:builder-runtime", onRuntime);
+    return () => window.removeEventListener("trove:builder-runtime", onRuntime);
+  }, []);
+
+  const visible = useMemo(
+    () => [...items, ...runtimeItems].sort((a, b) => a.at - b.at).slice(-18),
+    [items, runtimeItems],
+  );
+  const current = [...visible].reverse().find((item) => item.state === "active") ?? visible.at(-1);
+  const runtimeActive = runtimeItems.some((item) => item.state === "active");
+  const feedActive = active || runtimeActive;
+  const elapsed = useElapsed(feedActive, startedAt || runtimeStartedAt);
+
+  if (!visible.length && !feedActive) return null;
 
   return (
     <section
@@ -84,18 +128,18 @@ export function BuilderActivityFeed({
         <ThinkingOrb
           kind={current?.kind ?? "thinking"}
           variant={current?.variant ?? visible.length}
-          active={active}
+          active={feedActive}
           size={25}
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[12.5px] font-semibold tracking-[-0.01em] text-[#18181a]">
-            {active ? current?.label || "Trove is working" : "Work complete"}
+            {feedActive ? current?.label || "Trove is working" : "Work complete"}
           </p>
           <p className="mt-0.5 text-[10.5px] text-black/40">
-            {active ? `Working for ${formatElapsed(elapsed)}` : `${visible.length} actions completed`}
+            {feedActive ? `Working for ${formatElapsed(elapsed)}` : `${visible.length} actions completed`}
           </p>
         </div>
-        {active ? (
+        {feedActive ? (
           <span className="rounded-full bg-[#111]/[0.055] px-2 py-1 text-[9.5px] font-medium text-black/48">
             live
           </span>
