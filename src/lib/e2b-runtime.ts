@@ -107,17 +107,11 @@ async function startPreviewServer(sandbox: Sandbox) {
   // API instead of shelling out to `nohup ... &`, which can keep the RPC
   // command stream alive and eventually surface DEADLINE_EXCEEDED.
   const process = await sandbox.commands.run(
-    `npm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort`,
+    `bash -lc 'npm run dev -- --host 0.0.0.0 --port ${PREVIEW_PORT} --strictPort > /tmp/trove-vite.log 2>&1'`,
     {
       cwd: PROJECT_ROOT,
       background: true,
       timeoutMs: 0,
-      onStdout: (data) => {
-        if (data) void data;
-      },
-      onStderr: (data) => {
-        if (data) void data;
-      },
     },
   );
 
