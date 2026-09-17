@@ -3,6 +3,7 @@ import { searchProvider } from "@/lib/search";
 import { mailTransport, mailFallback } from "@/lib/mail";
 import { site } from "@/lib/site";
 import { compatProviders } from "@/lib/openai-compat";
+import { opsAlertsConfigured } from "@/lib/ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +43,7 @@ export async function GET() {
     billingWebhook:
       Boolean(process.env.LEMONSQUEEZY_WEBHOOK_SECRET?.trim()) ||
       Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim()),
+    opsAlerts: opsAlertsConfigured(),
     publishRoot: Boolean(process.env.NEXT_PUBLIC_PUBLISH_ROOT_DOMAIN?.trim()),
     siteUrl: Boolean(
       process.env.SITE_URL?.trim() || process.env.NEXT_PUBLIC_SITE_URL?.trim(),
@@ -61,6 +63,7 @@ export async function GET() {
     if (billing.length > 0 && !configured.billingWebhook) {
       warnings.push("billing_webhook_missing");
     }
+    if (!configured.opsAlerts) warnings.push("ops_alerts_missing");
 
     return Response.json(
       {
