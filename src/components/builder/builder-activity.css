@@ -1,0 +1,106 @@
+.builder-activity-enter {
+  animation: builder-activity-in 340ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.trove-thinking-orb {
+  --orb-speed: 1.2s;
+  --orb-delay: 0s;
+  --orb-rotate: 0deg;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  transform: rotate(var(--orb-rotate));
+  color: #171719;
+  isolation: isolate;
+}
+
+.trove-thinking-orb .orb-core,
+.trove-thinking-orb .orb-ring,
+.trove-thinking-orb .orb-dot,
+.trove-thinking-orb .orb-scan {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.trove-thinking-orb .orb-core {
+  width: 31%; height: 31%; border-radius: 999px; background: currentColor; opacity: .78;
+  animation: builder-core-breathe var(--orb-speed) ease-in-out var(--orb-delay) infinite alternate;
+}
+.trove-thinking-orb .orb-ring { inset: 14%; border: 1.35px solid currentColor; border-radius: 999px; opacity: .22; }
+.trove-thinking-orb .orb-ring-a { animation: builder-ring-spin calc(var(--orb-speed) * 1.7) linear var(--orb-delay) infinite; border-left-color: transparent; border-bottom-color: transparent; }
+.trove-thinking-orb .orb-ring-b { inset: 2%; opacity: .12; border-style: dashed; animation: builder-ring-spin-reverse calc(var(--orb-speed) * 2.3) linear var(--orb-delay) infinite; }
+.trove-thinking-orb .orb-dot { width: 13%; height: 13%; border-radius: 999px; background: currentColor; opacity: .54; }
+.trove-thinking-orb .orb-dot-a { animation: builder-dot-orbit var(--orb-speed) ease-in-out var(--orb-delay) infinite; }
+.trove-thinking-orb .orb-dot-b { animation: builder-dot-orbit-b calc(var(--orb-speed) * 1.25) ease-in-out var(--orb-delay) infinite; }
+.trove-thinking-orb .orb-scan { left: 12%; right: 12%; top: 50%; height: 1px; border-radius: 999px; background: currentColor; opacity: 0; transform-origin: center; }
+.trove-thinking-orb[data-kind="searching"] .orb-scan,
+.trove-thinking-orb[data-kind="reading"] .orb-scan { opacity: .22; animation: builder-scan calc(var(--orb-speed) * 1.15) ease-in-out var(--orb-delay) infinite; }
+
+.trove-thinking-orb[data-kind="planning"] { color: #5b52a5; }
+.trove-thinking-orb[data-kind="searching"] { color: #2563eb; }
+.trove-thinking-orb[data-kind="reading"] { color: #475569; }
+.trove-thinking-orb[data-kind="writing"] { color: #7c3aed; }
+.trove-thinking-orb[data-kind="command"] { color: #0f766e; }
+.trove-thinking-orb[data-kind="tool"] { color: #0369a1; }
+.trove-thinking-orb[data-kind="preview"] { color: #0284c7; }
+.trove-thinking-orb[data-kind="saving"] { color: #4f46e5; }
+.trove-thinking-orb[data-kind="done"] { color: #059669; }
+.trove-thinking-orb[data-kind="error"] { color: #dc2626; }
+
+/* Twelve base geometries × ten speed/rotation rhythms = 120 deterministic variants. */
+.trove-thinking-orb[data-geometry="1"] .orb-core { border-radius: 35% 65% 58% 42%; animation-name: builder-morph; }
+.trove-thinking-orb[data-geometry="1"] .orb-ring-a { inset: 8%; transform: rotate(28deg) scaleX(.72); }
+.trove-thinking-orb[data-geometry="2"] .orb-core { width: 18%; height: 48%; border-radius: 999px; }
+.trove-thinking-orb[data-geometry="2"] .orb-ring-a { transform: scaleX(.58); }
+.trove-thinking-orb[data-geometry="2"] .orb-ring-b { transform: scaleY(.58); }
+.trove-thinking-orb[data-geometry="3"] .orb-core { width: 17%; height: 17%; }
+.trove-thinking-orb[data-geometry="3"] .orb-dot-a, .trove-thinking-orb[data-geometry="3"] .orb-dot-b { width: 16%; height: 16%; }
+.trove-thinking-orb[data-geometry="3"] .orb-ring-a { opacity: 0; }
+.trove-thinking-orb[data-geometry="4"] .orb-ring-a { inset: 4%; border-width: 2px; }
+.trove-thinking-orb[data-geometry="4"] .orb-core { width: 20%; height: 20%; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 9%, transparent); }
+.trove-thinking-orb[data-geometry="5"] .orb-ring-a { border-radius: 38% 62% 45% 55%; animation-name: builder-wobble; }
+.trove-thinking-orb[data-geometry="5"] .orb-ring-b { border-radius: 65% 35% 58% 42%; }
+.trove-thinking-orb[data-geometry="6"] .orb-core { width: 52%; height: 2px; border-radius: 999px; animation-name: builder-line-pulse; }
+.trove-thinking-orb[data-geometry="6"] .orb-ring-a { inset: 23%; }
+.trove-thinking-orb[data-geometry="7"] .orb-core { width: 42%; height: 42%; background: transparent; border: 1.5px solid currentColor; }
+.trove-thinking-orb[data-geometry="7"] .orb-ring-a { inset: 28%; border-style: dashed; }
+.trove-thinking-orb[data-geometry="7"] .orb-dot-a { opacity: .85; }
+.trove-thinking-orb[data-geometry="8"] .orb-ring-a { inset: 0; border-radius: 35% 65% 35% 65%; }
+.trove-thinking-orb[data-geometry="8"] .orb-ring-b { inset: 18%; border-radius: 65% 35% 65% 35%; }
+.trove-thinking-orb[data-geometry="8"] .orb-core { width: 16%; height: 16%; }
+.trove-thinking-orb[data-geometry="9"] .orb-core { width: 8%; height: 54%; border-radius: 999px; }
+.trove-thinking-orb[data-geometry="9"] .orb-dot-a { animation-name: builder-dot-ping; }
+.trove-thinking-orb[data-geometry="9"] .orb-dot-b { animation-name: builder-dot-ping-b; }
+.trove-thinking-orb[data-geometry="10"] .orb-core { width: 46%; height: 46%; opacity: .13; box-shadow: inset 0 0 0 1px currentColor; }
+.trove-thinking-orb[data-geometry="10"] .orb-ring-a { inset: 29%; opacity: .65; }
+.trove-thinking-orb[data-geometry="10"] .orb-ring-b { inset: 4%; }
+.trove-thinking-orb[data-geometry="11"] .orb-core { width: 22%; height: 22%; animation-name: builder-core-pop; }
+.trove-thinking-orb[data-geometry="11"] .orb-ring-a { inset: 3%; animation-name: builder-ring-pulse; }
+.trove-thinking-orb[data-geometry="11"] .orb-ring-b { inset: 19%; animation-name: builder-ring-pulse-b; }
+
+@keyframes builder-activity-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes builder-core-breathe { from { transform: scale(.72); opacity: .48; } to { transform: scale(1.08); opacity: .88; } }
+@keyframes builder-core-pop { 0%,100% { transform: scale(.55); } 45% { transform: scale(1.2); } 70% { transform: scale(.88); } }
+@keyframes builder-morph { 0% { transform: rotate(0) scale(.76); border-radius: 35% 65% 58% 42%; } 100% { transform: rotate(95deg) scale(1.06); border-radius: 68% 32% 40% 60%; } }
+@keyframes builder-line-pulse { 0% { transform: scaleX(.35) rotate(-18deg); } 100% { transform: scaleX(1.1) rotate(18deg); } }
+@keyframes builder-ring-spin { to { transform: rotate(360deg); } }
+@keyframes builder-ring-spin-reverse { to { transform: rotate(-360deg); } }
+@keyframes builder-ring-pulse { 0%,100% { transform: scale(.72); opacity: .08; } 50% { transform: scale(1); opacity: .36; } }
+@keyframes builder-ring-pulse-b { 0%,100% { transform: scale(1); opacity: .2; } 50% { transform: scale(.54); opacity: .06; } }
+@keyframes builder-wobble { 0% { transform: rotate(0deg) scaleX(.8); } 50% { transform: rotate(180deg) scaleX(1); } 100% { transform: rotate(360deg) scaleX(.8); } }
+@keyframes builder-dot-orbit { 0%,100% { transform: translate(-155%, -115%); } 50% { transform: translate(165%, 130%); } }
+@keyframes builder-dot-orbit-b { 0%,100% { transform: translate(145%, -135%); } 50% { transform: translate(-165%, 130%); } }
+@keyframes builder-dot-ping { 0%,100% { transform: translate(-160%,0) scale(.55); opacity: .2; } 50% { transform: translate(150%,0) scale(1.2); opacity: .8; } }
+@keyframes builder-dot-ping-b { 0%,100% { transform: translate(160%,0) scale(1.1); opacity: .7; } 50% { transform: translate(-150%,0) scale(.5); opacity: .2; } }
+@keyframes builder-scan { 0%,100% { transform: translateY(-7px) scaleX(.45); opacity: .06; } 50% { transform: translateY(7px) scaleX(1); opacity: .34; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .builder-activity-enter,
+  .trove-thinking-orb .orb-core,
+  .trove-thinking-orb .orb-ring-a,
+  .trove-thinking-orb .orb-ring-b,
+  .trove-thinking-orb .orb-dot-a,
+  .trove-thinking-orb .orb-dot-b,
+  .trove-thinking-orb .orb-scan { animation: none !important; }
+}
