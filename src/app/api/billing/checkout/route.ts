@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { planById } from "@/lib/credits";
 import { saveCustomerId, subscriptionFor } from "@/lib/billing";
+import {
+  createLemonCheckout,
+  lemonConfigured,
+  lemonPurchasable,
+} from "@/lib/lemon";
 import { priceFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
 
@@ -9,27 +14,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Starts a Stripe Checkout session for a paid plan.
- *
- * The plan is looked up server-side and the price comes from the environment,
- * so the amount charged never depends on anything the browser sent. A client
- * that posts {plan:"team"} gets the Team price; it cannot post a price id or an
- * amount, because those are not read from the body at all.
- *
- * Nothing is granted here. Checkout only redirects someone to Stripe — the plan
- * is applied when Stripe tells us it was paid, in the webhook.
+ * Starts checkout for a paid plan.
+ * Prefers Lemon Squeezy (better international / PK card support),
+ * falls back to Stripe when Lemon is not configured.
+ * Plan is only granted by the webhook after payment confirms.
  */
 export async function POST(req: Request) {
   const user = await currentUser();
   if (!user) {
     return NextResponse.json({ error: "Log in to change your plan." }, { status: 401 });
-  }
-
-  if (!stripeConfigured()) {
-    return NextResponse.json(
-      { error: "Payments are not set up on this deployment yet." },
-      { status: 503 },
-    );
   }
 
   let planId = "";
@@ -44,6 +37,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "That is not a paid plan." }, { status: 400 });
   }
 
+  // —— Lemon Squeezy (primary) ————————————————————————————————
+  if (lemonConfigured() && lemonPurchasable(plan.id)) {
+    try {
+      const { url } = await createLemonCheckout({
+        planId: plan.id,
+        userId: user.id,
+        email: user.email,
+        name: user.name || undefined,
+        successUrl: `${site.url}/plans?checkout=done`,
+      });
+      return NextResponse.json({ url, provider: "lemon" });
+    } catch (err) {
+      console.error("[billing] lemon checkout failed:", err);
+      return NextResponse.json(
+        { error: "Could not start checkout. Please try again in a moment." },
+        { status: 502 },
+      );
+    }
+  }
+
+  // —— Stripe (fallback) ——————————————————————————————————————
+  if (!stripeConfigured()) {
+    return NextResponse.json(
+      { error: "Payments are not set up on this deployment yet." },
+      { status: 503 },
+    );
+  }
+
   const price = priceFor(plan.id);
   if (!price) {
     return NextResponse.json(
@@ -56,15 +77,14 @@ export async function POST(req: Request) {
     const sub = await subscriptionFor(user.id);
     const sdk = stripe();
 
-    // Reuse the customer if this account has one. Creating a second customer
-    // for the same person splits their history in two and breaks the portal.
     let customerId = sub.customerId;
+    // Only reuse Stripe customers (ids start with cus_)
+    if (customerId && !customerId.startsWith("cus_")) customerId = "";
+
     if (!customerId) {
       const customer = await sdk.customers.create({
         email: user.email,
         name: user.name || undefined,
-        // The webhook arrives with a customer id and nothing else useful; this
-        // is what lets it find the account again.
         metadata: { troveUserId: user.id },
       });
       customerId = customer.id;
@@ -75,8 +95,6 @@ export async function POST(req: Request) {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price, quantity: 1 }],
-      // Carried through to the webhook on both the session and the
-      // subscription, so neither handler has to guess who this was for.
       client_reference_id: user.id,
       metadata: { troveUserId: user.id, plan: plan.id },
       subscription_data: { metadata: { troveUserId: user.id, plan: plan.id } },
@@ -92,12 +110,9 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url, provider: "stripe" });
   } catch (err) {
-    // Stripe messages name the misconfiguration precisely ("No such price"),
-    // which matters while setting this up — but they are for the log, not for
-    // the person, who cannot act on them.
-    console.error("[billing] checkout failed:", err);
+    console.error("[billing] stripe checkout failed:", err);
     return NextResponse.json(
       { error: "Could not start checkout. Please try again in a moment." },
       { status: 502 },
