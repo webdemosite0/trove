@@ -16,8 +16,6 @@ type BuilderProps = {
   initialView?: SiteView;
 };
 
-// Preview intentionally shares the chat route. It remains available inside the
-// builder, but there is no separate full-page Preview destination anymore.
 const ROUTES: Record<SiteView, string> = {
   chat: "chat",
   preview: "chat",
@@ -55,6 +53,48 @@ function routeUrl(view: SiteView, projectId?: string | null) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+async function readJson(res: Response): Promise<Record<string, unknown> | null> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    // HTML error pages (404) produce "<!DOCTYPE…" — surface a clear message.
+    return {
+      error:
+        res.status === 401
+          ? "Sign in with Google or email to create a site."
+          : res.status === 404
+            ? "Create API is missing on this deploy. Redeploy and try again."
+            : `Server returned a non-JSON response (${res.status}).`,
+    };
+  }
+}
+
+async function createSiteIdentity(title: string, idea: string) {
+  const body = JSON.stringify({ title, idea, name: title, prompt: idea, status: "draft" });
+
+  // Primary endpoint
+  let res = await fetch("/api/sites/create", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ title, idea }),
+  });
+  let data = await readJson(res);
+
+  // Fallback if route is still missing on an old deployment
+  if (res.status === 404 || (data && !data.id && String(data.error || "").includes("missing"))) {
+    res = await fetch("/api/builder/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    });
+    data = await readJson(res);
+  }
+
+  return { res, data };
+}
+
 export function BuilderView({ initialView, ...props }: BuilderProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const startingView = initialView ?? "chat";
@@ -88,30 +128,27 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/sites/create", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            title: props.draft?.slice(0, 48) || "Untitled site",
-            idea: props.draft || "",
-          }),
-        });
-        const data = (await res.json()) as {
-          id?: string;
-          title?: string;
-          idea?: string;
-          error?: string;
-        };
+        const title = props.draft?.slice(0, 48) || "Untitled site";
+        const idea = props.draft || "";
+        const { res, data } = await createSiteIdentity(title, idea);
         if (cancelled) return;
-        if (!res.ok || !data.id) {
-          setIdentityError(data.error || "Could not create site");
+
+        const id = data && typeof data.id === "string" ? data.id : null;
+        if (!res.ok || !id) {
+          const err =
+            (data && typeof data.error === "string" && data.error) ||
+            (res.status === 401
+              ? "Sign in with Google or email to create a site workspace."
+              : "Could not create site");
+          setIdentityError(err);
           setIdentityReady(true);
           return;
         }
+
         setIdentity({
-          id: data.id,
-          title: data.title || "Untitled site",
-          idea: data.idea || props.draft || "",
+          id,
+          title: (data && typeof data.title === "string" && data.title) || title,
+          idea: (data && typeof data.idea === "string" && data.idea) || idea,
         });
         setIdentityReady(true);
       } catch (e) {
@@ -183,6 +220,12 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
           <p className="mt-2 text-[12.5px] leading-5 text-ink-4">
             {identityError || "Please reload and try again."}
           </p>
+          <a
+            href="/login"
+            className="mt-4 inline-flex h-9 items-center justify-center rounded-full bg-accent px-4 text-[13px] font-medium text-white"
+          >
+            Sign in
+          </a>
         </div>
       </div>
     );
