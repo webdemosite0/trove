@@ -4,9 +4,6 @@ export const runtime = "nodejs";
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-/**
- * Favicon — Trove vault monogram. Built for 16px: solid T, clear frame.
- */
 export default function Icon() {
   return new ImageResponse(
     (
@@ -17,27 +14,13 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0a0c14",
-          borderRadius: 7,
+          background: "transparent",
         }}
       >
-        <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-          <defs>
-            <linearGradient id="face" x1="0.15" y1="0" x2="0.9" y2="1">
-              <stop offset="0" stopColor="#2a2f45" />
-              <stop offset="1" stopColor="#0a0c14" />
-            </linearGradient>
-            <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#a5b4fc" />
-              <stop offset="1" stopColor="#4f46e5" />
-            </linearGradient>
-          </defs>
-          <rect x="4" y="4" width="40" height="40" rx="11" fill="url(#face)" />
-          <rect x="4" y="4" width="40" height="40" rx="11" fill="none" stroke="url(#edge)" strokeWidth="2" />
-          <path
-            d="M14 15h20v4.2H28.2v14.5h-8.4V19.2H14V15z"
-            fill="#f1f5f9"
-          />
+        <svg width="32" height="32" viewBox="0 0 512 512" fill="none">
+          <rect x="47" y="48" width="418" height="416" rx="109" fill="#0B0B0C" stroke="#3B82F6" strokeWidth="20" />
+          <rect x="151" y="173" width="210" height="43" rx="15" fill="#F7F8FA" />
+          <rect x="228" y="205" width="56" height="158" rx="15" fill="#F7F8FA" />
         </svg>
       </div>
     ),

@@ -21,7 +21,6 @@ export default function OpengraphImage() {
           position: "relative",
         }}
       >
-        {/* gradient fields, matching the app backdrop */}
         <div
           style={{
             position: "absolute",
@@ -41,69 +40,15 @@ export default function OpengraphImage() {
             width: 850,
             height: 700,
             background:
-              "radial-gradient(circle at 55% 45%, rgba(167,139,250,0.30), transparent 62%)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: -260,
-            left: 260,
-            width: 800,
-            height: 600,
-            background:
-              "radial-gradient(circle at 50% 50%, rgba(45,212,191,0.20), transparent 62%)",
+              "radial-gradient(circle at 55% 45%, rgba(99,102,241,0.22), transparent 62%)",
           }}
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-          {/* The Trove planet. Matches TroveOrb and the favicon; drawn
-              literally rather than imported because Satori renders this
-              without CSS custom properties or access to the component. At
-              84px there is room for the moon, unlike the 32px favicon. */}
-          <svg width="88" height="88" viewBox="0 0 48 48" fill="none">
-            <defs>
-              <linearGradient id="ogRing" x1="0.05" y1="0.95" x2="0.95" y2="0.05">
-                <stop offset="0" stopColor="#f0abfc" />
-                <stop offset="0.28" stopColor="#c084fc" />
-                <stop offset="0.58" stopColor="#7c6cff" />
-                <stop offset="0.82" stopColor="#38bdf8" />
-                <stop offset="1" stopColor="#5eead4" />
-              </linearGradient>
-              <linearGradient id="ogOuter" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0" stopColor="#a99cff" />
-                <stop offset="1" stopColor="#7c6cff" />
-              </linearGradient>
-              <radialGradient id="ogBody" cx="0.36" cy="0.3" r="0.85">
-                <stop offset="0" stopColor="#2a1b5e" />
-                <stop offset="0.45" stopColor="#140c33" />
-                <stop offset="1" stopColor="#05030f" />
-              </radialGradient>
-              <linearGradient id="ogRim" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
-                <stop offset="0" stopColor="#f0abfc" />
-                <stop offset="0.4" stopColor="#8b5cf6" />
-                <stop offset="1" stopColor="#38bdf8" />
-              </linearGradient>
-              <linearGradient id="ogMoon" x1="0.2" y1="0" x2="0.85" y2="1">
-                <stop offset="0" stopColor="#c4b5fd" />
-                <stop offset="0.5" stopColor="#3b2a6b" />
-                <stop offset="1" stopColor="#08050f" />
-              </linearGradient>
-            </defs>
-
-            <g transform="rotate(14 24 24)">
-              <ellipse cx="24" cy="24" rx="21" ry="8.2" stroke="url(#ogOuter)" strokeWidth="1.1" opacity="0.55" />
-            </g>
-
-            <g transform="rotate(-22 24 25)">
-              <path d="M4.5 25 A19.5 7.4 0 0 1 43.5 25" stroke="url(#ogRing)" strokeWidth="1.8" strokeLinecap="round" opacity="0.65" />
-              <circle cx="24" cy="25" r="11.4" fill="url(#ogBody)" />
-              <circle cx="24" cy="25" r="11.4" fill="none" stroke="url(#ogRim)" strokeWidth="1.3" />
-              <path d="M43.5 25 A19.5 7.4 0 0 1 4.5 25" stroke="url(#ogRing)" strokeWidth="2.6" strokeLinecap="round" />
-            </g>
-
-            <circle cx="24" cy="6.2" r="3.4" fill="url(#ogMoon)" />
-            <circle cx="24" cy="6.2" r="3.4" fill="none" stroke="#c4b5fd" strokeWidth="0.6" opacity="0.7" />
+          <svg width="88" height="88" viewBox="0 0 512 512" fill="none">
+            <rect x="47" y="48" width="418" height="416" rx="109" fill="#0B0B0C" stroke="#3B82F6" strokeWidth="14" />
+            <rect x="151" y="173" width="210" height="43" rx="15" fill="#F7F8FA" />
+            <rect x="228" y="205" width="56" height="158" rx="15" fill="#F7F8FA" />
           </svg>
           <div
             style={{
@@ -143,13 +88,7 @@ export default function OpengraphImage() {
           and yours to download.
         </div>
 
-        <div
-          style={{
-            marginTop: 44,
-            display: "flex",
-            gap: 14,
-          }}
-        >
+        <div style={{ marginTop: 44, display: "flex", gap: 14 }}>
           {["Website builder", "AI agents", ".docx", ".xlsx"].map((chip) => (
             <div
               key={chip}
