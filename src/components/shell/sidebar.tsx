@@ -90,7 +90,7 @@ function NavRow({
         "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] font-medium transition-colors",
         active
           ? "bg-accent-soft text-accent"
-          : "text-ink-3 hover:bg-hover hover:text-ink-2",
+          : "text-ink hover:bg-hover hover:text-ink",
         compact && "justify-center px-0",
       )}
     >
@@ -99,10 +99,13 @@ function NavRow({
         motion={item.motion}
         active={active}
         size={18}
-        className={cn("shrink-0", active ? "text-accent" : "text-ink")}
+        className={cn(
+          "shrink-0",
+          active ? "text-accent" : "text-ink opacity-90 group-hover:opacity-100",
+        )}
       />
       {!compact ? (
-        <span className={cn("truncate", active ? "text-accent" : "text-ink-3")}>
+        <span className={cn("truncate", active ? "text-accent" : "text-ink")}>
           {item.label}
         </span>
       ) : null}
@@ -136,18 +139,18 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
         aria-haspopup="menu"
         className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover"
       >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink-2 ring-1 ring-line">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
           {user.name.slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1 text-left">
           <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
-          <span className="block truncate text-[11px] capitalize text-ink-4">
+          <span className="block truncate text-[11px] capitalize text-ink-3">
             {user.plan} plan
           </span>
         </span>
         <FiChevronRight
           size={14}
-          className={cn("shrink-0 text-ink-4 transition-transform", open && "rotate-90")}
+          className={cn("shrink-0 text-ink-3 transition-transform", open && "rotate-90")}
         />
       </button>
 
@@ -163,7 +166,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
               setOpen(false);
               onNavigate?.();
             }}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink transition-colors hover:bg-hover"
           >
             <FiSettings size={15} className="text-ink" />
             Settings
@@ -175,7 +178,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
               setOpen(false);
               onNavigate?.();
             }}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink transition-colors hover:bg-hover"
           >
             <FiCreditCard size={15} className="text-ink" />
             Plan & credits
@@ -183,7 +186,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
           <form action={logOut} className="border-t border-line">
             <button
               role="menuitem"
-              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-hover"
             >
               <FiLogOut size={15} className="text-ink" />
               Sign out
@@ -266,7 +269,7 @@ function RailBody({
           href="/dashboard"
           onClick={onNavigate}
           aria-label="Trove home"
-          className="inline-flex items-center gap-2"
+          className="inline-flex items-center gap-2 text-ink"
         >
           <TroveOrb size={26} state="idle" />
           <Wordmark size={15} sweep={false} />
@@ -276,7 +279,7 @@ function RailBody({
             onClick={onCollapse}
             aria-label="Collapse sidebar"
             title="Toggle sidebar  ⌘B"
-            className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover hover:text-ink"
+            className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
           >
             <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
           </button>
@@ -420,7 +423,7 @@ export function Sidebar({
         onMouseEnter={onRailEnter}
         onMouseLeave={onRailLeave}
         className={cn(
-          "nx-no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail lg:flex",
+          "nx-sidebar nx-no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail text-ink lg:flex",
           "transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           expanded ? "w-[240px]" : "w-[64px]",
           collapsed && peek && "z-40 shadow-lg",
@@ -473,13 +476,13 @@ export function Sidebar({
             onClick={() => setOpen(false)}
             className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
           />
-          <div className="absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-line bg-rail shadow-xl">
+          <div className="nx-sidebar absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-line bg-rail text-ink shadow-xl">
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"
               className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
-              <FiX size={17} />
+              <FiX size={17} className="text-ink" />
             </button>
             <RailBody user={user} balance={balance} onNavigate={() => setOpen(false)} />
           </div>
