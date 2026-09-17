@@ -50,7 +50,8 @@ export default async function StudioLayout({
         >
           {children}
         </MobileShell>
-      <FloatingChat /></ToastProvider>
+        <FloatingChat />
+      </ToastProvider>
     );
   }
 
@@ -68,10 +69,12 @@ export default async function StudioLayout({
           <Sidebar user={user} balance={balance} />
           <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
-            <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+            {/* relative so builder can absolute-fill the remaining height below the top bar */}
+            <div className="relative min-h-0 flex-1 overflow-hidden">{children}</div>
           </main>
         </div>
-      <FloatingChat /></ToastProvider>
+        <FloatingChat />
+      </ToastProvider>
     </NavProvider>
   );
 }
