@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import styles from "./builder-activity.module.css";
 
 export type BuilderActivityKind =
   | "thinking"
@@ -114,7 +115,7 @@ function ActivityRow({ item, index }: { item: BuilderActivity; index: number }) 
   const state = item.state ?? "done";
   return (
     <div
-      className="builder-activity-enter group flex items-start gap-2.5 rounded-[14px] px-2.5 py-2 transition hover:bg-black/[0.025]"
+      className={cn(styles.enter, "group flex items-start gap-2.5 rounded-[14px] px-2.5 py-2 transition hover:bg-black/[0.025]")}
       style={{ animationDelay: `${Math.min(index * 18, 140)}ms` }}
     >
       <div className="mt-0.5 grid size-[22px] shrink-0 place-items-center">
@@ -155,7 +156,7 @@ export function ThinkingOrb({
   size?: number;
 }) {
   // 12 base geometries × 10 rhythm/rotation parameter sets = 120 distinct
-  // deterministic premium motion variants without shipping a heavy animation dependency.
+  // deterministic premium motion variants without a heavyweight animation runtime.
   const normalized = ((variant % 120) + 120) % 120;
   const geometry = normalized % 12;
   const rhythm = Math.floor(normalized / 12);
@@ -165,7 +166,7 @@ export function ThinkingOrb({
 
   return (
     <span
-      className={cn("trove-thinking-orb relative inline-grid shrink-0 place-items-center", !active && "opacity-45")}
+      className={cn(styles.orb, !active && "opacity-45")}
       data-geometry={geometry}
       data-kind={kind}
       aria-hidden
@@ -176,15 +177,15 @@ export function ThinkingOrb({
           "--orb-speed": `${speed}s`,
           "--orb-delay": `${delay}s`,
           "--orb-rotate": `${rotate}deg`,
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
-      <span className="orb-core" />
-      <span className="orb-ring orb-ring-a" />
-      <span className="orb-ring orb-ring-b" />
-      <span className="orb-dot orb-dot-a" />
-      <span className="orb-dot orb-dot-b" />
-      <span className="orb-scan" />
+      <span className={styles.core} />
+      <span className={cn(styles.ring, styles.ringA)} />
+      <span className={cn(styles.ring, styles.ringB)} />
+      <span className={cn(styles.dot, styles.dotA)} />
+      <span className={cn(styles.dot, styles.dotB)} />
+      <span className={styles.scan} />
     </span>
   );
 }
