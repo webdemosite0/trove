@@ -1,25 +1,24 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { PLANS } from "@/lib/credits";
+import { PLANS, type BillingInterval } from "@/lib/credits";
 
 /**
  * Lemon Squeezy — preferred payment processor for Trove.
  *
  * Env:
- *   LEMONSQUEEZY_API_KEY          — from Settings → API (match Test vs Live mode)
- *   LEMONSQUEEZY_STORE_ID         — numeric store id (Settings → Stores)
- *   LEMONSQUEEZY_WEBHOOK_SECRET   — webhook signing secret
- *   LEMONSQUEEZY_VARIANT_PRO      — **variant** id for Pro (not product id)
- *   LEMONSQUEEZY_VARIANT_TEAM     — **variant** id for Team
+ *   LEMONSQUEEZY_API_KEY
+ *   LEMONSQUEEZY_STORE_ID
+ *   LEMONSQUEEZY_WEBHOOK_SECRET
+ *   LEMONSQUEEZY_VARIANT_PRO          — monthly Pro variant id
+ *   LEMONSQUEEZY_VARIANT_PRO_YEARLY   — yearly Pro variant id (optional)
+ *   LEMONSQUEEZY_VARIANT_TEAM         — monthly Team variant id
+ *   LEMONSQUEEZY_VARIANT_TEAM_YEARLY  — yearly Team variant id (optional)
  *
- * How to find variant id:
- *   Products → open product → Variants → copy the id (number in the URL or API).
- *   Do NOT use the product id — checkout relationships require a variant.
+ * Use **variant** ids from Products → product → Variants (not product ids).
  */
 
 const API = "https://api.lemonsqueezy.com/v1";
 
-/** Keep only digits — Lemon relationship ids are numeric strings. */
 function numericId(raw: string | null | undefined): string | null {
   if (!raw) return null;
   const digits = String(raw).trim().replace(/\D/g, "");
@@ -33,23 +32,48 @@ export function lemonConfigured(): boolean {
   );
 }
 
-export function variantFor(planId: string): string | null {
-  const key = `LEMONSQUEEZY_VARIANT_${planId.toUpperCase()}`;
-  return numericId(process.env[key]);
+/**
+ * Resolve Lemon variant for a plan + billing interval.
+ * Monthly: LEMONSQUEEZY_VARIANT_PRO / _TEAM
+ * Yearly:  LEMONSQUEEZY_VARIANT_PRO_YEARLY / _TEAM_YEARLY (falls back to monthly if unset)
+ */
+export function variantFor(
+  planId: string,
+  interval: BillingInterval = "month",
+): string | null {
+  const base = planId.toUpperCase();
+  if (interval === "year") {
+    const yearly = numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}_YEARLY`]);
+    if (yearly) return yearly;
+  }
+  return numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}`]);
+}
+
+/** All known variant env keys for a paid plan (monthly + yearly). */
+function allVariantsForPlan(planId: string): string[] {
+  const base = planId.toUpperCase();
+  return [
+    numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}`]),
+    numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}_YEARLY`]),
+  ].filter((v): v is string => Boolean(v));
 }
 
 export function planForVariant(variantId: string | number | null | undefined): string | null {
   if (variantId == null) return null;
   const id = String(variantId).replace(/\D/g, "") || String(variantId);
   for (const plan of PLANS) {
-    if (plan.price > 0 && variantFor(plan.id) === id) return plan.id;
+    if (plan.price <= 0) continue;
+    if (allVariantsForPlan(plan.id).includes(id)) return plan.id;
   }
   return null;
 }
 
-/** Paid plan is buyable when Lemon is configured and the variant id is set. */
-export function lemonPurchasable(planId: string): boolean {
-  return lemonConfigured() && Boolean(variantFor(planId));
+/** Paid plan is buyable when Lemon is configured and at least the monthly variant is set. */
+export function lemonPurchasable(
+  planId: string,
+  interval: BillingInterval = "month",
+): boolean {
+  return lemonConfigured() && Boolean(variantFor(planId, interval));
 }
 
 function apiKey(): string {
@@ -90,7 +114,6 @@ async function lemonFetch<T = unknown>(
   return body;
 }
 
-/** Confirm store + variant exist under this API key (catches wrong ids early). */
 async function assertStoreAndVariant(store: string, variant: string): Promise<void> {
   try {
     await lemonFetch(`/stores/${store}`);
@@ -108,7 +131,7 @@ async function assertStoreAndVariant(store: string, variant: string): Promise<vo
     throw new Error(
       `Variant id ${variant} was not found for this API key. ` +
         `Use the **variant** id (Products → product → Variants), not the product id. ` +
-        `Test-mode keys only see test variants; live keys only see live variants.`,
+        `For yearly, set LEMONSQUEEZY_VARIANT_*_YEARLY to the yearly variant id.`,
     );
   }
 }
@@ -118,22 +141,22 @@ export interface LemonCheckoutResult {
   id: string;
 }
 
-/**
- * Create a hosted checkout for a paid plan.
- * custom.user_id is returned on webhooks so we can grant the plan.
- */
 export async function createLemonCheckout(opts: {
   planId: string;
+  interval?: BillingInterval;
   userId: string;
   email: string;
   name?: string;
   successUrl: string;
 }): Promise<LemonCheckoutResult> {
-  const variant = variantFor(opts.planId);
+  const interval: BillingInterval = opts.interval === "year" ? "year" : "month";
+  const variant = variantFor(opts.planId, interval);
   if (!variant) {
-    throw new Error(
-      `No Lemon Squeezy variant for plan ${opts.planId}. Set LEMONSQUEEZY_VARIANT_${opts.planId.toUpperCase()}.`,
-    );
+    const key =
+      interval === "year"
+        ? `LEMONSQUEEZY_VARIANT_${opts.planId.toUpperCase()}_YEARLY`
+        : `LEMONSQUEEZY_VARIANT_${opts.planId.toUpperCase()}`;
+    throw new Error(`No Lemon Squeezy variant for plan ${opts.planId} (${interval}). Set ${key}.`);
   }
 
   const store = storeId();
@@ -149,6 +172,7 @@ export async function createLemonCheckout(opts: {
           custom: {
             user_id: opts.userId,
             plan: opts.planId,
+            interval,
           },
         },
         product_options: {
@@ -186,7 +210,6 @@ export async function createLemonCheckout(opts: {
   return { url, id };
 }
 
-/** Customer portal URL for managing subscription / invoices. */
 export async function createLemonCustomerPortal(customerId: string): Promise<string> {
   const json = await lemonFetch<{
     data?: { attributes?: { urls?: { customer_portal?: string } } };
@@ -197,10 +220,6 @@ export async function createLemonCustomerPortal(customerId: string): Promise<str
   return url;
 }
 
-/**
- * Verify X-Signature header (HMAC-SHA256 hex of raw body).
- * https://docs.lemonsqueezy.com/help/webhooks/signing-requests
- */
 export function verifyLemonSignature(rawBody: string, signature: string | null): boolean {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET?.trim();
   if (!secret || !signature) return false;
@@ -218,7 +237,7 @@ export function verifyLemonSignature(rawBody: string, signature: string | null):
 export type LemonWebhookEvent = {
   meta?: {
     event_name?: string;
-    custom_data?: { user_id?: string; plan?: string };
+    custom_data?: { user_id?: string; plan?: string; interval?: string };
   };
   data?: {
     id?: string;
