@@ -10,6 +10,8 @@ import {
 import { priceFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
 import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
+import { alertOps } from "@/lib/ops";
+import { limitRequest, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +21,15 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Log in to change your plan." }, { status: 401 });
   }
+
+  const checkoutGate = await limitRequest(req, {
+    scope: "billing-checkout",
+    userId: user.id,
+    anonymousLimit: 1,
+    authenticatedLimit: 6,
+    windowMs: 5 * 60 * 1000,
+  });
+  if (!checkoutGate.allowed) return rateLimitResponse(checkoutGate);
 
   let planId = "";
   let interval: BillingInterval = "month";
@@ -45,6 +56,12 @@ export async function POST(req: Request) {
   if (lemonConfigured()) {
     if (!lemonPurchasable(plan.id, interval)) {
       console.error(`[billing] lemon missing variant plan=${plan.id} interval=${interval}`);
+      await alertOps({
+        key: `lemon-checkout-config-${plan.id}-${interval}`,
+        subject: "Lemon checkout is misconfigured",
+        message: `Checkout for ${plan.id} (${interval}) has no purchasable Lemon variant.`,
+        cooldownMs: 60 * 60 * 1000,
+      }).catch(() => false);
       await trackEvent({
         event: ANALYTICS_EVENTS.checkoutFailed,
         userId: user.id,
@@ -76,6 +93,11 @@ export async function POST(req: Request) {
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[billing] lemon checkout failed:", detail);
+      await alertOps({
+        key: `lemon-checkout-provider-${plan.id}-${interval}`,
+        subject: "Lemon checkout failed",
+        message: `Trove could not create a Lemon checkout for ${plan.id} (${interval}).`,
+      }).catch(() => false);
       await trackEvent({
         event: ANALYTICS_EVENTS.checkoutFailed,
         userId: user.id,
@@ -90,6 +112,12 @@ export async function POST(req: Request) {
   }
 
   if (!stripeConfigured()) {
+    await alertOps({
+      key: "payments-not-configured",
+      subject: "No payment provider is available",
+      message: "A signed-in user tried to start checkout, but neither a usable Lemon checkout nor Stripe was available.",
+      cooldownMs: 60 * 60 * 1000,
+    }).catch(() => false);
     await trackEvent({
       event: ANALYTICS_EVENTS.checkoutFailed,
       userId: user.id,
@@ -105,6 +133,12 @@ export async function POST(req: Request) {
   const price = priceFor(plan.id);
   if (!price) {
     console.error(`[billing] stripe price missing plan=${plan.id}`);
+    await alertOps({
+      key: `stripe-price-missing-${plan.id}`,
+      subject: "Stripe price is missing",
+      message: `Checkout for ${plan.id} has no configured Stripe price.`,
+      cooldownMs: 60 * 60 * 1000,
+    }).catch(() => false);
     return NextResponse.json(
       { error: "Checkout is temporarily unavailable for this plan. Please try again later." },
       { status: 503 },
@@ -165,6 +199,11 @@ export async function POST(req: Request) {
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[billing] stripe checkout failed:", detail);
+    await alertOps({
+      key: `stripe-checkout-provider-${plan.id}-${interval}`,
+      subject: "Stripe checkout failed",
+      message: `Trove could not create a Stripe checkout for ${plan.id} (${interval}).`,
+    }).catch(() => false);
     await trackEvent({
       event: ANALYTICS_EVENTS.checkoutFailed,
       userId: user.id,
