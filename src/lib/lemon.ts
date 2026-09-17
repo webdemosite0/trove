@@ -4,34 +4,43 @@ import { PLANS } from "@/lib/credits";
 
 /**
  * Lemon Squeezy — preferred payment processor for Trove.
- * Works for international cards (including many PK-issued cards) without a
- * local Stripe merchant account.
  *
  * Env:
- *   LEMONSQUEEZY_API_KEY
- *   LEMONSQUEEZY_STORE_ID
- *   LEMONSQUEEZY_WEBHOOK_SECRET
- *   LEMONSQUEEZY_VARIANT_PRO
- *   LEMONSQUEEZY_VARIANT_TEAM
+ *   LEMONSQUEEZY_API_KEY          — from Settings → API (match Test vs Live mode)
+ *   LEMONSQUEEZY_STORE_ID         — numeric store id (Settings → Stores)
+ *   LEMONSQUEEZY_WEBHOOK_SECRET   — webhook signing secret
+ *   LEMONSQUEEZY_VARIANT_PRO      — **variant** id for Pro (not product id)
+ *   LEMONSQUEEZY_VARIANT_TEAM     — **variant** id for Team
+ *
+ * How to find variant id:
+ *   Products → open product → Variants → copy the id (number in the URL or API).
+ *   Do NOT use the product id — checkout relationships require a variant.
  */
 
 const API = "https://api.lemonsqueezy.com/v1";
 
+/** Keep only digits — Lemon relationship ids are numeric strings. */
+function numericId(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = String(raw).trim().replace(/\D/g, "");
+  return digits || null;
+}
+
 export function lemonConfigured(): boolean {
   return Boolean(
     process.env.LEMONSQUEEZY_API_KEY?.trim() &&
-      process.env.LEMONSQUEEZY_STORE_ID?.trim(),
+      numericId(process.env.LEMONSQUEEZY_STORE_ID),
   );
 }
 
 export function variantFor(planId: string): string | null {
   const key = `LEMONSQUEEZY_VARIANT_${planId.toUpperCase()}`;
-  return process.env[key]?.trim() || null;
+  return numericId(process.env[key]);
 }
 
 export function planForVariant(variantId: string | number | null | undefined): string | null {
   if (variantId == null) return null;
-  const id = String(variantId);
+  const id = String(variantId).replace(/\D/g, "") || String(variantId);
   for (const plan of PLANS) {
     if (plan.price > 0 && variantFor(plan.id) === id) return plan.id;
   }
@@ -50,8 +59,8 @@ function apiKey(): string {
 }
 
 function storeId(): string {
-  const id = process.env.LEMONSQUEEZY_STORE_ID?.trim();
-  if (!id) throw new Error("LEMONSQUEEZY_STORE_ID is missing.");
+  const id = numericId(process.env.LEMONSQUEEZY_STORE_ID);
+  if (!id) throw new Error("LEMONSQUEEZY_STORE_ID is missing or invalid (must be a number).");
   return id;
 }
 
@@ -69,7 +78,7 @@ async function lemonFetch<T = unknown>(
     },
   });
   const body = (await res.json().catch(() => ({}))) as T & {
-    errors?: Array<{ detail?: string; title?: string }>;
+    errors?: Array<{ detail?: string; title?: string; status?: string }>;
   };
   if (!res.ok) {
     const msg =
@@ -79,6 +88,29 @@ async function lemonFetch<T = unknown>(
     throw new Error(msg);
   }
   return body;
+}
+
+/** Confirm store + variant exist under this API key (catches wrong ids early). */
+async function assertStoreAndVariant(store: string, variant: string): Promise<void> {
+  try {
+    await lemonFetch(`/stores/${store}`);
+  } catch {
+    throw new Error(
+      `Store id ${store} was not found for this API key. ` +
+        `Open Lemon → Settings → Stores and copy the numeric Store ID. ` +
+        `Also ensure the API key is from the same mode (Test vs Live) as the store.`,
+    );
+  }
+
+  try {
+    await lemonFetch(`/variants/${variant}`);
+  } catch {
+    throw new Error(
+      `Variant id ${variant} was not found for this API key. ` +
+        `Use the **variant** id (Products → product → Variants), not the product id. ` +
+        `Test-mode keys only see test variants; live keys only see live variants.`,
+    );
+  }
 }
 
 export interface LemonCheckoutResult {
@@ -99,8 +131,13 @@ export async function createLemonCheckout(opts: {
 }): Promise<LemonCheckoutResult> {
   const variant = variantFor(opts.planId);
   if (!variant) {
-    throw new Error(`No Lemon Squeezy variant for plan ${opts.planId}`);
+    throw new Error(
+      `No Lemon Squeezy variant for plan ${opts.planId}. Set LEMONSQUEEZY_VARIANT_${opts.planId.toUpperCase()}.`,
+    );
   }
+
+  const store = storeId();
+  await assertStoreAndVariant(store, variant);
 
   const payload = {
     data: {
@@ -127,7 +164,7 @@ export async function createLemonCheckout(opts: {
       },
       relationships: {
         store: {
-          data: { type: "stores", id: storeId() },
+          data: { type: "stores", id: store },
         },
         variant: {
           data: { type: "variants", id: variant },
@@ -151,7 +188,6 @@ export async function createLemonCheckout(opts: {
 
 /** Customer portal URL for managing subscription / invoices. */
 export async function createLemonCustomerPortal(customerId: string): Promise<string> {
-  // Lemon exposes portal via customer relationships; use the customer endpoint.
   const json = await lemonFetch<{
     data?: { attributes?: { urls?: { customer_portal?: string } } };
   }>(`/customers/${customerId}`);
