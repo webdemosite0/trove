@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadProject, saveProject, listUserProjects } from "@/lib/projects";
-import type { ProjectFile } from "@/lib/builder";
+import type { BuildPlan, ProjectFile } from "@/lib/builder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +33,8 @@ export async function POST(req: Request) {
     files?: ProjectFile[];
     previewHtml?: string | null;
     conversationId?: string | null;
+    buildPlan?: BuildPlan | null;
+    completedStepIds?: string[];
   };
 
   try {
@@ -61,6 +63,8 @@ export async function POST(req: Request) {
     files,
     previewHtml: body.previewHtml,
     conversationId: body.conversationId,
+    buildPlan: body.buildPlan || null,
+    completedStepIds: Array.isArray(body.completedStepIds) ? body.completedStepIds : [],
   });
 
   if (!saved) {

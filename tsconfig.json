@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "border-beam": ["./src/components/ui/border-beam.tsx"],
+      "thinking-orbs": ["./src/components/ui/thinking-orbs-compat.tsx"]
     }
   },
   "include": [

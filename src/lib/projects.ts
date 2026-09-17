@@ -2,7 +2,7 @@ import "server-only";
 
 import { all, one, run, uid } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
-import type { ProjectFile } from "@/lib/builder";
+import type { BuildPlan, ProjectFile } from "@/lib/builder";
 
 export interface SavedProject {
   id: string;
@@ -12,11 +12,13 @@ export interface SavedProject {
   status: string;
   files: ProjectFile[];
   previewHtml: string | null;
+  buildPlan: BuildPlan | null;
+  completedStepIds: string[];
   createdAt: number;
   updatedAt: number;
 }
 
-/** Add snapshot columns if missing (idempotent). */
+/** Add snapshot/build-state columns if missing (idempotent). */
 export async function ensureProjectColumns(): Promise<void> {
   await run(`
     CREATE TABLE IF NOT EXISTS builder_projects (
@@ -35,6 +37,8 @@ export async function ensureProjectColumns(): Promise<void> {
     `ALTER TABLE builder_projects ADD COLUMN files_json TEXT`,
     `ALTER TABLE builder_projects ADD COLUMN preview_html TEXT`,
     `ALTER TABLE builder_projects ADD COLUMN conversation_id TEXT`,
+    `ALTER TABLE builder_projects ADD COLUMN build_plan_json TEXT`,
+    `ALTER TABLE builder_projects ADD COLUMN completed_steps_json TEXT`,
   ]) {
     try {
       await run(stmt);
@@ -55,6 +59,28 @@ function parseFiles(raw: unknown): ProjectFile[] {
         path: String(f.path).replace(/^\/+/, "").slice(0, 240),
         content: String(f.content ?? "").slice(0, 500_000),
       }));
+  } catch {
+    return [];
+  }
+}
+
+function parseBuildPlan(raw: unknown): BuildPlan | null {
+  if (!raw || typeof raw !== "string") return null;
+  try {
+    const value = JSON.parse(raw);
+    if (!value || typeof value !== "object" || !Array.isArray(value.steps)) return null;
+    return value as BuildPlan;
+  } catch {
+    return null;
+  }
+}
+
+function parseCompletedSteps(raw: unknown): string[] {
+  if (!raw || typeof raw !== "string") return [];
+  try {
+    const value = JSON.parse(raw);
+    if (!Array.isArray(value)) return [];
+    return value.filter((item): item is string => typeof item === "string").slice(0, 200);
   } catch {
     return [];
   }
@@ -93,6 +119,8 @@ export async function saveProject(opts: {
   files: ProjectFile[];
   previewHtml?: string | null;
   conversationId?: string | null;
+  buildPlan?: BuildPlan | null;
+  completedStepIds?: string[];
 }): Promise<{ id: string } | null> {
   const user = await currentUser();
   if (!user) return null;
@@ -112,6 +140,8 @@ export async function saveProject(opts: {
   const previewHtml = opts.previewHtml
     ? String(opts.previewHtml).slice(0, 2_000_000)
     : null;
+  const buildPlanJson = opts.buildPlan ? JSON.stringify(opts.buildPlan).slice(0, 500_000) : null;
+  const completedStepsJson = JSON.stringify((opts.completedStepIds || []).slice(0, 200));
   const now = Date.now();
 
   let id = opts.id?.trim() || null;
@@ -130,6 +160,8 @@ export async function saveProject(opts: {
          name = ?, prompt = ?, target = ?, status = ?,
          files_json = ?, preview_html = ?,
          conversation_id = COALESCE(?, conversation_id),
+         build_plan_json = COALESCE(?, build_plan_json),
+         completed_steps_json = ?,
          updated_at = ?
        WHERE id = ? AND user_id = ?`,
       [
@@ -140,6 +172,8 @@ export async function saveProject(opts: {
         filesJson,
         previewHtml,
         opts.conversationId || null,
+        buildPlanJson,
+        completedStepsJson,
         now,
         id,
         user.id,
@@ -152,8 +186,8 @@ export async function saveProject(opts: {
   id = uid("proj");
   await run(
     `INSERT INTO builder_projects
-      (id, user_id, name, prompt, target, status, files_json, preview_html, conversation_id, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, user_id, name, prompt, target, status, files_json, preview_html, conversation_id, build_plan_json, completed_steps_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.id,
@@ -164,6 +198,8 @@ export async function saveProject(opts: {
       filesJson,
       previewHtml,
       opts.conversationId || null,
+      buildPlanJson,
+      completedStepsJson,
       now,
       now,
     ],
@@ -194,6 +230,8 @@ export async function loadProject(id: string): Promise<SavedProject | null> {
     status: String(row.status || "draft"),
     files: parseFiles(row.files_json),
     previewHtml: row.preview_html != null ? String(row.preview_html) : null,
+    buildPlan: parseBuildPlan(row.build_plan_json),
+    completedStepIds: parseCompletedSteps(row.completed_steps_json),
     createdAt: Number(row.created_at) || 0,
     updatedAt: Number(row.updated_at) || 0,
   };
