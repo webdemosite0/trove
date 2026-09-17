@@ -47,6 +47,23 @@ export default function PrivacyPage() {
           We use session cookies to keep you signed in. We do not run advertising
           trackers on the product.
         </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Analytics</h2>
+        <p>
+          Trove records limited first-party product events such as sign-up,
+          feature use, and checkout state so we can measure reliability and
+          improve the product. These events are designed not to contain your
+          prompts, generated content, passwords, API keys, or payment details.
+        </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Deleting your data</h2>
+        <p>
+          Signed-in users can permanently delete their account from{" "}
+          <Link href="/settings/account" className="text-accent hover:underline">
+            Account &amp; security
+          </Link>
+          . Trove removes first-party workspace data tied to that account. If a
+          paid subscription is still able to renew, you must cancel it first so
+          deleting your login cannot leave an active recurring charge behind.
+        </p>
         <h2 className="pt-2 text-[17px] font-semibold text-ink">Contact</h2>
         <p>
           Questions or deletion requests:{" "}
