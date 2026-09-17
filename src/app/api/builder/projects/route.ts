@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
-import { loadProject, saveProject, listUserProjects } from "@/lib/projects";
+import {
+  loadProject,
+  saveProject,
+  listUserProjects,
+  type ProjectChatMessage,
+} from "@/lib/projects";
 import type { BuildPlan, ProjectFile } from "@/lib/builder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** GET ?id=… → one project; no id → list recent projects for the user */
+/** GET ?id=… → one project; no id → list recent projects for the signed-in user */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get("id")?.trim();
@@ -13,7 +18,10 @@ export async function GET(req: Request) {
   if (id) {
     const project = await loadProject(id);
     if (!project) {
-      return NextResponse.json({ error: "Not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Not found. Sign in with the same account." },
+        { status: 404 },
+      );
     }
     return NextResponse.json({ project });
   }
@@ -22,7 +30,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ projects });
 }
 
-/** POST — create/update a site project, including an empty draft identity. */
+/** POST — create/update a site project (files, preview, chat) for the signed-in user. */
 export async function POST(req: Request) {
   let body: {
     id?: string | null;
@@ -35,6 +43,7 @@ export async function POST(req: Request) {
     conversationId?: string | null;
     buildPlan?: BuildPlan | null;
     completedStepIds?: string[];
+    messages?: ProjectChatMessage[] | null;
   };
 
   try {
@@ -44,10 +53,12 @@ export async function POST(req: Request) {
   }
 
   const files = Array.isArray(body.files) ? body.files : [];
+  const messages = Array.isArray(body.messages) ? body.messages : null;
   const status = String(body.status || "ready");
   const isDraftIdentity = status === "draft";
+  const hasChat = Boolean(messages && messages.length);
 
-  if (!files.length && !body.previewHtml && !isDraftIdentity) {
+  if (!files.length && !body.previewHtml && !isDraftIdentity && !hasChat) {
     return NextResponse.json(
       { error: "Nothing to save — build the site first." },
       { status: 400 },
@@ -65,11 +76,15 @@ export async function POST(req: Request) {
     conversationId: body.conversationId,
     buildPlan: body.buildPlan || null,
     completedStepIds: Array.isArray(body.completedStepIds) ? body.completedStepIds : [],
+    messages,
   });
 
   if (!saved) {
     return NextResponse.json(
-      { error: "Sign in to save your website." },
+      {
+        error:
+          "Sign in to save your website. Use Google or email — projects are tied to your account.",
+      },
       { status: 401 },
     );
   }
