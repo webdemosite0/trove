@@ -12,6 +12,7 @@ import {
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import { isChatModelId, type ChatModelId } from "@/lib/chat-models";
 import { listConnections, secretFor } from "@/lib/connections";
+import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("chat route: unhandled —", message, e);
     return Response.json(
-      { error: `The server failed to handle that: ${message}` },
+      { error: "Trove could not complete that request. Please try again." },
       { status: 500 },
     );
   }
@@ -109,9 +110,23 @@ async function handle(req: NextRequest) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("chat route: could not read the credit balance —", message);
     return Response.json(
-      { error: `Could not reach the database to check your credits: ${message}` },
+      { error: "Trove could not verify your usage right now. Please try again." },
       { status: 503 },
     );
+  }
+
+  if (account?.userId) {
+    await trackEvent({
+      event: ANALYTICS_EVENTS.chatPrompt,
+      userId: account.userId,
+      path: "/chat",
+      properties: { hasAttachments: attachments.length > 0, model },
+    });
+    await trackEventOncePerUser({
+      event: ANALYTICS_EVENTS.firstPrompt,
+      userId: account.userId,
+      path: "/chat",
+    });
   }
 
   const simple = isSimpleTurn(turns) && attachments.length === 0;
@@ -246,6 +261,9 @@ async function handle(req: NextRequest) {
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("chat route", message);
-    return Response.json({ error: message }, { status: 502 });
+    return Response.json(
+      { error: "Trove couldn't complete that response. Please try again." },
+      { status: 502 },
+    );
   }
 }
