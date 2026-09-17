@@ -20,7 +20,7 @@ export default async function WebsitesPage({
   if (id) {
     const project = await loadProject(id).catch(() => null);
     if (project) {
-      redirect(`/project/${encodeURIComponent(project.id)}/preview`);
+      redirect(`/project/${encodeURIComponent(project.id)}/chat`);
     }
 
     const convo = await loadConversation(id).catch(() => null);
