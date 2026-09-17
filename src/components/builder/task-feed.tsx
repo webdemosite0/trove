@@ -36,13 +36,22 @@ const MOTION: Record<TaskKind, Motion> = {
 };
 
 const VERB: Record<TaskKind, string> = {
-  plan: "Plan",
-  skill: "Skill",
-  read: "Read",
-  write: "Write",
-  check: "Check",
-  think: "Run",
+  plan: "Planning",
+  skill: "Preparing",
+  read: "Reading",
+  write: "Making",
+  check: "Checking",
+  think: "Working",
 };
+
+function cleanTaskLabel(label: string) {
+  const value = String(label || "").trim();
+  if (!value) return "project";
+  if (/deadline|timed?\s*out|timeout|exception|stack|trace|exit\s*code|failed|error|model|provider|api\s*key/i.test(value)) {
+    return "project";
+  }
+  return value;
+}
 
 function LiveWorking({ startedAt }: { startedAt: number }) {
   const [s, setS] = useState(() => Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
@@ -50,47 +59,37 @@ function LiveWorking({ startedAt }: { startedAt: number }) {
     const t = setInterval(() => setS(Math.max(0, Math.floor((Date.now() - startedAt) / 1000))), 1000);
     return () => clearInterval(t);
   }, [startedAt]);
-  return <span className="text-accent tabular-nums">Working for {s}s</span>;
+  return <span className="tabular-nums text-black">Working for {s}s</span>;
 }
 
 function Row({ task, liveSince }: { task: Task; liveSince?: number }) {
   const Icon = ICON[task.kind];
   const running = task.state === "run";
   const failed = task.state === "fail";
+  const label = cleanTaskLabel(task.label);
 
   return (
-    <li className="group nx-in flex items-start gap-2.5 py-[5px] text-[13px]">
-      <span
-        className={cn(
-          "mt-0.5 grid h-4 w-4 shrink-0 place-items-center",
-          failed ? "text-critical" : running ? "text-accent" : "text-ink-4",
-        )}
-      >
+    <li className="group nx-in flex items-start gap-2.5 py-[5px] text-[13px] text-black">
+      <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center text-black">
         {running ? (
-          <span className="block h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-current border-t-transparent" />
+          <span className="block h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-black border-t-transparent" />
+        ) : failed ? (
+          <Ico icon={FiAlertCircle} motion="alert" size={14} className="text-black" />
         ) : (
-          <Ico icon={Icon} motion={MOTION[task.kind]} size={14} />
+          <Ico icon={Icon} motion={MOTION[task.kind]} size={14} className="text-black" />
         )}
       </span>
 
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1 text-black">
         <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className={cn("shrink-0 text-[12px]", running ? "text-accent" : "text-ink-4")}>
-            {VERB[task.kind]}
+          <span className="shrink-0 text-[12px] font-medium text-black">{VERB[task.kind]}</span>
+          <span className="min-w-0 truncate text-black" title={label}>
+            {label}
           </span>
-          <span
-            className={cn(
-              "min-w-0 truncate",
-              running ? "text-ink" : failed ? "text-critical" : "text-ink-3",
-            )}
-            title={task.label}
-          >
-            {task.label}
-          </span>
-          {task.state === "ok" ? <FiCheck size={12} className="shrink-0 text-positive" /> : null}
+          {task.state === "ok" ? <FiCheck size={12} className="shrink-0 text-black" /> : null}
         </span>
         {running && liveSince ? (
-          <span className="mt-0.5 block text-[11.5px]">
+          <span className="mt-0.5 block text-[11.5px] text-black">
             <LiveWorking startedAt={liveSince} />
           </span>
         ) : null}
@@ -99,10 +98,6 @@ function Row({ task, liveSince }: { task: Task; liveSince?: number }) {
   );
 }
 
-/**
- * Build activity feed — real task events from the stream, with a live timer
- * on the active row (Grok-style "Working for 14s").
- */
 export function ActivityBox({
   tasks,
   running,
@@ -134,24 +129,24 @@ export function ActivityBox({
   const liveSince = active ? runStarted.current ?? Date.now() : undefined;
 
   return (
-    <div className="rounded-[var(--r-control)] border border-line bg-rail/60 px-3 py-2.5">
+    <div className="rounded-[var(--r-control)] border border-black/10 bg-white px-3 py-2.5 text-black">
       <button
         onClick={() => setChoice(!open)}
-        className="flex w-full items-center gap-2 text-left"
+        className="flex w-full items-center gap-2 text-left text-black"
         aria-expanded={open}
       >
         {running ? (
-          <span className="block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-[1.5px] border-accent border-t-transparent" />
+          <span className="block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-[1.5px] border-black border-t-transparent" />
         ) : (
-          <FiCheck size={13} className="shrink-0 text-positive" />
+          <FiCheck size={13} className="shrink-0 text-black" />
         )}
-        <span className="flex-1 truncate text-[13px] font-medium text-ink-2">
+        <span className="flex-1 truncate text-[13px] font-medium text-black">
           {running ? (
             <>
-              <FiZap size={12} className="mr-1 inline text-accent" />
-              {active ? active.label : "Working"}
+              <FiZap size={12} className="mr-1 inline text-black" />
+              {active ? cleanTaskLabel(active.label) : "Working"}
               {liveSince ? (
-                <span className="ml-2 font-normal text-ink-4">
+                <span className="ml-2 font-normal text-black">
                   · <LiveWorking startedAt={liveSince} />
                 </span>
               ) : null}
@@ -163,20 +158,16 @@ export function ActivityBox({
         <FiChevronDown
           size={14}
           className={cn(
-            "shrink-0 text-ink-4 transition-transform duration-[var(--t-hover)]",
+            "shrink-0 text-black transition-transform duration-[var(--t-hover)]",
             open && "rotate-180",
           )}
         />
       </button>
 
       {open ? (
-        <ul className="mt-1.5 max-h-[38vh] overflow-auto border-t border-line pt-1.5">
+        <ul className="mt-1.5 max-h-[38vh] overflow-auto border-t border-black/10 pt-1.5">
           {tasks.map((t) => (
-            <Row
-              key={t.id}
-              task={t}
-              liveSince={t.state === "run" ? liveSince : undefined}
-            />
+            <Row key={t.id} task={t} liveSince={t.state === "run" ? liveSince : undefined} />
           ))}
           <div ref={end} />
         </ul>
