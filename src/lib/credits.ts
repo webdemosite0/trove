@@ -24,6 +24,8 @@ export const RATE_WINDOW_MS = 5 * 60 * 60 * 1000;
 /** Sentinel used in Balance when the account is unlimited (admin). */
 export const UNLIMITED = 1_000_000_000;
 
+export type BillingInterval = "month" | "year";
+
 export interface Plan {
   id: string;
   name: string;
@@ -31,9 +33,29 @@ export interface Plan {
   monthly: number;
   /** Max credits that may be spent inside any rolling 5-hour window. */
   windowLimit: number;
+  /** Monthly price in USD (0 = free). */
   price: number;
+  /** Yearly total price in USD (billed once per year). 0 if free / no yearly. */
+  priceYearly: number;
   blurb: string;
   features: string[];
+}
+
+/**
+ * Display helper — percent saved vs paying monthly for 12 months.
+ * Returns 0 when there is no yearly option or no savings.
+ */
+export function yearlyDiscountPercent(plan: Plan): number {
+  if (plan.price <= 0 || plan.priceYearly <= 0) return 0;
+  const full = plan.price * 12;
+  if (full <= plan.priceYearly) return 0;
+  return Math.round(((full - plan.priceYearly) / full) * 100);
+}
+
+/** Effective amount charged for the selected interval. */
+export function priceForInterval(plan: Plan, interval: BillingInterval): number {
+  if (plan.price <= 0) return 0;
+  return interval === "year" ? plan.priceYearly : plan.price;
 }
 
 export const PLANS: Plan[] = [
@@ -43,6 +65,7 @@ export const PLANS: Plan[] = [
     monthly: 200,
     windowLimit: 40,
     price: 0,
+    priceYearly: 0,
     blurb: "Enough to build something real and see how it feels.",
     features: [
       "200 credits a month (~200k tokens)",
@@ -56,13 +79,15 @@ export const PLANS: Plan[] = [
     name: "Pro",
     monthly: 5_000,
     windowLimit: 500,
-    price: 24,
+    price: 19,
+    priceYearly: 200,
     blurb: "For daily work, where you stop thinking about the meter.",
     features: [
       "5,000 credits a month (~5M tokens)",
       "500 credits per 5-hour window",
       "Everything in Free",
       "Priority model fallback when the provider is busy",
+      "Publish live on *.troveai.site",
     ],
   },
   {
@@ -70,7 +95,8 @@ export const PLANS: Plan[] = [
     name: "Team",
     monthly: 20_000,
     windowLimit: 2_000,
-    price: 96,
+    price: 99,
+    priceYearly: 1_100,
     blurb: "Shared capacity for a group building together.",
     features: [
       "20,000 credits a month (~20M tokens)",
@@ -210,7 +236,6 @@ export async function balanceFor(
   const period = currentPeriod();
 
   if (unlimited) {
-    // Still record real usage for observability, but never gate.
     const row = await one(
       `SELECT COALESCE(SUM(credits), 0) AS used, COALESCE(SUM(tokens), 0) AS tokens
          FROM credit_spends WHERE user_id = ? AND period = ?`,
