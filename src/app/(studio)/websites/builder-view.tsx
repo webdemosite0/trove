@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BuilderView as WorkspaceBuilderView } from "./builder-workspace";
 import { BuilderCommandCenter } from "@/components/builder/builder-command-center";
 
-/** User-facing site panes. Terminal/console is backend-only and never a route. */
+/** User-facing site panes. Preview is an internal builder pane, not a page. */
 export type SiteView = "chat" | "preview" | "files" | "code";
 
 type RestoredSite = { id: string; title: string; idea: string };
@@ -17,9 +17,11 @@ type BuilderProps = {
   initialView?: SiteView;
 };
 
+// Preview intentionally shares the chat route. It remains available inside the
+// builder, but there is no separate full-page Preview destination anymore.
 const ROUTES: Record<SiteView, string> = {
   chat: "chat",
-  preview: "preview",
+  preview: "chat",
   files: "files",
   code: "code",
 };
@@ -36,8 +38,7 @@ function viewFromPath(pathname: string): SiteView | null {
   if (parts[0] === "project") segment = parts[2]?.toLowerCase() || "";
   else if (parts[0] === "websites" && parts[1] === "project") segment = parts[3]?.toLowerCase() || "";
   else segment = parts[1]?.toLowerCase() || "";
-  if (segment === "chat") return "chat";
-  if (segment === "preview") return "preview";
+  if (segment === "chat" || segment === "preview") return "chat";
   if (segment === "files") return "files";
   if (segment === "code") return "code";
   return null;
@@ -57,7 +58,7 @@ function routeUrl(view: SiteView, projectId?: string | null) {
 
 export function BuilderView({ initialView, ...props }: BuilderProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const startingView = initialView ?? (props.restored ? (props.mobile ? "chat" : "preview") : "chat");
+  const startingView = initialView ?? "chat";
   const desiredView = useRef<SiteView>(startingView);
   const initialRoutePending = useRef(Boolean(initialView));
   const [view, setView] = useState<SiteView>(startingView);
@@ -188,10 +189,6 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
     );
   }
 
-  const previewRouteClass =
-    view === "preview"
-      ? "bg-[#1b1b1c] [&>div>header]:hidden [&>div>div>aside]:hidden [&>div>nav]:hidden [&>div>div>main]:bg-[#1b1b1c]"
-      : "";
   const terminalHiddenClass =
     "[&_.trove-tab-active:last-of-type]:!hidden [&>div>nav>div]:!grid-cols-4 [&>div>nav>div>button:last-child]:!hidden";
 
@@ -200,7 +197,7 @@ export function BuilderView({ initialView, ...props }: BuilderProps) {
       ref={rootRef}
       data-trove-site-view={view}
       data-trove-project-id={identity.id}
-      className={`h-full min-h-0 ${previewRouteClass} ${terminalHiddenClass}`}
+      className={`h-full min-h-0 ${terminalHiddenClass}`}
     >
       <WorkspaceBuilderView {...props} restored={identity} />
       {!props.mobile ? <BuilderCommandCenter /> : null}
