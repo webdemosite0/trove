@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  ThinkingOrb as TroveThinkingOrb,
-  type BuilderActivityKind,
-} from "@/components/builder/builder-activity";
-
 type LegacyOrbState =
   | "working"
   | "searching"
@@ -17,22 +12,10 @@ type LegacyOrbState =
   | "shaping"
   | string;
 
-const KIND_BY_STATE: Record<string, BuilderActivityKind> = {
-  working: "thinking",
-  searching: "searching",
-  solving: "planning",
-  listening: "thinking",
-  connecting: "tool",
-  weaving: "command",
-  composing: "writing",
-  breathing: "thinking",
-  shaping: "writing",
-};
-
 /**
- * Compatibility adapter for older Trove components that imported the
- * thinking-orbs package. They now use the same internal 120-variant orb engine
- * as the agentic builder without changing each call site.
+ * Lightweight compatibility component for older Trove UI that imported the
+ * thinking-orbs package. It intentionally has no dependency on the newer
+ * agentic-builder activity system so the original builder can stand alone.
  */
 export function ThinkingOrb({
   state = "working",
@@ -44,15 +27,20 @@ export function ThinkingOrb({
   theme?: "auto" | "light" | "dark";
   active?: boolean;
 }) {
-  const kind = KIND_BY_STATE[state] ?? "thinking";
-  const variant = stableVariant(state);
-  return <TroveThinkingOrb kind={kind} variant={variant} active={active} size={size} />;
-}
+  const speed = state === "searching" || state === "solving" ? "0.9s" : "1.35s";
 
-function stableVariant(value: string) {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
-  }
-  return hash % 120;
+  return (
+    <span
+      aria-hidden
+      className="relative inline-grid shrink-0 place-items-center rounded-full"
+      style={{ width: size, height: size, opacity: active ? 1 : 0.5 }}
+    >
+      <span
+        className="absolute inset-[8%] rounded-full border border-current/20"
+        style={{ animation: active ? `spin ${speed} linear infinite` : undefined }}
+      />
+      <span className={active ? "absolute inset-[27%] animate-pulse rounded-full bg-current/65" : "absolute inset-[27%] rounded-full bg-current/45"} />
+      <span className="absolute left-1/2 top-[3%] size-[18%] -translate-x-1/2 rounded-full bg-current/80" />
+    </span>
+  );
 }
