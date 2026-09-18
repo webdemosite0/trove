@@ -217,8 +217,17 @@
   .lp-blur-in,
   .nx-chip-pop,
   .ann-card,
-  .landing-scene__photo {
+  .landing-scene__photo,
+  .lp-demo-message,
+  .lp-demo-spinner,
+  .lp-demo-skeleton,
+  .lp-demo-preview,
+  .lp-demo-publish,
+  .lp-demo-step {
     animation: none !important;
+  }
+  .lp-demo-cursor {
+    transition: none !important;
   }
   .lp-hero-in,
   .lp-chip-in,
@@ -237,4 +246,54 @@
     -webkit-background-clip: unset;
     background-clip: unset;
   }
+}
+
+
+/* Website maker demo — staged chat/build/preview motion */
+@keyframes lp-demo-message-in {
+  from { opacity: 0; transform: translateY(8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes lp-demo-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes lp-demo-skeleton {
+  0%, 100% { opacity: .48; }
+  50% { opacity: 1; }
+}
+@keyframes lp-demo-preview-in {
+  from { opacity: .25; transform: scale(.985); filter: blur(4px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes lp-demo-publish-in {
+  0% { opacity: 0; transform: translateY(-5px) scale(.92); }
+  70% { transform: translateY(0) scale(1.04); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes lp-demo-step-in {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.lp-demo-message {
+  animation: lp-demo-message-in .42s cubic-bezier(.22,1,.36,1) both;
+}
+.lp-demo-spinner {
+  animation: lp-demo-spin .8s linear infinite;
+}
+.lp-demo-skeleton {
+  animation: lp-demo-skeleton 1.45s ease-in-out infinite;
+}
+.lp-demo-preview {
+  animation: lp-demo-preview-in .7s cubic-bezier(.22,1,.36,1) both;
+}
+.lp-demo-publish {
+  animation: lp-demo-publish-in .55s cubic-bezier(.22,1,.36,1) both;
+}
+.lp-demo-step {
+  opacity: 0;
+  animation: lp-demo-step-in .35s cubic-bezier(.22,1,.36,1) forwards;
+}
+.lp-demo-cursor {
+  filter: drop-shadow(0 3px 4px rgba(15,23,42,.22));
 }
