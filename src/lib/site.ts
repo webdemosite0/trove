@@ -32,7 +32,7 @@ function resolveSiteUrl(): string {
 export const site = {
   name: "Trove",
   url: resolveSiteUrl(),
-  email: "official@troveai.site",
+  email: "contact@troveai.site",
   tagline: "Describe what you want. Trove builds it.",
   description:
     "Trove is an AI workspace that builds real things and keeps them. Generate a complete website from a sentence and keep editing it in chat, create your own AI agents, put a team of four on one task, and export documents to Word and spreadsheets to Excel. Every conversation is saved, so reopening it shows the same answer you left.",
@@ -72,28 +72,14 @@ export const publicRoutes = [
 ];
 
 /**
- * Account, workspace and machine-facing routes that should never be indexed.
- * Keep this list centralized so robots.ts and any future noindex helpers use
- * the same canonical privacy boundary.
+ * Routes robots.txt should never crawl.
+ *
+ * Do NOT put authenticated workspace URLs here. Google has already indexed a
+ * few of those URLs as the sign-in page; it must be allowed to revisit them so
+ * the noindex response can remove the stale result. robots.txt controls crawl,
+ * not indexing.
  */
 export const privateRoutes = [
   "/api/",
   "/admin",
-  "/agents",
-  "/chat",
-  "/dashboard",
-  "/integrations",
-  "/launching",
-  "/plans",
-  "/project/",
-  "/projects",
-  "/reminders",
-  "/settings",
-  "/skills",
-  "/team",
-  "/websites",
-  "/workflows",
-  "/login",
-  "/signup",
-  "/verify",
 ];

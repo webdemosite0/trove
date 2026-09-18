@@ -32,7 +32,7 @@ export interface RateWindow {
   used: number;
   limit: number;
   remaining: number;
-  resetsAt: number;
+  resetsAt: number | Date;
 }
 
 export interface Balance {

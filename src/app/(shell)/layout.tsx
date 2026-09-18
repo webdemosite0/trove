@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
 import { CommandPalette } from "@/components/shell/command-palette";
@@ -11,6 +12,10 @@ import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { AnnouncementBanner } from "@/components/shell/announcement-banner";
 import { FloatingChat } from "@/components/shell/floating-chat";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 function isAdminEmail(email: string | null | undefined) {
   if (!email) return false;

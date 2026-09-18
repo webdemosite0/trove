@@ -134,7 +134,9 @@ export function middleware(req: NextRequest) {
   if (req.cookies.has("nx_session")) return pinUi(req, NextResponse.next());
 
   if (pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
+    const res = NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
   }
 
   const url = req.nextUrl.clone();
@@ -143,6 +145,9 @@ export function middleware(req: NextRequest) {
   if (pathname !== "/") url.searchParams.set("next", pathname + search);
 
   const res = pinUi(req, NextResponse.redirect(url));
+  // This header belongs to the originally requested private URL, so crawlers
+  // can remove stale "Sign in · Trove" results even though the response redirects.
+  res.headers.set("X-Robots-Tag", "noindex, nofollow");
   if (req.cookies.has("nx_guest")) res.cookies.delete("nx_guest");
   return res;
 }
