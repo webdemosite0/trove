@@ -117,14 +117,15 @@ export async function POST(req: NextRequest) {
 
     // Designs are real saved work, just like chats/docs/decks. Saving is
     // best-effort so a database hiccup never hides a screen the model already built.
-    await saveDesignScreen(brief, screen, doc).catch((error) => {
+    const savedId = await saveDesignScreen(brief, screen, doc).catch((error) => {
       console.error(
         "design save",
         error instanceof Error ? error.message : String(error),
       );
+      return null;
     });
 
-    return Response.json({ screen, html: doc });
+    return Response.json({ screen, html: doc, id: savedId });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("design route", message);
