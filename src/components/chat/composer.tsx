@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BorderBeam } from "border-beam";
+import { BorderBeam } from "@/components/ui/border-beam";
 import {
   FiArrowUp,
   FiLoader,
