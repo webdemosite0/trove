@@ -4,39 +4,13 @@ import { useCallback, useReducer } from "react";
 import type { Slide } from "@/lib/slides";
 import * as ops from "@/lib/deck-ops";
 
-/**
- * An editable deck, with history.
- *
- * Slides used to be derived — `useMemo(() => parseDeck(text))`, recomputed
- * from the model's markdown on every render. That made the deck a *view* of
- * the answer, and a view cannot be edited: changing a title meant editing
- * markdown and hoping the parser agreed. So the slides are the state now, and
- * the markdown is only how they arrive.
- *
- * Past, present and future live in one reducer rather than in three refs. With
- * refs, an undo that lands in the same render as an edit reads a stale stack
- * and silently loses a step; a reducer sees them in order because React
- * applies actions in order.
- *
- * The edits themselves are in lib/deck-ops — pure array transforms, tested
- * without React.
- */
-
 const HISTORY_LIMIT = 60;
 
 interface State {
   past: Slide[][];
   present: Slide[];
   future: Slide[][];
-  /** True once anything has been changed by hand. */
   edited: boolean;
-  /**
-   * What the last edit was.
-   *
-   * Typing a title emits one action per keystroke. Without this, undoing a
-   * sentence takes forty presses — so consecutive edits carrying the same key
-   * replace the present rather than pushing a new history entry.
-   */
   lastKey: string | null;
 }
 
@@ -52,9 +26,7 @@ function reducer(state: State, action: Action): State {
       return { past: [], present: action.slides, future: [], edited: false, lastKey: null };
 
     case "edit": {
-      // Nothing actually changed — an op that hit a no-op guard.
       if (action.slides === state.present) return state;
-
       const coalesced = action.key != null && action.key === state.lastKey;
       return {
         past: coalesced
@@ -119,8 +91,6 @@ export function useDeck(initial: Slide[] = []) {
     redo: useCallback(() => dispatch({ type: "redo" }), []),
     load: useCallback((next: Slide[]) => dispatch({ type: "load", slides: next }), []),
 
-    // Text edits coalesce per field; structural ones never do, because each is
-    // a deliberate single action someone may want back.
     setTitle: (i: number, v: string) => edit(ops.setTitle(slides, i, v), `title:${i}`),
     setNote: (i: number, v: string) => edit(ops.setNote(slides, i, v), `note:${i}`),
     setBullet: (i: number, b: number, v: string) =>
@@ -132,5 +102,9 @@ export function useDeck(initial: Slide[] = []) {
     duplicateSlide: (i: number) => edit(ops.duplicateSlide(slides, i)),
     removeSlide: (i: number) => edit(ops.removeSlide(slides, i)),
     moveSlide: (from: number, to: number) => edit(ops.moveSlide(slides, from, to)),
+    setImage: (i: number, image: string | undefined) =>
+      edit(ops.setImage(slides, i, image), `image:${i}`),
+    setLayout: (i: number, layout: Slide["layout"]) =>
+      edit(ops.setLayout(slides, i, layout), `layout:${i}`),
   };
 }
