@@ -7,6 +7,9 @@
 
 name: CI
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [mains, main]
@@ -36,6 +39,17 @@ jobs:
           name: security-dependency-lock
           path: package-lock.json
           retention-days: 1
+
+      - name: Commit regenerated lockfile to PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update dependency lockfile"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - run: npm ci
 
