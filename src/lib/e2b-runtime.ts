@@ -24,6 +24,10 @@ function requireApiKey() {
   return apiKey;
 }
 
+export function sandboxTerminalEnabled() {
+  return process.env.TROVE_SANDBOX_TERMINAL_ENABLED?.trim() === "1";
+}
+
 function safePath(raw: string) {
   return String(raw || "")
     .replace(/\\/g, "/")
