@@ -108,7 +108,6 @@ function grok(Icon: LucideIcon): LucideIcon {
       <Icon
         ref={ref}
         {...props}
-        fill="none"
         strokeWidth={props.strokeWidth ?? 1.5}
         absoluteStrokeWidth={false}
       />

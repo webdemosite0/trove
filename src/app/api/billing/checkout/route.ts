@@ -6,12 +6,10 @@ import {
   createLemonCheckout,
   lemonConfigured,
   lemonPurchasable,
+  variantFor,
 } from "@/lib/lemon";
 import { priceFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
-import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
-import { alertOps } from "@/lib/ops";
-import { limitRequest, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,15 +19,6 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Log in to change your plan." }, { status: 401 });
   }
-
-  const checkoutGate = await limitRequest(req, {
-    scope: "billing-checkout",
-    userId: user.id,
-    anonymousLimit: 1,
-    authenticatedLimit: 6,
-    windowMs: 5 * 60 * 1000,
-  });
-  if (!checkoutGate.allowed) return rateLimitResponse(checkoutGate);
 
   let planId = "";
   let interval: BillingInterval = "month";
@@ -46,30 +35,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "That is not a paid plan." }, { status: 400 });
   }
 
-  await trackEvent({
-    event: ANALYTICS_EVENTS.checkoutStarted,
-    userId: user.id,
-    path: "/plans",
-    properties: { plan: plan.id, interval },
-  });
-
   if (lemonConfigured()) {
     if (!lemonPurchasable(plan.id, interval)) {
+      const key =
+        interval === "year"
+          ? `LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}_YEARLY`
+          : `LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}`;
       console.error(`[billing] lemon missing variant plan=${plan.id} interval=${interval}`);
-      await alertOps({
-        key: `lemon-checkout-config-${plan.id}-${interval}`,
-        subject: "Lemon checkout is misconfigured",
-        message: `Checkout for ${plan.id} (${interval}) has no purchasable Lemon variant.`,
-        cooldownMs: 60 * 60 * 1000,
-      }).catch(() => false);
-      await trackEvent({
-        event: ANALYTICS_EVENTS.checkoutFailed,
-        userId: user.id,
-        path: "/plans",
-        properties: { provider: "lemon", plan: plan.id, interval, reason: "not_configured" },
-      });
       return NextResponse.json(
-        { error: "Checkout is temporarily unavailable for this plan. Please try again later." },
+        {
+          error: `Lemon Squeezy ${interval}ly variant for ${plan.name} is not configured. Set ${key} in Vercel env.`,
+        },
         { status: 503 },
       );
     }
@@ -83,64 +59,34 @@ export async function POST(req: Request) {
         name: user.name || undefined,
         successUrl: `${site.url}/plans?checkout=done`,
       });
-      await trackEvent({
-        event: ANALYTICS_EVENTS.checkoutCreated,
-        userId: user.id,
-        path: "/plans",
-        properties: { provider: "lemon", plan: plan.id, interval },
-      });
       return NextResponse.json({ url, provider: "lemon", interval });
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[billing] lemon checkout failed:", detail);
-      await alertOps({
-        key: `lemon-checkout-provider-${plan.id}-${interval}`,
-        subject: "Lemon checkout failed",
-        message: `Trove could not create a Lemon checkout for ${plan.id} (${interval}).`,
-      }).catch(() => false);
-      await trackEvent({
-        event: ANALYTICS_EVENTS.checkoutFailed,
-        userId: user.id,
-        path: "/plans",
-        properties: { provider: "lemon", plan: plan.id, interval, reason: "provider_error" },
-      });
       return NextResponse.json(
-        { error: "Checkout could not be started right now. Please try again." },
+        {
+          error: `Lemon checkout failed: ${detail}`,
+          hint: "Check API key, store id, and monthly/yearly variant ids (same Test/Live mode).",
+        },
         { status: 502 },
       );
     }
   }
 
   if (!stripeConfigured()) {
-    await alertOps({
-      key: "payments-not-configured",
-      subject: "No payment provider is available",
-      message: "A signed-in user tried to start checkout, but neither a usable Lemon checkout nor Stripe was available.",
-      cooldownMs: 60 * 60 * 1000,
-    }).catch(() => false);
-    await trackEvent({
-      event: ANALYTICS_EVENTS.checkoutFailed,
-      userId: user.id,
-      path: "/plans",
-      properties: { provider: "none", plan: plan.id, interval, reason: "not_configured" },
-    });
     return NextResponse.json(
-      { error: "Payments are temporarily unavailable. Please try again later." },
+      {
+        error:
+          "Payments are not set up yet. Add Lemon Squeezy env vars in Vercel.",
+      },
       { status: 503 },
     );
   }
 
   const price = priceFor(plan.id);
   if (!price) {
-    console.error(`[billing] stripe price missing plan=${plan.id}`);
-    await alertOps({
-      key: `stripe-price-missing-${plan.id}`,
-      subject: "Stripe price is missing",
-      message: `Checkout for ${plan.id} has no configured Stripe price.`,
-      cooldownMs: 60 * 60 * 1000,
-    }).catch(() => false);
     return NextResponse.json(
-      { error: "Checkout is temporarily unavailable for this plan. Please try again later." },
+      { error: `${plan.name} has no price configured on this deployment yet.` },
       { status: 503 },
     );
   }
@@ -177,41 +123,18 @@ export async function POST(req: Request) {
     });
 
     if (!session.url) {
-      await trackEvent({
-        event: ANALYTICS_EVENTS.checkoutFailed,
-        userId: user.id,
-        path: "/plans",
-        properties: { provider: "stripe", plan: plan.id, interval, reason: "missing_url" },
-      });
       return NextResponse.json(
-        { error: "Checkout could not be started right now. Please try again." },
+        { error: "Stripe did not return a checkout page. Please try again." },
         { status: 502 },
       );
     }
 
-    await trackEvent({
-      event: ANALYTICS_EVENTS.checkoutCreated,
-      userId: user.id,
-      path: "/plans",
-      properties: { provider: "stripe", plan: plan.id, interval },
-    });
     return NextResponse.json({ url: session.url, provider: "stripe", interval });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[billing] stripe checkout failed:", detail);
-    await alertOps({
-      key: `stripe-checkout-provider-${plan.id}-${interval}`,
-      subject: "Stripe checkout failed",
-      message: `Trove could not create a Stripe checkout for ${plan.id} (${interval}).`,
-    }).catch(() => false);
-    await trackEvent({
-      event: ANALYTICS_EVENTS.checkoutFailed,
-      userId: user.id,
-      path: "/plans",
-      properties: { provider: "stripe", plan: plan.id, interval, reason: "provider_error" },
-    });
     return NextResponse.json(
-      { error: "Checkout could not be started right now. Please try again." },
+      { error: `Could not start checkout: ${detail}` },
       { status: 502 },
     );
   }

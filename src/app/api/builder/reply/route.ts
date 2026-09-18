@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "@/lib/ai";
-import { requireCredits, spend, OutOfCredits, RateWindowExceeded } from "@/lib/credits";
-import { limitRequest, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -18,28 +16,6 @@ export async function POST(req: NextRequest) {
     if (!message) {
       return NextResponse.json({ error: "Empty message" }, { status: 400 });
     }
-
-    let account: { userId: string } | null = null;
-    try {
-      account = await requireCredits();
-    } catch (error) {
-      if (error instanceof OutOfCredits) {
-        return NextResponse.json({ error: error.message }, { status: 402 });
-      }
-      if (error instanceof RateWindowExceeded) {
-        return NextResponse.json({ error: error.message }, { status: 429 });
-      }
-      return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
-    }
-
-    const gate = await limitRequest(req, {
-      scope: "builder-reply",
-      userId: account?.userId,
-      anonymousLimit: 6,
-      authenticatedLimit: 20,
-      windowMs: 60_000,
-    });
-    if (!gate.allowed) return rateLimitResponse(gate);
 
     const idea = String(body.idea || "");
     const title = String(body.title || idea || "project");
@@ -88,9 +64,6 @@ Each option is 3–8 words, actionable, specific to this project.`;
       system: system + (snippets ? `\n\nPartial file context:\n${snippets}` : ""),
       temperature: 0.4,
       maxOutputTokens: 700,
-      onUsage: (usage) => {
-        if (account) void spend(account.userId, "builder-reply", usage.totalTokens);
-      },
     });
 
     let reply = (text || "Got it.").trim();
@@ -132,9 +105,6 @@ Each option is 3–8 words, actionable, specific to this project.`;
   } catch (e) {
     const message = e instanceof Error ? e.message : "Chat failed";
     console.error("builder/reply", message);
-    return NextResponse.json(
-      { error: "Trove could not reply right now. Please try again." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

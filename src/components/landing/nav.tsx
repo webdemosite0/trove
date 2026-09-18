@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FiArrowRight, FiMenu, FiX } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/shell/theme";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -68,6 +69,7 @@ export function LandingNav() {
         <span className="flex-1" />
 
         <div className="hidden items-center gap-1.5 sm:flex">
+          <ThemeToggle />
           <Link
             href="/login"
             className="rounded-[var(--r-chip)] px-3 py-2 text-[14px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
@@ -111,6 +113,7 @@ export function LandingNav() {
             ))}
           </nav>
           <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
+            <ThemeToggle />
             <Link
               href="/login"
               className="rounded-[var(--r-chip)] px-3 py-2 text-[14px] text-ink-2 hover:bg-hover"
