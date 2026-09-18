@@ -12,6 +12,9 @@ import {
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import { isChatModelId, type ChatModelId } from "@/lib/chat-models";
 import { listConnections, secretFor } from "@/lib/connections";
+import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -56,8 +59,9 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("chat route: unhandled —", message, e);
+    await opsAlert("chat_unhandled", { kind: classifyOperationalError(e) });
     return Response.json(
-      { error: `The server failed to handle that: ${message}` },
+      { error: "Trove could not complete that request. Please try again." },
       { status: 500 },
     );
   }
@@ -108,11 +112,50 @@ async function handle(req: NextRequest) {
     }
     const message = e instanceof Error ? e.message : String(e);
     console.error("chat route: could not read the credit balance —", message);
+    await opsAlert("chat_usage_check_failed", { kind: classifyOperationalError(e) });
     return Response.json(
-      { error: `Could not reach the database to check your credits: ${message}` },
+      { error: "Trove could not check your usage right now. Please try again shortly." },
       { status: 503 },
     );
   }
+
+  if (!account) {
+    return Response.json({ error: "Sign in to use Trove chat." }, { status: 401 });
+  }
+
+  const requestLimit = await consumeRateLimit({
+    scope: "chat-request",
+    identity: account.userId,
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!requestLimit.allowed) {
+    return Response.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(requestLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
+  await Promise.all([
+    trackEvent({
+      event: ANALYTICS_EVENTS.chatPrompt,
+      userId: account.userId,
+      path: "/chat",
+      properties: {
+        model,
+        mode: typeof mode === "string" ? mode.slice(0, 40) : "auto",
+        hasAttachments: attachments.length > 0,
+      },
+    }),
+    trackEventOncePerUser({
+      event: ANALYTICS_EVENTS.firstPrompt,
+      userId: account.userId,
+      path: "/chat",
+    }),
+  ]);
 
   const simple = isSimpleTurn(turns) && attachments.length === 0;
   const wantSearch = !simple;
@@ -172,8 +215,12 @@ async function handle(req: NextRequest) {
           "\n\nGitHub is not connected. Tell the user to open Integrations and connect GitHub.";
       }
     } catch (e) {
+      console.error(
+        "[chat/github] live data failed",
+        e instanceof Error ? e.message : String(e),
+      );
       liveToolContext =
-        "\n\nCould not reach GitHub: " + (e instanceof Error ? e.message : String(e));
+        "\n\nGitHub could not be reached. Ask the user to reconnect GitHub under Integrations.";
     }
   }
 
@@ -245,7 +292,12 @@ async function handle(req: NextRequest) {
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    console.error("chat route", message);
-    return Response.json({ error: message }, { status: 502 });
+    const kind = classifyOperationalError(e);
+    console.error("chat route", kind, message);
+    await opsAlert("chat_generation_failed", { kind });
+    return Response.json(
+      { error: "Trove could not finish that response. Please try again." },
+      { status: 502 },
+    );
   }
 }
