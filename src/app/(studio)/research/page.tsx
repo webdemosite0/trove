@@ -1,6 +1,7 @@
 import { ToolPage } from "@/components/tools/tool-page";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
+import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Research" };
 
@@ -16,7 +17,8 @@ export default async function ResearchPage({
   ]);
 
   return (
-    <ToolPage
+    <div className="h-full overflow-y-auto">
+      <ToolPage
       tool="research"
       title="Research"
       tagline="Structured analysis that separates what is known from what is not."
@@ -42,6 +44,8 @@ export default async function ResearchPage({
           : null
       }
       key={saved?.id ?? "new"}
-    />
+      />
+      <AllWorkSection limit={18} />
+    </div>
   );
 }

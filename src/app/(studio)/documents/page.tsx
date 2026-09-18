@@ -1,6 +1,7 @@
 import { DocumentView } from "./document-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
+import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Docs" };
 
@@ -16,7 +17,8 @@ export default async function DocsPage({
   ]);
 
   return (
-    <DocumentView
+    <div className="h-full overflow-y-auto">
+      <DocumentView
       recents={recents}
       recentsLabel={RECENT_LABEL.docs}
       restored={
@@ -31,6 +33,8 @@ export default async function DocsPage({
           : null
       }
       key={saved?.id ?? "new"}
-    />
+      />
+      <AllWorkSection limit={18} />
+    </div>
   );
 }

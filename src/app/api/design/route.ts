@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { saveDesignScreen } from "@/lib/design-saves";
 import {
   FIDELITIES,
   PLATFORMS,
@@ -113,6 +114,15 @@ export async function POST(req: NextRequest) {
         { status: 502 },
       );
     }
+
+    // Designs are real saved work, just like chats/docs/decks. Saving is
+    // best-effort so a database hiccup never hides a screen the model already built.
+    await saveDesignScreen(brief, screen, doc).catch((error) => {
+      console.error(
+        "design save",
+        error instanceof Error ? error.message : String(error),
+      );
+    });
 
     return Response.json({ screen, html: doc });
   } catch (e) {

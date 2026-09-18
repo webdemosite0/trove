@@ -1,5 +1,7 @@
 import { DesignView } from "./design-view";
 import { listRecents } from "@/lib/recents";
+import { AllWorkSection } from "@/components/work/all-work-section";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Design" };
 
@@ -11,7 +13,19 @@ export const metadata = { title: "Design" };
  * of screens, and forcing that through a prose pipeline is what produced a
  * specification nobody asked for.
  */
-export default async function DesignPage() {
+export default async function DesignPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ c?: string }>;
+}) {
+  const { c } = await searchParams;
+  if (c) redirect(`/design/saved/${encodeURIComponent(c)}`);
+
   const recents = await listRecents("design");
-  return <DesignView recents={recents} />;
+  return (
+    <div className="h-full overflow-y-auto">
+      <DesignView recents={recents} />
+      <AllWorkSection limit={18} />
+    </div>
+  );
 }

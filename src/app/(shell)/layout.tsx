@@ -11,6 +11,8 @@ import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { AnnouncementBanner } from "@/components/shell/announcement-banner";
+import { AllWorkSection } from "@/components/work/all-work-section";
+import { AllWorkVisibility } from "@/components/work/all-work-visibility";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -61,7 +63,12 @@ export default async function ShellLayout({
           <main className="flex min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <AnnouncementBanner />
-            <div className="app-page-in min-w-0 flex-1">{children}</div>
+            <div className="app-page-in min-w-0 flex-1">
+              {children}
+              <AllWorkVisibility>
+                <AllWorkSection limit={18} />
+              </AllWorkVisibility>
+            </div>
           </main>
         </div>
       </ToastProvider>
