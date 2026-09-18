@@ -111,6 +111,17 @@ PRAGMA journal_mode = WAL;
     );
     CREATE INDEX IF NOT EXISTS credit_spends_lookup ON credit_spends (user_id, period);
 
+    CREATE TABLE IF NOT EXISTS credit_wallet_ledger (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      delta INTEGER NOT NULL,
+      source TEXT NOT NULL DEFAULT '',
+      ref TEXT NOT NULL UNIQUE,
+      amount_cents INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS credit_wallet_by_user ON credit_wallet_ledger (user_id, created_at);
+
     CREATE TABLE IF NOT EXISTS connections (
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       service TEXT NOT NULL,
@@ -275,6 +286,8 @@ export const MIGRATIONS: string[] = [
   `ALTER TABLE users ADD COLUMN instructions TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE users ADD COLUMN onboarding_done INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE users ADD COLUMN onboarding_meta TEXT NOT NULL DEFAULT ''`,
+  `CREATE TABLE IF NOT EXISTS credit_wallet_ledger (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, delta INTEGER NOT NULL, source TEXT NOT NULL DEFAULT '', ref TEXT NOT NULL UNIQUE, amount_cents INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS credit_wallet_by_user ON credit_wallet_ledger (user_id, created_at)`,
   // Existing accounts already use the product — don't force the intro again.
   `UPDATE users SET onboarding_done = 1 WHERE onboarding_done = 0 AND created_at < ${Date.now() - 60_000}`,
 ];
