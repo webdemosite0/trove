@@ -10,7 +10,6 @@ import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { isMobile } from "@/lib/device";
 import { MobileShell } from "@/components/mobile/shell";
-import { FloatingChat } from "@/components/shell/floating-chat";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -42,9 +41,6 @@ export default async function StudioLayout({
   if (!gate.ok) return gate.screen;
   const { user, balance } = gate;
 
-  // The phone gets its own chrome, exactly as the shell does. Rendering the
-  // desktop rail here and hiding it with a media query would ship both trees
-  // to a device that can only ever use one.
   if (await isMobile()) {
     return (
       <ToastProvider>
@@ -55,7 +51,6 @@ export default async function StudioLayout({
         >
           {children}
         </MobileShell>
-        <FloatingChat />
       </ToastProvider>
     );
   }
@@ -74,11 +69,9 @@ export default async function StudioLayout({
           <Sidebar user={user} balance={balance} />
           <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
-            {/* relative so builder can absolute-fill the remaining height below the top bar */}
             <div className="relative min-h-0 flex-1 overflow-hidden">{children}</div>
           </main>
         </div>
-        <FloatingChat />
       </ToastProvider>
     </NavProvider>
   );

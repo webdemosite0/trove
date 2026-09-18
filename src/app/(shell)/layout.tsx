@@ -11,7 +11,6 @@ import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { AnnouncementBanner } from "@/components/shell/announcement-banner";
-import { FloatingChat } from "@/components/shell/floating-chat";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -48,7 +47,6 @@ export default async function ShellLayout({
         >
           {children}
         </MobileShell>
-        <FloatingChat />
       </ToastProvider>
     );
   }
@@ -66,7 +64,6 @@ export default async function ShellLayout({
             <div className="app-page-in min-w-0 flex-1">{children}</div>
           </main>
         </div>
-        <FloatingChat />
       </ToastProvider>
     </NavProvider>
   );
