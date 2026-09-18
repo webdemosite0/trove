@@ -78,13 +78,16 @@ export async function opsAlert(
       : { text: `${line} ${JSON.stringify(cleaned)}`.slice(0, 3500) };
 
   try {
-    await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(5_000),
       cache: "no-store",
     });
+    if (!response.ok) {
+      console.error("[ops] alert webhook rejected", response.status);
+    }
   } catch (error) {
     console.error(
       "[ops] alert delivery failed",

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { applySubscription, saveCustomerId, userIdForCustomer } from "@/lib/billing";
 import {
@@ -7,6 +8,11 @@ import {
   type LemonWebhookEvent,
 } from "@/lib/lemon";
 import { opsAlert } from "@/lib/ops-alert";
+import {
+  beginBillingWebhook,
+  completeBillingWebhook,
+  releaseBillingWebhook,
+} from "@/lib/billing-webhook-events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,13 +62,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true, ignored: name });
   }
 
+  // Lemon does not expose a stable delivery id in this payload shape.
+  // Hashing the verified raw body gives retries of the exact event a stable key.
+  const eventId = createHash("sha256").update(raw).digest("hex");
+  const shouldProcess = await beginBillingWebhook({
+    provider: "lemon",
+    eventId,
+    eventType: name,
+  });
+  if (!shouldProcess) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   try {
     await handle(name, event);
     if (name === "subscription_payment_failed") {
       await opsAlert("billing_payment_failed", { provider: "lemon" });
     }
+    await completeBillingWebhook("lemon", eventId);
   } catch (err) {
     console.error(`[billing/lemon] handling ${name} failed:`, err);
+    await releaseBillingWebhook("lemon", eventId);
     await opsAlert("billing_webhook_failed", { provider: "lemon", event: name });
     return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
