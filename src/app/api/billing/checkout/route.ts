@@ -10,6 +10,8 @@ import {
 } from "@/lib/lemon";
 import { priceFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { opsAlert } from "@/lib/ops-alert";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +20,22 @@ export async function POST(req: Request) {
   const user = await currentUser();
   if (!user) {
     return NextResponse.json({ error: "Log in to change your plan." }, { status: 401 });
+  }
+
+  const limit = await consumeRateLimit({
+    scope: "billing-checkout",
+    identity: user.id,
+    limit: 12,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many checkout attempts. Try again shortly." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
   }
 
   let planId = "";
@@ -42,10 +60,13 @@ export async function POST(req: Request) {
           ? `LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}_YEARLY`
           : `LEMONSQUEEZY_VARIANT_${plan.id.toUpperCase()}`;
       console.error(`[billing] lemon missing variant plan=${plan.id} interval=${interval}`);
+      await opsAlert("billing_config_missing", {
+        provider: "lemon",
+        plan: plan.id,
+        interval,
+      });
       return NextResponse.json(
-        {
-          error: `Lemon Squeezy ${interval}ly variant for ${plan.name} is not configured. Set ${key} in Vercel env.`,
-        },
+        { error: "Checkout is temporarily unavailable for this plan." },
         { status: 503 },
       );
     }
@@ -63,30 +84,35 @@ export async function POST(req: Request) {
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       console.error("[billing] lemon checkout failed:", detail);
+      await opsAlert("billing_checkout_failed", {
+        provider: "lemon",
+        plan: plan.id,
+        interval,
+      });
       return NextResponse.json(
-        {
-          error: `Lemon checkout failed: ${detail}`,
-          hint: "Check API key, store id, and monthly/yearly variant ids (same Test/Live mode).",
-        },
+        { error: "Could not start checkout. Please try again shortly." },
         { status: 502 },
       );
     }
   }
 
   if (!stripeConfigured()) {
+    await opsAlert("billing_config_missing", { provider: "stripe" });
     return NextResponse.json(
-      {
-        error:
-          "Payments are not set up yet. Add Lemon Squeezy env vars in Vercel.",
-      },
+      { error: "Payments are temporarily unavailable." },
       { status: 503 },
     );
   }
 
   const price = priceFor(plan.id);
   if (!price) {
+    await opsAlert("billing_config_missing", {
+      provider: "stripe",
+      plan: plan.id,
+      interval,
+    });
     return NextResponse.json(
-      { error: `${plan.name} has no price configured on this deployment yet.` },
+      { error: "Checkout is temporarily unavailable for this plan." },
       { status: 503 },
     );
   }
@@ -123,8 +149,13 @@ export async function POST(req: Request) {
     });
 
     if (!session.url) {
+      await opsAlert("billing_checkout_failed", {
+        provider: "stripe",
+        plan: plan.id,
+        interval,
+      });
       return NextResponse.json(
-        { error: "Stripe did not return a checkout page. Please try again." },
+        { error: "Could not start checkout. Please try again shortly." },
         { status: 502 },
       );
     }
@@ -133,8 +164,13 @@ export async function POST(req: Request) {
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[billing] stripe checkout failed:", detail);
+    await opsAlert("billing_checkout_failed", {
+      provider: "stripe",
+      plan: plan.id,
+      interval,
+    });
     return NextResponse.json(
-      { error: `Could not start checkout: ${detail}` },
+      { error: "Could not start checkout. Please try again shortly." },
       { status: 502 },
     );
   }
