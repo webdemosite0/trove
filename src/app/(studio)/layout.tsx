@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Backdrop } from "@/components/shell/backdrop";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { NavProvider } from "@/components/shell/nav-state";
@@ -10,6 +11,10 @@ import { listAllRecents } from "@/lib/recents";
 import { isMobile } from "@/lib/device";
 import { MobileShell } from "@/components/mobile/shell";
 import { FloatingChat } from "@/components/shell/floating-chat";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 /**
  * The tool layout: the same chrome as the rest of the workspace.
