@@ -121,6 +121,7 @@ const TABLES = [
   "messages",
   "credit_grants",
   "credit_spends",
+  "credit_wallet_ledger",
   "integrations",
   "connections",
   "auth_tokens",
