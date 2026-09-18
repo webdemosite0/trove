@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export interface SavedMessage {
   role: "user" | "model";
@@ -17,13 +18,24 @@ export interface SavedMessage {
  * The conversation id is kept in a ref, not state: it must be readable by the
  * next save immediately, and it never affects what is rendered.
  */
+const WORKSPACE_ROOTS: Record<string, string> = {
+  docs: "/documents",
+  sheets: "/spreadsheets",
+  slides: "/slides",
+  design: "/design",
+  research: "/research",
+};
+
 export function useSaved(kind: string, initialId?: string | null) {
+  const router = useRouter();
   const idRef = useRef<string | null>(initialId ?? null);
 
   const save = useCallback(
     async (messages: SavedMessage[], title?: string) => {
       const usable = messages.filter((m) => m.text.trim());
       if (!usable.length) return;
+
+      const wasNew = !idRef.current;
 
       try {
         const res = await fetch("/api/conversations", {
@@ -45,8 +57,18 @@ export function useSaved(kind: string, initialId?: string | null) {
         const data = await res.json();
         if (data?.id) {
           idRef.current = data.id;
-          // Reflect the thread in the URL so a reload or a shared link lands
-          // back on it. replaceState keeps it out of the back-button history.
+          const workspaceRoot = WORKSPACE_ROOTS[kind];
+
+          // Creation happens on the clean product page. Once the first result
+          // is saved, move into a permanent workspace route for that artefact.
+          if (workspaceRoot) {
+            if (wasNew) {
+              router.replace(`${workspaceRoot}/${encodeURIComponent(data.id)}`);
+            }
+            return;
+          }
+
+          // Legacy tools still keep their conversation id in the query string.
           const url = new URL(window.location.href);
           if (url.searchParams.get("c") !== data.id) {
             url.searchParams.set("c", data.id);
@@ -58,17 +80,22 @@ export function useSaved(kind: string, initialId?: string | null) {
         // answer the user already has on screen.
       }
     },
-    [kind],
+    [kind, router],
   );
 
   const reset = useCallback(() => {
     idRef.current = null;
+    const workspaceRoot = WORKSPACE_ROOTS[kind];
+    if (workspaceRoot) {
+      router.push(workspaceRoot);
+      return;
+    }
     const url = new URL(window.location.href);
     if (url.searchParams.has("c")) {
       url.searchParams.delete("c");
       window.history.replaceState(null, "", url.toString());
     }
-  }, []);
+  }, [kind, router]);
 
   return { save, reset, id: idRef };
 }
