@@ -7,9 +7,6 @@
 
 name: CI
 
-permissions:
-  contents: write
-
 on:
   push:
     branches: [mains, main]
@@ -22,8 +19,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -32,29 +27,11 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Regenerate lockfile for dependency patch
-        run: npm install --package-lock-only --ignore-scripts
-
-      - name: Upload regenerated lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-dependency-lock
-          path: package-lock.json
-          retention-days: 1
-
-      - name: Commit regenerated lockfile to PR branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update dependency lockfile"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
-
       - run: npm ci
 
+      # Launch gate: high/critical vulnerabilities in packages shipped to
+      # production must fail CI. Dev-only tooling is audited separately during
+      # routine dependency maintenance so it cannot block an otherwise safe deploy.
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
 
