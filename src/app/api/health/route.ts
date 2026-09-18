@@ -39,6 +39,10 @@ export async function GET() {
       process.env.SITE_URL?.trim() || process.env.NEXT_PUBLIC_SITE_URL?.trim(),
     ),
     resolvedSiteUrl: site.url,
+    e2b: Boolean(process.env.E2B_API_KEY?.trim()),
+    opsAlerts: Boolean(process.env.TROVE_ALERT_WEBHOOK_URL?.trim()),
+    lemonWebhook: Boolean(process.env.LEMONSQUEEZY_WEBHOOK_SECRET?.trim()),
+    stripeWebhook: Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim()),
   };
 
   const modeNow = () =>
@@ -66,8 +70,15 @@ export async function GET() {
       ? "TURSO_DATABASE_URL is set but the database could not be queried. Check the URL and that TURSO_AUTH_TOKEN matches it."
       : "No Turso credentials are set, so Trove tried to write a SQLite file to local disk. That fails on Vercel and every other read-only host. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.";
 
+    console.error("[health] database check failed", message);
     return Response.json(
-      { ok: false, database: { mode: modeNow(), reachable: false }, configured, error: message, hint },
+      {
+        ok: false,
+        database: { mode: modeNow(), reachable: false },
+        configured,
+        error: "Database health check failed.",
+        hint,
+      },
       { status: 503 },
     );
   }
