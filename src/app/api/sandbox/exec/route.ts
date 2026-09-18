@@ -8,6 +8,7 @@ import {
   connectExistingSandbox,
   e2bCookieName,
   runE2BCommand,
+  sandboxTerminalEnabled,
 } from "@/lib/e2b-runtime";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 
@@ -19,6 +20,13 @@ export async function POST(req: Request) {
   const user = await currentUser();
   if (!user) {
     return NextResponse.json({ error: "Sign in to use the terminal." }, { status: 401 });
+  }
+
+  if (!sandboxTerminalEnabled()) {
+    return NextResponse.json(
+      { error: "Terminal access is disabled on this deployment." },
+      { status: 404 },
+    );
   }
 
   let body: { command?: string; projectId?: string | null };
