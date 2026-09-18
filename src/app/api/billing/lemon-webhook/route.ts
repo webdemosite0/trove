@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { applySubscription, saveCustomerId, userIdForCustomer } from "@/lib/billing";
+import { recordCreditWalletAdjustment } from "@/lib/credits";
+import { creditTopupPriceCents, validCreditTopup } from "@/lib/credit-topups";
 import {
+  creditVariant,
   lemonConfigured,
   planForVariant,
   verifyLemonSignature,
@@ -21,6 +24,8 @@ export const dynamic = "force-dynamic";
  */
 
 const HANDLED = new Set([
+  "order_created",
+  "order_refunded",
   "subscription_created",
   "subscription_updated",
   "subscription_cancelled",
@@ -73,6 +78,59 @@ function asId(value: unknown): string {
 
 async function handle(eventName: string, event: LemonWebhookEvent) {
   const attrs = event.data?.attributes || {};
+  const custom = event.meta?.custom_data;
+
+  if ((eventName === "order_created" || eventName === "order_refunded") && custom?.kind === "credits") {
+    const userId = custom.user_id?.trim() || "";
+    const credits = validCreditTopup(custom.credits);
+    const expectedPrice = creditTopupPriceCents(custom.credits);
+    const orderId = String(event.data?.id || "");
+    const status = String(attrs.status || "").toLowerCase();
+    const firstItem =
+      attrs.first_order_item && typeof attrs.first_order_item === "object"
+        ? (attrs.first_order_item as Record<string, unknown>)
+        : {};
+    const variantId = asId(firstItem.variant_id);
+    const configuredVariant = creditVariant();
+
+    if (!userId || credits == null || expectedPrice == null || !orderId) {
+      throw new Error("credit order is missing required metadata");
+    }
+    if (!configuredVariant || variantId !== configuredVariant) {
+      throw new Error("credit order used an unexpected variant");
+    }
+
+    if (eventName === "order_created") {
+      if (status !== "paid") {
+        throw new Error(`credit order ${orderId} is not paid`);
+      }
+      const itemPrice = Number(firstItem.price ?? 0);
+      if (!Number.isFinite(itemPrice) || Math.round(itemPrice) !== expectedPrice) {
+        throw new Error("credit order price does not match requested credits");
+      }
+      await recordCreditWalletAdjustment({
+        userId,
+        delta: credits,
+        source: "lemon",
+        ref: `lemon-order:${orderId}`,
+        amountCents: expectedPrice,
+      });
+      return;
+    }
+
+    const fullyRefunded = Boolean(attrs.refunded) || status === "refunded";
+    if (fullyRefunded) {
+      await recordCreditWalletAdjustment({
+        userId,
+        delta: -credits,
+        source: "lemon-refund",
+        ref: `lemon-refund:${orderId}`,
+        amountCents: expectedPrice,
+      });
+    }
+    return;
+  }
+
   const subscriptionId = String(event.data?.id || "");
   const customerId = asId(attrs.customer_id);
   const variantId = asId(attrs.variant_id);
