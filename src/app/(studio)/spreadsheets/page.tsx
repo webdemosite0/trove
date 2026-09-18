@@ -1,6 +1,7 @@
 import { SpreadsheetView } from "./spreadsheet-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
+import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Sheets" };
 
@@ -16,7 +17,8 @@ export default async function SheetsPage({
   ]);
 
   return (
-    <SpreadsheetView
+    <div className="h-full overflow-y-auto">
+      <SpreadsheetView
       recents={recents}
       recentsLabel={RECENT_LABEL.sheets}
       restored={
@@ -31,6 +33,8 @@ export default async function SheetsPage({
           : null
       }
       key={saved?.id ?? "new"}
-    />
+      />
+      <AllWorkSection limit={18} />
+    </div>
   );
 }
