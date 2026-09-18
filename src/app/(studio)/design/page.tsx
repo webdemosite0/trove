@@ -1,5 +1,6 @@
 import { DesignView } from "./design-view";
 import { listRecents } from "@/lib/recents";
+import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Design" };
 
@@ -13,5 +14,10 @@ export const metadata = { title: "Design" };
  */
 export default async function DesignPage() {
   const recents = await listRecents("design");
-  return <DesignView recents={recents} />;
+  return (
+    <div className="h-full overflow-y-auto">
+      <DesignView recents={recents} />
+      <AllWorkSection limit={18} />
+    </div>
+  );
 }
