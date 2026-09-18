@@ -5,13 +5,17 @@ import { TbSearch, TbBell, TbHelpCircle, FiMenu } from "@/components/ui/icons";
 import { useNav } from "@/components/shell/nav-state";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
+import type { Balance } from "@/lib/credits";
+import { TopbarCredits } from "@/components/shell/topbar-credits";
 
 export function TopBar({
   initial,
   due = 0,
+  balance,
 }: {
   initial?: string;
   due?: number;
+  balance: Balance | null;
 }) {
   const { setOpen } = useNav();
 
@@ -48,6 +52,8 @@ export function TopBar({
       </button>
 
       <span className="flex-1" />
+
+      <TopbarCredits balance={balance} />
 
       <Link
         href="/reminders"
