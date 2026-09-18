@@ -13,6 +13,7 @@ import {
   FiX,
   FiPaperclip,
   FiLink,
+  FiActivity,
   TbSparkles,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
@@ -44,8 +45,22 @@ type SiteRow = {
   live: boolean;
 };
 
+type AnalyticsRow = {
+  event: string;
+  count: number;
+  uniqueUsers: number;
+};
+
+type AnalyticsSummary = {
+  days: number;
+  since: number;
+  events: AnalyticsRow[];
+  daily: { day: string; count: number; uniqueUsers: number }[];
+};
+
 const TABS = [
   { id: "announce" as const, label: "Announcements", Icon: FiBell },
+  { id: "analytics" as const, label: "Launch analytics", Icon: FiActivity },
   { id: "users" as const, label: "Users", Icon: FiUsers },
   { id: "sites" as const, label: "Published sites", Icon: FiGlobe },
 ];
@@ -82,7 +97,7 @@ async function fileToDataUrl(file: File): Promise<string> {
 }
 
 export function AdminView({ email }: { email: string }) {
-  const [tab, setTab] = useState<"announce" | "users" | "sites">("announce");
+  const [tab, setTab] = useState<"announce" | "analytics" | "users" | "sites">("announce");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -90,6 +105,7 @@ export function AdminView({ email }: { email: string }) {
   const [items, setItems] = useState<Announcement[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [sites, setSites] = useState<SiteRow[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -118,11 +134,22 @@ export function AdminView({ email }: { email: string }) {
     } catch { /* */ }
   }, []);
 
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/analytics?days=30");
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && Array.isArray(data.events) && Array.isArray(data.daily)) {
+        setAnalytics(data as AnalyticsSummary);
+      }
+    } catch { /* */ }
+  }, []);
+
   useEffect(() => { void loadAnn(); }, [loadAnn]);
   useEffect(() => {
+    if (tab === "analytics") void loadAnalytics();
     if (tab === "users") void loadUsers();
     if (tab === "sites") void loadSites();
-  }, [tab, loadUsers, loadSites]);
+  }, [tab, loadAnalytics, loadUsers, loadSites]);
 
   function resetForm() {
     setTitle("");
@@ -365,6 +392,85 @@ export function AdminView({ email }: { email: string }) {
               {!items.length ? <div className="rounded-[16px] border border-dashed border-line px-4 py-12 text-center text-[13.5px] text-ink-4">No announcements yet.</div> : null}
             </section>
           </div>
+        ) : null}
+
+        {tab === "analytics" ? (
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-semibold text-ink">Launch funnel</h2>
+                <p className="mt-1 text-[12.5px] text-ink-4">
+                  First-party, content-free product events from the last {analytics?.days ?? 30} days.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadAnalytics()}
+                className="rounded-[12px] border border-line bg-raised px-3 py-2 text-[12.5px] font-medium text-ink-2 hover:bg-hover"
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Signups", "signup_completed"],
+                ["First prompts", "first_prompt"],
+                ["Builder projects", "builder_project_created"],
+                ["Checkout starts", "checkout_started"],
+              ].map(([label, event]) => {
+                const row = analytics?.events.find((item) => item.event === event);
+                return (
+                  <div key={event} className="rounded-[16px] border border-line bg-raised p-4 shadow-sm">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">{label}</p>
+                    <p className="mt-2 text-[28px] font-semibold tabular-nums tracking-tight text-ink">{row?.count ?? 0}</p>
+                    <p className="mt-1 text-[12px] text-ink-4">{row?.uniqueUsers ?? 0} unique users</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
+              <div className="overflow-hidden rounded-[18px] border border-line bg-raised shadow-sm">
+                <div className="border-b border-line px-5 py-3.5">
+                  <h3 className="text-[14px] font-semibold text-ink">All tracked events</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-left text-[13px]">
+                    <thead>
+                      <tr className="border-b border-line bg-sunk/30 text-[11px] uppercase tracking-wide text-ink-4">
+                        <th className="px-5 py-3 font-semibold">Event</th>
+                        <th className="px-5 py-3 font-semibold">Events</th>
+                        <th className="px-5 py-3 font-semibold">Users</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(analytics?.events ?? []).map((row) => (
+                        <tr key={row.event} className="border-b border-line/50">
+                          <td className="px-5 py-3 font-mono text-[12px] text-ink-2">{row.event}</td>
+                          <td className="px-5 py-3 font-medium tabular-nums text-ink">{row.count}</td>
+                          <td className="px-5 py-3 tabular-nums text-ink-3">{row.uniqueUsers}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!analytics?.events?.length ? (
+                    <p className="px-5 py-10 text-center text-[13px] text-ink-4">No launch events recorded yet.</p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="rounded-[18px] border border-line bg-raised p-5 shadow-sm">
+                <h3 className="text-[14px] font-semibold text-ink">What to watch</h3>
+                <div className="mt-4 space-y-3 text-[13px] text-ink-3">
+                  <p><span className="font-medium text-ink">Activation:</span> signups that reach a first prompt and create useful work.</p>
+                  <p><span className="font-medium text-ink">Builder adoption:</span> users creating a website project after their first session.</p>
+                  <p><span className="font-medium text-ink">Paid intent:</span> checkout starts compared with successful checkout creation.</p>
+                  <p><span className="font-medium text-ink">Failures:</span> checkout_failed should stay near zero; investigate spikes immediately.</p>
+                </div>
+              </div>
+            </div>
+          </section>
         ) : null}
 
         {tab === "users" ? (
