@@ -27,6 +27,18 @@ function safePath(path: unknown): string | null {
 }
 
 export function hrefFor(kind: RecentKind, id: string, path?: unknown): string {
+  const workspaceRoots: Partial<Record<RecentKind, string>> = {
+    docs: "/documents",
+    sheets: "/spreadsheets",
+    slides: "/slides",
+    design: "/design",
+    research: "/research",
+  };
+  const workspaceRoot = workspaceRoots[kind];
+  if (workspaceRoot) {
+    return `${workspaceRoot}/${encodeURIComponent(id)}`;
+  }
+
   const known: Partial<Record<RecentKind, string>> = {
     chat: "/chat",
     docs: "/documents",
