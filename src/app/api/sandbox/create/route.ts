@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import type { ProjectFile } from "@/lib/builder";
+import { loadProject } from "@/lib/projects";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 import {
   connectOrCreateSandbox,
   e2bCookieName,
@@ -38,6 +41,27 @@ export async function POST(req: Request) {
     );
   }
 
+  const owned = await loadProject(projectId);
+  if (!owned) {
+    return NextResponse.json({ error: "That saved project was not found." }, { status: 404 });
+  }
+
+  const limit = await consumeRateLimit({
+    scope: "sandbox-create",
+    identity: user.id,
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Preview is being refreshed too quickly. Try again shortly." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
+
   const jar = await cookies();
   const cookieName = e2bCookieName(user.id, projectId);
   const existingSandboxId = jar.get(cookieName)?.value;
@@ -66,11 +90,22 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "E2B preview failed to start.";
+    const message = error instanceof Error ? error.message : String(error);
+    const kind = classifyOperationalError(error);
+    console.error("[sandbox/create] preview failed", kind, message);
+    await opsAlert("sandbox_preview_failed", { kind, projectId });
+
+    const limitError = message.startsWith("PROJECT_LIMIT_");
     const missingKey = message.includes("E2B_API_KEY");
+    const safeError = limitError
+      ? "This project is too large for a live preview. Remove large generated files and try again."
+      : missingKey
+        ? "Live preview is temporarily unavailable."
+        : "Live preview could not start. Please try again.";
+
     return NextResponse.json(
-      { error: message, runtime: "e2b", projectId },
-      { status: missingKey ? 503 : 500 },
+      { error: safeError, runtime: "e2b", projectId },
+      { status: limitError ? 413 : missingKey ? 503 : 500 },
     );
   }
 }
