@@ -7,9 +7,9 @@ import { run } from "@/lib/db";
 
 export type DeleteAccountState = { error?: string };
 
-async function tryRun(sql: string, args: unknown[] = []) {
+async function tryRun(sql: string, args: string[] = []) {
   try {
-    await run(sql, args as never[]);
+    await run(sql, args);
   } catch {
     // Some tables are created lazily or only exist on newer deployments.
   }
@@ -74,6 +74,9 @@ export async function deleteAccount(
   }
 
   for (const table of [
+    "published_domain_claims",
+    "published_deployments",
+    "published_sites",
     "auth_tokens",
     "sessions",
     "agents",
