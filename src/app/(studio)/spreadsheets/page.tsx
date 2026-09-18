@@ -1,6 +1,6 @@
 import { SpreadsheetView } from "./spreadsheet-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
-import { loadConversation } from "@/lib/conversations";
+import { redirect } from "next/navigation";
 import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Sheets" };
@@ -11,28 +11,16 @@ export default async function SheetsPage({
   searchParams: Promise<{ c?: string }>;
 }) {
   const { c } = await searchParams;
-  const [recents, saved] = await Promise.all([
-    listRecents("sheets"),
-    c ? loadConversation(c) : Promise.resolve(null),
-  ]);
+  if (c) redirect(`/spreadsheets/${encodeURIComponent(c)}`);
+
+  const recents = await listRecents("sheets");
 
   return (
     <div className="h-full overflow-y-auto">
       <SpreadsheetView
-      recents={recents}
-      recentsLabel={RECENT_LABEL.sheets}
-      restored={
-        saved
-          ? {
-              id: saved.id,
-              title: saved.messages.find((m) => m.role === "user")?.text ?? saved.title,
-              // The whole thread, so a reopened draft can still be revised
-              // with a follow-up rather than only re-read.
-              messages: saved.messages,
-            }
-          : null
-      }
-      key={saved?.id ?? "new"}
+        recents={recents}
+        recentsLabel={RECENT_LABEL.sheets}
+        key="new"
       />
       <AllWorkSection limit={18} />
     </div>
