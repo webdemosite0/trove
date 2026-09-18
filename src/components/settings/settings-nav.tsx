@@ -12,6 +12,7 @@ import {
   FiGrid,
   FiSun,
   FiFileText,
+  TbHelpCircle,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const ACCOUNT: Section[] = [
   { href: "/settings/account", label: "Account & security", icon: FiShield },
   { href: "/settings/appearance", label: "Appearance", icon: FiSun },
   { href: "/settings/instructions", label: "Instructions", icon: FiFileText },
+  { href: "/settings/support", label: "Help & support", icon: TbHelpCircle },
 ];
 
 const BILLING: Section[] = [

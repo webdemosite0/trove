@@ -15,6 +15,7 @@ import { storageIsEphemeral, tursoVars } from "@/lib/db";
 import { sendMail, verificationEmail } from "@/lib/mail";
 import { site } from "@/lib/site";
 import { consumeRateLimit, requestIdentity } from "@/lib/rate-limit";
+import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
 
 export interface AuthState {
   error?: string;
@@ -88,6 +89,12 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   }
 
   const user = await createUser(email, name, password, { emailVerified: true });
+  await trackEvent({
+    event: ANALYTICS_EVENTS.signupCompleted,
+    userId: user.id,
+    path: "/signup",
+    properties: { provider: user.provider || "password" },
+  });
 
   await startSession(user.id);
   redirect("/launching?next=/onboarding");

@@ -12,6 +12,7 @@ import { priceFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { opsAlert } from "@/lib/ops-alert";
+import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "That is not a paid plan." }, { status: 400 });
   }
 
+  await trackEvent({
+    event: ANALYTICS_EVENTS.checkoutStarted,
+    userId: user.id,
+    path: "/plans",
+    properties: { plan: plan.id, interval },
+  });
+
   if (lemonConfigured()) {
     if (!lemonPurchasable(plan.id, interval)) {
       const key =
@@ -80,6 +88,12 @@ export async function POST(req: Request) {
         name: user.name || undefined,
         successUrl: `${site.url}/plans?checkout=done`,
       });
+      await trackEvent({
+        event: ANALYTICS_EVENTS.checkoutCreated,
+        userId: user.id,
+        path: "/plans",
+        properties: { provider: "lemon", plan: plan.id, interval },
+      });
       return NextResponse.json({ url, provider: "lemon", interval });
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
@@ -88,6 +102,12 @@ export async function POST(req: Request) {
         provider: "lemon",
         plan: plan.id,
         interval,
+      });
+      await trackEvent({
+        event: ANALYTICS_EVENTS.checkoutFailed,
+        userId: user.id,
+        path: "/plans",
+        properties: { provider: "lemon", plan: plan.id, interval },
       });
       return NextResponse.json(
         { error: "Could not start checkout. Please try again shortly." },
@@ -160,6 +180,12 @@ export async function POST(req: Request) {
       );
     }
 
+    await trackEvent({
+      event: ANALYTICS_EVENTS.checkoutCreated,
+      userId: user.id,
+      path: "/plans",
+      properties: { provider: "stripe", plan: plan.id, interval },
+    });
     return NextResponse.json({ url: session.url, provider: "stripe", interval });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
@@ -168,6 +194,12 @@ export async function POST(req: Request) {
       provider: "stripe",
       plan: plan.id,
       interval,
+    });
+    await trackEvent({
+      event: ANALYTICS_EVENTS.checkoutFailed,
+      userId: user.id,
+      path: "/plans",
+      properties: { provider: "stripe", plan: plan.id, interval },
     });
     return NextResponse.json(
       { error: "Could not start checkout. Please try again shortly." },

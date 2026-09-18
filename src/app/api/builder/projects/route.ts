@@ -6,6 +6,8 @@ import {
   type ProjectChatMessage,
 } from "@/lib/projects";
 import type { BuildPlan, ProjectFile } from "@/lib/builder";
+import { currentUser } from "@/lib/auth";
+import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,6 +67,8 @@ export async function POST(req: Request) {
     );
   }
 
+  const creating = !body.id?.trim();
+
   const saved = await saveProject({
     id: body.id,
     name: body.name || "Untitled site",
@@ -87,6 +91,21 @@ export async function POST(req: Request) {
       },
       { status: 401 },
     );
+  }
+
+  if (creating) {
+    const user = await currentUser();
+    if (user) {
+      await trackEvent({
+        event: ANALYTICS_EVENTS.builderProjectCreated,
+        userId: user.id,
+        path: "/websites",
+        properties: {
+          target: String(body.target || "react").slice(0, 40),
+          status: status.slice(0, 40),
+        },
+      });
+    }
   }
 
   return NextResponse.json({ ok: true, id: saved.id });

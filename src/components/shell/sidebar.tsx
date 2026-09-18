@@ -25,6 +25,7 @@ import {
   TbSearch,
   TbMessageCircle,
   TbPlugConnected,
+  TbHelpCircle,
 } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
@@ -181,6 +182,18 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
             <FiCreditCard size={15} className="text-ink" />
             Plan & credits
           </Link>
+          <Link
+            href="/settings/support"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink transition-colors hover:bg-hover"
+          >
+            <TbHelpCircle size={15} className="text-ink" />
+            Help & support
+          </Link>
           <form action={logOut} className="border-t border-line">
             <button
               role="menuitem"
@@ -298,6 +311,16 @@ function RailBody({
               className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
               <FiCreditCard size={16} className="text-ink" />
+            </Link>
+          </Tooltip>
+          <Tooltip label="Help" side="top">
+            <Link
+              href="/settings/support"
+              onClick={onNavigate}
+              aria-label="Help & support"
+              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+            >
+              <TbHelpCircle size={16} className="text-ink" />
             </Link>
           </Tooltip>
           <span className="flex-1" />
