@@ -51,7 +51,13 @@ function Preview({ item }: { item: WorkItem }) {
           sandbox=""
           tabIndex={-1}
           aria-hidden
-          className="pointer-events-none absolute inset-0 h-full w-full border-0 bg-white"
+          className="pointer-events-none absolute left-0 top-0 border-0 bg-white"
+          style={{
+            width: 1200,
+            height: 750,
+            transform: "scale(0.305)",
+            transformOrigin: "top left",
+          }}
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/[0.045]" />
       </div>
