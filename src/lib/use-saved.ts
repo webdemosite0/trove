@@ -61,8 +61,10 @@ export function useSaved(kind: string, initialId?: string | null) {
 
           // Creation happens on the clean product page. Once the first result
           // is saved, move into a permanent workspace route for that artefact.
-          if (wasNew && workspaceRoot) {
-            router.replace(`${workspaceRoot}/${encodeURIComponent(data.id)}`);
+          if (workspaceRoot) {
+            if (wasNew) {
+              router.replace(`${workspaceRoot}/${encodeURIComponent(data.id)}`);
+            }
             return;
           }
 
