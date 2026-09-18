@@ -92,11 +92,12 @@ export function BuilderPreviewPane({
       window.open(runtime.url, "_blank", "noopener,noreferrer");
       return;
     }
-    if (!preview) return;
-    const blob = new Blob([preview], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank", "noopener,noreferrer");
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    if (!preview || !projectId) return;
+    window.open(
+      `/api/builder/projects/${encodeURIComponent(projectId)}/preview`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const navigate = (destination: PreviewDestination) => {
@@ -164,7 +165,7 @@ export function BuilderPreviewPane({
         activeTab={activeTab}
         publishControl={realPublishControl}
         onNavigate={navigate}
-        onOpen={useLive || preview ? openPreview : undefined}
+        onOpen={useLive || (preview && projectId) ? openPreview : undefined}
         onRefresh={() => {
           setRefreshKey((value) => value + 1);
           if (files.length && projectId) void syncLocalProject(files, projectId);
@@ -178,7 +179,8 @@ export function BuilderPreviewPane({
             title="Live site preview"
             src={runtime.url}
             className="absolute inset-0 h-full w-full border-0 bg-white"
-            allow="accelerometer; camera; geolocation; microphone; clipboard-write; fullscreen"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+            allow="clipboard-write; fullscreen"
             referrerPolicy="no-referrer"
           />
         ) : useSnapshot && preview ? (
@@ -187,7 +189,7 @@ export function BuilderPreviewPane({
             title="Preview snapshot"
             srcDoc={preview}
             className="absolute inset-0 h-full w-full border-0 bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+            sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
             referrerPolicy="no-referrer"
           />
         ) : (

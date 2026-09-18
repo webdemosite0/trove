@@ -8,6 +8,8 @@ const PROJECT_ROOT = "/home/user/project";
 const PREVIEW_PORT = 5173;
 const SANDBOX_TIMEOUT_MS = 30 * 60 * 1000;
 const MAX_FILES = 250;
+const MAX_FILE_BYTES = 750_000;
+const MAX_PROJECT_BYTES = 10_000_000;
 const PREVIEW_RUNTIME_VERSION = "vite-e2b-host-v2";
 const PREVIEW_RUNTIME_MARKER = `${PROJECT_ROOT}/.trove-preview-runtime`;
 const TROVE_VITE_CONFIG = `${PROJECT_ROOT}/.trove-vite.config.mjs`;
@@ -55,16 +57,29 @@ function defaultPackageJson() {
 }
 
 export function normalizeProjectFiles(files: ProjectFile[]) {
-  const cleaned = (Array.isArray(files) ? files : [])
-    .slice(0, MAX_FILES)
-    .map((file) => ({
-      path: safePath(file.path),
-      content: String(file.content ?? ""),
-    }))
+  const input = Array.isArray(files) ? files : [];
+  if (input.length > MAX_FILES) {
+    throw new Error("PROJECT_LIMIT_FILES");
+  }
+
+  let totalBytes = 0;
+  const cleaned = input
+    .map((file) => {
+      const path = safePath(file.path);
+      const content = String(file.content ?? "");
+      const bytes = Buffer.byteLength(content, "utf8");
+      if (bytes > MAX_FILE_BYTES) throw new Error("PROJECT_LIMIT_FILE_SIZE");
+      totalBytes += bytes;
+      if (totalBytes > MAX_PROJECT_BYTES) throw new Error("PROJECT_LIMIT_TOTAL_SIZE");
+      return { path, content };
+    })
     .filter((file) => file.path);
 
   if (!cleaned.some((file) => file.path === "package.json")) {
-    cleaned.push({ path: "package.json", content: defaultPackageJson() });
+    const content = defaultPackageJson();
+    totalBytes += Buffer.byteLength(content, "utf8");
+    if (totalBytes > MAX_PROJECT_BYTES) throw new Error("PROJECT_LIMIT_TOTAL_SIZE");
+    cleaned.push({ path: "package.json", content });
   }
 
   return cleaned;

@@ -29,7 +29,7 @@ export function LandingTrustedBar({ models }: { models: ChatModelOption[] }) {
           {APPS.map((app, index) => (
             <Reveal key={app.id} delay={index * 24} as="div" className="shrink-0">
               <span className="group inline-flex shrink-0 items-center gap-1.5 rounded-full px-1.5 py-1 text-[11px] font-semibold text-zinc-700 transition hover:bg-zinc-50 sm:gap-2 sm:px-2 sm:text-[12px]">
-                <ServiceMark id={app.id} name={app.name} size={24} monochrome />
+                <ServiceMark id={app.id} name={app.name} size={24} />
                 <span className="hidden sm:inline">{app.name}</span>
               </span>
             </Reveal>

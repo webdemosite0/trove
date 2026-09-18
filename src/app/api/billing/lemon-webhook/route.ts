@@ -6,6 +6,7 @@ import {
   verifyLemonSignature,
   type LemonWebhookEvent,
 } from "@/lib/lemon";
+import { opsAlert } from "@/lib/ops-alert";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,8 +58,12 @@ export async function POST(req: Request) {
 
   try {
     await handle(name, event);
+    if (name === "subscription_payment_failed") {
+      await opsAlert("billing_payment_failed", { provider: "lemon" });
+    }
   } catch (err) {
     console.error(`[billing/lemon] handling ${name} failed:`, err);
+    await opsAlert("billing_webhook_failed", { provider: "lemon", event: name });
     return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
 
@@ -91,6 +96,7 @@ async function handle(eventName: string, event: LemonWebhookEvent) {
 
   if (!userId) {
     console.error(`[billing/lemon] ${eventName}: no user for customer ${customerId}`);
+    await opsAlert("billing_user_mapping_missing", { provider: "lemon", event: eventName });
     return;
   }
 
@@ -126,6 +132,11 @@ async function handle(eventName: string, event: LemonWebhookEvent) {
     console.error(
       `[billing/lemon] variant ${variantId || "(none)"} maps to no plan; user ${userId}`,
     );
+    await opsAlert("billing_plan_mapping_missing", {
+      provider: "lemon",
+      event: eventName,
+      hasVariant: Boolean(variantId),
+    });
     return;
   }
 

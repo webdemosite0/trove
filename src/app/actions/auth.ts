@@ -14,6 +14,7 @@ import {
 import { storageIsEphemeral, tursoVars } from "@/lib/db";
 import { sendMail, verificationEmail } from "@/lib/mail";
 import { site } from "@/lib/site";
+import { consumeRateLimit, requestIdentity } from "@/lib/rate-limit";
 
 export interface AuthState {
   error?: string;
@@ -52,6 +53,17 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
   }
+
+  const signupLimit = await consumeRateLimit({
+    scope: "auth-signup",
+    identity: await requestIdentity(email),
+    limit: 8,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!signupLimit.allowed) {
+    return { error: "Too many signup attempts. Please try again later." };
+  }
+
   if (await findByEmail(email)) {
     return { error: "An account with that email already exists." };
   }
@@ -83,6 +95,16 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
 
 export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState> {
   const { email, password, next } = readForm(form);
+
+  const loginLimit = await consumeRateLimit({
+    scope: "auth-login",
+    identity: await requestIdentity(email),
+    limit: 25,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!loginLimit.allowed) {
+    return { error: "Too many login attempts. Please wait a few minutes and try again." };
+  }
 
   const row = await findByEmail(email);
 

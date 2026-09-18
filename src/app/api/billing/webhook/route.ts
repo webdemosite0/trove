@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { applySubscription, userIdForCustomer } from "@/lib/billing";
 import { planForPrice, stripe, stripeConfigured } from "@/lib/stripe";
+import { opsAlert } from "@/lib/ops-alert";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
     // 500 so Stripe retries. A database blip should not silently cost someone
     // the plan they just paid for.
     console.error(`[billing] handling ${event.type} failed:`, err);
+    await opsAlert("billing_webhook_failed", { provider: "stripe", event: event.type });
     return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
 
@@ -89,6 +91,7 @@ async function handle(event: Stripe.Event) {
 
   if (!customerId) {
     console.error(`[billing] ${event.type} had no customer`);
+    await opsAlert("billing_customer_missing", { provider: "stripe", event: event.type });
     return;
   }
 
@@ -97,6 +100,7 @@ async function handle(event: Stripe.Event) {
     // Someone else's Stripe account, or an account deleted since paying.
     // Not an error worth retrying — a retry would find nothing either.
     console.error(`[billing] no account for stripe customer ${customerId}`);
+    await opsAlert("billing_user_mapping_missing", { provider: "stripe", event: event.type });
     return;
   }
 
@@ -128,6 +132,11 @@ async function handle(event: Stripe.Event) {
     console.error(
       `[billing] price ${priceId || "(none)"} maps to no plan; not changing plan for ${userId}`,
     );
+    await opsAlert("billing_plan_mapping_missing", {
+      provider: "stripe",
+      event: event.type,
+      hasPrice: Boolean(priceId),
+    });
     return;
   }
 
