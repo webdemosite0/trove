@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
+import { loadProject } from "@/lib/projects";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import {
   connectExistingSandbox,
   e2bCookieName,
@@ -40,6 +42,27 @@ export async function POST(req: Request) {
     );
   }
 
+  const owned = await loadProject(projectId);
+  if (!owned) {
+    return NextResponse.json({ error: "That saved project was not found." }, { status: 404 });
+  }
+
+  const limit = await consumeRateLimit({
+    scope: "sandbox-exec",
+    identity: user.id,
+    limit: 180,
+    windowMs: 5 * 60 * 1000,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many terminal commands. Try again shortly." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
+
   const jar = await cookies();
   const cookieName = e2bCookieName(user.id, projectId);
   const sandboxId = jar.get(cookieName)?.value;
@@ -56,8 +79,8 @@ export async function POST(req: Request) {
     const result = await runE2BCommand(sandbox, command);
     const response = NextResponse.json({
       ok: true,
-      stdout: result.stdout,
-      stderr: result.stderr,
+      stdout: String(result.stdout || "").slice(-200_000),
+      stderr: String(result.stderr || "").slice(-200_000),
       exitCode: result.exitCode,
       projectId,
       runtime: "e2b",
