@@ -1,6 +1,6 @@
 import "server-only";
 
-import { one, all, run, uid, num, str } from "@/lib/db";
+import { one, all, run, batch, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -136,9 +136,15 @@ export interface RateWindow {
 
 export interface Balance {
   plan: Plan;
+  /** Credits included with the current plan for this month. */
   granted: number;
   used: number;
+  /** Total spendable credits: monthly allowance + purchased wallet. */
   remaining: number;
+  /** Remaining credits from the monthly plan before wallet credits are used. */
+  planRemaining: number;
+  /** Purchased credits that do not expire. */
+  purchased: number;
   tokensUsed: number;
   period: string;
   /** Rolling 5-hour burst window. */
@@ -186,7 +192,7 @@ export async function rateWindowFor(
   userId: string,
   planId: string,
   now = Date.now(),
-  opts?: { unlimited?: boolean },
+  opts?: { unlimited?: boolean; purchasedCredits?: number },
 ): Promise<RateWindow> {
   if (opts?.unlimited) {
     return {
@@ -199,6 +205,8 @@ export async function rateWindowFor(
   }
 
   const plan = planById(planId);
+  const purchasedCredits = Math.max(0, Math.floor(opts?.purchasedCredits ?? 0));
+  const effectiveLimit = plan.windowLimit + purchasedCredits;
   const since = now - RATE_WINDOW_MS;
 
   const row = await one(
@@ -216,15 +224,56 @@ export async function rateWindowFor(
       ? new Date(oldest + RATE_WINDOW_MS)
       : new Date(now);
 
-  const remaining = Math.max(0, plan.windowLimit - used);
+  const remaining = Math.max(0, effectiveLimit - used);
 
   return {
     used,
-    limit: plan.windowLimit,
+    limit: effectiveLimit,
     remaining,
     resetsAt,
     exhausted: remaining <= 0,
   };
+}
+
+async function purchasedCreditBalance(userId: string): Promise<number> {
+  const row = await one(
+    `SELECT COALESCE(SUM(delta), 0) AS balance
+       FROM credit_wallet_ledger
+      WHERE user_id = ?`,
+    [userId],
+  ).catch(() => null);
+  return Math.max(0, num(row?.balance));
+}
+
+/**
+ * Add or remove permanent wallet credits. The ref is unique, making webhook
+ * retries idempotent.
+ */
+export async function recordCreditWalletAdjustment(input: {
+  userId: string;
+  delta: number;
+  ref: string;
+  source: string;
+  amountCents?: number;
+}): Promise<boolean> {
+  const delta = Math.trunc(input.delta);
+  const ref = input.ref.trim().slice(0, 160);
+  if (!input.userId || !ref || delta === 0) return false;
+  const changed = await run(
+    `INSERT OR IGNORE INTO credit_wallet_ledger
+       (id, user_id, delta, source, ref, amount_cents, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      uid("wallet"),
+      input.userId,
+      delta,
+      input.source.slice(0, 40),
+      ref,
+      Math.max(0, Math.floor(input.amountCents ?? 0)),
+      Date.now(),
+    ],
+  );
+  return changed > 0;
 }
 
 export async function balanceFor(
@@ -249,6 +298,8 @@ export async function balanceFor(
       granted: UNLIMITED,
       used: num(row?.used),
       remaining: UNLIMITED,
+      planRemaining: UNLIMITED,
+      purchased: 0,
       tokensUsed: num(row?.tokens),
       period,
       window,
@@ -265,13 +316,19 @@ export async function balanceFor(
   );
 
   const used = num(row?.used);
-  const window = await rateWindowFor(userId, planId);
+  const planRemaining = Math.max(0, granted - used);
+  const purchased = await purchasedCreditBalance(userId);
+  const window = await rateWindowFor(userId, planId, Date.now(), {
+    purchasedCredits: purchased,
+  });
 
   return {
     plan: planById(planId),
     granted,
     used,
-    remaining: Math.max(0, granted - used),
+    remaining: planRemaining + purchased,
+    planRemaining,
+    purchased,
     tokensUsed: num(row?.tokens),
     period,
     window,
@@ -298,11 +355,54 @@ export async function spend(
 ): Promise<void> {
   try {
     const credits = creditsForTokens(tokens);
-    await run(
-      `INSERT INTO credit_spends (id, user_id, kind, tokens, credits, period, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [uid("spend"), userId, kind, Math.max(0, tokens), credits, currentPeriod(), Date.now()],
+    const period = currentPeriod();
+    const spendId = uid("spend");
+    const grant = await one(
+      `SELECT credits FROM credit_grants WHERE user_id = ? AND period = ?`,
+      [userId, period],
     );
+    const spent = await one(
+      `SELECT COALESCE(SUM(credits), 0) AS used
+         FROM credit_spends WHERE user_id = ? AND period = ?`,
+      [userId, period],
+    );
+    const monthlyRemaining = Math.max(0, num(grant?.credits) - num(spent?.used));
+    const wallet = await purchasedCreditBalance(userId);
+    const walletDebit = Math.min(wallet, Math.max(0, credits - monthlyRemaining));
+
+    const statements = [
+      {
+        sql: `INSERT INTO credit_spends
+                (id, user_id, kind, tokens, credits, period, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          spendId,
+          userId,
+          kind,
+          Math.max(0, tokens),
+          credits,
+          period,
+          Date.now(),
+        ],
+      },
+    ];
+
+    if (walletDebit > 0) {
+      statements.push({
+        sql: `INSERT OR IGNORE INTO credit_wallet_ledger
+                (id, user_id, delta, source, ref, amount_cents, created_at)
+              VALUES (?, ?, ?, 'usage', ?, 0, ?)`,
+        args: [
+          uid("wallet"),
+          userId,
+          -walletDebit,
+          `spend:${spendId}`,
+          Date.now(),
+        ],
+      });
+    }
+
+    await batch(statements);
   } catch (e) {
     console.error("credits: could not record spend", e);
   }
