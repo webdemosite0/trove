@@ -3,7 +3,6 @@ import { BuilderView } from "./builder-view";
 import { isMobile } from "@/lib/device";
 import { loadConversation } from "@/lib/conversations";
 import { loadProject } from "@/lib/projects";
-import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Sites" };
 
@@ -32,15 +31,12 @@ export default async function WebsitesPage({
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="h-full min-h-[640px]">
-        <BuilderView
-          mobile={await isMobile()}
-          draft={draft}
-          restored={restored}
-        />
-      </div>
-      <AllWorkSection limit={18} />
+    <div className="h-full min-h-0 overflow-hidden">
+      <BuilderView
+        mobile={await isMobile()}
+        draft={draft}
+        restored={restored}
+      />
     </div>
   );
 }
