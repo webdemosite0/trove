@@ -46,7 +46,14 @@ function previewHeaders(): HeadersInit {
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": "private, no-store, max-age=0",
     "X-Content-Type-Options": "nosniff",
-    "Content-Security-Policy": "frame-ancestors 'self'",
+    "Content-Security-Policy":
+      "sandbox allow-scripts allow-forms allow-popups allow-modals allow-downloads; " +
+      "frame-ancestors 'self'; default-src 'self' data: blob: https:; " +
+      "script-src 'unsafe-inline' 'unsafe-eval' blob: https:; " +
+      "style-src 'unsafe-inline' https:; img-src data: blob: https:; " +
+      "font-src data: https:; connect-src https: wss:; media-src data: blob: https:",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    "Referrer-Policy": "no-referrer",
     "X-Robots-Tag": "noindex, nofollow",
   };
 }
