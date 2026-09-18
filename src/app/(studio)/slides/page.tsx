@@ -1,6 +1,7 @@
 import { SlidesView } from "./slides-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
+import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Decks" };
 
@@ -16,7 +17,8 @@ export default async function SlidesPage({
   ]);
 
   return (
-    <SlidesView
+    <div className="h-full overflow-y-auto">
+      <SlidesView
       recents={recents}
       recentsLabel={RECENT_LABEL.slides}
       restored={
@@ -31,6 +33,8 @@ export default async function SlidesPage({
           : null
       }
       key={saved?.id ?? "new"}
-    />
+      />
+      <AllWorkSection limit={18} />
+    </div>
   );
 }
