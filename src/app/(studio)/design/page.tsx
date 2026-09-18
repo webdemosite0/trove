@@ -19,7 +19,7 @@ export default async function DesignPage({
   searchParams: Promise<{ c?: string }>;
 }) {
   const { c } = await searchParams;
-  if (c) redirect(`/design/saved/${encodeURIComponent(c)}`);
+  if (c) redirect(`/design/${encodeURIComponent(c)}`);
 
   const recents = await listRecents("design");
   return (
