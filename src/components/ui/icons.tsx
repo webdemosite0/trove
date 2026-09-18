@@ -108,7 +108,6 @@ function grok(Icon: LucideIcon): LucideIcon {
       <Icon
         ref={ref}
         {...props}
-        fill="none"
         strokeWidth={props.strokeWidth ?? 1.5}
         absoluteStrokeWidth={false}
       />
@@ -152,7 +151,6 @@ export const FiFolder = grok(Folder);
 export const FiGlobe = grok(Globe);
 export const FiGrid = grok(LayoutGrid);
 export const FiHome = grok(Home);
-export const FiImage = grok(Image);
 export const FiInfo = grok(Info);
 export const FiLayers = grok(Layers);
 export const FiLayout = grok(Layout);

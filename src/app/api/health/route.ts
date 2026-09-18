@@ -3,7 +3,6 @@ import { searchProvider } from "@/lib/search";
 import { mailTransport, mailFallback } from "@/lib/mail";
 import { site } from "@/lib/site";
 import { compatProviders } from "@/lib/openai-compat";
-import { opsAlertsConfigured } from "@/lib/ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,38 +15,30 @@ function providerChain(): string[] {
   return labels;
 }
 
-function billingProviders() {
-  const providers: string[] = [];
-  if (
-    process.env.LEMONSQUEEZY_API_KEY?.trim() &&
-    process.env.LEMONSQUEEZY_STORE_ID?.trim()
-  ) {
-    providers.push("lemon");
-  }
-  if (process.env.STRIPE_SECRET_KEY?.trim()) providers.push("stripe");
-  return providers;
-}
-
+/**
+ * Says why the app is unhappy, without a dashboard login.
+ *
+ * Next hides server errors in production and Vercel does not surface the
+ * message, so a misconfigured database looks identical to a code bug: every
+ * page just returns 500. This reports which mode the database is in and
+ * whether it can actually be reached.
+ *
+ * Deliberately leaks nothing: no connection string, no token, no row data —
+ * only booleans, and the error text if a query fails.
+ */
 export async function GET() {
-  const aiProviders = providerChain();
-  const billing = billingProviders();
   const configured = {
-    ai: aiProviders.length > 0,
-    aiProviders,
+    gemini: Boolean(process.env.GEMINI_API_KEY?.trim()),
+    aiProviders: providerChain(),
     searchProvider: searchProvider(),
     mail: mailTransport(),
     mailFallback: mailFallback(),
-    database: Boolean(process.env.TURSO_DATABASE_URL?.trim()),
-    e2b: Boolean(process.env.E2B_API_KEY?.trim()),
-    billing,
-    billingWebhook:
-      Boolean(process.env.LEMONSQUEEZY_WEBHOOK_SECRET?.trim()) ||
-      Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim()),
-    opsAlerts: opsAlertsConfigured(),
-    publishRoot: Boolean(process.env.NEXT_PUBLIC_PUBLISH_ROOT_DOMAIN?.trim()),
+    tursoUrl: Boolean(process.env.TURSO_DATABASE_URL?.trim()),
+    tursoToken: Boolean(process.env.TURSO_AUTH_TOKEN?.trim()),
     siteUrl: Boolean(
       process.env.SITE_URL?.trim() || process.env.NEXT_PUBLIC_SITE_URL?.trim(),
     ),
+    resolvedSiteUrl: site.url,
   };
 
   const modeNow = () =>
@@ -55,39 +46,29 @@ export async function GET() {
 
   try {
     await one(`SELECT COUNT(*) AS n FROM users`);
-    const durable = isRemote || !ephemeral;
-    const warnings: string[] = [];
-    if (!durable) warnings.push("database_not_durable");
-    if (!configured.ai) warnings.push("ai_provider_missing");
-    if (billing.length > 0 && !configured.billingWebhook) {
-      warnings.push("billing_webhook_missing");
-    }
-    if (!configured.opsAlerts) warnings.push("ops_alerts_missing");
+    return Response.json({
+      ok: true,
+      database: { mode: modeNow(), reachable: true, durable: isRemote || !ephemeral },
+      configured,
+      ...(ephemeral
+        ? {
+            warning:
+              "Running on a temporary filesystem. The app works, but accounts, " +
+              "saved conversations and credits are lost whenever the instance " +
+              "recycles. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN to keep them.",
+          }
+        : {}),
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+
+    const hint = isRemote
+      ? "TURSO_DATABASE_URL is set but the database could not be queried. Check the URL and that TURSO_AUTH_TOKEN matches it."
+      : "No Turso credentials are set, so Trove tried to write a SQLite file to local disk. That fails on Vercel and every other read-only host. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.";
 
     return Response.json(
-      {
-        ok: true,
-        status: warnings.length ? "degraded" : "healthy",
-        database: { mode: modeNow(), reachable: true, durable },
-        configured,
-        warnings,
-        service: { name: site.name, url: site.url },
-      },
-      { headers: { "Cache-Control": "no-store" } },
-    );
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    console.error("health: database check failed", detail);
-    return Response.json(
-      {
-        ok: false,
-        status: "unhealthy",
-        database: { mode: modeNow(), reachable: false, durable: false },
-        configured,
-        errorCode: "database_unreachable",
-        service: { name: site.name, url: site.url },
-      },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
+      { ok: false, database: { mode: modeNow(), reachable: false }, configured, error: message, hint },
+      { status: 503 },
     );
   }
 }

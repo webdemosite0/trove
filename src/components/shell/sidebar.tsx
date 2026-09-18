@@ -94,25 +94,16 @@ function NavRow({
         compact && "justify-center px-0",
       )}
     >
-      <span
+      <Ico
+        icon={item.icon}
+        motion={item.motion}
+        active={active}
+        size={18}
         className={cn(
-          "grid size-7 shrink-0 place-items-center rounded-lg transition-colors",
-          active
-            ? "bg-accent text-white shadow-[0_4px_12px_rgba(79,70,229,.22)]"
-            : "text-ink group-hover:bg-hover",
+          "shrink-0",
+          active ? "text-accent" : "text-ink opacity-90 group-hover:opacity-100",
         )}
-      >
-        <Ico
-          icon={item.icon}
-          motion={item.motion}
-          active={active}
-          size={17}
-          className={cn(
-            "shrink-0",
-            active ? "text-white" : "text-ink opacity-90 group-hover:opacity-100",
-          )}
-        />
-      </span>
+      />
       {!compact ? (
         <span className={cn("truncate", active ? "text-accent" : "text-ink")}>
           {item.label}
@@ -248,12 +239,7 @@ function GooeyAddButton() {
             href="/chat"
             title="New chat"
             aria-label="New chat"
-            className={cn(
-              "grid size-9 place-items-center rounded-full text-white",
-              "bg-[linear-gradient(135deg,#7c3aed_0%,#2563eb_40%,#06b6d4_100%)]",
-              "ring-2 ring-offset-2 ring-offset-rail ring-sky-400/50",
-              "shadow-[0_6px_18px_-4px_rgba(37,99,235,0.55)]",
-            )}
+            className="btn-grad grid size-9 place-items-center rounded-full text-white"
           >
             <FiPlus size={16} />
           </Link>
@@ -292,7 +278,7 @@ function RailBody({
           <button
             onClick={onCollapse}
             aria-label="Collapse sidebar"
-            title="Collapse sidebar"
+            title="Toggle sidebar  ⌘B"
             className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
           >
             <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
@@ -301,16 +287,20 @@ function RailBody({
       </div>
 
       <div className="px-3 pt-3">
-        <Link
-          href="/chat"
-          onClick={onNavigate}
-          className="group flex h-10 w-full items-center gap-2.5 overflow-hidden rounded-xl border border-line-strong bg-raised px-2.5 text-[13.5px] font-medium text-ink shadow-[0_1px_2px_rgba(15,23,42,.04)] transition-[border-color,background-color,box-shadow,transform] duration-200 hover:border-accent/35 hover:bg-hover hover:shadow-[0_6px_18px_rgba(15,23,42,.06)] active:scale-[0.99]"
-        >
-          <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-accent text-white shadow-[0_4px_10px_rgba(79,70,229,.2)]">
-            <Ico icon={FiPlus} motion="open" size={14} className="text-white" />
-          </span>
-          <span>New chat</span>
-        </Link>
+        <Liquid blur={6} contrast={16} className="w-full">
+          <Liquid.Item transition="bouncy" effect="morph">
+            <Link
+              href="/chat"
+              onClick={onNavigate}
+              className="group flex h-9 w-full items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
+            >
+              <span className="grid size-6 place-items-center rounded-full bg-accent/12 text-accent">
+                <Ico icon={FiPlus} motion="open" size={14} className="text-accent" />
+              </span>
+              New chat
+            </Link>
+          </Liquid.Item>
+        </Liquid>
       </div>
 
       <nav
@@ -385,15 +375,58 @@ export function Sidebar({
 }) {
   const { open, setOpen, collapsed, setCollapsed } = useNav();
   const pathname = usePathname();
-  const expanded = !collapsed;
+  const [peek, setPeek] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const expanded = !collapsed || peek;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setPeek(false);
+        setCollapsed(!collapsed);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [collapsed, setCollapsed]);
+
+  useEffect(() => {
+    if (!collapsed) setPeek(false);
+  }, [collapsed]);
+
+  useEffect(
+    () => () => {
+      if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    },
+    [],
+  );
+
+  function onRailEnter() {
+    if (!collapsed) return;
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+    setPeek(true);
+  }
+
+  function onRailLeave() {
+    if (!collapsed) return;
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    leaveTimer.current = setTimeout(() => setPeek(false), 160);
+  }
 
   return (
     <>
       <aside
+        onMouseEnter={onRailEnter}
+        onMouseLeave={onRailLeave}
         className={cn(
           "nx-sidebar nx-no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail text-ink lg:flex",
           "transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           expanded ? "w-[240px]" : "w-[64px]",
+          collapsed && peek && "z-40 shadow-lg",
         )}
       >
         {expanded ? (
@@ -401,7 +434,10 @@ export function Sidebar({
             <RailBody
               user={user}
               balance={balance}
-              onCollapse={() => setCollapsed(true)}
+              onCollapse={() => {
+                setPeek(false);
+                setCollapsed(true);
+              }}
             />
           </div>
         ) : (
@@ -412,7 +448,7 @@ export function Sidebar({
             <button
               onClick={() => setCollapsed(false)}
               aria-label="Expand sidebar"
-              title="Expand sidebar"
+              title="Toggle sidebar  ⌘B"
               className="mb-2 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
               <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />

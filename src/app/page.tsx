@@ -19,9 +19,9 @@ import { PLANS } from "@/lib/credits";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
-  title: "Trove — Describe What You Want. Trove Builds It.",
+  title: "Trove — Turn Prompts Into Real Files",
   description:
-    "Turn one prompt into finished work you can actually use — websites, documents, spreadsheets, decks, and code you can refine, export, or publish with Trove.",
+    "Build websites, documents, spreadsheets, presentations, code, research and AI agents with Trove — then download the actual files or publish live on *.troveai.site.",
 };
 
 export default async function Landing() {

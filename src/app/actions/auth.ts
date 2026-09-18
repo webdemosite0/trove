@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import {
   createUser,
   currentUser,
@@ -15,8 +14,6 @@ import {
 import { storageIsEphemeral, tursoVars } from "@/lib/db";
 import { sendMail, verificationEmail } from "@/lib/mail";
 import { site } from "@/lib/site";
-import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
-import { requestIp, takeRateLimit } from "@/lib/rate-limit";
 
 export interface AuthState {
   error?: string;
@@ -38,22 +35,6 @@ function safeNext(value: string): string | null {
   return value;
 }
 
-async function authAttemptLimit(scope: "signup" | "login", email: string) {
-  const h = await headers();
-  return takeRateLimit({
-    scope: `auth-${scope}`,
-    subject: `${requestIp(h)}:${email.trim().toLowerCase().slice(0, 160)}`,
-    limit: scope === "signup" ? 5 : 12,
-    windowMs: 10 * 60 * 1000,
-  });
-}
-
-function retryMessage(resetAt: number) {
-  const seconds = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
-  const minutes = Math.max(1, Math.ceil(seconds / 60));
-  return `Too many attempts. Try again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
-}
-
 async function sendVerification(user: { id: string; email: string; name: string }) {
   const token = await issueToken(user.id, "verify-email");
   const link = `${site.url}/verify-email/confirm?token=${token}`;
@@ -71,12 +52,6 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
   }
-
-  const signupGate = await authAttemptLimit("signup", email);
-  if (!signupGate.allowed) {
-    return { error: retryMessage(signupGate.resetAt) };
-  }
-
   if (await findByEmail(email)) {
     return { error: "An account with that email already exists." };
   }
@@ -101,7 +76,6 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   }
 
   const user = await createUser(email, name, password, { emailVerified: true });
-  await trackEvent({ event: ANALYTICS_EVENTS.signupCompleted, userId: user.id, path: "/signup" });
 
   await startSession(user.id);
   redirect("/launching?next=/onboarding");
@@ -109,11 +83,6 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
 
 export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState> {
   const { email, password, next } = readForm(form);
-
-  const loginGate = await authAttemptLimit("login", email);
-  if (!loginGate.allowed) {
-    return { error: retryMessage(loginGate.resetAt) };
-  }
 
   const row = await findByEmail(email);
 

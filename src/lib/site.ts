@@ -82,7 +82,6 @@ export const privateRoutes = [
   "/agents",
   "/chat",
   "/dashboard",
-  "/help",
   "/integrations",
   "/launching",
   "/plans",
