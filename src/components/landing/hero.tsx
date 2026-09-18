@@ -70,18 +70,18 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
   }
 
   return (
-    <section className="relative overflow-hidden px-4 pb-12 pt-10 sm:px-5 sm:pb-16 sm:pt-16 lg:pb-24 lg:pt-22">
+    <section className="relative overflow-hidden px-4 pb-10 pt-6 sm:px-5 sm:pb-14 sm:pt-10 lg:pb-16 lg:pt-12">
       <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-[420px] max-w-5xl opacity-70">
         <div className="absolute left-1/2 top-8 h-64 w-[min(90%,720px)] -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-400/25 via-indigo-300/20 to-fuchsia-300/20 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-[960px] text-center">
-        <div className="lp-hero-in mb-5 inline-flex items-center rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-700 shadow-sm backdrop-blur-md sm:mb-7 sm:px-4 sm:text-[11px]">
+        <div className="lp-hero-in mb-3.5 inline-flex items-center rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-700 shadow-sm backdrop-blur-md sm:mb-5 sm:px-4 sm:text-[11px]">
           AI THAT SHIP REAL FILES
         </div>
 
         <h1
-          className="lp-hero-in text-[clamp(2.05rem,1.55rem+3vw,4.35rem)] font-semibold leading-[1.02] tracking-[-0.038em] text-zinc-950"
+          className="lp-hero-in text-[clamp(1.95rem,1.4rem+2.8vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.038em] text-zinc-950"
           style={{ animationDelay: "60ms" }}
         >
           Describe it once.
@@ -92,15 +92,15 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         </h1>
 
         <p
-          className="lp-hero-in mx-auto mt-4 max-w-[50ch] text-[13.5px] leading-6 text-zinc-600 sm:mt-6 sm:text-[17px] sm:leading-relaxed lg:text-[18px]"
+          className="lp-hero-in mx-auto mt-3 max-w-[50ch] text-[13.5px] leading-6 text-zinc-600 sm:mt-4 sm:text-[16px] sm:leading-relaxed lg:text-[17px]"
           style={{ animationDelay: "120ms" }}
         >
           Real deliverables you can refine, export, and keep — websites, documents, spreadsheets, presentations, and code in the same project.
         </p>
 
-        <div className="lp-hero-in mx-auto mt-7 max-w-[740px] sm:mt-11" style={{ animationDelay: "180ms" }}>
+        <div className="lp-hero-in mx-auto mt-5 max-w-[740px] sm:mt-7" style={{ animationDelay: "180ms" }}>
           <div className="rounded-[22px] border border-white/80 bg-white/82 p-1.5 shadow-[0_24px_80px_-24px_rgba(99,102,241,0.35),0_0_0_1px_rgba(99,102,241,0.06)] backdrop-blur-xl sm:rounded-[28px] sm:p-2">
-            <div className="relative flex min-h-[84px] flex-col rounded-[17px] bg-gradient-to-b from-zinc-50/90 to-white px-3.5 py-3 ring-1 ring-zinc-200/80 sm:min-h-[100px] sm:rounded-[22px] sm:px-4 sm:py-3.5">
+            <div className="relative flex min-h-[72px] flex-col rounded-[17px] bg-gradient-to-b from-zinc-50/90 to-white px-3.5 py-2.5 ring-1 ring-zinc-200/80 sm:min-h-[84px] sm:rounded-[22px] sm:px-4 sm:py-3">
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
@@ -144,7 +144,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
             <span>Download real files</span>
           </div>
 
-          <div className="mt-5 flex flex-wrap justify-center gap-1.5 sm:mt-6 sm:gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:mt-5 sm:gap-2">
             {CHIPS.map((chip, i) => {
               const Icon = chip.icon;
               return (
@@ -163,7 +163,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           </div>
         </div>
 
-        <p className="lp-hero-in mt-6 text-[10.5px] text-zinc-500 sm:mt-8 sm:text-[13px]" style={{ animationDelay: "280ms" }}>
+        <p className="lp-hero-in mt-4 text-[10.5px] text-zinc-500 sm:mt-5 sm:text-[13px]" style={{ animationDelay: "280ms" }}>
           {freeCredits > 0 ? (
             <>
               <span className="font-medium text-emerald-600">{freeCredits} free credits</span>{" "}on signup · No card required
