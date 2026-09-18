@@ -132,9 +132,13 @@ async function sendViaSmtp(opts: MailOptions): Promise<MailResult> {
   }
 }
 
-/** Email verification is disabled — accounts work immediately after signup. */
+/**
+ * Enforce email verification whenever Trove has a working outbound mail
+ * transport. This avoids fake-email account abuse in production without
+ * hard-locking a development/demo deployment that has no mail provider.
+ */
 export function verificationEnforced(): boolean {
-  return false;
+  return mailerConfigured();
 }
 
 export function verificationEmail(name: string, link: string) {

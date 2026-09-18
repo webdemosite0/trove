@@ -8,14 +8,16 @@ import {
   findByEmail,
   issueToken,
   lastTokenAt,
+  markVerified,
   startSession,
   verifyPassword,
 } from "@/lib/auth";
 import { storageIsEphemeral, tursoVars } from "@/lib/db";
-import { sendMail, verificationEmail } from "@/lib/mail";
+import { sendMail, verificationEmail, verificationEnforced } from "@/lib/mail";
 import { site } from "@/lib/site";
 import { consumeRateLimit, requestIdentity } from "@/lib/rate-limit";
 import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
+import { opsAlert } from "@/lib/ops-alert";
 
 export interface AuthState {
   error?: string;
@@ -88,7 +90,10 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
     };
   }
 
-  const user = await createUser(email, name, password, { emailVerified: true });
+  const mustVerifyEmail = verificationEnforced();
+  const user = await createUser(email, name, password, {
+    emailVerified: !mustVerifyEmail,
+  });
   await trackEvent({
     event: ANALYTICS_EVENTS.signupCompleted,
     userId: user.id,
@@ -97,6 +102,18 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   });
 
   await startSession(user.id);
+
+  if (mustVerifyEmail) {
+    const result = await sendVerification(user);
+    if (!result.sent) {
+      console.error("[auth] initial verification email failed", result.reason || "unknown");
+      await opsAlert("email_verification_delivery_failed", {
+        reason: result.reason || "unknown",
+      });
+    }
+    redirect("/verify-email");
+  }
+
   redirect("/launching?next=/onboarding");
 }
 
@@ -119,7 +136,17 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
     return { error: "That email and password do not match." };
   }
 
+  const mustVerifyEmail = verificationEnforced();
+  if (!row.emailVerified && !mustVerifyEmail) {
+    // Mail is unavailable, so do not strand an older unverified account.
+    await markVerified(row.id);
+  }
+
   await startSession(row.id);
+
+  if (!row.emailVerified && mustVerifyEmail) {
+    redirect("/verify-email");
+  }
 
   // Incomplete onboarding always wins over a deep link
   if (!row.onboardingDone) {
@@ -148,11 +175,15 @@ export async function resendVerification(): Promise<AuthState> {
   const result = await sendVerification(user);
 
   if (!result.sent) {
+    console.error("[auth] verification resend failed", result.reason || "unknown");
+    await opsAlert("email_verification_delivery_failed", {
+      reason: result.reason || "unknown",
+    });
     return {
       error:
         result.reason === "not-configured"
-          ? "No mail provider is configured on this deployment, so nothing was sent."
-          : `The mail provider rejected that (${result.reason}). Nothing was sent.`,
+          ? "Email verification is temporarily unavailable."
+          : "We could not send the verification email. Please try again shortly.",
     };
   }
 
