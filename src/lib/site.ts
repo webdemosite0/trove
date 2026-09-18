@@ -72,28 +72,14 @@ export const publicRoutes = [
 ];
 
 /**
- * Account, workspace and machine-facing routes that should never be indexed.
- * Keep this list centralized so robots.ts and any future noindex helpers use
- * the same canonical privacy boundary.
+ * Routes robots.txt should never crawl.
+ *
+ * Do NOT put authenticated workspace URLs here. Google has already indexed a
+ * few of those URLs as the sign-in page; it must be allowed to revisit them so
+ * the noindex response can remove the stale result. robots.txt controls crawl,
+ * not indexing.
  */
 export const privateRoutes = [
   "/api/",
   "/admin",
-  "/agents",
-  "/chat",
-  "/dashboard",
-  "/integrations",
-  "/launching",
-  "/plans",
-  "/project/",
-  "/projects",
-  "/reminders",
-  "/settings",
-  "/skills",
-  "/team",
-  "/websites",
-  "/workflows",
-  "/login",
-  "/signup",
-  "/verify",
 ];
