@@ -71,9 +71,17 @@ export async function saveDesignScreen(
 
   const existingId = str(existing?.id) || null;
   const old = existingId ? await loadConversation(existingId).catch(() => null) : null;
-  const previous = old?.messages.findLast((message) => message.role === "model");
+  let previousText = "";
+  if (old) {
+    for (let i = old.messages.length - 1; i >= 0; i -= 1) {
+      if (old.messages[i]?.role === "model") {
+        previousText = old.messages[i].text;
+        break;
+      }
+    }
+  }
   const payload =
-    (previous ? parseSavedDesign(previous.text) : null) ??
+    (previousText ? parseSavedDesign(previousText) : null) ??
     ({ type: "trove-design-v1", brief, screens: [] } satisfies SavedDesignPayload);
 
   const cleanName = String(screenName || "Screen").slice(0, 80);
