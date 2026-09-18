@@ -4,10 +4,12 @@ import { currentUser } from "@/lib/auth";
 import { loadProject } from "@/lib/projects";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import {
+  assertSafeE2BCommand,
   connectExistingSandbox,
   e2bCookieName,
   runE2BCommand,
 } from "@/lib/e2b-runtime";
+import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,12 +28,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
 
-  const command = String(body.command || "").trim();
-  if (!command) {
-    return NextResponse.json({ error: "Command is required." }, { status: 400 });
-  }
-  if (command.length > 8_000) {
-    return NextResponse.json({ error: "Command is too long." }, { status: 400 });
+  let command = "";
+  try {
+    command = assertSafeE2BCommand(String(body.command || ""));
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    const blocked = code === "SANDBOX_COMMAND_BLOCKED";
+    if (blocked) {
+      await opsAlert("sandbox_command_blocked", { kind: "resource_abuse" });
+    }
+    return NextResponse.json(
+      {
+        error:
+          code === "SANDBOX_COMMAND_TOO_LONG"
+            ? "Command is too long."
+            : blocked
+              ? "That command is blocked for sandbox safety."
+              : "Command is required.",
+      },
+      { status: 400 },
+    );
   }
 
   const projectId = body.projectId?.trim() || "";
@@ -50,7 +66,7 @@ export async function POST(req: Request) {
   const limit = await consumeRateLimit({
     scope: "sandbox-exec",
     identity: user.id,
-    limit: 180,
+    limit: 60,
     windowMs: 5 * 60 * 1000,
   });
   if (!limit.allowed) {
@@ -79,8 +95,8 @@ export async function POST(req: Request) {
     const result = await runE2BCommand(sandbox, command);
     const response = NextResponse.json({
       ok: true,
-      stdout: String(result.stdout || "").slice(-200_000),
-      stderr: String(result.stderr || "").slice(-200_000),
+      stdout: String(result.stdout || "").slice(-100_000),
+      stderr: String(result.stderr || "").slice(-100_000),
       exitCode: result.exitCode,
       projectId,
       runtime: "e2b",
@@ -95,10 +111,13 @@ export async function POST(req: Request) {
     });
 
     return response;
-  } catch {
+  } catch (error) {
+    const kind = classifyOperationalError(error);
+    console.error("[sandbox/exec] command failed", kind);
+    await opsAlert("sandbox_command_failed", { kind });
     return NextResponse.json(
       {
-        error: "This project's preview sandbox expired. Open Preview to restore it, then run the command again.",
+        error: "This project's preview sandbox is unavailable. Open Preview to restore it, then run the command again.",
         projectId,
         runtime: "e2b",
       },
