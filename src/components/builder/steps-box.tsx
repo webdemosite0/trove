@@ -1,7 +1,7 @@
 "use client";
 
-import { ThinkingOrb } from "thinking-orbs";
-import { BorderBeam } from "border-beam";
+import { ThinkingOrb } from "@/components/ui/thinking-orbs-compat";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { FiCheck, FiAlertCircle } from "@/components/ui/icons";
 import type { PlanStep, Task } from "@/lib/builder";
 import { skillLabel } from "@/lib/skills";

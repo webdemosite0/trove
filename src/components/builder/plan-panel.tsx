@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BorderBeam } from "border-beam";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { FiFileText, FiDatabase, FiCheck, TbPalette } from "@/components/ui/icons";
 import type { BuildPlan } from "@/lib/builder";
 import { skillLabel } from "@/lib/skills";

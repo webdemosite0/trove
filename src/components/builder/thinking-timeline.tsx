@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ThinkingOrb } from "thinking-orbs";
+import { ThinkingOrb } from "@/components/ui/thinking-orbs-compat";
 import {
   FiCheck,
   FiFileText,

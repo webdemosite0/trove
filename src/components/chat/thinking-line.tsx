@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ThinkingOrb } from "thinking-orbs";
+import { ThinkingOrb } from "@/components/ui/thinking-orbs-compat";
 import { ProcessRow, WorkingTimer } from "@/components/builder/process-row";
 
 type Step = {
@@ -41,8 +41,7 @@ function orbForStep(s: Step | undefined): OrbState {
 }
 
 /**
- * Live thinking strip — process rows + ThinkingOrb (Libraries.dev).
- * Connector steps render as "Used GitHub Connector" with the service mark.
+ * Live thinking strip — process rows + ThinkingOrb.
  */
 export function ThinkingLine({ labels }: { labels?: string[] }) {
   const steps: Step[] = labels?.length
