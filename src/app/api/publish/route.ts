@@ -10,6 +10,7 @@ import {
 import type { ProjectFile } from "@/lib/builder";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
+import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -76,6 +77,16 @@ export async function POST(req: NextRequest) {
       html,
       files,
       projectId,
+    });
+
+    await trackEvent({
+      event: ANALYTICS_EVENTS.sitePublished,
+      userId: user.id,
+      path: "/websites",
+      properties: {
+        hasFiles: Boolean(files?.length),
+        hasHtml: Boolean(html),
+      },
     });
 
     return NextResponse.json(result);
