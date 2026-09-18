@@ -28,6 +28,8 @@ const HANDLED = new Set([
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
+  "invoice.payment_failed",
+  "charge.dispute.created",
 ]);
 
 export async function POST(req: Request) {
@@ -73,6 +75,15 @@ export async function POST(req: Request) {
 }
 
 async function handle(event: Stripe.Event) {
+  if (event.type === "invoice.payment_failed") {
+    await opsAlert("billing_payment_failed", { provider: "stripe" });
+    return;
+  }
+  if (event.type === "charge.dispute.created") {
+    await opsAlert("billing_dispute_created", { provider: "stripe" });
+    return;
+  }
+
   const sdk = stripe();
 
   let subscriptionId = "";
