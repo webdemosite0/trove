@@ -3,11 +3,10 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export type PreviewDestination = "chat" | "files" | "code";
+export type PreviewDestination = "chat" | "files" | "code" | "preview";
 
 /**
- * Simple Trove preview chrome — no editor-product mimicry.
- * Tabs + refresh + open + publish. The iframe is the child.
+ * Trove preview chrome — tabs switch Preview / Files / Code.
  */
 export function BrowserFrame({
   children,
@@ -17,6 +16,7 @@ export function BrowserFrame({
   publishControl,
   url,
   status,
+  activeTab = "preview",
   className,
 }: {
   url?: string | null;
@@ -27,6 +27,7 @@ export function BrowserFrame({
   publishControl?: ReactNode;
   pageTitle?: string;
   status?: "idle" | "working" | "ready" | "error";
+  activeTab?: "preview" | "files" | "code";
   className?: string;
 }) {
   const statusLabel =
@@ -47,6 +48,12 @@ export function BrowserFrame({
           ? "text-positive"
           : "text-ink-4";
 
+  const tabs = [
+    ["preview", "Preview"],
+    ["files", "Files"],
+    ["code", "Code"],
+  ] as const;
+
   return (
     <div
       className={cn(
@@ -56,35 +63,29 @@ export function BrowserFrame({
     >
       <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-rail/80 px-2 sm:px-3">
         <div className="flex items-center gap-0.5 rounded-[var(--r-control)] border border-line bg-canvas p-0.5">
-          {(
-            [
-              ["preview", "Preview"],
-              ["files", "Files"],
-              ["code", "Code"],
-            ] as const
-          ).map(([id, label], i) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => {
-                if (id === "preview") return;
-                onNavigate?.(id);
-              }}
-              className={cn(
-                "h-7 rounded-[calc(var(--r-control)-2px)] px-2.5 text-[12.5px] font-medium transition-colors",
-                i === 0
-                  ? "bg-raised text-ink shadow-[var(--sh-1)]"
-                  : "text-ink-3 hover:text-ink",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+          {tabs.map(([id, label]) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onNavigate?.(id)}
+                className={cn(
+                  "h-7 rounded-[calc(var(--r-control)-2px)] px-2.5 text-[12.5px] font-medium transition-colors",
+                  active
+                    ? "bg-raised text-ink shadow-[var(--sh-1)]"
+                    : "text-ink-3 hover:text-ink",
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="mx-2 hidden min-w-0 flex-1 items-center gap-2 sm:flex">
           <span className="truncate rounded-[var(--r-chip)] border border-line bg-sunk px-2.5 py-1 font-mono text-[11.5px] text-ink-3">
-            {url && url !== "about:blank" ? url : "Preview"}
+            {url && url !== "about:blank" ? url : activeTab === "files" ? "Files" : activeTab === "code" ? "Code" : "Preview"}
           </span>
           <span className={cn("shrink-0 text-[11px] font-medium", statusTone)}>
             {statusLabel}
@@ -113,20 +114,11 @@ export function BrowserFrame({
           >
             <ExternalIcon />
           </button>
-          <button
-            type="button"
-            onClick={() => onNavigate?.("chat")}
-            className="hidden h-8 items-center rounded-[var(--r-control)] border border-line px-2.5 text-[12.5px] font-medium text-ink-2 transition hover:bg-hover sm:inline-flex"
-          >
-            Chat
-          </button>
-          {publishControl ? (
-            <div className="ml-0.5">{publishControl}</div>
-          ) : null}
+          {publishControl ? <div className="ml-0.5">{publishControl}</div> : null}
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1 overflow-hidden bg-white">
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-white dark:bg-canvas">
         {children}
       </div>
     </div>
