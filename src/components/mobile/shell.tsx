@@ -27,7 +27,7 @@ import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";
 import { Drawer } from "@/components/mobile/drawer";
-import type { Balance } from "@/lib/credits";
+import type { Balance } from "@/lib/credits";\nimport { compactCredits } from "@/lib/credit-topups";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
 
@@ -124,7 +124,7 @@ export function MobileShell({
                 className="flex h-8 items-center gap-1.5 rounded-full border border-line/80 bg-raised/90 px-2.5 text-[10.5px] font-semibold tabular-nums text-ink-2 shadow-sm"
               >
                 <span className="text-accent">✦</span>
-                {balance.remaining > 999 ? `${Math.round(balance.remaining / 1000)}k` : balance.remaining}
+                {balance.unlimited ? "∞" : compactCredits(balance.remaining)}
               </Link>
             ) : null}
           </div>
