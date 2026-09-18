@@ -32,7 +32,7 @@ function resolveSiteUrl(): string {
 export const site = {
   name: "Trove",
   url: resolveSiteUrl(),
-  email: "official@troveai.site",
+  email: "contact@troveai.site",
   tagline: "Describe what you want. Trove builds it.",
   description:
     "Trove is an AI workspace that builds real things and keeps them. Generate a complete website from a sentence and keep editing it in chat, create your own AI agents, put a team of four on one task, and export documents to Word and spreadsheets to Excel. Every conversation is saved, so reopening it shows the same answer you left.",
