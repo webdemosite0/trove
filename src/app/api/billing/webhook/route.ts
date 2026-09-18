@@ -3,6 +3,11 @@ import type Stripe from "stripe";
 import { applySubscription, userIdForCustomer } from "@/lib/billing";
 import { planForPrice, stripe, stripeConfigured } from "@/lib/stripe";
 import { opsAlert } from "@/lib/ops-alert";
+import {
+  beginBillingWebhook,
+  completeBillingWebhook,
+  releaseBillingWebhook,
+} from "@/lib/billing-webhook-events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,12 +66,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true, ignored: event.type });
   }
 
+  const shouldProcess = await beginBillingWebhook({
+    provider: "stripe",
+    eventId: event.id,
+    eventType: event.type,
+  });
+  if (!shouldProcess) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   try {
     await handle(event);
+    await completeBillingWebhook("stripe", event.id);
   } catch (err) {
     // 500 so Stripe retries. A database blip should not silently cost someone
     // the plan they just paid for.
     console.error(`[billing] handling ${event.type} failed:`, err);
+    await releaseBillingWebhook("stripe", event.id);
     await opsAlert("billing_webhook_failed", { provider: "stripe", event: event.type });
     return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
