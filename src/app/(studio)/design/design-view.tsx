@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -34,9 +35,25 @@ interface Screen {
   error?: string;
 }
 
-export function DesignView({ recents = [] }: { recents?: Recent[] }) {
-  const [brief, setBrief] = useState<Brief | null>(null);
-  const [screens, setScreens] = useState<Screen[]>([]);
+export function DesignView({
+  recents = [],
+  restored = null,
+}: {
+  recents?: Recent[];
+  restored?: {
+    id: string;
+    brief: Brief;
+    screens: { name: string; html: string }[];
+  } | null;
+}) {
+  const router = useRouter();
+  const [brief, setBrief] = useState<Brief | null>(() => restored?.brief ?? null);
+  const [screens, setScreens] = useState<Screen[]>(() =>
+    (restored?.screens ?? []).map((screen) => ({
+      ...screen,
+      state: "done" as const,
+    })),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(0.75);
@@ -55,6 +72,7 @@ export function DesignView({ recents = [] }: { recents?: Recent[] }) {
     setCurrent(0);
     setScreens(b.screens.map((name) => ({ name, html: "", state: "waiting" })));
 
+    let savedId: string | null = null;
     for (const [i, name] of b.screens.entries()) {
       if (controller.signal.aborted) return;
       setScreens((s) => s.map((x, n) => (n === i ? { ...x, state: "drawing" } : x)));
@@ -69,6 +87,7 @@ export function DesignView({ recents = [] }: { recents?: Recent[] }) {
         });
         const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status}).`);
+        if (data?.id) savedId = String(data.id);
 
         setScreens((s) =>
           s.map((x, n) => (n === i ? { ...x, html: data.html, state: "done" } : x)),
@@ -84,7 +103,10 @@ export function DesignView({ recents = [] }: { recents?: Recent[] }) {
     }
 
     setBusy(false);
-  }, []);
+    if (savedId && !restored?.id) {
+      router.replace(`/design/${encodeURIComponent(savedId)}`);
+    }
+  }, [restored?.id, router]);
 
   const total = screens.length;
   const safeIndex = Math.min(current, Math.max(0, total - 1));
@@ -142,6 +164,10 @@ export function DesignView({ recents = [] }: { recents?: Recent[] }) {
 
   function reset() {
     abort.current?.abort();
+    if (restored?.id) {
+      router.push("/design");
+      return;
+    }
     setBrief(null);
     setScreens([]);
     setError(null);
