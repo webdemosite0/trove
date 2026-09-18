@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FiUsers,
+  FiActivity,
   FiGlobe,
   FiBell,
   FiPlus,
@@ -44,7 +45,27 @@ type SiteRow = {
   live: boolean;
 };
 
+type AnalyticsEventRow = {
+  event: string;
+  count: number;
+  uniqueUsers: number;
+};
+
+type AnalyticsDailyRow = {
+  day: string;
+  count: number;
+  uniqueUsers: number;
+};
+
+type AnalyticsSummary = {
+  days: number;
+  since: number;
+  events: AnalyticsEventRow[];
+  daily: AnalyticsDailyRow[];
+};
+
 const TABS = [
+  { id: "analytics" as const, label: "Launch", Icon: FiActivity },
   { id: "announce" as const, label: "Announcements", Icon: FiBell },
   { id: "users" as const, label: "Users", Icon: FiUsers },
   { id: "sites" as const, label: "Published sites", Icon: FiGlobe },
@@ -82,7 +103,7 @@ async function fileToDataUrl(file: File): Promise<string> {
 }
 
 export function AdminView({ email }: { email: string }) {
-  const [tab, setTab] = useState<"announce" | "users" | "sites">("announce");
+  const [tab, setTab] = useState<"analytics" | "announce" | "users" | "sites">("analytics");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -90,6 +111,7 @@ export function AdminView({ email }: { email: string }) {
   const [items, setItems] = useState<Announcement[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [sites, setSites] = useState<SiteRow[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -118,11 +140,22 @@ export function AdminView({ email }: { email: string }) {
     } catch { /* */ }
   }, []);
 
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/analytics?days=30", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (res.ok && Array.isArray(data?.events) && Array.isArray(data?.daily)) {
+        setAnalytics(data as AnalyticsSummary);
+      }
+    } catch { /* */ }
+  }, []);
+
   useEffect(() => { void loadAnn(); }, [loadAnn]);
   useEffect(() => {
+    if (tab === "analytics") void loadAnalytics();
     if (tab === "users") void loadUsers();
     if (tab === "sites") void loadSites();
-  }, [tab, loadUsers, loadSites]);
+  }, [tab, loadAnalytics, loadUsers, loadSites]);
 
   function resetForm() {
     setTitle("");
@@ -210,6 +243,25 @@ export function AdminView({ email }: { email: string }) {
   const activeCount = items.filter((i) => i.active).length;
   const liveSites = sites.filter((s) => s.live).length;
 
+  function metric(event: string) {
+    return analytics?.events.find((row) => row.event === event) ?? {
+      event,
+      count: 0,
+      uniqueUsers: 0,
+    };
+  }
+
+  const signupMetric = metric("signup_completed");
+  const firstPromptMetric = metric("first_prompt");
+  const builderMetric = metric("builder_project_created");
+  const checkoutStartMetric = metric("checkout_started");
+  const checkoutCreatedMetric = metric("checkout_created");
+  const checkoutFailedMetric = metric("checkout_failed");
+  const activationRate =
+    signupMetric.uniqueUsers > 0
+      ? Math.round((firstPromptMetric.uniqueUsers / signupMetric.uniqueUsers) * 100)
+      : 0;
+
   return (
     <div className="relative min-h-[calc(100dvh-3.5rem)]">
       <div
@@ -259,6 +311,130 @@ export function AdminView({ email }: { email: string }) {
 
         {msg ? (
           <div className="mb-4 rounded-[14px] border border-line bg-raised px-4 py-3 text-[13.5px] text-ink-2 shadow-sm">{msg}</div>
+        ) : null}
+
+        {tab === "analytics" ? (
+          <section className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <LaunchMetric
+                label="Signups"
+                value={signupMetric.uniqueUsers}
+                detail="Unique accounts created"
+              />
+              <LaunchMetric
+                label="Activated"
+                value={firstPromptMetric.uniqueUsers}
+                detail="Users who sent a first prompt"
+              />
+              <LaunchMetric
+                label="Activation rate"
+                value={`${activationRate}%`}
+                detail="First prompt ÷ signups"
+              />
+              <LaunchMetric
+                label="Builder users"
+                value={builderMetric.uniqueUsers}
+                detail="Created a website project"
+              />
+              <LaunchMetric
+                label="Checkout starts"
+                value={checkoutStartMetric.uniqueUsers}
+                detail="Unique users who began checkout"
+              />
+              <LaunchMetric
+                label="Checkout created"
+                value={checkoutCreatedMetric.uniqueUsers}
+                detail="Payment checkout successfully created"
+              />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
+              <div className="overflow-hidden rounded-[18px] border border-line bg-raised shadow-[0_16px_48px_-28px_rgba(15,23,42,0.22)]">
+                <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+                  <div>
+                    <h2 className="text-[15px] font-semibold text-ink">30-day funnel events</h2>
+                    <p className="text-[12px] text-ink-4">
+                      Content-free product analytics only
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void loadAnalytics()}
+                    className="rounded-full border border-line px-3 py-1.5 text-[11.5px] text-ink-2 hover:bg-hover"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-left text-[13px]">
+                    <thead>
+                      <tr className="border-b border-line bg-sunk/30 text-[11px] uppercase tracking-wide text-ink-4">
+                        <th className="px-5 py-3 font-semibold">Event</th>
+                        <th className="px-5 py-3 font-semibold">Events</th>
+                        <th className="px-5 py-3 font-semibold">Users</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(analytics?.events ?? []).map((row) => (
+                        <tr key={row.event} className="border-b border-line/50">
+                          <td className="px-5 py-3 font-medium text-ink">
+                            {row.event.replaceAll("_", " ")}
+                          </td>
+                          <td className="px-5 py-3 tabular-nums text-ink-3">{row.count}</td>
+                          <td className="px-5 py-3 tabular-nums text-ink-3">{row.uniqueUsers}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!analytics?.events?.length ? (
+                    <p className="px-5 py-10 text-center text-[13px] text-ink-4">
+                      No launch events recorded yet.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="rounded-[18px] border border-line bg-raised p-5 shadow-[0_16px_48px_-28px_rgba(15,23,42,0.22)]">
+                <h2 className="text-[15px] font-semibold text-ink">What needs attention</h2>
+                <div className="mt-4 space-y-3">
+                  <HealthLine
+                    label="Checkout failures"
+                    value={checkoutFailedMetric.count}
+                    ok={checkoutFailedMetric.count === 0}
+                  />
+                  <HealthLine
+                    label="Activation"
+                    value={`${activationRate}%`}
+                    ok={signupMetric.uniqueUsers === 0 || activationRate >= 25}
+                  />
+                  <HealthLine
+                    label="Builder adoption"
+                    value={builderMetric.uniqueUsers}
+                    ok={firstPromptMetric.uniqueUsers === 0 || builderMetric.uniqueUsers > 0}
+                  />
+                </div>
+
+                <div className="mt-5 border-t border-line pt-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+                    Recent activity
+                  </p>
+                  <div className="mt-2 space-y-1.5">
+                    {(analytics?.daily ?? []).slice(-7).reverse().map((row) => (
+                      <div key={row.day} className="flex items-center justify-between gap-3 text-[12.5px]">
+                        <span className="text-ink-4">{row.day}</span>
+                        <span className="tabular-nums text-ink-2">
+                          {row.uniqueUsers} users · {row.count} events
+                        </span>
+                      </div>
+                    ))}
+                    {!analytics?.daily?.length ? (
+                      <p className="text-[12.5px] text-ink-4">No activity yet.</p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         ) : null}
 
         {tab === "announce" ? (
@@ -434,6 +610,45 @@ function StatChip({ label, value, tone }: { label: string; value: number | strin
     <div className={cn("min-w-[92px] rounded-[14px] border border-line bg-gradient-to-br px-3.5 py-2.5 text-center shadow-sm", tones[tone])}>
       <p className="text-[18px] font-semibold tabular-nums text-ink">{value}</p>
       <p className="text-[10.5px] font-medium text-ink-4">{label}</p>
+    </div>
+  );
+}
+
+
+function LaunchMetric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: number | string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[16px] border border-line bg-raised p-4 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4">{label}</p>
+      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink">{value}</p>
+      <p className="mt-1 text-[12px] leading-5 text-ink-4">{detail}</p>
+    </div>
+  );
+}
+
+function HealthLine({
+  label,
+  value,
+  ok,
+}: {
+  label: string;
+  value: number | string;
+  ok: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[12px] bg-sunk/35 px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <span className={cn("size-2 rounded-full", ok ? "bg-positive" : "bg-caution")} />
+        <span className="text-[12.5px] text-ink-2">{label}</span>
+      </div>
+      <span className="text-[12.5px] font-semibold tabular-nums text-ink">{value}</span>
     </div>
   );
 }
