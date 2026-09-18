@@ -34,8 +34,6 @@ import { ThemeToggle } from "@/components/shell/theme";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/auth";
-import type { Balance } from "@/lib/credits";
-import { CreditMeter } from "@/components/shell/credit-meter";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Liquid } from "liquid-gooey";
 
@@ -251,12 +249,10 @@ function GooeyAddButton() {
 
 function RailBody({
   user,
-  balance,
   onNavigate,
   onCollapse,
 }: {
   user: User | null;
-  balance: Balance | null;
   onNavigate?: () => void;
   onCollapse?: () => void;
 }) {
@@ -319,8 +315,6 @@ function RailBody({
       </nav>
 
       <div className="space-y-2 border-t border-line p-2.5">
-        <CreditMeter balance={balance} />
-
         {user ? (
           <UserMenu user={user} onNavigate={onNavigate} />
         ) : (
@@ -367,10 +361,8 @@ function RailBody({
 
 export function Sidebar({
   user,
-  balance,
 }: {
   user: User | null;
-  balance: Balance | null;
   isAdmin?: boolean;
 }) {
   const { open, setOpen, collapsed, setCollapsed } = useNav();
@@ -433,7 +425,6 @@ export function Sidebar({
           <div className="flex h-full min-h-0 flex-col overflow-hidden">
             <RailBody
               user={user}
-              balance={balance}
               onCollapse={() => {
                 setPeek(false);
                 setCollapsed(true);
@@ -462,9 +453,6 @@ export function Sidebar({
               ))}
             </div>
 
-            <div className="mt-auto pt-2">
-              <CreditMeter balance={balance} collapsed />
-            </div>
           </div>
         )}
       </aside>
@@ -484,7 +472,7 @@ export function Sidebar({
             >
               <FiX size={17} className="text-ink" />
             </button>
-            <RailBody user={user} balance={balance} onNavigate={() => setOpen(false)} />
+            <RailBody user={user} onNavigate={() => setOpen(false)} />
           </div>
         </div>
       ) : null}
