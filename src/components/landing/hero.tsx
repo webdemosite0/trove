@@ -77,7 +77,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
       <div className="relative mx-auto max-w-[960px] text-center">
         <div className="lp-hero-in mb-3.5 inline-flex items-center rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-700 shadow-sm backdrop-blur-md sm:mb-5 sm:px-4 sm:text-[11px]">
-          AI THAT SHIP REAL FILES
+          AI THAT SHIPS REAL FILES
         </div>
 
         <h1
