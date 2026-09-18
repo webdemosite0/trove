@@ -7,10 +7,13 @@ import { FEATURES } from "@/lib/features";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
+const freePlan = PLANS.find((plan) => plan.id === "free")!;
+const proPlan = PLANS.find((plan) => plan.id === "pro")!;
+const teamPlan = PLANS.find((plan) => plan.id === "team")!;
+
 export const metadata: Metadata = {
   title: "Pricing",
-  description:
-    "Trove starts free with 200 credits a month, a 5-hour burst window, and every tool included. Pro is $24 for 5,000 credits. Team is $96 for 20,000.",
+  description: `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month, a 5-hour burst window, and every tool included. Pro is ${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team is ${teamPlan.price} for ${teamPlan.monthly.toLocaleString()}.`,
   alternates: { canonical: "/pricing" },
   openGraph: {
     type: "website",

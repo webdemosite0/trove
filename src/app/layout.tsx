@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Poppins } from "next/font/google";
 import Script from "next/script";
 import { site } from "@/lib/site";
+import { PLANS } from "@/lib/credits";
 import { THEME_SCRIPT } from "@/components/shell/theme";
 import "./globals.css";
 import "./landing-motion.css";
@@ -133,26 +134,12 @@ function StructuredData() {
           "AI image generation via Puter.js (no API keys)",
           "Reminders with browser notifications",
         ],
-        offers: [
-          {
-            "@type": "Offer",
-            name: "Free",
-            price: "0",
-            priceCurrency: "USD",
-          },
-          {
-            "@type": "Offer",
-            name: "Pro",
-            price: "24",
-            priceCurrency: "USD",
-          },
-          {
-            "@type": "Offer",
-            name: "Team",
-            price: "96",
-            priceCurrency: "USD",
-          },
-        ],
+        offers: PLANS.map((plan) => ({
+          "@type": "Offer",
+          name: plan.name,
+          price: String(plan.price),
+          priceCurrency: "USD",
+        })),
       },
     ],
   };

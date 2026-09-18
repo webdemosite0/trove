@@ -35,12 +35,12 @@ export const site = {
   email: "contact@troveai.site",
   tagline: "Describe what you want. Trove builds it.",
   description:
-    "Trove is an AI workspace that builds real things and keeps them. Generate a complete website from a sentence and keep editing it in chat, create your own AI agents, put a team of four on one task, and export documents to Word and spreadsheets to Excel. Every conversation is saved, so reopening it shows the same answer you left.",
-  searchTitle: "AI workspace that builds websites, docs and agents",
+    "Trove turns one prompt into finished work you can actually use — websites, documents, spreadsheets, decks, and code you can refine, export, publish, and keep.",
+  searchTitle: "Turn prompts into finished websites and files",
   metaDescription:
-    "An AI workspace that turns a sentence into finished work: websites, documents, spreadsheets, code and AI agents you can download and keep.",
+    "Turn one prompt into finished work you can use: websites, documents, spreadsheets, decks, and code you can refine, export, publish, and keep.",
   shortDescription:
-    "An AI workspace that generates websites, agents, documents and spreadsheets you can actually download.",
+    "Describe the work. Trove builds finished websites and files you can keep.",
   keywords: [
     "AI website builder",
     "AI agent builder",
