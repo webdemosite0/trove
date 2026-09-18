@@ -5,6 +5,7 @@ import { logOut } from "@/app/actions/auth";
 import { getProfile } from "@/app/actions/profile";
 import { Panel, Row } from "@/components/settings/panel";
 import { SignedOut } from "@/components/settings/signed-out";
+import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 
 export const metadata = { title: "Account" };
 
@@ -85,6 +86,13 @@ export default async function AccountSettingsPage() {
             <FiLogOut size={14} /> Log out
           </button>
         </form>
+      </Panel>
+
+      <Panel
+        title="Delete account"
+        description="Permanently remove your Trove account and saved workspace data."
+      >
+        <DeleteAccountForm />
       </Panel>
     </div>
   );
