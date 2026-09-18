@@ -2,7 +2,7 @@
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
-import { FiSearch, FiCheck, FiPlus, FiExternalLink } from "@/components/ui/icons";
+import { FiSearch, FiCheck, FiExternalLink } from "@/components/ui/icons";
 import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
 import { SERVICES } from "@/lib/services";
@@ -14,6 +14,24 @@ export interface ConnectedService {
   account: string;
   hint: string;
 }
+
+const FEATURED_BRANDS = [
+  "github",
+  "gmail",
+  "slack",
+  "discord",
+  "chatgpt",
+  "telegram",
+  "whatsapp",
+  "linkedin",
+  "twitter",
+  "meta",
+  "figma",
+] as const;
+
+const FEATURED_RANK = new Map<string, number>(
+  FEATURED_BRANDS.map((id, index) => [id, index]),
+);
 
 export function IntegrationsView({
   connected,
@@ -57,7 +75,12 @@ export function IntegrationsView({
         s.blurb.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q)
       );
-    }).slice(0, q ? 40 : 16);
+    })
+      .sort((a, b) =>
+        (FEATURED_RANK.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (FEATURED_RANK.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+      )
+      .slice(0, q ? 40 : 16);
   }, [query, byId]);
 
   function remove(id: string) {
