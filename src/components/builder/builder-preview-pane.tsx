@@ -23,6 +23,7 @@ export function BuilderPreviewPane({
   onRefresh,
   onNavigate,
   publishControl,
+  activeTab = "preview",
 }: {
   preview: string | null;
   files?: ProjectFile[];
@@ -32,6 +33,7 @@ export function BuilderPreviewPane({
   onNavigate?: (destination: PreviewDestination) => void;
   publishControl?: ReactNode;
   pageTitle?: string;
+  activeTab?: "preview" | "files" | "code";
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -112,8 +114,8 @@ export function BuilderPreviewPane({
       return;
     }
 
-    if (destination !== "chat") {
-      const indexMap: Record<Exclude<PreviewDestination, "chat">, number> = {
+    if (destination === "files" || destination === "code") {
+      const indexMap: Record<"files" | "code", number> = {
         files: 1,
         code: 2,
       };
@@ -159,6 +161,7 @@ export function BuilderPreviewPane({
       <BrowserFrame
         url={displayUrl}
         status={chromeStatus}
+        activeTab={activeTab}
         publishControl={realPublishControl}
         onNavigate={navigate}
         onOpen={useLive || preview ? openPreview : undefined}
