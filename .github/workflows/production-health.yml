@@ -1,0 +1,59 @@
+name: Production health
+
+on:
+  schedule:
+    # Run off the hour so this does not compete with typical top-of-hour cron traffic.
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic:
+    name: troveai.site synthetic check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TROVE_URL: https://troveai.site
+
+    steps:
+      - name: Check public homepage
+        run: |
+          curl --fail --silent --show-error --location             --connect-timeout 10 --max-time 25             "$TROVE_URL/" >/dev/null
+
+      - name: Check public status page
+        run: |
+          curl --fail --silent --show-error --location             --connect-timeout 10 --max-time 25             "$TROVE_URL/status" >/dev/null
+
+      - name: Check launch-critical health
+        run: |
+          curl --fail --silent --show-error --location             --connect-timeout 10 --max-time 25             "$TROVE_URL/api/health" > /tmp/trove-health.json
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const health = JSON.parse(fs.readFileSync("/tmp/trove-health.json", "utf8"));
+          const failures = [];
+
+          if (health.ok !== true) failures.push("health.ok is not true");
+          if (health.database?.reachable !== true) failures.push("database is unreachable");
+          if (health.database?.durable !== true) failures.push("database is not durable");
+
+          const providers = health.configured?.aiProviders;
+          if (!Array.isArray(providers) || providers.length === 0) {
+            failures.push("no AI provider is configured");
+          }
+
+          if (health.configured?.e2b !== true) {
+            failures.push("E2B live preview is not configured");
+          }
+
+          if (failures.length) {
+            console.error("Trove production health failed:");
+            for (const failure of failures) console.error(`- ${failure}`);
+            process.exit(1);
+          }
+
+          console.log("Trove production health is OK.");
+          NODE
