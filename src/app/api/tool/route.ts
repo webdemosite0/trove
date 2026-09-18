@@ -25,16 +25,17 @@ Format, exactly:
 - Start with "# " and the deck title on its own — title slide, no bullets.
 - Then one "## Slide N — Title" per content slide.
 - After the heading, optionally one line: Layout: title|bullets|split|photo|quote|section
-- Optionally one line: Image: short photo brief OR https URL (for photo/split layouts)
+- For most content slides add: Image: short concrete photo brief (what to show, not "illustration of…")
+  Examples: "crowded trading floor at night", "electric vehicle on mountain road", "founder sketching on glass whiteboard"
 - Then 3-5 bullets starting with "- " (skip bullets for title/section/quote when needed)
 - Then a one-line speaker note: Note: ...
 
-Layouts (mix them — do not use only bullets):
+Layouts (mix them — do not use only bullets; at least half of the deck should be split or photo):
 - title: opening / closing statement
 - section: chapter break, big title only
 - bullets: classic points (default)
-- split: text left + Image photo panel right
-- photo: full-bleed image with title bar
+- split: text left + Image photo panel right — always include Image:
+- photo: full-bleed image with title bar — always include Image:
 - quote: one strong line (+ optional attribution as second bullet)
 
 Typography is one system only (the product applies a single text style).
