@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const SIMPLE_ICON: Record<string, string> = {
   gmail: "gmail", "google-calendar": "googlecalendar", outlook: "microsoftoutlook", fastmail: "fastmail", calendly: "calendly",
-  slack: "slack", discord: "discord", "microsoft-teams": "microsoftteams", telegram: "telegram", twilio: "twilio", zoom: "zoom",
+  slack: "slack", discord: "discord", "microsoft-teams": "microsoftteams", telegram: "telegram", whatsapp: "whatsapp", twilio: "twilio", zoom: "zoom",
   github: "github", gitlab: "gitlab", bitbucket: "bitbucket", gitea: "gitea", linear: "linear", jira: "jira", asana: "asana",
   trello: "trello", clickup: "clickup", height: "height", shortcut: "shortcut", "google-drive": "googledrive", notion: "notion",
   dropbox: "dropbox", onedrive: "microsoftonedrive", confluence: "confluence", airtable: "airtable", box: "box", postgres: "postgresql",
@@ -12,10 +12,10 @@ const SIMPLE_ICON: Record<string, string> = {
   vercel: "vercel", netlify: "netlify", aws: "amazonwebservices", gcp: "googlecloud", azure: "microsoftazure", cloudflare: "cloudflare",
   docker: "docker", railway: "railway", fly: "flydotio", stripe: "stripe", paypal: "paypal", lemonsqueezy: "lemonsqueezy",
   paddle: "paddle", quickbooks: "quickbooks", salesforce: "salesforce", hubspot: "hubspot", pipedrive: "pipedrive", attio: "attio",
-  mailchimp: "mailchimp", sendgrid: "sendgrid", resend: "resend", customerio: "customerio", webflow: "webflow", zendesk: "zendesk",
+  mailchimp: "mailchimp", sendgrid: "sendgrid", resend: "resend", customerio: "customerio", webflow: "webflow", meta: "meta", twitter: "twitter", linkedin: "linkedin", zendesk: "zendesk",
   intercom: "intercom", freshdesk: "freshworks", crisp: "crisp", "google-analytics": "googleanalytics", posthog: "posthog",
   mixpanel: "mixpanel", amplitude: "amplitude", sentry: "sentry", datadog: "datadog", figma: "figma", framer: "framer", canva: "canva",
-  zapier: "zapier", make: "make", n8n: "n8n", ifttt: "ifttt",
+  chatgpt: "openai", zapier: "zapier", make: "make", n8n: "n8n", ifttt: "ifttt",
 };
 
 export function ServiceMark({
