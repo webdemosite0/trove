@@ -49,12 +49,10 @@ export default function SupportPage() {
             Account & security
           </Link>
           <a
-            href="/api/health"
-            target="_blank"
-            rel="noreferrer"
+            href="/status"
             className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
           >
-            System check
+            System status
           </a>
         </div>
       </div>

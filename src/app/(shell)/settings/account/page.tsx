@@ -89,6 +89,23 @@ export default async function AccountSettingsPage() {
       </Panel>
 
       <Panel
+        title="Your data"
+        description="Download a copy of the information and saved work tied to this account."
+      >
+        <p className="mb-3 text-[13px] leading-6 text-ink-3">
+          The export includes your saved conversations, site projects, agents, reminders,
+          usage history, and connection metadata. It excludes passwords, sessions, payment
+          credentials, API keys, and connected-app secrets.
+        </p>
+        <a
+          href="/api/account/export"
+          className="inline-flex rounded-[var(--r-control)] border border-line px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-hover"
+        >
+          Download JSON export
+        </a>
+      </Panel>
+
+      <Panel
         title="Delete account"
         description="Permanently remove your Trove account and saved workspace data."
       >
