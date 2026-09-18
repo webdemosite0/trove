@@ -161,6 +161,7 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
   // canonical save paths existed.
   for (const row of legacy) {
     const kind = safeKind(row.kind);
+    if (kind === "site" || kind === "agent") continue;
     const href = str(row.href);
     const title = str(row.title);
     const key = `legacy:${kind}:${href || title}`;
@@ -174,7 +175,21 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
       id: str(row.id),
       kind,
       title,
-      href: href || hrefFor(kind, str(row.id)),
+      href:
+        href ||
+        (kind === "docs"
+          ? "/documents"
+          : kind === "sheets"
+            ? "/spreadsheets"
+            : kind === "slides"
+              ? "/slides"
+              : kind === "design"
+                ? "/design"
+                : kind === "research"
+                  ? "/research"
+                  : kind === "team"
+                    ? "/team"
+                    : "/chat"),
       updatedAt: num(row.created_at),
       excerpt: "",
       hasVisualPreview: false,
