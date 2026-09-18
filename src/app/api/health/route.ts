@@ -40,6 +40,7 @@ export async function GET() {
     ),
     resolvedSiteUrl: site.url,
     e2b: Boolean(process.env.E2B_API_KEY?.trim()),
+    sandboxTerminal: process.env.TROVE_SANDBOX_TERMINAL_ENABLED?.trim() === "1",
     opsAlerts: Boolean(process.env.TROVE_ALERT_WEBHOOK_URL?.trim()),
     lemonWebhook: Boolean(process.env.LEMONSQUEEZY_WEBHOOK_SECRET?.trim()),
     stripeWebhook: Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim()),
