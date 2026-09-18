@@ -27,6 +27,14 @@ export function setNote(slides: Slide[], index: number, note: string): Slide[] {
   return replace(slides, index, { note });
 }
 
+export function setImage(slides: Slide[], index: number, image: string | undefined): Slide[] {
+  return replace(slides, index, { image });
+}
+
+export function setLayout(slides: Slide[], index: number, layout: Slide["layout"]): Slide[] {
+  return replace(slides, index, { layout });
+}
+
 export function setBullet(
   slides: Slide[],
   index: number,
