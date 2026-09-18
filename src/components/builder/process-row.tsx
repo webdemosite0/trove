@@ -1,6 +1,6 @@
 "use client";
 
-import { ThinkingOrb } from "thinking-orbs";
+import { ThinkingOrb } from "@/components/ui/thinking-orbs-compat";
 import { ServiceMark } from "@/components/integrations/service-mark";
 import { cn } from "@/lib/utils";
 
