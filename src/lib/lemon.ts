@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { PLANS, type BillingInterval } from "@/lib/credits";
+import { creditTopupPriceCents, validCreditTopup } from "@/lib/credit-topups";
 
 /**
  * Lemon Squeezy — preferred payment processor for Trove.
@@ -47,6 +48,10 @@ export function variantFor(
     if (yearly) return yearly;
   }
   return numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}`]);
+}
+
+export function creditVariant(): string | null {
+  return numericId(process.env.LEMONSQUEEZY_VARIANT_CREDITS);
 }
 
 /** All known variant env keys for a paid plan (monthly + yearly). */
@@ -210,6 +215,76 @@ export async function createLemonCheckout(opts: {
   return { url, id };
 }
 
+export async function createLemonCreditCheckout(opts: {
+  userId: string;
+  email: string;
+  name?: string;
+  credits: number;
+  successUrl: string;
+}): Promise<LemonCheckoutResult> {
+  const credits = validCreditTopup(opts.credits);
+  const priceCents = creditTopupPriceCents(opts.credits);
+  const variant = creditVariant();
+  if (credits == null || priceCents == null) {
+    throw new Error("Invalid credit amount.");
+  }
+  if (!variant) {
+    throw new Error("LEMONSQUEEZY_VARIANT_CREDITS is not configured.");
+  }
+
+  const store = storeId();
+  await assertStoreAndVariant(store, variant);
+
+  const payload = {
+    data: {
+      type: "checkouts",
+      attributes: {
+        custom_price: priceCents,
+        checkout_data: {
+          email: opts.email,
+          name: opts.name || undefined,
+          custom: {
+            user_id: opts.userId,
+            kind: "credits",
+            credits: String(credits),
+            price_cents: String(priceCents),
+          },
+        },
+        product_options: {
+          name: `${credits.toLocaleString()} Trove credits`,
+          description: "One-time Trove credit top-up. Purchased credits do not expire.",
+          redirect_url: opts.successUrl,
+          receipt_button_text: "Back to Trove",
+          receipt_thank_you_note: "Your credits are being added to your Trove account.",
+          enabled_variants: [Number(variant)],
+        },
+        checkout_options: {
+          embed: false,
+          media: false,
+          logo: true,
+          discount: false,
+        },
+      },
+      relationships: {
+        store: { data: { type: "stores", id: store } },
+        variant: { data: { type: "variants", id: variant } },
+      },
+    },
+  };
+
+  const json = await lemonFetch<{
+    data?: { id?: string; attributes?: { url?: string } };
+  }>("/checkouts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  const url = json.data?.attributes?.url;
+  const id = json.data?.id;
+  if (!url || !id) throw new Error("Lemon Squeezy did not return a checkout URL.");
+  return { url, id };
+}
+
 export async function createLemonCustomerPortal(customerId: string): Promise<string> {
   const json = await lemonFetch<{
     data?: { attributes?: { urls?: { customer_portal?: string } } };
@@ -237,7 +312,7 @@ export function verifyLemonSignature(rawBody: string, signature: string | null):
 export type LemonWebhookEvent = {
   meta?: {
     event_name?: string;
-    custom_data?: { user_id?: string; plan?: string; interval?: string };
+    custom_data?: { user_id?: string; plan?: string; interval?: string; kind?: string; credits?: string; price_cents?: string };
   };
   data?: {
     id?: string;
