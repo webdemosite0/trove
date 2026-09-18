@@ -54,9 +54,9 @@ export default async function ShellLayout({
         <Backdrop />
         <CommandPalette recents={recents} />
         <div className="flex min-h-screen">
-          <Sidebar user={user} balance={balance} isAdmin={isAdminEmail(user?.email)} />
+          <Sidebar user={user} isAdmin={isAdminEmail(user?.email)} />
           <main className="flex min-w-0 flex-1 flex-col">
-            <TopBar initial={user?.name?.slice(0, 1)} due={due} />
+            <TopBar initial={user?.name?.slice(0, 1)} due={due} balance={balance} />
             <AnnouncementBanner />
             <div className="app-page-in min-w-0 flex-1">{children}</div>
           </main>
