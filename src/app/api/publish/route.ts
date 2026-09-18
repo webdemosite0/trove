@@ -8,6 +8,8 @@ import {
   type PublishResult,
 } from "@/lib/publish";
 import type { ProjectFile } from "@/lib/builder";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -23,6 +25,22 @@ export async function POST(req: NextRequest) {
   const user = await currentUser();
   if (!user) {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  }
+
+  const limit = await consumeRateLimit({
+    scope: "publish",
+    identity: user.id,
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many publish requests. Try again shortly." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
   }
 
   try {
@@ -62,9 +80,25 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (e) {
-    const status = (e as { status?: number })?.status || 500;
+    const requestedStatus = Number((e as { status?: number })?.status || 500);
+    const status =
+      requestedStatus >= 400 && requestedStatus < 500 ? requestedStatus : 500;
     const message = e instanceof Error ? e.message : "Publish failed";
-    return NextResponse.json({ error: message }, { status });
+
+    if (status >= 500) {
+      const kind = classifyOperationalError(e);
+      console.error("[publish] failed", kind, message);
+      await opsAlert("publish_failed", { kind });
+      return NextResponse.json(
+        { error: "Publish could not finish. Please try again shortly." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: message.slice(0, 240) || "Publish request could not be completed." },
+      { status },
+    );
   }
 }
 
