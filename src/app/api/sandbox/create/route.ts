@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const limit = await consumeRateLimit({
     scope: "sandbox-create",
     identity: user.id,
-    limit: 60,
+    limit: 30,
     windowMs: 10 * 60 * 1000,
   });
   if (!limit.allowed) {

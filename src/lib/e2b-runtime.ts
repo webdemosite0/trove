@@ -10,6 +10,10 @@ const SANDBOX_TIMEOUT_MS = 30 * 60 * 1000;
 const MAX_FILES = 250;
 const MAX_FILE_BYTES = 750_000;
 const MAX_PROJECT_BYTES = 10_000_000;
+const TERMINAL_TIMEOUT_MS = 45_000;
+const MAX_TERMINAL_COMMAND_CHARS = 4_000;
+const BLOCKED_TERMINAL_COMMAND =
+  /\b(mkfs|shutdown|reboot|poweroff|halt|masscan|nmap|xmrig|cpuminer|minerd)\b|:\(\)\s*\{.*:\|.*&.*\}|rm\s+-[a-z]*r[a-z]*f[a-z]*\s+\/(?:\s|$)|--no-preserve-root|dd\s+.*if=\/dev\/(zero|random|urandom)|while\s+(true|:)\s*;/i;
 const PREVIEW_RUNTIME_VERSION = "vite-e2b-host-v2";
 const PREVIEW_RUNTIME_MARKER = `${PROJECT_ROOT}/.trove-preview-runtime`;
 const TROVE_VITE_CONFIG = `${PROJECT_ROOT}/.trove-vite.config.mjs`;
@@ -292,14 +296,25 @@ export async function syncE2BProject(sandbox: Sandbox, projectFiles: ProjectFile
   };
 }
 
+export function assertSafeE2BCommand(command: string) {
+  const value = String(command || "").trim();
+  if (!value) throw new Error("SANDBOX_COMMAND_EMPTY");
+  if (value.length > MAX_TERMINAL_COMMAND_CHARS) {
+    throw new Error("SANDBOX_COMMAND_TOO_LONG");
+  }
+  if (BLOCKED_TERMINAL_COMMAND.test(value)) {
+    throw new Error("SANDBOX_COMMAND_BLOCKED");
+  }
+  return value;
+}
+
 export async function runE2BCommand(sandbox: Sandbox, command: string) {
-  const value = command.trim();
-  if (!value) return { stdout: "", stderr: "", exitCode: 0 };
+  const value = assertSafeE2BCommand(command);
 
   try {
     return await sandbox.commands.run(value, {
       cwd: PROJECT_ROOT,
-      timeoutMs: 120_000,
+      timeoutMs: TERMINAL_TIMEOUT_MS,
     });
   } catch (error) {
     if (
@@ -331,4 +346,6 @@ export const e2bRuntimeConfig = {
   projectRoot: PROJECT_ROOT,
   previewPort: PREVIEW_PORT,
   timeoutMs: SANDBOX_TIMEOUT_MS,
+  terminalTimeoutMs: TERMINAL_TIMEOUT_MS,
+  terminalMaxCommandChars: MAX_TERMINAL_COMMAND_CHARS,
 };
