@@ -1,6 +1,6 @@
 /**
- * Soft lavender workspace ground — cool white → lilac wash, corner blooms.
- * Grid lines removed for a cleaner surface.
+ * Workspace ground — light lavender wash or deep blue-black night sky.
+ * No grid lines. Fixed so it stays put while pages scroll.
  */
 export function Backdrop() {
   return (
@@ -37,22 +37,30 @@ export function Backdrop() {
         />
       </div>
 
-      {/* Dark theme */}
+      {/* Dark theme — richer depth, soft blue/violet atmosphere */}
       <div className="absolute inset-0 nx-bg-dark">
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(circle 40rem at 50% -8rem, var(--orb-a), transparent 70%)," +
-              "radial-gradient(circle 28rem at 12% 12%, var(--orb-b), transparent 70%)," +
-              "radial-gradient(circle 26rem at 88% 4%, var(--orb-c), transparent 70%)," +
-              "linear-gradient(180deg, var(--grad-sky) 0%, transparent 42%)",
+              "linear-gradient(180deg, #0a0a12 0%, #09090f 40%, #07070c 100%)",
           }}
         />
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(to bottom, transparent 50%, var(--floor) 100%)",
+            background:
+              "radial-gradient(ellipse 70% 50% at 50% -10%, rgba(59,130,246,0.22), transparent 60%)," +
+              "radial-gradient(ellipse 45% 40% at 12% 20%, rgba(99,102,241,0.14), transparent 55%)," +
+              "radial-gradient(ellipse 40% 35% at 88% 15%, rgba(56,189,248,0.10), transparent 55%)," +
+              "radial-gradient(ellipse 50% 40% at 70% 90%, rgba(139,92,246,0.08), transparent 60%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 45% at 50% 100%, rgba(0,0,0,0.45), transparent 55%)",
           }}
         />
       </div>
