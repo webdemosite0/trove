@@ -1,22 +1,43 @@
-/* Sidebar — near-white icons & labels when the app is in dark mode */
+/* Sidebar — dark mode hierarchy */
 :root:not([data-theme="light"]) .nx-sidebar,
 :root[data-theme="dark"] .nx-sidebar {
-  color: #f4f4f4;
+  color: #f5f5f7;
+  background: color-mix(in oklab, var(--color-rail) 94%, #000 6%);
+  border-color: var(--color-line);
 }
 
 :root:not([data-theme="light"]) .nx-sidebar a,
 :root:not([data-theme="light"]) .nx-sidebar button,
 :root[data-theme="dark"] .nx-sidebar a,
 :root[data-theme="dark"] .nx-sidebar button {
-  color: #f4f4f4;
+  color: #c8c8d0;
+}
+
+:root:not([data-theme="light"]) .nx-sidebar a:hover,
+:root:not([data-theme="light"]) .nx-sidebar button:hover,
+:root[data-theme="dark"] .nx-sidebar a:hover,
+:root[data-theme="dark"] .nx-sidebar button:hover {
+  color: #f5f5f7;
+  background: var(--color-hover);
 }
 
 :root:not([data-theme="light"]) .nx-sidebar .ico,
 :root:not([data-theme="light"]) .nx-sidebar svg,
 :root[data-theme="dark"] .nx-sidebar .ico,
 :root[data-theme="dark"] .nx-sidebar svg {
-  color: #f4f4f4;
+  color: #a8a8b3;
   stroke: currentColor;
+}
+
+:root:not([data-theme="light"]) .nx-sidebar a:hover .ico,
+:root:not([data-theme="light"]) .nx-sidebar a:hover svg,
+:root:not([data-theme="light"]) .nx-sidebar button:hover .ico,
+:root:not([data-theme="light"]) .nx-sidebar button:hover svg,
+:root[data-theme="dark"] .nx-sidebar a:hover .ico,
+:root[data-theme="dark"] .nx-sidebar a:hover svg,
+:root[data-theme="dark"] .nx-sidebar button:hover .ico,
+:root[data-theme="dark"] .nx-sidebar button:hover svg {
+  color: #e8e8ed;
 }
 
 /* Active row keeps accent */
@@ -27,4 +48,9 @@
 :root[data-theme="dark"] .nx-sidebar [aria-current="page"] .ico,
 :root[data-theme="dark"] .nx-sidebar [aria-current="page"] span {
   color: var(--color-accent);
+}
+
+:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"],
+:root[data-theme="dark"] .nx-sidebar [aria-current="page"] {
+  background: color-mix(in oklab, var(--color-accent-soft) 70%, var(--color-hover));
 }
