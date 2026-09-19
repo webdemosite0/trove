@@ -11,7 +11,6 @@ export async function getInstructions(userId?: string): Promise<string> {
     const row = await one(`SELECT instructions FROM users WHERE id = ?`, [user.id]);
     return row ? str(row.instructions) : "";
   } catch {
-    // Column may not exist until migration runs on next boot.
     return "";
   }
 }
@@ -33,7 +32,6 @@ export async function setInstructions(text: string): Promise<{ ok: true } | { er
   }
 }
 
-/** Block appended to system prompts so the model follows the user permanently. */
 export async function instructionsBlock(): Promise<string> {
   const text = (await getInstructions()).trim();
   if (!text) return "";
@@ -44,21 +42,24 @@ export async function instructionsBlock(): Promise<string> {
   );
 }
 
-/** Connected apps the model is allowed to mention and request actions for. */
+/** Connected apps the model is allowed to use with live server-fetched data. */
 export async function connectedToolsBlock(): Promise<string> {
   const user = await currentUser();
   if (!user) return "";
   const list = await listConnections();
   if (!list.length) {
     return (
-      "\n\nCONNECTED APPS: none yet. If the user asks to use GitHub, Figma, Vercel, etc., " +
-      "tell them to connect the app under Integrations first."
+      "\n\nCONNECTED APPS: none yet. If the user asks to use GitHub, Slack, Notion, etc., " +
+      "tell them to connect the app under Integrations first — do not pretend you used it."
     );
   }
   const names = list.map((c) => c.service).join(", ");
   return (
-    `\n\nCONNECTED APPS (user authorized these — you may use them when they @mention or ask): ${names}.\n` +
-    `When they write @github or ask to list repos / create a repo, the server can call GitHub with their token.\n` +
-    `For other apps, describe what you would do and point them to the matching workspace (Websites deploy, etc.) if a full API action is not available yet.\n`
+    `\n\nCONNECTED APPS (authorized — use LIVE DATA from the system context when present): ${names}.\n` +
+    `When live data is supplied below (GitHub repos, Slack messages, …), answer from that data. ` +
+    `Never invent channel messages, repos, or files. Never say you cannot use a connected app ` +
+    `when it is listed here — if data is missing, say what scope or reconnect step is needed.\n` +
+    `Slack: bot token (xoxb-) can list channels and read recent messages; webhook-only can post but not read.\n` +
+    `GitHub: list repos / profile when the server injects them.\n`
   );
 }
