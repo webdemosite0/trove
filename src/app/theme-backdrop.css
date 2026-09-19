@@ -1,7 +1,8 @@
 /*
- * Product photo background (lavender grid + soft blooms).
- * Static only — no animated layers (avoids GPU banding / seams).
+ * Theme backdrop + dark surface polish.
+ * Static only — no animated layers.
  */
+
 .nx-photo-bg {
   position: absolute;
   inset: 0;
@@ -17,18 +18,9 @@
   backface-visibility: hidden;
 }
 
-/* Fine grid like the photo */
+/* Grid removed — clean wash only */
 .nx-photo-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(120, 130, 220, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(120, 130, 220, 0.06) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse 92% 75% at 50% 35%, #000 10%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 92% 75% at 50% 35%, #000 10%, transparent 80%);
-  pointer-events: none;
+  content: none;
 }
 
 /* Theme switch — opacity (no display flash) */
@@ -72,7 +64,7 @@
   }
 }
 
-/* Match page fill to photo */
+/* Match page fill to photo in light */
 :root[data-theme="light"] {
   --color-canvas: #f4f2ff;
 }
@@ -80,4 +72,91 @@
   :root:not([data-theme="dark"]) {
     --color-canvas: #f4f2ff;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark mode surface polish                                           */
+/* Stronger hierarchy, clearer borders, readable secondary text.      */
+/* ------------------------------------------------------------------ */
+
+:root,
+:root[data-theme="dark"] {
+  --color-canvas: #09090f;
+  --color-rail: #0c0c14;
+  --color-sunk: #111118;
+  --color-raised: #16161f;
+  --color-hover: #1e1e2a;
+  --color-ink: #f5f5f7;
+  --color-ink-2: #e8e8ed;
+  --color-ink-3: #a8a8b3;
+  --color-ink-4: #7e7e8a;
+  --color-line: #2a2a36;
+  --color-line-strong: #3a3a4a;
+  --color-accent: #6bb3ff;
+  --color-accent-soft: #0f1c33;
+  --color-violet: #8ec5ff;
+  --scrollbar: #2a2a36;
+  --scrollbar-hover: #3a3a4a;
+  --chip-hover-line: #45455a;
+  --hairline: rgb(180 200 255 / 0.16);
+  --bezel: rgb(180 200 255 / 0.06);
+  --focus-ring: rgb(107 179 255 / 0.28);
+  --focus-line: rgb(107 179 255 / 0.85);
+  --elev: 0 12px 40px -12px rgb(0 0 0 / 0.65);
+  --elev-lift: 0 20px 56px -16px rgb(0 0 0 / 0.75);
+  --sh-1: 0 1px 2px rgb(0 0 0 / 0.35);
+  --sh-2: 0 2px 8px rgb(0 0 0 / 0.28), 0 12px 32px -12px rgb(0 0 0 / 0.4);
+  --sh-3: 0 4px 12px rgb(0 0 0 / 0.3), 0 24px 48px -16px rgb(0 0 0 / 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: #09090f;
+    --color-rail: #0c0c14;
+    --color-sunk: #111118;
+    --color-raised: #16161f;
+    --color-hover: #1e1e2a;
+    --color-ink: #f5f5f7;
+    --color-ink-2: #e8e8ed;
+    --color-ink-3: #a8a8b3;
+    --color-ink-4: #7e7e8a;
+    --color-line: #2a2a36;
+    --color-line-strong: #3a3a4a;
+    --color-accent: #6bb3ff;
+    --color-accent-soft: #0f1c33;
+    --color-violet: #8ec5ff;
+    --scrollbar: #2a2a36;
+    --scrollbar-hover: #3a3a4a;
+    --chip-hover-line: #45455a;
+    --hairline: rgb(180 200 255 / 0.16);
+    --bezel: rgb(180 200 255 / 0.06);
+    --focus-ring: rgb(107 179 255 / 0.28);
+    --focus-line: rgb(107 179 255 / 0.85);
+  }
+}
+
+/* Panels and cards sit more clearly on dark canvas */
+:root[data-theme="dark"] .panel,
+:root:not([data-theme="light"]) .panel {
+  background: color-mix(in oklab, var(--color-raised) 92%, var(--color-accent) 8%);
+  border-color: var(--color-line);
+  box-shadow: var(--sh-1);
+}
+
+:root[data-theme="dark"] .composer,
+:root:not([data-theme="light"]) .composer {
+  background: color-mix(in oklab, var(--color-raised) 88%, #ffffff 4%);
+  border-color: var(--color-line-strong);
+}
+
+:root[data-theme="dark"] .chip,
+:root:not([data-theme="light"]) .chip {
+  border-color: var(--color-line-strong);
+  background: color-mix(in oklab, var(--color-sunk) 80%, transparent);
+}
+
+:root[data-theme="dark"] .chip:hover,
+:root:not([data-theme="light"]) .chip:hover {
+  border-color: var(--chip-hover-line);
+  background: var(--color-hover);
 }
