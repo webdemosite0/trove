@@ -12,6 +12,12 @@ import {
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import { isChatModelId, type ChatModelId } from "@/lib/chat-models";
 import { listConnections, secretFor } from "@/lib/connections";
+import {
+  isSlackToken,
+  recentSlackMessages,
+  listSlackChannels,
+  formatSlackMessagesForModel,
+} from "@/lib/slack";
 import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
@@ -25,12 +31,14 @@ Keep answers tight. Prefer code and facts over filler. Never sycophantic.
 When ambiguous in a way that changes the answer, ask one clarifying question.
 Use fenced code blocks for code. Do not invent file contents or command output.
 
-CONNECTORS
-Users may mention tools with @github, @vercel, @slack, etc. Those appear as chips in the UI.
-When the user tags a connector, use LIVE DATA in the system context if provided — never invent repos or files.
-- @github — list repos from their token when data is supplied; deploy via Website builder Deploy to GitHub.
-- @vercel — deploy static sites from Website builder.
-- Token connectors are under Integrations.
+CONNECTORS / INTEGRATIONS
+Users connect apps under Integrations (GitHub, Slack, Notion, …). When an app is listed as CONNECTED, you MAY use it.
+When LIVE DATA appears in this system context (Slack messages, GitHub repos, …), treat it as ground truth and answer from it.
+Never invent channel messages, repos, files, or API results.
+Never say you "cannot use the integration directly" if that app is connected — if live data is missing, say exactly what is needed (e.g. bot token with channels:history, invite the bot to the channel).
+- Slack — with a bot token, the server can list channels and read recent messages; with webhook-only, post only.
+- GitHub — list repos / profile when the server injects them; deploy via Website builder Deploy to GitHub.
+- @mentions (@slack, @github) request that connector; same live-data rules apply.
 Do not claim you executed a deploy unless they used Deploy in the builder.`;
 
 const SYSTEM_FAST = `You are Trove. Answer briefly and naturally. No tools, no search, no long preambles.`;
@@ -183,11 +191,11 @@ async function handle(req: NextRequest) {
     try {
       const tok = await secretFor("github");
       if (tok && !tok.trim().startsWith("{")) {
-        const res = await fetch("https://api.github.com/user/repos?per_page=15&sort=updated", {
+        const res = await fetch("https://api.github.com/user/repos?per_page=20&sort=updated", {
           headers: {
-            Authorization: `Bearer ${tok.trim()}`,
+            Authorization: `Bearer ${tok}`,
             Accept: "application/vnd.github+json",
-            "User-Agent": "Trove",
+            "User-Agent": "trove",
           },
         });
         if (res.ok) {
@@ -221,6 +229,54 @@ async function handle(req: NextRequest) {
       );
       liveToolContext =
         "\n\nGitHub could not be reached. Ask the user to reconnect GitHub under Integrations.";
+    }
+  }
+
+  // Slack — read recent channel messages when the user asks.
+  if (!liveToolContext && /@slack\b|\bslack\b/i.test(lastUser)) {
+    try {
+      const tok = await secretFor("slack");
+      if (!tok) {
+        liveToolContext =
+          "\n\nSlack is not connected. Tell the user to open Integrations and connect Slack with a Bot User OAuth Token (xoxb-) that has channels:history and channels:read, then invite the bot to the channel.";
+      } else if (!isSlackToken(tok)) {
+        liveToolContext =
+          "\n\nSlack is connected as an incoming webhook only (send-only). It cannot read channel messages. Tell the user to reconnect under Integrations with a Bot User OAuth Token (xoxb-) and scopes channels:history, channels:read (plus groups:* for private channels), then /invite the bot into the channel.";
+      } else {
+        const channelMatch =
+          lastUser.match(/#([a-z0-9_-]+)/i) ||
+          lastUser.match(/\bchannel\s+#?([a-z0-9_-]+)/i) ||
+          lastUser.match(/\bin\s+#([a-z0-9_-]+)/i);
+        let channel = (channelMatch?.[1] ?? "").toLowerCase();
+        if (["the", "a", "an", "my", "our", "this", "that", "channel"].includes(channel)) {
+          channel = "";
+        }
+        if (!channel) {
+          const channels = await listSlackChannels(tok, 25);
+          if (channels.length) {
+            liveToolContext =
+              "\n\nLIVE SLACK DATA — channels available:\n" +
+              channels.map((c) => `- #${c.name}${c.isPrivate ? " (private)" : ""}`).join("\n") +
+              "\nThe user did not name a channel. Summarize the list and ask which channel to read.";
+          } else {
+            liveToolContext =
+              "\n\nSlack token works but no channels were returned. The bot may need to be invited to channels.";
+          }
+        } else {
+          const result = await recentSlackMessages(tok, channel, 20);
+          liveToolContext =
+            "\n\n" + formatSlackMessagesForModel(result.channelName, result.messages);
+        }
+      }
+    } catch (e) {
+      console.error(
+        "[chat/slack] live data failed",
+        e instanceof Error ? e.message : String(e),
+      );
+      liveToolContext =
+        "\n\nSlack could not be read: " +
+        (e instanceof Error ? e.message : "unknown error") +
+        ". Tell the user the exact fix (scopes, invite bot, reconnect).";
     }
   }
 
