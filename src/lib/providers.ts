@@ -3,29 +3,18 @@ import "server-only";
 /**
  * How each service actually authenticates, and how to prove a credential works.
  *
- * The old integrations page had one "Connect" button for all 78 services and
- * connected to none of them. Services differ fundamentally:
- *
- *   token    — the provider issues a personal token you paste. Works
- *              immediately, no app registration. GitHub, Slack, Notion…
- *   webhook  — you paste a URL that accepts posts. Slack incoming webhooks.
- *   oauth    — needs a client id and secret registered with the provider,
- *              which only the account owner can create. Gmail, Drive, Figma…
- *
- * Only the first two can be made to work from inside this app. The third is
- * marked honestly rather than given a button that pretends.
+ *   token    — personal/bot token you paste (GitHub, Slack bot, Notion…)
+ *   webhook  — URL that accepts posts (legacy Slack incoming webhooks)
+ *   oauth    — needs a client id/secret registered with the provider
  */
 
 export type AuthKind = "token" | "webhook" | "oauth";
 
 export interface Provider {
   kind: AuthKind;
-  /** What to ask for, in the user's words. */
   label: string;
-  /** Where the user gets it. */
   help: string;
   docs?: string;
-  /** Proves the credential works and names the account it belongs to. */
   verify?: (secret: string) => Promise<{ ok: boolean; account?: string; error?: string }>;
 }
 
@@ -66,22 +55,48 @@ export const PROVIDERS: Record<string, Provider> = {
   },
 
   slack: {
-    kind: "webhook",
-    label: "Incoming webhook URL",
-    help: "Slack → your app → Incoming Webhooks → Add New Webhook to Workspace.",
-    docs: "https://api.slack.com/messaging/webhooks",
+    kind: "token",
+    label: "Bot token (xoxb-) or incoming webhook URL",
+    help:
+      "Preferred: Slack app → OAuth & Permissions → Bot User OAuth Token (xoxb-…) with channels:history, channels:read, groups:history, chat:write. " +
+      "Or: Incoming Webhooks → webhook URL (post only, cannot read messages).",
+    docs: "https://api.slack.com/authentication/token-types",
     async verify(secret) {
-      if (!/^https:\/\/hooks\.slack\.com\//.test(secret)) {
-        return { ok: false, error: "That does not look like a Slack webhook URL." };
+      const s = secret.trim();
+      if (/^xox[bpoa]-/i.test(s)) {
+        const res = await fetch("https://slack.com/api/auth.test", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${s}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        });
+        const data = await json(res);
+        if (!data?.ok) {
+          return {
+            ok: false,
+            error: data?.error
+              ? `Slack rejected that token (${data.error}).`
+              : "Slack rejected that token.",
+          };
+        }
+        const team = data.team ? String(data.team) : "workspace";
+        const user = data.user ? String(data.user) : "";
+        return { ok: true, account: user ? `${team} · ${user}` : team };
       }
-      // Slack answers invalid_payload for a well-formed URL with a bad body,
-      // which proves the endpoint exists without posting a message to anyone.
-      const res = await fetch(secret, { method: "POST", body: "" });
-      const body = await res.text().catch(() => "");
-      if (res.status === 404 || /no_service|no_team/i.test(body)) {
-        return { ok: false, error: "Slack does not recognise that webhook." };
+      if (/^https:\/\/hooks\.slack\.com\//.test(s)) {
+        const res = await fetch(s, { method: "POST", body: "" });
+        const body = await res.text().catch(() => "");
+        if (res.status === 404 || /no_service|no_team/i.test(body)) {
+          return { ok: false, error: "Slack does not recognise that webhook." };
+        }
+        return { ok: true, account: "workspace webhook (send-only)" };
       }
-      return { ok: true, account: "workspace webhook" };
+      return {
+        ok: false,
+        error:
+          "Paste a Slack bot token (xoxb-…) to read channels, or an incoming webhook URL to post only.",
+      };
     },
   },
 
@@ -118,77 +133,20 @@ export const PROVIDERS: Record<string, Provider> = {
       if (!res.ok || data?.errors) {
         return { ok: false, error: "Linear rejected that key." };
       }
-      return { ok: true, account: data?.data?.viewer?.name ?? "connected" };
-    },
-  },
-
-  resend: {
-    kind: "token",
-    label: "API key",
-    help: "Resend → API Keys → Create API Key. This is how Trove sends real email.",
-    docs: "https://resend.com/api-keys",
-    async verify(secret) {
-      const res = await fetch("https://api.resend.com/domains", {
-        headers: { Authorization: `Bearer ${secret}` },
-      });
-      if (res.status === 401) return { ok: false, error: "Resend rejected that key." };
-      if (!res.ok) return { ok: false, error: `Resend returned ${res.status}.` };
-      return { ok: true, account: "connected" };
-    },
-  },
-
-  vercel: {
-    kind: "token",
-    label: "Access token",
-    help: "Vercel → Account Settings → Tokens.",
-    docs: "https://vercel.com/account/tokens",
-    async verify(secret) {
-      const res = await fetch("https://api.vercel.com/v2/user", {
-        headers: { Authorization: `Bearer ${secret}` },
-      });
-      if (!res.ok) return { ok: false, error: `Vercel returned ${res.status}.` };
-      const me = await json(res);
-      return { ok: true, account: me?.user?.username ?? "connected" };
-    },
-  },
-
-  airtable: {
-    kind: "token",
-    label: "Personal access token",
-    help: "Airtable → Developer hub → Personal access tokens.",
-    docs: "https://airtable.com/create/tokens",
-    async verify(secret) {
-      const res = await fetch("https://api.airtable.com/v0/meta/whoami", {
-        headers: { Authorization: `Bearer ${secret}` },
-      });
-      if (!res.ok) return { ok: false, error: `Airtable returned ${res.status}.` };
-      return { ok: true, account: "connected" };
-    },
-  },
-
-  telegram: {
-    kind: "token",
-    label: "Bot token",
-    help: "Message @BotFather on Telegram and create a bot.",
-    docs: "https://core.telegram.org/bots#botfather",
-    async verify(secret) {
-      const res = await fetch(`https://api.telegram.org/bot${secret}/getMe`);
-      const data = await json(res);
-      if (!data?.ok) return { ok: false, error: "Telegram rejected that bot token." };
-      return { ok: true, account: `@${data.result?.username ?? "bot"}` };
+      return {
+        ok: true,
+        account: data?.data?.viewer?.email ?? data?.data?.viewer?.name ?? "connected",
+      };
     },
   },
 };
 
-/** Everything else needs an OAuth app the account owner must register. */
-export function providerFor(serviceId: string): Provider {
+export function providerFor(service: string): Provider {
   return (
-    PROVIDERS[serviceId] ?? {
+    PROVIDERS[service] ?? {
       kind: "oauth",
       label: "OAuth",
-      help: "This service needs an OAuth app registered with the provider, using credentials only its account owner can create.",
+      help: "This service needs an OAuth app registered with the provider.",
     }
   );
 }
-
-export const CONNECTABLE = Object.keys(PROVIDERS);
