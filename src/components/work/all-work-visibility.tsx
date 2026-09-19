@@ -1,20 +1,9 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-
-export function AllWorkVisibility({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
-  // Full-screen workspaces: no library strip under the editor.
-  if (
-    pathname === "/projects" ||
-    pathname.startsWith("/projects/") ||
-    pathname === "/websites" ||
-    pathname.startsWith("/websites/") ||
-    pathname.startsWith("/project/")
-  ) {
-    return null;
-  }
-
-  return <>{children}</>;
+/**
+ * All work library footer is retired from app pages.
+ * Kept as a no-op so any remaining import still compiles.
+ */
+export function AllWorkVisibility(_props: { children: React.ReactNode }) {
+  return null;
 }
