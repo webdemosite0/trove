@@ -286,15 +286,8 @@ export async function POST(req: NextRequest) {
 
         const raw = await generateText({
           onUsage: (u) => account && spend(account.userId, "site", u.totalTokens),
-          onAttempt: ({ model, status, pass }) =>
-            send({
-              t: "log",
-              text:
-                status === 0
-                  ? `${model} timed out (pass ${pass}) — trying the next model`
-                  : `${model} returned ${status} (pass ${pass}) — trying the next model`,
-              level: "warn",
-            }),
+          // Model fallback stays server-side only (console.warn in gemini.ts).
+          // Do not stream attempt noise into the builder UI.
           turns: [{ role: "user", text: prompt }],
           system,
           temperature: 0.65,
