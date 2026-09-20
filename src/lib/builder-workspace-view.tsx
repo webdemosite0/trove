@@ -25,7 +25,7 @@ import {
 } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 import { useNav } from "@/components/shell/nav-state";
-import { ProcessRow, BuilderChatText } from "@/components/builder/process-row";
+import { ProcessRow } from "@/components/builder/process-row";
 import { BuildConsole } from "@/components/builder/console";
 
 type Phase = "idle" | "asking" | "planning" | "review" | "building" | "ready";
@@ -172,9 +172,7 @@ export function BuilderView({
       }
       setFiles(current);
       setPhase("ready");
-      setFinalMsg(
-        "## Build complete\n\n1. Files written and preview updated\n2. Project saved to your account\n\n→ Ask for any changes in the composer below.",
-      );
+      setFinalMsg("Build complete. Saved to your account.");
       try {
         const html = bundle(current);
         if (html) setPreview(html);
@@ -219,7 +217,7 @@ export function BuilderView({
         {
           id: `a${++msgId.current}`,
           role: "assistant",
-          text: "## Updated\n\n→ Preview refreshed\n→ Saved to your account\n\nTell me what else to change.",
+          text: "Updated. Preview refreshed and saved to your account.",
           at: Date.now(),
         },
       ]);
@@ -331,26 +329,16 @@ export function BuilderView({
           <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
             <div className="flex flex-col gap-3">
               {error ? <FailureNote error={error} /> : null}
-              {finalMsg ? (
-                <div className="rounded-[var(--r-panel)] bg-rail px-3.5 py-3">
-                  <BuilderChatText text={finalMsg} />
-                </div>
-              ) : null}
+              {finalMsg ? <p className="text-[13px] text-ink-3">{finalMsg}</p> : null}
               {messages.map((m) => (
                 <div
                   key={m.id}
                   className={cn(
-                    "rounded-[var(--r-panel)] px-3.5 py-3",
-                    m.role === "user"
-                      ? "bg-accent/10 text-[13.5px] leading-relaxed text-ink"
-                      : "bg-rail",
+                    "rounded-[var(--r-panel)] px-3 py-2 text-[13.5px] leading-relaxed",
+                    m.role === "user" ? "bg-accent/10 text-ink" : "bg-rail text-ink-2",
                   )}
                 >
-                  {m.role === "assistant" || m.role === "system" ? (
-                    <BuilderChatText text={m.text} />
-                  ) : (
-                    <p className="text-[13.5px] leading-relaxed">{m.text}</p>
-                  )}
+                  {m.text}
                 </div>
               ))}
               {tasks.map((t) => {
