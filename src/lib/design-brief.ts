@@ -80,18 +80,55 @@ const FIDELITY_RULES: Record<Fidelity, string> = {
     "opens. No framework, no build step.",
 };
 
+export function brandNameFromBrief(what: string): string {
+  const text = what.trim() || "App";
+  const quoted = text.match(/["“]([^"”]{2,40})["”]/);
+  if (quoted) return quoted[1].trim();
+  const titled = text.match(/\b([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+){0,2})\b/);
+  if (titled && titled[1].length >= 3 && titled[1].toLowerCase() !== "the") return titled[1];
+  const first = text.split(/[.,:;!?]/)[0]?.trim().slice(0, 28);
+  return first || "App";
+}
+
+/** Shared brand + theme rules so every screen in a set looks like one product. */
+export function consistencyBlock(brief: Brief, screen: string): string {
+  const brand = brandNameFromBrief(brief.what);
+  const others = brief.screens.filter((s) => s !== screen).slice(0, 8);
+  return [
+    `PRODUCT BRAND (lock across the whole set)`,
+    `- App name / wordmark text: "${brand}" — use this exact name on every screen.`,
+    `- Logo: one simple geometric mark (inline SVG) + the wordmark "${brand}".`,
+    `  The SAME mark shape, stroke weight, and color must appear on every screen`,
+    `  (header, splash, or nav). Do not invent a different logo per screen.`,
+    `- Theme tokens in :root — reuse these exact variable names on every screen:`,
+    `  --bg, --surface, --text, --muted, --accent, --accent-text, --line, --radius, --shadow.`,
+    `  Pick values once from the brief and keep them identical across screens.`,
+    `- Typography: one display stack + one body stack (system fonts only). Same sizes rhythm.`,
+    others.length
+      ? `- Screen set: ${[screen, ...others].join(" · ")}. Nav labels must match these names.`
+      : "",
+    ``,
+    `WORKING UI (not a static poster)`,
+    `- Bottom tab bar or side nav with real destinations for the screens in this set.`,
+    `  Highlight the current screen ("${screen}") with accent color / weight.`,
+    `- Every icon is inline SVG and paired with a tappable/clickable control.`,
+    `- Buttons, tabs, chips, and list rows use :hover / :active (and JS only if needed`,
+    `  for tabs, toggles, or menus). Dead controls are a failed design.`,
+    `- Primary actions do something visible (ripple, pressed state, sheet, toast).`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 /**
  * The instruction sent to the model for one screen.
- *
- * One screen per request rather than a whole set in one. A single response
- * holding six screens hits the output ceiling and truncates the last of them
- * mid-element, and a truncated screen renders as a blank frame.
+ * One screen per request rather than a whole set in one.
  */
-export function screenPrompt(brief: Brief, screen: string): string {
+export function screenPrompt(brief: Brief, screen: string, priorThemeHint?: string): string {
   const frame = FRAME[brief.platform];
 
   return [
-    `Design the "${screen}" screen.`,
+    `Design the "${screen}" screen as a finished product surface.`,
     "",
     `The product: ${brief.what.trim() || "a general-purpose consumer app"}`,
     `Platform: ${brief.platform}, designed at ${frame.width}×${frame.height}.`,
@@ -99,12 +136,19 @@ export function screenPrompt(brief: Brief, screen: string): string {
     FIDELITY_RULES[brief.fidelity],
     brief.style.trim() ? `\nVisual direction: ${brief.style.trim()}` : "",
     "",
+    consistencyBlock(brief, screen),
+    priorThemeHint
+      ? `\nTheme continuity from earlier screens in this project:\n${priorThemeHint}\nMatch these colors and the logo mark exactly.`
+      : "",
+    "",
     "Return ONE complete HTML document and nothing else — no explanation, no",
     "markdown fence. It must:",
     "",
     `- open with <!DOCTYPE html> and set the viewport to ${frame.width}px wide`,
     "- carry all CSS in a single <style> block; no external stylesheets or fonts",
+    "- define :root theme tokens listed above and use them (no random one-off hex for brand)",
     "- draw every icon as inline SVG; never reference an icon font or an image URL",
+    "- include the brand logo mark + wordmark in the chrome on this screen",
     "- fill the full height of the frame, with nothing cut off",
     "- use real, specific copy for this product — names, numbers, labels someone",
     "  would actually see, not 'Title' and 'Subtitle'",
@@ -114,6 +158,31 @@ export function screenPrompt(brief: Brief, screen: string): string {
   ]
     .filter((line) => line !== "")
     .join("\n");
+}
+
+/** Follow-up edit of an existing screen HTML. */
+export function updateScreenPrompt(
+  brief: Brief,
+  screen: string,
+  instruction: string,
+  html: string,
+): string {
+  return [
+    `Update the "${screen}" screen for this product.`,
+    `Product: ${brief.what.trim() || "app"}`,
+    `Platform: ${brief.platform}.`,
+    "",
+    consistencyBlock(brief, screen),
+    "",
+    `Change requested: ${instruction.trim()}`,
+    "",
+    "Return ONE complete updated HTML document only (no markdown).",
+    "Keep the same logo mark, brand name, and :root theme tokens unless the user asked to change them.",
+    "Keep navigation working; highlight the current screen.",
+    "",
+    "Current HTML:",
+    html.slice(0, 28000),
+  ].join("\n");
 }
 
 /** A one-line summary of the brief, for the header and for saved history. */
