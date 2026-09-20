@@ -43,11 +43,12 @@ export function compatProviders(): CompatProvider[] {
       label: "OpenRouter",
       baseUrl: "https://openrouter.ai/api/v1",
       apiKey: openrouter,
+      // Prefer explicit env; default free route so missing Gemma ids don't break the chain
       model:
         process.env.OPENROUTER_MODEL?.trim() ||
         process.env.SLIDES_MODEL?.trim() ||
         process.env.GEMMA_MODEL?.trim() ||
-        "google/gemma-3-27b-it",
+        "openrouter/free",
     });
   }
 
