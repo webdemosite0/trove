@@ -1,19 +1,15 @@
 import "server-only";
-import type { Turn, Usage, OnUsage } from "@/lib/gemini";
-import { site } from "@/lib/site";
 
-export interface CompatProvider {
+export type CompatProvider = {
   id: string;
   label: string;
   baseUrl: string;
   apiKey: string;
   model: string;
-}
+  /** Some hosts want Authorization without Bearer. */
+  rawAuth?: boolean;
+};
 
-/**
- * Configured OpenAI-compatible providers.
- * Bytez first when BYTEZ_API_KEY is set, then Experiential Labs, OpenRouter, xAI, Puter.
- */
 export function compatProviders(): CompatProvider[] {
   const out: CompatProvider[] = [];
 
@@ -33,7 +29,7 @@ export function compatProviders(): CompatProvider[] {
     out.push({
       id: "explabs",
       label: "Experiential Labs",
-      baseUrl: "https://api.experientiallabs.ai/v1",
+      baseUrl: process.env.EXPLABS_BASE_URL?.trim() || "https://api.experientiallabs.ai/v1",
       apiKey: explabs,
       model: process.env.EXPLABS_MODEL?.trim() || "gpt-6-astra",
     });
@@ -46,7 +42,12 @@ export function compatProviders(): CompatProvider[] {
       label: "OpenRouter",
       baseUrl: "https://openrouter.ai/api/v1",
       apiKey: openrouter,
-      model: process.env.OPENROUTER_MODEL?.trim() || "openrouter/free",
+      // Prefer Gemma for presentation-quality generation when OpenRouter is selected
+      model:
+        process.env.OPENROUTER_MODEL?.trim() ||
+        process.env.SLIDES_MODEL?.trim() ||
+        process.env.GEMMA_MODEL?.trim() ||
+        "google/gemma-3-27b-it",
     });
   }
 
@@ -54,19 +55,19 @@ export function compatProviders(): CompatProvider[] {
   if (xai) {
     out.push({
       id: "xai",
-      label: "Grok",
+      label: "xAI",
       baseUrl: "https://api.x.ai/v1",
       apiKey: xai,
       model: process.env.XAI_MODEL?.trim() || "grok-2-latest",
     });
   }
 
-  const puter = process.env.PUTER_AUTH_TOKEN?.trim();
+  const puter = process.env.PUTER_API_KEY?.trim();
   if (puter) {
     out.push({
       id: "puter",
       label: "Puter",
-      baseUrl: "https://api.puter.com/puterai/openai/v1",
+      baseUrl: process.env.PUTER_BASE_URL?.trim() || "https://api.puter.com/v1",
       apiKey: puter,
       model: process.env.PUTER_MODEL?.trim() || "gpt-5.4-nano",
     });
@@ -75,181 +76,136 @@ export function compatProviders(): CompatProvider[] {
   return out;
 }
 
-function toMessages(turns: Turn[], system: string) {
-  const messages: { role: string; content: string }[] = [
-    { role: "system", content: system },
-  ];
+function toMessages(turns: { role: string; text: string }[], system: string) {
+  const messages: { role: string; content: string }[] = [{ role: "system", content: system }];
   for (const t of turns) {
     messages.push({ role: t.role === "model" ? "assistant" : "user", content: t.text });
   }
   return messages;
 }
 
-function headersFor(p: CompatProvider) {
-  const h: Record<string, string> = {
-    authorization: `Bearer ${p.apiKey}`,
-    "content-type": "application/json",
-  };
-  if (p.id === "openrouter") {
-    h["HTTP-Referer"] = site.url;
-    h["X-Title"] = "Trove";
-  }
-  return h;
-}
-
-function readUsage(u: unknown): Usage | null {
-  const d = u as { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null;
-  if (!d || typeof d.total_tokens !== "number") return null;
-  return {
-    promptTokens: d.prompt_tokens ?? 0,
-    responseTokens: d.completion_tokens ?? 0,
-    totalTokens: d.total_tokens,
-  };
-}
-
-function clampMaxTokens(provider: CompatProvider, maxOutputTokens: number): number {
-  if (provider.id === "openrouter") {
-    return Math.min(maxOutputTokens, 4096);
-  }
-  return maxOutputTokens;
-}
-
-export async function compatGenerate({
-  provider,
-  turns,
-  system,
-  temperature,
-  maxOutputTokens,
-  onUsage,
-}: {
+export async function compatGenerate(opts: {
   provider: CompatProvider;
-  turns: Turn[];
+  turns: { role: string; text: string }[];
   system: string;
-  temperature: number;
-  maxOutputTokens: number;
-  onUsage?: OnUsage;
+  temperature?: number;
+  maxOutputTokens?: number;
+  onUsage?: (u: { inputTokens: number; outputTokens: number; totalTokens: number }) => void;
 }): Promise<string> {
-  const max_tokens = clampMaxTokens(provider, maxOutputTokens);
-  const payload =
-    provider.id === "explabs"
-      ? { model: provider.model, messages: toMessages(turns, system) }
-      : {
-          model: provider.model,
-          messages: toMessages(turns, system),
-          temperature,
-          max_tokens,
-        };
-  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+  const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
+  const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
-    headers: headersFor(provider),
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(90_000),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
+      ...(provider.id === "openrouter"
+        ? {
+            "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://trove.ai",
+            "X-Title": process.env.OPENROUTER_APP_NAME?.trim() || "Trove",
+          }
+        : {}),
+    },
+    body: JSON.stringify({
+      model: provider.model,
+      messages: toMessages(turns, system),
+      temperature,
+      max_tokens: maxOutputTokens,
+    }),
   });
-
   if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    throw new Error(`${provider.label} returned ${res.status}. ${detail.slice(0, 200)}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(`${provider.label} ${res.status}: ${text.slice(0, 240)}`);
   }
-
-  const json = await res.json();
-  const usage = readUsage(json?.usage);
-  if (usage) {
-    try {
-      onUsage?.(usage);
-    } catch (e) {
-      console.error("usage callback failed", e);
-    }
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== "string") throw new Error(`${provider.label}: empty response`);
+  const usage = data?.usage;
+  if (usage && onUsage) {
+    const inputTokens = Number(usage.prompt_tokens || 0);
+    const outputTokens = Number(usage.completion_tokens || 0);
+    onUsage({ inputTokens, outputTokens, totalTokens: inputTokens + outputTokens });
   }
-
-  return String(json?.choices?.[0]?.message?.content ?? "");
+  return content;
 }
 
-export async function compatStream({
-  provider,
-  turns,
-  system,
-  temperature,
-  maxOutputTokens,
-  onUsage,
-}: {
+export async function compatStream(opts: {
   provider: CompatProvider;
-  turns: Turn[];
+  turns: { role: string; text: string }[];
   system: string;
-  temperature: number;
-  maxOutputTokens: number;
-  onUsage?: OnUsage;
+  temperature?: number;
+  maxOutputTokens?: number;
+  onUsage?: (u: { inputTokens: number; outputTokens: number; totalTokens: number }) => void;
 }): Promise<ReadableStream<Uint8Array>> {
-  const max_tokens = clampMaxTokens(provider, maxOutputTokens);
-  const streamPayload =
-    provider.id === "explabs"
-      ? { model: provider.model, messages: toMessages(turns, system), stream: true }
-      : {
-          model: provider.model,
-          messages: toMessages(turns, system),
-          temperature,
-          max_tokens,
-          stream: true,
-          stream_options: { include_usage: true },
-        };
-  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+  const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
+  const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
-    headers: headersFor(provider),
-    body: JSON.stringify(streamPayload),
-    signal: AbortSignal.timeout(90_000),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
+      ...(provider.id === "openrouter"
+        ? {
+            "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://trove.ai",
+            "X-Title": process.env.OPENROUTER_APP_NAME?.trim() || "Trove",
+          }
+        : {}),
+    },
+    body: JSON.stringify({
+      model: provider.model,
+      messages: toMessages(turns, system),
+      temperature,
+      max_tokens: maxOutputTokens,
+      stream: true,
+    }),
   });
-
   if (!res.ok || !res.body) {
-    const detail = await res.text().catch(() => "");
-    throw new Error(`${provider.label} returned ${res.status}. ${detail.slice(0, 200)}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(`${provider.label} ${res.status}: ${text.slice(0, 240)}`);
   }
 
-  const upstream = res.body;
+  const reader = res.body.getReader();
   const decoder = new TextDecoder();
-  const encoder = new TextEncoder();
   let buffer = "";
-  let usage: Usage | null = null;
+  let inputTokens = 0;
+  let outputTokens = 0;
 
   return new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const reader = upstream.getReader();
-      try {
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (!line.startsWith("data:")) continue;
-            const payload = line.slice(5).trim();
-            if (!payload || payload === "[DONE]") continue;
-            try {
-              const json = JSON.parse(payload);
-              const seen = readUsage(json?.usage);
-              if (seen) usage = seen;
-              const delta = json?.choices?.[0]?.delta?.content;
-              if (typeof delta === "string" && delta) {
-                controller.enqueue(encoder.encode(delta));
-              }
-            } catch {
-              /* partial frame */
-            }
+    async pull(controller) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          if (onUsage && (inputTokens || outputTokens)) {
+            onUsage({ inputTokens, outputTokens, totalTokens: inputTokens + outputTokens });
           }
+          controller.close();
+          return;
         }
-      } catch (err) {
-        console.error(`${provider.label} stream error`, err);
-      } finally {
-        controller.close();
-        reader.releaseLock();
-        if (usage) {
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const payload = trimmed.slice(5).trim();
+          if (payload === "[DONE]") continue;
           try {
-            onUsage?.(usage);
-          } catch (e) {
-            console.error("usage callback failed", e);
+            const json = JSON.parse(payload);
+            const delta = json?.choices?.[0]?.delta?.content;
+            if (typeof delta === "string" && delta) {
+              controller.enqueue(new TextEncoder().encode(delta));
+            }
+            const usage = json?.usage;
+            if (usage) {
+              inputTokens = Number(usage.prompt_tokens || inputTokens);
+              outputTokens = Number(usage.completion_tokens || outputTokens);
+            }
+          } catch {
+            /* ignore partial */
           }
         }
       }
+    },
+    cancel() {
+      reader.cancel().catch(() => {});
     },
   });
 }
