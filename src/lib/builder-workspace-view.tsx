@@ -1,20 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
-import {
-  FiArrowLeft,
-  FiFile,
-  TbWorld,
-  TbTerminal2,
-  TbCode,
-  TbFiles,
-} from "@/components/ui/icons";
+import { FiArrowLeft } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
 import { TroveOrb } from "@/components/brand/orb";
-import { Ico, type Motion } from "@/components/ui/ico";
 import { PlanPanel } from "@/components/builder/plan-panel";
 import { QuestionBox } from "@/components/builder/question-box";
 import { PublishPanel } from "@/components/builder/publish-panel";
@@ -66,6 +58,7 @@ export function BuilderView({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsOpen, setQuestionsOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [storage, setStorage] = useState<"local" | "none">("local");
   const [error, setError] = useState<string | null>(null);
   const [finalMsg, setFinalMsg] = useState<string | null>(null);
   const [pane, setPane] = useState<Pane>(mobile ? "chat" : "preview");
@@ -75,7 +68,6 @@ export function BuilderView({
   const [projectId, setProjectId] = useState<string | null>(restored?.id ?? null);
   const [targetId] = useState<TargetId>("react");
   const msgId = useRef(0);
-  const logId = useRef(0);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const busy = phase === "asking" || phase === "planning" || phase === "building";
 
@@ -180,7 +172,9 @@ export function BuilderView({
       }
       setFiles(current);
       setPhase("ready");
-      setFinalMsg("## Build complete\n\n1. Files written and preview updated\n2. Project saved to your account\n\n→ Ask for any changes in the composer below.");
+      setFinalMsg(
+        "## Build complete\n\n1. Files written and preview updated\n2. Project saved to your account\n\n→ Ask for any changes in the composer below.",
+      );
       try {
         const html = bundle(current);
         if (html) setPreview(html);
@@ -388,7 +382,13 @@ export function BuilderView({
                 />
               ) : null}
               {phase === "review" && plan && !questionsOpen ? (
-                <PlanPanel plan={plan} onGenerate={() => void generate()} busy={busy} />
+                <PlanPanel
+                  plan={plan}
+                  storage={storage}
+                  onStorage={setStorage}
+                  onGenerate={() => void generate()}
+                  busy={busy}
+                />
               ) : null}
               {phase === "idle" && !messages.length ? (
                 <div className="py-8 text-center">
@@ -443,7 +443,7 @@ export function BuilderView({
           <div className="min-h-0 flex-1 overflow-auto p-3">
             {pane === "preview" ? (
               <BrowserFrame url={publishedUrl || "preview"}>
-                <BuilderPreviewPane html={preview} />
+                <BuilderPreviewPane preview={preview} />
               </BrowserFrame>
             ) : null}
             {pane === "files" ? (
@@ -472,7 +472,7 @@ export function BuilderView({
                   "// Select a file"}
               </pre>
             ) : null}
-            {pane === "console" ? <BuildConsole logs={logs} /> : null}
+            {pane === "console" ? <BuildConsole lines={logs} /> : null}
           </div>
           {phase === "ready" && files.length ? (
             <div className="shrink-0 border-t border-line p-3">
