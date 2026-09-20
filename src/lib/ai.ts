@@ -43,7 +43,7 @@ function errText(e: unknown): string {
 }
 
 function shouldFallOver(message: string): boolean {
-  return /429|402|quota|rate.?limit|exhaust|billing|insufficient|subscription_required|401|403|invalid.?api.?key|incorrect api key|not available|404|503|overload|context.?length|maximum context/i.test(
+  return /429|402|500|502|504|quota|rate.?limit|exhaust|billing|insufficient|subscription_required|401|403|invalid.?api.?key|incorrect api key|not available|404|503|overload|context.?length|maximum context|empty response|model.?not.?found|no model|timed?\s?out|ECONNRESET|fetch failed|network/i.test(
     message,
   );
 }
