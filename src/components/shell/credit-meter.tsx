@@ -31,9 +31,12 @@ function fillClass(l: ReturnType<typeof level>) {
 export function CreditMeter({
   balance,
   collapsed = false,
+  variant = "sidebar",
 }: {
   balance: Balance | null;
   collapsed?: boolean;
+  /** topbar = compact pill next to profile; sidebar = full meter */
+  variant?: "sidebar" | "topbar";
 }) {
   const [openedAt, setOpenedAt] = useState<string | null>(null);
   const [usage, setUsage] = useState<UsageRow[] | null>(null);
@@ -101,6 +104,47 @@ export function CreditMeter({
           : "ok";
   const title = `${remaining.toLocaleString()} credits left this month`;
 
+  if (variant === "topbar") {
+    const label =
+      remaining >= 1_000_000_000
+        ? "Unlimited"
+        : remaining >= 1_000_000
+          ? `${(remaining / 1_000_000).toFixed(1)}M`
+          : remaining >= 10_000
+            ? `${Math.round(remaining / 1000)}k`
+            : remaining.toLocaleString();
+    return (
+      <div ref={wrap} className="relative">
+        <Link
+          href="/plans"
+          title={title}
+          className={cn(
+            "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold tabular-nums transition",
+            worst === "ok" &&
+              "border-violet-500/25 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+            worst === "caution" &&
+              "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+            (worst === "critical" || worst === "out") &&
+              "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300",
+            "hover:brightness-110",
+          )}
+        >
+          <span
+            aria-hidden
+            className={cn(
+              "size-1.5 rounded-full",
+              worst === "ok" && "bg-violet-500",
+              worst === "caution" && "bg-amber-500",
+              (worst === "critical" || worst === "out") && "bg-rose-500",
+            )}
+          />
+          {label}
+          <span className="hidden text-[11px] font-medium opacity-70 sm:inline">credits</span>
+        </Link>
+      </div>
+    );
+  }
+
   const toggle = () => setOpen(!open);
 
   const popover = (
@@ -123,7 +167,7 @@ export function CreditMeter({
       </div>
       {state === "loading" ? (
         <p className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-4">
-          <FiLoader size={12} className="animate-spin" /> Loading usage…
+          <Ico icon={FiLoader} motion="spin" size={12} /> Loading usage…
         </p>
       ) : usage && usage.length > 0 ? (
         <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-[11px] text-ink-3">
@@ -134,31 +178,35 @@ export function CreditMeter({
             </li>
           ))}
         </ul>
-      ) : null}
+      ) : state === "error" ? (
+        <p className="mt-2 text-[11px] text-ink-4">Could not load usage.</p>
+      ) : (
+        <p className="mt-2 text-[11px] text-ink-4">No usage this month yet.</p>
+      )}
       <Link
-        href="/plans"
+        href="/settings/usage"
         onClick={() => setOpen(false)}
-        className="mt-2 flex items-center justify-center gap-1 rounded-lg bg-accent/10 py-1.5 text-[12px] font-medium text-accent hover:bg-accent/15"
+        className="mt-2 flex items-center gap-1 text-[11.5px] font-medium text-accent hover:underline"
       >
-        Get more credits <FiArrowRight size={12} />
+        Full usage <FiArrowRight size={12} />
       </Link>
     </div>
   );
 
   if (collapsed) {
     return (
-      <div ref={wrap} className="relative flex justify-center">
+      <div ref={wrap} className="relative flex justify-center px-1">
         <button
           type="button"
           onClick={toggle}
-          aria-expanded={open}
           title={title}
           className={cn(
-            "grid h-9 w-9 place-items-center rounded-lg text-[11px] font-semibold tabular-nums transition-colors hover:bg-hover",
+            "grid h-9 w-9 place-items-center rounded-lg text-[11px] font-bold tabular-nums transition",
             toneClass(worst),
+            "hover:bg-hover",
           )}
         >
-          {remaining > 999 ? `${Math.round(remaining / 1000)}k` : remaining}
+          {remaining >= 1_000_000_000 ? "∞" : remaining >= 1000 ? `${Math.round(remaining / 1000)}k` : remaining}
         </button>
         {open ? popover : null}
       </div>
@@ -170,40 +218,16 @@ export function CreditMeter({
       <button
         type="button"
         onClick={toggle}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        title={title}
-        className="group block w-full rounded-xl px-2 py-2 text-left transition-colors hover:bg-hover"
+        className="flex w-full flex-col gap-1.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-hover"
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-baseline gap-1.5">
-            <span aria-hidden className="text-[11px] leading-none text-violet-600">
-              ✦
-            </span>
-            <span className={cn("text-[12.5px] font-semibold tabular-nums", toneClass(worst))}>
-              {remaining.toLocaleString()}
-            </span>
-            <span className="text-[11.5px] text-ink-4">left</span>
-          </div>
-          {balance.window ? (
-            <span className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">
-              5h {window.remaining}
-            </span>
-          ) : null}
+          <span className={cn("text-[12.5px] font-medium tabular-nums", toneClass(worst))}>
+            {remaining.toLocaleString()} left
+          </span>
+          <span className="text-[11px] text-ink-4">{balance.plan.name}</span>
         </div>
-        <div className="mt-2 space-y-1">
-          <div
-            className="h-[3px] overflow-hidden rounded-full bg-raised"
-            role="progressbar"
-            aria-valuenow={monthPct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div
-              className={cn("h-full rounded-full transition-[width] duration-500", fillClass(monthLevel))}
-              style={{ width: `${monthPct}%` }}
-            />
-          </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-sunk">
+          <div className={cn("h-full rounded-full", fillClass(monthLevel))} style={{ width: `${monthPct}%` }} />
         </div>
       </button>
       {open ? popover : null}
