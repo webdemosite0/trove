@@ -20,6 +20,7 @@ import {
 export function BuilderPreviewPane({
   preview,
   files = [],
+  projectId: projectIdProp = null,
   onRefresh,
   onNavigate,
   publishControl,
@@ -27,6 +28,8 @@ export function BuilderPreviewPane({
 }: {
   preview: string | null;
   files?: ProjectFile[];
+  /** Preferred project id from workspace state (URL may lag after first save). */
+  projectId?: string | null;
   sandboxUrl?: string | null;
   onSandboxError?: () => void;
   onRefresh?: () => void;
@@ -41,6 +44,7 @@ export function BuilderPreviewPane({
   const legacyProjectId = pathname?.match(/^\/websites\/project\/([^/]+)(?:\/|$)/i)?.[1];
   const routeProjectId = topLevelProjectId || legacyProjectId;
   const projectId =
+    (projectIdProp && projectIdProp.trim()) ||
     searchParams?.get("c")?.trim() ||
     (routeProjectId ? decodeURIComponent(routeProjectId).trim() : "") ||
     null;
@@ -61,11 +65,12 @@ export function BuilderPreviewPane({
   }, [files, filesKey, projectId]);
 
   const useLive = runtime.status === "ready" && Boolean(runtime.url);
+  // Always keep the HTML snapshot as a fallback while the sandbox boots or fails.
   const useSnapshot = Boolean(preview) && !useLive;
   const displayUrl = useLive
     ? `localhost:${runtime.port || 5173}`
     : preview
-      ? "localhost:5173"
+      ? "preview"
       : "about:blank";
 
   const publishTitle = useMemo(() => {
@@ -189,15 +194,26 @@ export function BuilderPreviewPane({
             title="Preview snapshot"
             srcDoc={preview}
             className="absolute inset-0 h-full w-full border-0 bg-white"
-            sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
             referrerPolicy="no-referrer"
           />
         ) : (
           <div className="grid h-full min-h-[280px] place-items-center bg-canvas px-6 text-center">
             <div className="max-w-sm">
-              <p className="text-[15px] font-semibold tracking-tight text-ink">No preview yet</p>
+              <p className="text-[15px] font-semibold tracking-tight text-ink">
+                {runtime.status === "error"
+                  ? "Preview unavailable"
+                  : runtime.status === "booting" ||
+                      runtime.status === "installing" ||
+                      runtime.status === "starting" ||
+                      runtime.status === "syncing"
+                    ? "Starting preview…"
+                    : "No preview yet"}
+              </p>
               <p className="mt-2 text-[13px] leading-relaxed text-ink-3">
-                Describe what to build in chat. When files are ready, the preview shows up here.
+                {runtime.status === "error" && runtime.error
+                  ? runtime.error
+                  : "Describe what to build in chat. When files are ready, the preview shows up here."}
               </p>
             </div>
           </div>
