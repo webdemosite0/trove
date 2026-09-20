@@ -27,6 +27,7 @@ import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";
 import { Drawer } from "@/components/mobile/drawer";
+import { MobileViewport } from "@/components/mobile/viewport";
 import type { Balance } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
@@ -85,6 +86,10 @@ export function MobileShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  const closeNavigation = React.useCallback(() => setOpen(false), []);
+  const studio = ["/chat", "/documents", "/spreadsheets", "/slides", "/design", "/research", "/code"].some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
   const immersive =
     pathname === "/websites" ||
     pathname.startsWith("/websites/") ||
@@ -95,15 +100,18 @@ export function MobileShell({
   const title = ALL.find((dest) => isActive(pathname, dest.href))?.label ?? "Trove";
 
   return (
-    <div className="nx-mobile min-h-[100dvh] bg-canvas">
+    <div className={cn("nx-mobile bg-canvas", immersive || studio ? "mobile-viewport flex h-dvh min-h-0 flex-col overflow-hidden" : "min-h-dvh")}>
+      <MobileViewport />
       {!immersive ? (
-        <header className="nx-no-print sticky top-0 z-40 border-b border-line/70 bg-canvas/88 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <header className="nx-no-print sticky top-0 z-40 shrink-0 border-b border-line/70 bg-canvas/88 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-[720px] items-center gap-2.5 px-3.5 sm:px-4">
             <button
               type="button"
               onClick={() => setOpen(true)}
               aria-label="Open navigation"
-              className="grid size-9 place-items-center rounded-xl text-ink transition hover:bg-hover active:scale-[.97]"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              className="grid size-11 shrink-0 place-items-center rounded-xl text-ink transition hover:bg-hover active:scale-[.97]"
             >
               <Ico icon={TbLayoutSidebar} motion="panel" size={18} className="text-ink" />
             </button>
@@ -124,12 +132,11 @@ export function MobileShell({
             {balance ? (
               <Link
                 href="/plans"
-                className="flex h-8 items-center gap-1.5 rounded-full border border-line/80 bg-raised/90 px-2.5 text-[10.5px] font-semibold tabular-nums text-ink-2 shadow-sm"
+                aria-label={`${balance.remaining.toLocaleString()} credits remaining. View plan and usage`}
+                className="flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-line/80 bg-raised/90 px-2.5 text-[12px] font-semibold tabular-nums text-ink-2 shadow-sm"
               >
                 <span className="text-accent">✦</span>
-                {balance.remaining > 999
-                  ? `${Math.round(balance.remaining / 1000)}k`
-                  : balance.remaining}
+                {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(balance.remaining)}
               </Link>
             ) : null}
           </div>
@@ -139,16 +146,16 @@ export function MobileShell({
       <main
         className={cn(
           "min-h-0 min-w-0",
-          immersive
-            ? "h-[100dvh] overflow-hidden"
+          immersive || studio
+            ? "flex flex-1 flex-col overflow-hidden"
             : "min-h-[calc(100dvh-3.5rem-env(safe-area-inset-top))]",
         )}
       >
         {children}
       </main>
 
-      <Drawer open={open} onClose={() => setOpen(false)}>
-        <div className="flex items-center justify-between border-b border-line/70 px-4 pb-3 pt-[calc(.8rem+env(safe-area-inset-top))]">
+      <Drawer open={open} onClose={closeNavigation}>
+        <div className="flex shrink-0 items-center justify-between border-b border-line/70 py-3 pl-4 pr-16">
           <span className="flex items-center gap-2.5">
             <TroveOrb size={24} state="idle" />
             <span>
@@ -166,7 +173,7 @@ export function MobileShell({
           </Link>
         </div>
 
-        <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
+        <nav aria-label="Main" onClick={(event) => { if ((event.target as HTMLElement).closest("a")) closeNavigation(); }} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-3">
           {GROUPS.map((group) => (
             <div key={group.label}>
               <div className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-4">
@@ -181,7 +188,7 @@ export function MobileShell({
                       href={dest.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex min-h-10 items-center gap-2.5 rounded-[12px] px-2.5 text-[12.5px] font-medium transition-colors",
+                        "flex min-h-11 items-center gap-2.5 rounded-[12px] px-2.5 text-[14px] font-medium transition-colors",
                         active ? "bg-accent/10 text-accent" : "text-ink-3 hover:bg-hover",
                       )}
                     >

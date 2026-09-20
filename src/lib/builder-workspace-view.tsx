@@ -552,7 +552,8 @@ export function BuilderView({
   }
 
   const goPane = (dest: string) => {
-    if (dest === "files") setPane("files");
+    if (dest === "chat") setPane("chat");
+    else if (dest === "files") setPane("files");
     else if (dest === "code") setPane("code");
     else setPane("preview");
   };
@@ -569,9 +570,18 @@ export function BuilderView({
   );
 
   return (
-    <div className="relative h-full min-h-0 w-full overflow-hidden bg-canvas">
-      <div className="absolute inset-0 flex min-h-0 flex-col lg:flex-row">
-        <aside className="flex min-h-0 w-full flex-col border-b border-line lg:w-[380px] lg:shrink-0 lg:border-b-0 lg:border-r">
+    <div className="mobile-editor relative h-full min-h-0 w-full overflow-hidden bg-canvas">
+      <div className="absolute inset-0 flex min-h-0 flex-col">
+        <nav aria-label="Website workspace view" className="mobile-editor-tabs lg:hidden">
+          <Link href="/dashboard" aria-label="Back to projects" className="grid size-11 shrink-0 place-items-center"><FiArrowLeft size={18} /></Link>
+          {(["chat", "preview", "files", "code"] as const).map((view) => (
+            <button key={view} type="button" aria-pressed={pane === view} onClick={() => goPane(view)}>
+              {view.charAt(0).toUpperCase() + view.slice(1)}
+            </button>
+          ))}
+        </nav>
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside className={cn("min-h-0 w-full flex-1 flex-col border-b border-line lg:flex lg:w-[380px] lg:flex-none lg:shrink-0 lg:border-b-0 lg:border-r", pane === "chat" ? "flex" : "hidden")}>
           <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-canvas px-3">
             <Link href="/dashboard" className="shrink-0 text-ink-3 hover:text-ink" aria-label="Back">
               <FiArrowLeft size={16} />
@@ -639,7 +649,7 @@ export function BuilderView({
               ) : null}
             </div>
           </div>
-          <div className="shrink-0 border-t border-line bg-canvas p-2">
+          <div className="mobile-composer-dock shrink-0 border-t border-line bg-canvas p-2">
             {mobile ? (
               <MobileComposer onSend={sendFromComposer} disabled={busy} />
             ) : (
@@ -648,7 +658,7 @@ export function BuilderView({
           </div>
         </aside>
 
-        <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+        <main className={cn("relative min-h-0 min-w-0 flex-1 overflow-hidden lg:block", pane === "chat" && "hidden")}>
           <div className="h-full min-h-0 overflow-hidden">
             {(pane === "preview" || pane === "chat") && (
               <BuilderPreviewPane
@@ -714,6 +724,7 @@ export function BuilderView({
             )}
           </div>
         </main>
+        </div>
       </div>
     </div>
   );

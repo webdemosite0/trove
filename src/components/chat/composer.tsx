@@ -243,6 +243,10 @@ export function Composer({
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+          // A phone's return key inserts a line break. Explicit modifier+Enter
+          // still sends when a hardware keyboard is attached.
+          if (window.matchMedia("(pointer: coarse)").matches && !e.ctrlKey && !e.metaKey) return;
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             send();

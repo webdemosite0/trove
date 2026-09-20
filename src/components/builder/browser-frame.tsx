@@ -61,8 +61,8 @@ export function BrowserFrame({
         className,
       )}
     >
-      <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line bg-rail/80 px-2 sm:px-3">
-        <div className="flex items-center gap-0.5 rounded-[var(--r-control)] border border-line bg-canvas p-0.5">
+      <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-1 border-b border-line bg-rail/80 px-2 py-1 sm:px-3 lg:min-h-11 lg:flex-nowrap lg:py-0">
+        <div className="hidden items-center gap-0.5 rounded-[var(--r-control)] border border-line bg-canvas p-0.5 lg:flex">
           {tabs.map(([id, label]) => {
             const active = activeTab === id;
             return (
@@ -83,8 +83,8 @@ export function BrowserFrame({
           })}
         </div>
 
-        <div className="mx-2 hidden min-w-0 flex-1 items-center gap-2 sm:flex">
-          <span className="truncate rounded-[var(--r-chip)] border border-line bg-sunk px-2.5 py-1 font-mono text-[11.5px] text-ink-3">
+        <div className="mx-2 flex min-w-0 flex-1 items-center gap-2">
+          <span className="hidden truncate rounded-[var(--r-chip)] border border-line bg-sunk px-2.5 py-1 font-mono text-[11.5px] text-ink-3 sm:block">
             {url && url !== "about:blank" ? url : activeTab === "files" ? "Files" : activeTab === "code" ? "Code" : "Preview"}
           </span>
           <span className={cn("shrink-0 text-[11px] font-medium", statusTone)}>
@@ -92,7 +92,6 @@ export function BrowserFrame({
           </span>
         </div>
 
-        <span className="flex-1 sm:hidden" />
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <button

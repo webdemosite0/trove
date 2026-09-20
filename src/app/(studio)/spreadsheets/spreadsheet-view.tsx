@@ -222,8 +222,12 @@ export function SpreadsheetView({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col lg:flex-row">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-line lg:border-b-0 lg:border-r">
+    <div className="mobile-editor sheet-editor flex h-full min-h-0 flex-1 flex-col lg:flex-row">
+      <nav aria-label="Spreadsheet view" className="mobile-editor-tabs lg:hidden">
+        <button type="button" aria-pressed={!showPreview} onClick={() => setShowPreview(false)}>Chat</button>
+        <button type="button" aria-pressed={showPreview} onClick={() => setShowPreview(true)}>Spreadsheet</button>
+      </nav>
+      <div className={`${showPreview ? "hidden lg:flex" : "flex"} min-h-0 min-w-0 flex-1 flex-col border-b border-line lg:border-b-0 lg:border-r`}>
         <header className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] uppercase tracking-[0.08em] text-ink-4">Spreadsheets</p>
@@ -286,17 +290,17 @@ export function SpreadsheetView({
           {error ? <FailureNote error={error} onRetry={() => run(prompt)} /> : null}
         </div>
 
-        <div className="shrink-0 border-t border-line bg-canvas/90 p-3 backdrop-blur">
-          <Composer onSend={run} disabled={busy} placeholder="Ask anything about this sheet…" />
+        <div className="mobile-composer-dock shrink-0 border-t border-line bg-canvas/90 p-3 backdrop-blur">
+          <Composer onSend={run} disabled={busy} placeholder="Ask anything about this sheet…" compact />
         </div>
       </div>
 
       {showPreview ? (
-        <div className="flex min-h-[50vh] min-w-0 flex-1 flex-col bg-white text-[#1a1a1a] lg:min-h-0">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white text-[#1a1a1a]">
           <div className="flex shrink-0 items-center gap-2 border-b border-[#e5e5e5] px-3 py-2.5">
             <button
               type="button"
-              className="grid size-8 place-items-center rounded-full text-[#666] hover:bg-[#f3f3f3] lg:hidden"
+              className="grid size-11 place-items-center rounded-full text-[#666] hover:bg-[#f3f3f3] lg:hidden"
               onClick={() => setShowPreview(false)}
               aria-label="Close preview"
             >
@@ -307,7 +311,8 @@ export function SpreadsheetView({
               type="button"
               disabled={!rows.length}
               onClick={() => downloadXlsx(rows, xlsxName)}
-              className="grid size-8 place-items-center rounded-full text-[#666] hover:bg-[#f3f3f3] disabled:opacity-40"
+              className="grid size-11 place-items-center rounded-full text-[#666] hover:bg-[#f3f3f3] disabled:opacity-40 lg:size-8"
+              aria-label="Download Excel"
               title="Download Excel"
             >
               <FiDownload size={16} />
@@ -316,7 +321,7 @@ export function SpreadsheetView({
               type="button"
               disabled={!rows.length}
               onClick={() => downloadCsv(rows, xlsxName.replace(/\.xlsx$/, ".csv"))}
-              className="hidden rounded-full px-2.5 py-1 text-[12px] text-[#666] hover:bg-[#f3f3f3] disabled:opacity-40 sm:inline"
+              className="min-h-11 rounded-full px-2.5 py-1 text-[12px] text-[#666] hover:bg-[#f3f3f3] disabled:opacity-40 lg:min-h-0"
             >
               CSV
             </button>

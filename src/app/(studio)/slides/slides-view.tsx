@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   FiChevronDown,
   FiChevronUp,
@@ -64,6 +65,7 @@ export function SlidesView({
   });
   const [current, setCurrent] = useState(0);
   const [presenting, setPresenting] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<"preview" | "slides" | "edit">("preview");
   const stageRef = useRef<HTMLDivElement>(null);
   const deck = useDeck([]);
   const slides = deck.slides;
@@ -116,6 +118,7 @@ export function SlidesView({
   }, []);
 
   async function present() {
+    flushSync(() => setMobilePanel("preview"));
     const el = stageRef.current;
     if (!el) return;
     try {
@@ -196,7 +199,7 @@ export function SlidesView({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="mobile-editor deck-editor flex h-full min-h-0 flex-col overflow-hidden">
       <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-canvas/90 px-3 py-2.5 backdrop-blur-md lg:px-4">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14px] font-medium text-ink">
@@ -261,14 +264,21 @@ export function SlidesView({
         </button>
       </header>
 
+      <nav aria-label="Presentation view" className="mobile-editor-tabs lg:hidden">
+        {(["preview", "slides", "edit"] as const).map((panel) => (
+          <button key={panel} type="button" aria-pressed={mobilePanel === panel} onClick={() => setMobilePanel(panel)}>
+            {panel === "edit" ? "Edit & chat" : panel === "slides" ? "Slides" : "Preview"}
+          </button>
+        ))}
+      </nav>
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[200px_minmax(0,1fr)_minmax(220px,280px)]">
-        <aside className="min-h-0 overflow-y-auto border-b border-line bg-rail/40 lg:border-b-0 lg:border-r">
+        <aside className={cn("min-h-0 overflow-y-auto border-b border-line bg-rail/40 lg:block lg:border-b-0 lg:border-r", mobilePanel !== "slides" && "hidden")}>
           <ol className="flex gap-2 overflow-x-auto p-3 lg:flex-col lg:overflow-x-visible">
             {slides.map((s, i) => (
               <li key={i} className="group/slide w-[140px] shrink-0 lg:w-full">
                 <button
                   type="button"
-                  onClick={() => setCurrent(i)}
+                  onClick={() => { setCurrent(i); setMobilePanel("preview"); }}
                   aria-current={i === safeIndex}
                   className="block w-full rounded-[var(--r-panel)] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                 >
@@ -289,9 +299,10 @@ export function SlidesView({
                     )}
                   />
                 </button>
-                <div className="mt-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/slide:opacity-100">
+                <div className="slide-actions mt-1 flex flex-wrap items-center gap-0.5 transition-opacity focus-within:opacity-100 group-hover/slide:opacity-100 lg:opacity-0">
                   <button
                     onClick={() => deck.moveSlide(i, i - 1)}
+                    aria-label={`Move slide ${i + 1} earlier`}
                     disabled={i === 0}
                     className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25"
                   >
@@ -299,6 +310,7 @@ export function SlidesView({
                   </button>
                   <button
                     onClick={() => deck.moveSlide(i, i + 1)}
+                    aria-label={`Move slide ${i + 1} later`}
                     disabled={i >= total - 1}
                     className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25"
                   >
@@ -317,6 +329,7 @@ export function SlidesView({
                       deck.duplicateSlide(i);
                       setCurrent(i + 1);
                     }}
+                    aria-label={`Duplicate slide ${i + 1}`}
                     className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover"
                   >
                     <Ico icon={FiCopy} motion="copy" size={13} />
@@ -326,6 +339,7 @@ export function SlidesView({
                       deck.removeSlide(i);
                       setCurrent((c) => Math.max(0, Math.min(c, total - 2)));
                     }}
+                    aria-label={`Delete slide ${i + 1}`}
                     className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:text-critical"
                   >
                     <Ico icon={FiTrash2} motion="shake" size={13} />
@@ -348,7 +362,7 @@ export function SlidesView({
           </ol>
         </aside>
 
-        <section className="relative flex min-h-0 flex-col overflow-hidden">
+        <section className={cn("relative min-h-0 flex-col overflow-hidden lg:flex", mobilePanel === "preview" ? "flex" : "hidden")}>
           {busy && !total ? (
             <div className="m-4 flex items-center gap-3.5 rounded-[var(--r-panel)] border border-line bg-raised px-5 py-4">
               <Bot size={38} state="working" />
@@ -451,7 +465,7 @@ export function SlidesView({
           ) : null}
         </section>
 
-        <aside className="flex min-h-0 flex-col border-t border-line bg-rail/30 lg:border-l lg:border-t-0">
+        <aside className={cn("min-h-0 flex-col border-t border-line bg-rail/30 lg:flex lg:border-l lg:border-t-0", mobilePanel === "edit" ? "flex" : "hidden")}>
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">
               Speaker notes
@@ -461,6 +475,7 @@ export function SlidesView({
                 value={slide.note}
                 onChange={(e) => deck.setNote(safeIndex, e.target.value)}
                 placeholder="No notes for this slide"
+                aria-label="Speaker notes"
                 rows={6}
                 className="w-full resize-none rounded-[var(--r-control)] border border-line bg-raised px-3 py-2.5 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-4 focus:border-accent/40"
               />
@@ -506,7 +521,7 @@ export function SlidesView({
             ) : null}
           </div>
 
-          <div className="shrink-0 border-t border-line p-3">
+          <div className="mobile-composer-dock shrink-0 border-t border-line p-3">
             <Composer onSend={run} placeholder="Continue the deck…" disabled={busy} compact />
           </div>
         </aside>
