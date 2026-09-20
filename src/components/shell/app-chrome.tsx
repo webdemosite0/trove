@@ -6,6 +6,7 @@ import { FiArrowLeft } from "@/components/ui/icons";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
 import { AnnouncementBanner } from "@/components/shell/announcement-banner";
+import { AuthReferralAnnouncement } from "@/components/shell/auth-referral-announcement";
 import type { User, Balance } from "@/lib/types";
 
 export function AppChrome({
@@ -26,7 +27,8 @@ export function AppChrome({
 
   if (isSettings) {
     return (
-      <div className="min-h-screen bg-canvas">
+      <div className="relative min-h-screen bg-canvas">
+        <AuthReferralAnnouncement />
         <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-[1100px] items-center gap-3 px-4 sm:px-6">
             <Link
@@ -46,7 +48,8 @@ export function AppChrome({
   return (
     <div className="flex min-h-screen">
       <Sidebar user={user} balance={balance} isAdmin={isAdmin} />
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="relative flex min-w-0 flex-1 flex-col">
+        <AuthReferralAnnouncement />
         <TopBar initial={user?.name?.slice(0, 1)} due={due} balance={balance} />
         <AnnouncementBanner />
         <div className="app-page-in min-w-0 flex-1">{children}</div>
