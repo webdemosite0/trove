@@ -11,15 +11,16 @@ export const metadata = {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ref?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, ref } = await searchParams;
   return (
     <AuthCard
       mode="signup"
       googleEnabled={googleConfigured()}
       microsoftEnabled={microsoftConfigured()}
       oauthError={error}
+      referralCode={ref}
     />
   );
 }

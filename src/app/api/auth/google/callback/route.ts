@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth";
 import { exchangeCode, googleConfigured } from "@/lib/google";
 import { site } from "@/lib/site";
+import { applyReferralOnSignup } from "@/lib/affiliates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest) {
       randomBytes(32).toString("hex"),
       { provider: "google", emailVerified: true },
     );
+    await applyReferralOnSignup(created.id).catch(() => undefined);
     await startSession(created.id);
     needOnboarding = true;
   }
