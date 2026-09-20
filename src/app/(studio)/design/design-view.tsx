@@ -16,7 +16,7 @@ import { FailureNote } from "@/components/ui/failure-note";
 import { Ico } from "@/components/ui/ico";
 import { Recents } from "@/components/ui/recents";
 import { localTimeZone } from "@/lib/context";
-import { briefSummary, FRAME, type Brief } from "@/lib/design-brief";
+import { brandNameFromBrief, briefSummary, FRAME, type Brief } from "@/lib/design-brief";
 import type { Recent } from "@/lib/recents";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +27,13 @@ import { cn } from "@/lib/utils";
  * screens, and keyboard navigation. Screens still stream in one at a time
  * so the first is visible while later ones are drawn.
  */
+
+
+function extractThemeHint(html: string): string {
+  const root = html.match(/:root\s*\{([^}]+)\}/);
+  if (!root) return "";
+  return root[1].split(";").map((l) => l.trim()).filter((l) => l.startsWith("--")).slice(0, 16).join("; ");
+}
 
 interface Screen {
   name: string;
@@ -82,6 +89,7 @@ export function DesignView({
     setScreens(b.screens.map((name) => ({ name, html: "", state: "waiting" })));
 
     let savedId: string | null = null;
+    let themeHint = "";
     for (const [i, name] of b.screens.entries()) {
       if (controller.signal.aborted) return;
       setScreens((s) => s.map((x, n) => (n === i ? { ...x, state: "drawing" } : x)));
@@ -91,15 +99,22 @@ export function DesignView({
         const res = await fetch("/api/design", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ brief: b, screen: name, timeZone: localTimeZone() }),
+          body: JSON.stringify({
+          brief: b,
+          screen: name,
+          timeZone: localTimeZone(),
+          priorThemeHint: themeHint || undefined,
+        }),
           signal: controller.signal,
         });
         const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status}).`);
         if (data?.id) savedId = String(data.id);
 
+        const html = String(data.html ?? "");
+        if (!themeHint) themeHint = extractThemeHint(html);
         setScreens((s) =>
-          s.map((x, n) => (n === i ? { ...x, html: data.html, state: "done" } : x)),
+          s.map((x, n) => (n === i ? { ...x, html, state: "done" } : x)),
         );
       } catch (e) {
         if (controller.signal.aborted) return;
