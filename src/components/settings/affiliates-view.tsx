@@ -66,18 +66,18 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
   const paidPct = Math.min(100, Math.round((stats.paidSignups / PAID_REFERRAL_GOAL) * 100));
 
   return (
-    <div className="space-y-5">
-      <section className="relative overflow-hidden rounded-[26px] border border-line p-6 sm:p-8">
+    <div className="space-y-5 pb-8">
+      <section className="relative overflow-hidden rounded-[26px] border border-line-strong bg-raised p-6 shadow-[var(--elev)] sm:p-8">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-90"
           style={{
             background:
-              "radial-gradient(ellipse at 10% 0%, rgba(251,113,133,0.35), transparent 45%), radial-gradient(ellipse at 90% 10%, rgba(96,165,250,0.4), transparent 40%), radial-gradient(ellipse at 50% 100%, rgba(167,139,250,0.35), transparent 50%), linear-gradient(135deg, rgba(15,23,42,0.02), transparent)",
+              "radial-gradient(ellipse at 8% 0%, color-mix(in oklab, var(--color-accent) 14%, transparent), transparent 42%), radial-gradient(ellipse at 94% 8%, color-mix(in oklab, var(--color-violet) 14%, transparent), transparent 38%), linear-gradient(180deg, color-mix(in oklab, var(--color-raised) 92%, transparent), color-mix(in oklab, var(--color-canvas) 80%, transparent))",
           }}
         />
         <div className="relative">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-fuchsia-500">
+          <p className="inline-flex rounded-full border border-accent/20 bg-accent-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.14em] text-accent">
             Affiliate program
           </p>
           <h1 className="mt-2 max-w-[22ch] text-[clamp(1.6rem,1.2rem+1.4vw,2.15rem)] font-semibold tracking-[-0.03em] text-ink">
@@ -105,8 +105,8 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
             />
           </div>
 
-          <div className="mt-5 overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 p-[1px] shadow-lg">
-            <div className="rounded-2xl bg-white/90 px-4 py-4 dark:bg-black/50">
+          <div className="mt-5 overflow-hidden rounded-2xl border border-amber-300/60 bg-amber-50/80 shadow-[var(--elev)] dark:border-amber-400/20 dark:bg-amber-950/20">
+            <div className="px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[12px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
@@ -126,7 +126,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
                   <p className="text-[11px] text-ink-4">{paidPct}% there</p>
                 </div>
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+              <div className="mt-3 h-2 overflow-hidden rounded-full border border-line bg-sunk">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-amber-400 to-rose-500 transition-all"
                   style={{ width: `${Math.min(100, (stats.paidSignups / PAID_REFERRAL_GOAL) * 100)}%` }}
@@ -138,19 +138,19 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
       </section>
 
       <Panel
+        className="border-line-strong bg-raised shadow-[var(--elev)]"
         title="Your referral link"
         description="Share this anywhere. When someone opens it and creates an account, the referral is applied automatically — they never need to enter a code on login or signup."
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="min-w-0 flex-1 rounded-xl border border-line bg-sunk px-3.5 py-3 font-mono text-[13px] text-ink break-all">
+          <div className="min-w-0 flex-1 rounded-xl border border-line-strong bg-canvas px-3.5 py-3 font-mono text-[13px] text-ink shadow-inner break-all">
             {stats.link}
           </div>
           <button
             type="button"
             onClick={() => copy("link")}
             className={cn(
-              "shrink-0 rounded-xl px-4 py-3 text-[13.5px] font-semibold text-white transition",
-              "bg-gradient-to-r from-fuchsia-500 via-violet-500 to-sky-500 hover:opacity-95",
+              "btn-grad shrink-0 rounded-xl px-4 py-3 text-[13.5px] font-semibold transition",
             )}
           >
             {copied === "link" ? "Copied!" : "Copy link"}
@@ -159,7 +159,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <span className="text-[12.5px] text-ink-4">Code</span>
-          <code className="rounded-lg border border-line bg-raised px-2.5 py-1 font-mono text-[13px] font-semibold tracking-wider text-ink">
+          <code className="rounded-lg border border-line-strong bg-canvas px-2.5 py-1 font-mono text-[13px] font-semibold tracking-wider text-ink">
             {stats.code}
           </code>
           <button
@@ -189,7 +189,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
         </div>
       </Panel>
 
-      <Panel title="How it works" description="Simple, colorful, and automatic.">
+      <Panel className="border-line-strong bg-raised shadow-[var(--elev)]" title="How it works" description="Three simple steps, handled automatically.">
         <ol className="grid gap-3 sm:grid-cols-3">
           {[
             {
@@ -211,7 +211,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
               ring: "from-amber-400 to-orange-500",
             },
           ].map((step) => (
-            <li key={step.n} className="rounded-2xl border border-line bg-sunk/60 p-4">
+            <li key={step.n} className="rounded-2xl border border-line-strong bg-canvas p-4 shadow-[var(--elev)]">
               <span
                 className={cn(
                   "inline-flex size-8 items-center justify-center rounded-full bg-gradient-to-br text-[13px] font-bold text-white",
@@ -227,7 +227,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
         </ol>
       </Panel>
 
-      <Panel title="Recent referrals">
+      <Panel className="border-line-strong bg-raised shadow-[var(--elev)]" title="Recent referrals">
         {stats.recent.length === 0 ? (
           <p className="text-[13.5px] text-ink-3">No signups yet — share your link to start earning.</p>
         ) : (
@@ -255,7 +255,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
 
 function StatChip({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <div className="rounded-2xl border border-white/20 bg-white/50 p-3.5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
+    <div className="rounded-2xl border border-line-strong bg-canvas/85 p-3.5 shadow-[var(--elev)] backdrop-blur">
       <p className="text-[11px] font-medium uppercase tracking-wide text-ink-4">{label}</p>
       <p
         className={cn(
