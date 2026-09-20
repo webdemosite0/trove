@@ -13,6 +13,10 @@ export type OnboardingPayload = {
   plan?: string;
   /** How they want to pay if not free: bank | jazzcash | easypaisa | later */
   paymentMethod?: string;
+  businessName?: string;
+  businessUrl?: string;
+  businessProfileName?: string;
+  businessAnalysis?: string;
 };
 
 export async function finishOnboarding(payload: OnboardingPayload) {
@@ -36,6 +40,10 @@ export async function finishOnboarding(payload: OnboardingPayload) {
     firstIdea: (payload.firstIdea || "").slice(0, 500),
     plan: wanted.id,
     paymentMethod: (payload.paymentMethod || "").slice(0, 40),
+    businessName: (payload.businessName || "").slice(0, 120),
+    businessUrl: (payload.businessUrl || "").slice(0, 500),
+    businessProfileName: (payload.businessProfileName || "").slice(0, 180),
+    businessAnalysis: (payload.businessAnalysis || "").slice(0, 1200),
   });
 
   const goal = payload.goal || "explore";
