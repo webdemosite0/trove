@@ -61,6 +61,9 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     siteName: site.name,
@@ -68,12 +71,30 @@ export const metadata: Metadata = {
     url: site.url,
     title: `${site.name} — ${site.searchTitle}`,
     description: site.description,
+    images: [
+      {
+        url: site.ogImagePath,
+        width: 1200,
+        height: 630,
+        alt: site.ogImageAlt,
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${site.name} — ${site.searchTitle}`,
     description: site.shortDescription,
     creator: site.twitter,
+    site: site.twitter,
+    images: [
+      {
+        url: site.ogImagePath,
+        width: 1200,
+        height: 630,
+        alt: site.ogImageAlt,
+      },
+    ],
   },
   formatDetection: { telephone: false, address: false, email: false },
 };
@@ -104,7 +125,9 @@ function StructuredData() {
           width: 180,
           height: 180,
         },
+        image: `${site.url}${site.ogImagePath}`,
         description: site.shortDescription,
+        email: site.email,
       },
       {
         "@type": "WebSite",
