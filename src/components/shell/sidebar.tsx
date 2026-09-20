@@ -209,28 +209,41 @@ function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
     <Link
       href="/settings/affiliates"
       onClick={onNavigate}
-      className="group relative block overflow-hidden rounded-2xl p-[1px] shadow-sm transition hover:scale-[1.02]"
-      style={{
-        background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
-      }}
+      className="group relative block overflow-hidden rounded-2xl border border-line-strong bg-raised p-3 shadow-[var(--elev)] transition hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-[var(--elev-lift)]"
     >
-      <div className="relative rounded-[15px] bg-rail/95 px-3 py-3 backdrop-blur-sm dark:bg-black/70">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-4 -top-4 size-16 rounded-full opacity-40 blur-2xl"
-          style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
-        />
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-fuchsia-500">
-          Refer & earn
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-80"
+        style={{
+          background:
+            "radial-gradient(circle at 100% 0%, color-mix(in oklab, var(--color-accent) 16%, transparent), transparent 42%), radial-gradient(circle at 0% 100%, color-mix(in oklab, var(--color-violet) 10%, transparent), transparent 46%)",
+        }}
+      />
+      <div className="relative">
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-full border border-accent/20 bg-accent-soft px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.12em] text-accent">
+            Referral
+          </span>
+          <span className="grid size-6 place-items-center rounded-full border border-line bg-canvas text-accent transition group-hover:translate-x-0.5">
+            <FiChevronRight size={12} />
+          </span>
+        </div>
+
+        <p className="mt-2.5 text-[13px] font-semibold leading-snug text-ink">
+          Invite people. Earn rewards.
         </p>
-        <p className="mt-1 text-[13px] font-semibold leading-snug text-ink">
-          Share Trove · get credits
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
+          Get credits for signups and unlock a cash reward from paid referrals.
         </p>
-        <p className="mt-0.5 text-[11px] text-ink-3">100 paid invites → $200</p>
-        <span className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-accent">
-          Open affiliates
-          <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
-        </span>
+
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <span className="rounded-full border border-line bg-canvas/80 px-2 py-1 text-[10px] font-semibold text-ink-2">
+            Credits per signup
+          </span>
+          <span className="rounded-full border border-line bg-canvas/80 px-2 py-1 text-[10px] font-semibold text-ink-2">
+            $200 goal
+          </span>
+        </div>
       </div>
     </Link>
   );
@@ -402,7 +415,7 @@ export function Sidebar({
               <Link
                 href="/settings/affiliates"
                 title="Refer & earn"
-                className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-[11px] font-bold text-white shadow-md"
+                className="mx-auto grid h-9 w-9 place-items-center rounded-xl border border-line-strong bg-raised text-[11px] font-bold text-accent shadow-[var(--elev)] transition hover:border-accent/35 hover:bg-accent-soft"
               >
                 $
               </Link>
