@@ -98,17 +98,21 @@ export function useDraft({
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
+        let replyText = "";
         for (;;) {
           const { done, value: chunk } = await reader.read();
           if (done) break;
           const piece = decoder.decode(chunk, { stream: true });
+          replyText += piece;
           setTurns((t) =>
             t.map((x) => (x.id === replyId ? { ...x, text: x.text + piece } : x)),
           );
         }
 
-        // Read the finished thread out of state rather than closing over a
-        // stale copy — the answer only exists once the stream has drained.
+        if (!replyText.trim()) {
+          throw new Error("The model returned an empty response. Try again.");
+        }
+
         setTurns((t) => {
           void save(
             t.map(({ role, text }) => ({ role, text })),
