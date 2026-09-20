@@ -108,6 +108,10 @@ export async function completeOnboarding(
     firstIdea?: string;
     plan?: string;
     paymentMethod?: string;
+    businessName?: string;
+    businessUrl?: string;
+    businessProfileName?: string;
+    businessAnalysis?: string;
   },
 ) {
   const payload = JSON.stringify({
@@ -116,6 +120,10 @@ export async function completeOnboarding(
     firstIdea: meta?.firstIdea || "",
     preferredPlan: meta?.plan || "free",
     paymentMethod: meta?.paymentMethod || "",
+    businessName: meta?.businessName || "",
+    businessUrl: meta?.businessUrl || "",
+    businessProfileName: meta?.businessProfileName || "",
+    businessAnalysis: meta?.businessAnalysis || "",
     at: Date.now(),
   });
   try {
