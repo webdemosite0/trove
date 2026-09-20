@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
     needOnboarding = true;
   }
 
-  const next = needOnboarding ? "/onboarding" : "/chat";
+  const next = needOnboarding ? "/onboarding" : "/chat?welcome=referral";
   const res = NextResponse.redirect(
     `${site.url}/launching?next=${encodeURIComponent(next)}`,
   );
