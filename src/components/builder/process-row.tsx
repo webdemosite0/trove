@@ -80,7 +80,7 @@ export function ProcessRow({
   kind: ProcessKind; label: string; active?: boolean; connectorId?: string; index?: number; className?: string;
 }) {
   const meta = KIND_META[kind] ?? KIND_META.think;
-  const showPrefix = meta.prefix && kind !== "think";
+  const showPrefix = Boolean(meta.prefix && kind !== "think");
   return (
     <div className={cn("group flex items-start gap-2 py-1 text-[13px] leading-snug", active ? "text-ink-2" : "text-ink-3", className)}>
       {typeof index === "number" ? (
@@ -148,33 +148,59 @@ export function ThinkingTrace({ steps, running, className }: { steps: ThinkingSt
   );
 }
 
+type TextBlock = { type: "h1" | "h2" | "p" | "arrow"; text: string };
+type ListBlock = { type: "ol" | "ul"; items: string[] };
+type ChatBlock = TextBlock | ListBlock;
+
 export function BuilderChatText({ text, className }: { text: string; className?: string }) {
   const blocks = parseChatBlocks(text);
   return (
     <div className={cn("space-y-2.5 text-[13.5px] leading-relaxed text-ink-2", className)}>
       {blocks.map((b, i) => {
-        if (b.type === "h1") return <h3 key={i} className="text-[15px] font-semibold tracking-tight text-ink">{b.text}</h3>;
-        if (b.type === "h2") return <h4 key={i} className="text-[13.5px] font-semibold text-ink">{b.text}</h4>;
-        if (b.type === "ol") return (
-          <ol key={i} className="space-y-1.5 pl-0">{b.items.map((item, j) => (
-            <li key={j} className="flex gap-2.5"><span className="w-5 shrink-0 tabular-nums text-[12.5px] font-medium text-accent">{j + 1}.</span><span className="min-w-0 flex-1">{renderInline(item)}</span></li>
-          ))}</ol>
-        );
-        if (b.type === "ul") return (
-          <ul key={i} className="space-y-1.5">{b.items.map((item, j) => (
-            <li key={j} className="flex gap-2.5"><span className="mt-0.5 shrink-0 text-ink-4" aria-hidden>→</span><span className="min-w-0 flex-1">{renderInline(item)}</span></li>
-          ))}</ul>
-        );
-        if (b.type === "arrow") return (
-          <p key={i} className="flex gap-2 text-ink-2"><span className="shrink-0 font-medium text-accent" aria-hidden>→</span><span>{renderInline(b.text)}</span></p>
-        );
+        if (b.type === "h1") {
+          return <h3 key={i} className="text-[15px] font-semibold tracking-tight text-ink">{b.text}</h3>;
+        }
+        if (b.type === "h2") {
+          return <h4 key={i} className="text-[13.5px] font-semibold text-ink">{b.text}</h4>;
+        }
+        if (b.type === "ol") {
+          return (
+            <ol key={i} className="space-y-1.5 pl-0">
+              {b.items.map((item, j) => (
+                <li key={j} className="flex gap-2.5">
+                  <span className="w-5 shrink-0 tabular-nums text-[12.5px] font-medium text-accent">{j + 1}.</span>
+                  <span className="min-w-0 flex-1">{renderInline(item)}</span>
+                </li>
+              ))}
+            </ol>
+          );
+        }
+        if (b.type === "ul") {
+          return (
+            <ul key={i} className="space-y-1.5">
+              {b.items.map((item, j) => (
+                <li key={j} className="flex gap-2.5">
+                  <span className="mt-0.5 shrink-0 text-ink-4" aria-hidden>→</span>
+                  <span className="min-w-0 flex-1">{renderInline(item)}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (b.type === "arrow") {
+          return (
+            <p key={i} className="flex gap-2 text-ink-2">
+              <span className="shrink-0 font-medium text-accent" aria-hidden>→</span>
+              <span>{renderInline(b.text)}</span>
+            </p>
+          );
+        }
+        // b.type === "p"
         return <p key={i} className="text-ink-2">{renderInline(b.text)}</p>;
       })}
     </div>
   );
 }
-
-type ChatBlock = { type: "h1" | "h2" | "p" | "arrow"; text: string } | { type: "ol" | "ul"; items: string[] };
 
 function parseChatBlocks(raw: string): ChatBlock[] {
   const lines = raw.replace(/\r\n/g, "\n").split("\n");
