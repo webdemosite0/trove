@@ -1,0 +1,69 @@
+name: Patch design-view
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch design-view.tsx
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path("src/app/(studio)/design/design-view.tsx")
+          t = p.read_text()
+
+          # imports
+          t = t.replace(
+              "import { briefSummary, FRAME, type Brief } from \"@/lib/design-brief\";",
+              "import { brandNameFromBrief, briefSummary, FRAME, type Brief } from \"@/lib/design-brief\";",
+          )
+
+          helper = '''
+          function extractThemeHint(html: string): string {
+            const root = html.match(/:root\\s*\\{([^}]+)\\}/);
+            if (!root) return "";
+            return root[1].split(";").map((l) => l.trim()).filter((l) => l.startsWith("--")).slice(0, 16).join("; ");
+          }
+
+          '''
+          if "function extractThemeHint" not in t:
+              t = t.replace("interface Screen {", helper + "interface Screen {")
+
+          # pass priorThemeHint in fetch body
+          old_body = '''body: JSON.stringify({ brief: b, screen: name, timeZone: localTimeZone() }),'''
+          new_body = '''body: JSON.stringify({
+                    brief: b,
+                    screen: name,
+                    timeZone: localTimeZone(),
+                    priorThemeHint: themeHint || undefined,
+                  }),'''
+          if "priorThemeHint" not in t:
+              if old_body not in t:
+                  raise SystemExit("fetch body not found")
+              t = t.replace(old_body, new_body, 1)
+              # declare themeHint before loop
+              t = t.replace(
+                  "let savedId: string | null = null;\n    for (const [i, name] of b.screens.entries()) {",
+                  "let savedId: string | null = null;\n    let themeHint = \"\";\n    for (const [i, name] of b.screens.entries()) {",
+                  1,
+              )
+              t = t.replace(
+                  "setScreens((s) =>\n          s.map((x, n) => (n === i ? { ...x, html: data.html, state: \"done\" } : x)),\n        );",
+                  "const html = String(data.html ?? \"\");\n        if (!themeHint) themeHint = extractThemeHint(html);\n        setScreens((s) =>\n          s.map((x, n) => (n === i ? { ...x, html, state: \"done\" } : x)),\n        );",
+                  1,
+              )
+
+          p.write_text(t)
+          print("patched", p.stat().st_size)
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "src/app/(studio)/design/design-view.tsx"
+          git commit -m "Design view: theme continuity across screens" || echo noop
+          git push
