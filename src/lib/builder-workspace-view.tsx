@@ -66,7 +66,6 @@ export function BuilderView({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsOpen, setQuestionsOpen] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [storage, setStorage] = useState<"local" | "none">("local");
   const [error, setError] = useState<string | null>(null);
   const [finalMsg, setFinalMsg] = useState<string | null>(null);
   const [pane, setPane] = useState<Pane>(mobile ? "chat" : "preview");
@@ -77,7 +76,6 @@ export function BuilderView({
   const [targetId] = useState<TargetId>("react");
   const msgId = useRef(0);
   const logId = useRef(0);
-  const hydrated = useRef(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const busy = phase === "asking" || phase === "planning" || phase === "building";
 
@@ -101,167 +99,6 @@ export function BuilderView({
     el.scrollTop = el.scrollHeight;
   }, [messages, tasks, phase, finalMsg]);
 
-  // NOTE: Full body restored from commit 798dacb — see artifact for complete source.
-  // Temporary: re-export path may need full file. Loading from known good implementation below via dynamic structure.
-
-  return (
-    <div className="flex min-h-[100dvh] w-full flex-col bg-canvas">
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
-        <Link href="/dashboard" className="text-ink-3 hover:text-ink" aria-label="Back">
-          <FiArrowLeft size={16} />
-        </Link>
-        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
-          {plan?.title || idea.slice(0, 40) || "Website builder"}
-        </span>
-        {busy ? <span className="text-[11px] text-ink-3">Working…</span> : null}
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <aside className="flex min-h-0 w-full flex-1 flex-col border-b border-line lg:w-[380px] lg:flex-none lg:border-b-0 lg:border-r">
-          <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-            <div className="flex flex-col gap-3">
-              {error ? <FailureNote error={error} /> : null}
-              {finalMsg ? <p className="text-[13px] text-ink-3">{finalMsg}</p> : null}
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={cn(
-                    "rounded-[var(--r-panel)] px-3 py-2 text-[13.5px] leading-relaxed",
-                    m.role === "user" ? "bg-accent/10 text-ink" : "bg-rail text-ink-2",
-                  )}
-                >
-                  {m.text}
-                </div>
-              ))}
-              {tasks.map((t) => {
-                const kind =
-                  t.kind === "write"
-                    ? ("file" as const)
-                    : t.kind === "read"
-                      ? ("file" as const)
-                      : t.kind === "check"
-                        ? ("cmd" as const)
-                        : t.kind === "think" || t.kind === "plan"
-                          ? ("think" as const)
-                          : t.state === "ok"
-                            ? ("ok" as const)
-                            : ("think" as const);
-                return (
-                  <ProcessRow key={t.id} kind={kind} label={t.label} active={t.state === "run"} />
-                );
-              })}
-              {questionsOpen && questions.length ? (
-                <QuestionBox
-                  questions={questions}
-                  busy={busy}
-                  onSubmit={(ans) => {
-                    setAnswers(ans);
-                    void plan_(idea, ans);
-                  }}
-                  onSkip={() => void plan_(idea, answers)}
-                />
-              ) : null}
-              {phase === "review" && plan && !questionsOpen ? (
-                <PlanPanel plan={plan} onGenerate={() => void generate()} busy={busy} />
-              ) : null}
-              {phase === "idle" && !messages.length ? (
-                <div className="py-8 text-center">
-                  <TroveOrb size={40} />
-                  <p className="mt-3 text-[15px] font-medium text-ink">What should we build?</p>
-                  <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    {IDEAS.map((hint) => (
-                      <button
-                        key={hint}
-                        type="button"
-                        className="rounded-full border border-line px-3 py-1.5 text-[12.5px] text-ink-2 hover:border-accent/40"
-                        onClick={() => void ask(hint)}
-                      >
-                        {hint}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <div className="shrink-0 border-t border-line p-3">
-            {mobile ? (
-              <MobileComposer
-                onSend={sendFromComposer}
-                placeholder="Describe the site or ask for changes…"
-              />
-            ) : (
-              <Composer
-                onSend={sendFromComposer}
-                placeholder="Describe the site or ask for changes…"
-              />
-            )}
-          </div>
-        </aside>
-        <main className="hidden min-h-0 flex-1 flex-col lg:flex">
-          <div className="flex h-10 shrink-0 items-center gap-1 border-b border-line px-2">
-            {(["preview", "files", "code", "console"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPane(p)}
-                className={cn(
-                  "rounded-md px-2.5 py-1 text-[12px] capitalize",
-                  pane === p ? "bg-hover text-ink" : "text-ink-3 hover:text-ink",
-                )}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-          <div className="min-h-0 flex-1 overflow-auto p-3">
-            {pane === "preview" ? (
-              <BrowserFrame url={publishedUrl || "preview"}>
-                <BuilderPreviewPane html={preview} />
-              </BrowserFrame>
-            ) : null}
-            {pane === "files" ? (
-              <ul className="space-y-1 text-[13px]">
-                {files.map((f) => (
-                  <li key={f.path}>
-                    <button
-                      type="button"
-                      className="text-ink-2 hover:text-ink"
-                      onClick={() => {
-                        setOpenFile(f.path);
-                        setPane("code");
-                      }}
-                    >
-                      {f.path}
-                    </button>
-                  </li>
-                ))}
-                {!files.length ? <li className="text-ink-4">No files yet</li> : null}
-              </ul>
-            ) : null}
-            {pane === "code" ? (
-              <pre className="overflow-auto rounded-lg bg-sunk p-3 font-mono text-[12px] text-ink-2">
-                {files.find((f) => f.path === openFile)?.content ||
-                  files[0]?.content ||
-                  "// Select a file"}
-              </pre>
-            ) : null}
-            {pane === "console" ? <BuildConsole logs={logs} /> : null}
-          </div>
-          {phase === "ready" && files.length ? (
-            <div className="shrink-0 border-t border-line p-3">
-              <PublishPanel
-                files={files}
-                title={plan?.title || idea.slice(0, 40)}
-                onPublished={(url) => setPublishedUrl(url)}
-              />
-            </div>
-          ) : null}
-        </main>
-      </div>
-    </div>
-  );
-
-  // --- handlers (hoisted via function body order in full file) ---
   async function plan_(text: string, ans: Record<string, string> = {}) {
     setPhase("planning");
     setError(null);
@@ -454,7 +291,12 @@ export function BuilderView({
             written.push({ path: event.path, content: event.content });
             setTasks((prev) => [
               ...prev,
-              { id: `f${meta.index}-${written.length}`, kind: "write", label: event.path, state: "run" },
+              {
+                id: `f${meta.index}-${written.length}`,
+                kind: "write",
+                label: event.path,
+                state: "run",
+              },
             ]);
           } else if (event.t === "error") {
             throw new Error(event.message || "Step failed");
@@ -478,4 +320,161 @@ export function BuilderView({
     );
     return next;
   }
+
+  return (
+    <div className="flex min-h-[100dvh] w-full flex-col bg-canvas">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
+        <Link href="/dashboard" className="text-ink-3 hover:text-ink" aria-label="Back">
+          <FiArrowLeft size={16} />
+        </Link>
+        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
+          {plan?.title || idea.slice(0, 40) || "Website builder"}
+        </span>
+        {busy ? <span className="text-[11px] text-ink-3">Working…</span> : null}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside className="flex min-h-0 w-full flex-1 flex-col border-b border-line lg:w-[380px] lg:flex-none lg:border-b-0 lg:border-r">
+          <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+            <div className="flex flex-col gap-3">
+              {error ? <FailureNote error={error} /> : null}
+              {finalMsg ? <p className="text-[13px] text-ink-3">{finalMsg}</p> : null}
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={cn(
+                    "rounded-[var(--r-panel)] px-3 py-2 text-[13.5px] leading-relaxed",
+                    m.role === "user" ? "bg-accent/10 text-ink" : "bg-rail text-ink-2",
+                  )}
+                >
+                  {m.text}
+                </div>
+              ))}
+              {tasks.map((t) => {
+                const kind =
+                  t.kind === "write"
+                    ? ("file" as const)
+                    : t.kind === "read"
+                      ? ("file" as const)
+                      : t.kind === "check"
+                        ? ("cmd" as const)
+                        : t.kind === "think" || t.kind === "plan"
+                          ? ("think" as const)
+                          : t.state === "ok"
+                            ? ("ok" as const)
+                            : ("think" as const);
+                return (
+                  <ProcessRow key={t.id} kind={kind} label={t.label} active={t.state === "run"} />
+                );
+              })}
+              {questionsOpen && questions.length ? (
+                <QuestionBox
+                  questions={questions}
+                  busy={busy}
+                  onSubmit={(ans) => {
+                    setAnswers(ans);
+                    void plan_(idea, ans);
+                  }}
+                  onSkip={() => void plan_(idea, answers)}
+                />
+              ) : null}
+              {phase === "review" && plan && !questionsOpen ? (
+                <PlanPanel plan={plan} onGenerate={() => void generate()} busy={busy} />
+              ) : null}
+              {phase === "idle" && !messages.length ? (
+                <div className="py-8 text-center">
+                  <TroveOrb size={40} />
+                  <p className="mt-3 text-[15px] font-medium text-ink">What should we build?</p>
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
+                    {IDEAS.map((hint) => (
+                      <button
+                        key={hint}
+                        type="button"
+                        className="rounded-full border border-line px-3 py-1.5 text-[12.5px] text-ink-2 hover:border-accent/40"
+                        onClick={() => void ask(hint)}
+                      >
+                        {hint}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <div className="shrink-0 border-t border-line p-3">
+            {mobile ? (
+              <MobileComposer
+                onSend={sendFromComposer}
+                placeholder="Describe the site or ask for changes…"
+              />
+            ) : (
+              <Composer
+                onSend={sendFromComposer}
+                placeholder="Describe the site or ask for changes…"
+              />
+            )}
+          </div>
+        </aside>
+        <main className="hidden min-h-0 flex-1 flex-col lg:flex">
+          <div className="flex h-10 shrink-0 items-center gap-1 border-b border-line px-2">
+            {(["preview", "files", "code", "console"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPane(p)}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-[12px] capitalize",
+                  pane === p ? "bg-hover text-ink" : "text-ink-3 hover:text-ink",
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <div className="min-h-0 flex-1 overflow-auto p-3">
+            {pane === "preview" ? (
+              <BrowserFrame url={publishedUrl || "preview"}>
+                <BuilderPreviewPane html={preview} />
+              </BrowserFrame>
+            ) : null}
+            {pane === "files" ? (
+              <ul className="space-y-1 text-[13px]">
+                {files.map((f) => (
+                  <li key={f.path}>
+                    <button
+                      type="button"
+                      className="text-ink-2 hover:text-ink"
+                      onClick={() => {
+                        setOpenFile(f.path);
+                        setPane("code");
+                      }}
+                    >
+                      {f.path}
+                    </button>
+                  </li>
+                ))}
+                {!files.length ? <li className="text-ink-4">No files yet</li> : null}
+              </ul>
+            ) : null}
+            {pane === "code" ? (
+              <pre className="overflow-auto rounded-lg bg-sunk p-3 font-mono text-[12px] text-ink-2">
+                {files.find((f) => f.path === openFile)?.content ||
+                  files[0]?.content ||
+                  "// Select a file"}
+              </pre>
+            ) : null}
+            {pane === "console" ? <BuildConsole logs={logs} /> : null}
+          </div>
+          {phase === "ready" && files.length ? (
+            <div className="shrink-0 border-t border-line p-3">
+              <PublishPanel
+                files={files}
+                title={plan?.title || idea.slice(0, 40)}
+                onPublished={(url) => setPublishedUrl(url)}
+              />
+            </div>
+          ) : null}
+        </main>
+      </div>
+    </div>
+  );
 }
