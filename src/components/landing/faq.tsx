@@ -4,11 +4,19 @@ import { SectionHead } from "@/components/landing/sections";
 const QA: { q: string; a: string }[] = [
   {
     q: "What is Trove?",
-    a: "An AI workspace. You describe what you need and Trove plans it, builds it, and keeps it — websites, documents, spreadsheets, decks, code, research, and agents from one place.",
+    a: "An AI workspace for business. You describe what you need and Trove helps plan it, build it, and keep it — websites, documents, spreadsheets, decks, code, research, agents, and connected-tool workflows from one place.",
   },
   {
     q: "What can I build with it?",
     a: "Multi-page websites (with live preview and publish), Vite + React apps, Word documents, Excel workbooks, PowerPoint decks, runnable code, research write-ups, and agents that carry out multi-step work.",
+  },
+  {
+    q: "Which apps can Trove connect to?",
+    a: "Trove has an integrations layer for business tools including Gmail, Google Calendar, Google Drive, Slack, Notion, GitHub, Linear, Figma, Airtable, HubSpot, Salesforce, Stripe, Dropbox, Outlook, Microsoft Teams and more. Availability depends on the integration and workspace setup.",
+  },
+  {
+    q: "Can Trove use connected tools in AI workflows?",
+    a: "That is the purpose of the integrations layer: bring useful company context into the workspace and let supported agents or workflows work across connected services instead of treating every prompt as a blank session.",
   },
   {
     q: "Can I publish a website live?",
@@ -32,7 +40,7 @@ const QA: { q: string; a: string }[] = [
   },
   {
     q: "Can I cancel anytime?",
-    a: "The free plan needs no card, so there is nothing to cancel. Paid plans are monthly.",
+    a: "The free plan needs no card. Paid plans can be offered monthly or yearly depending on the plan you choose.",
   },
   {
     q: "Who makes Trove?",
