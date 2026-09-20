@@ -1,0 +1,26 @@
+name: Assemble design-view
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/design-view-src/**"
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Concatenate
+        run: |
+          set -euo pipefail
+          cat scripts/design-view-src/part0.tsx scripts/design-view-src/part1.tsx scripts/design-view-src/part2.tsx scripts/design-view-src/part3.tsx > "src/app/(studio)/design/design-view.tsx"
+          wc -c "src/app/(studio)/design/design-view.tsx"
+          head -3 "src/app/(studio)/design/design-view.tsx"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "src/app/(studio)/design/design-view.tsx"
+          git commit -m "Assemble redesigned design-view UI" || echo noop
+          git push
