@@ -120,20 +120,27 @@ export async function POST(req: NextRequest) {
   try {
     let sources: Source[] = [];
 
+    // Same provider path as docs/sheets (auto). High temp only for slides variety.
+    // Never force OpenRouter — a bad model/key caused Build paused + infinite Try again.
     const isSlides = tool === "slides";
-    // Prefer OpenRouter/Gemma only when that key is configured; otherwise use
-    // the normal auto chain so slides still work (and Try again can succeed).
-    const openrouterReady = Boolean(process.env.OPENROUTER_API_KEY?.trim());
     const stream = await streamText({
-      onUsage: (u) => account && spend(account.userId, tool, u.totalTokens),
+      onUsage: (u) => {
+        if (!account) return;
+        try {
+          void spend(account.userId, tool, u.totalTokens);
+        } catch (err) {
+          console.warn("tool: spend failed —", err);
+        }
+      },
       turns: messages.length
         ? messages
         : [{ role: "user", text: "Work from the attached files." }],
       system: promptFor(SEARCHES.has(tool)),
       systemWithoutSearch: promptFor(false),
-      temperature: isSlides ? 0.95 : 0.75,
-      maxOutputTokens: isSlides ? 5120 : 4096,
-      preferredProvider: isSlides && openrouterReady ? "openrouter" : undefined,
+      temperature: isSlides ? 0.9 : 0.75,
+      maxOutputTokens: 4096,
+      // auto = Explabs → Gemini → OpenRouter → …
+      preferredProvider: "auto",
       extraParts: attachments.length ? toParts(attachments) : undefined,
       search: SEARCHES.has(tool),
       onSources: (s) => {
@@ -161,7 +168,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    console.error("tool route", message);
+    console.error("tool route", tool, message);
     return Response.json({ error: message }, { status: 502 });
   }
 }
