@@ -94,7 +94,7 @@ export function ThinkingLine({ labels }: { labels?: string[] }) {
             active={i === step}
           />
         ))}
-        <WorkingTimer secs={secs} />
+        <WorkingTimer secs={secs} orbState={orbState} />
       </div>
     </div>
   );
