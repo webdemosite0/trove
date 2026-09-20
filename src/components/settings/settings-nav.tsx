@@ -13,6 +13,7 @@ import {
   FiSun,
   FiFileText,
   TbHelpCircle,
+  FiShare2,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,7 @@ const BILLING: Section[] = [
   { href: "/settings/payment-methods", label: "Payment methods", icon: FiCreditCard },
   { href: "/settings/billing", label: "Billing history", icon: FiFileText },
   { href: "/settings/usage", label: "Usage", icon: FiActivity },
+  { href: "/settings/affiliates", label: "Affiliates", icon: FiShare2 },
 ];
 
 const WORKSPACE: Section[] = [
@@ -62,8 +64,8 @@ function SettingsSection({ title, items }: { title: string; items: Section[] }) 
                 className={cn(
                   "group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] transition-all",
                   active
-                    ? "bg-white font-medium text-ink shadow-[0_1px_3px_rgba(15,23,42,.08),0_8px_24px_rgba(15,23,42,.04)] ring-1 ring-black/[0.05]"
-                    : "text-ink-3 hover:bg-white/70 hover:text-ink",
+                    ? "bg-raised font-medium text-ink shadow-[var(--sh-1)] ring-1 ring-line"
+                    : "text-ink-3 hover:bg-hover hover:text-ink",
                 )}
               >
                 <s.icon size={15} className={cn("shrink-0", active ? "text-accent" : "text-ink-4")} />

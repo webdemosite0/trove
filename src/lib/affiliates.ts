@@ -25,8 +25,31 @@ function randomCode(len = 8): string {
   return out;
 }
 
+/** Create affiliate tables if a deploy has not run the latest schema migrations yet. */
+async function ensureAffiliateTables(): Promise<void> {
+  await run(`CREATE TABLE IF NOT EXISTS affiliate_codes (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    code TEXT NOT NULL UNIQUE,
+    created_at INTEGER NOT NULL
+  )`);
+  await run(`CREATE UNIQUE INDEX IF NOT EXISTS affiliate_codes_code ON affiliate_codes (code)`).catch(() => undefined);
+  await run(`CREATE TABLE IF NOT EXISTS referrals (
+    id TEXT PRIMARY KEY,
+    referrer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    referee_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    code TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'credited',
+    credits_referrer INTEGER NOT NULL DEFAULT 0,
+    credits_referee INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+  )`);
+  await run(`CREATE INDEX IF NOT EXISTS referrals_by_referrer ON referrals (referrer_id, created_at DESC)`).catch(() => undefined);
+  await run(`ALTER TABLE users ADD COLUMN referred_by TEXT NOT NULL DEFAULT ''`).catch(() => undefined);
+}
+
 /** Ensure the user has a permanent affiliate code. */
 export async function ensureAffiliateCode(userId: string): Promise<string> {
+  await ensureAffiliateTables();
   const existing = await one(
     `SELECT code FROM affiliate_codes WHERE user_id = ?`,
     [userId],
@@ -61,6 +84,7 @@ export function referralUrl(code: string): string {
 export async function findReferrerByCode(code: string): Promise<{ userId: string; code: string } | null> {
   const normalized = code.trim().toUpperCase();
   if (!normalized || normalized.length < 4) return null;
+  await ensureAffiliateTables();
   const row = await one(
     `SELECT user_id, code FROM affiliate_codes WHERE upper(code) = ?`,
     [normalized],
@@ -88,6 +112,7 @@ export async function applyReferralOnSignup(
   refereeId: string,
   codeFromForm?: string | null,
 ): Promise<{ applied: boolean; code?: string }> {
+  await ensureAffiliateTables();
   const cookieCode = await readRefCookie();
   const raw = (codeFromForm || cookieCode || "").trim().toUpperCase();
   if (!raw) return { applied: false };
