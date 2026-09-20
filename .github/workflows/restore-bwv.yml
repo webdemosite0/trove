@@ -1,0 +1,51 @@
+name: Restore builder-workspace-view
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download last good file and patch projectId
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://cdn.jsdelivr.net/gh/webdemosite0/trove@f067390869f314070ea269b65f7dda0a2c0f0f4e/src/lib/builder-workspace-view.tsx" -o src/lib/builder-workspace-view.tsx
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path("src/lib/builder-workspace-view.tsx")
+          t = p.read_text()
+          old = """                <BuilderPreviewPane
+                  preview={preview}
+                  files={files}
+                  activeTab=\"preview\"
+                  onNavigate={goPane}
+                  publishControl={publishCtrl}
+                />"""
+          new = """                <BuilderPreviewPane
+                  preview={preview}
+                  files={files}
+                  projectId={projectId}
+                  activeTab=\"preview\"
+                  onNavigate={goPane}
+                  publishControl={publishCtrl}
+                />"""
+          if old not in t:
+              raise SystemExit("patch target not found")
+          p.write_text(t.replace(old, new, 1))
+          print("patched", p.stat().st_size)
+          PY
+
+      - name: Commit restore
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/builder-workspace-view.tsx
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Restore builder-workspace-view.tsx + pass projectId to preview"
+          git push
