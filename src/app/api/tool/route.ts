@@ -121,6 +121,9 @@ export async function POST(req: NextRequest) {
     let sources: Source[] = [];
 
     const isSlides = tool === "slides";
+    // Prefer OpenRouter/Gemma only when that key is configured; otherwise use
+    // the normal auto chain so slides still work (and Try again can succeed).
+    const openrouterReady = Boolean(process.env.OPENROUTER_API_KEY?.trim());
     const stream = await streamText({
       onUsage: (u) => account && spend(account.userId, tool, u.totalTokens),
       turns: messages.length
@@ -128,9 +131,9 @@ export async function POST(req: NextRequest) {
         : [{ role: "user", text: "Work from the attached files." }],
       system: promptFor(SEARCHES.has(tool)),
       systemWithoutSearch: promptFor(false),
-      temperature: isSlides ? 1.05 : 0.75,
-      maxOutputTokens: isSlides ? 6144 : 4096,
-      preferredProvider: isSlides ? "openrouter" : undefined,
+      temperature: isSlides ? 0.95 : 0.75,
+      maxOutputTokens: isSlides ? 5120 : 4096,
+      preferredProvider: isSlides && openrouterReady ? "openrouter" : undefined,
       extraParts: attachments.length ? toParts(attachments) : undefined,
       search: SEARCHES.has(tool),
       onSources: (s) => {
