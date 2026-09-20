@@ -2,7 +2,8 @@
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
-import { FiSearch, FiCheck, FiPlus, FiExternalLink } from "@/components/ui/icons";
+import { useRouter } from "next/navigation";
+import { FiSearch, FiPlus, FiCheck, FiExternalLink } from "@/components/ui/icons";
 import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
 import { SERVICES } from "@/lib/services";
@@ -14,6 +15,19 @@ export interface ConnectedService {
   account: string;
   hint: string;
 }
+
+const POPULAR_IDS = [
+  "gmail",
+  "github",
+  "google-drive",
+  "google-calendar",
+  "notion",
+  "slack",
+  "outlook",
+  "vercel",
+  "linear",
+  "discord",
+];
 
 export function IntegrationsView({
   connected,
@@ -28,37 +42,43 @@ export function IntegrationsView({
   nangoOn?: boolean;
   nangoServices?: string[];
 }) {
-  const [tab, setTab] = useState<"connectors" | "skills">("connectors");
+  const router = useRouter();
   const [opening, setOpening] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
   const [nangoBusy, setNangoBusy] = useState<string | null>(null);
   const [nangoError, setNangoError] = useState<string | null>(null);
-
   const nangoSet = useMemo(() => new Set(nangoServices), [nangoServices]);
 
   const [optimistic, dropOne] = useOptimistic(
     connected,
     (state: ConnectedService[], id: string) => state.filter((s) => s.service !== id),
   );
-
   const byId = useMemo(
     () => new Map(optimistic.map((c) => [c.service, c])),
     [optimistic],
   );
 
-  const featured = useMemo(() => {
+  const installed = useMemo(
+    () => SERVICES.filter((s) => byId.has(s.id)),
+    [byId],
+  );
+
+  const popular = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return SERVICES.filter((s) => {
-      if (byId.has(s.id)) return false;
-      if (!q) return true;
-      return (
+    if (!q) {
+      const map = new Map(SERVICES.map((s) => [s.id, s]));
+      const ordered = POPULAR_IDS.map((id) => map.get(id)).filter(Boolean) as typeof SERVICES;
+      const rest = SERVICES.filter((s) => !POPULAR_IDS.includes(s.id));
+      return [...ordered, ...rest].slice(0, 24);
+    }
+    return SERVICES.filter(
+      (s) =>
         s.name.toLowerCase().includes(q) ||
         s.blurb.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q)
-      );
-    }).slice(0, q ? 40 : 16);
-  }, [query, byId]);
+        s.category.toLowerCase().includes(q),
+    ).slice(0, 40);
+  }, [query]);
 
   function remove(id: string) {
     startTransition(async () => {
@@ -80,12 +100,10 @@ export function IntegrationsView({
       if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
       const link = data.connectLink as string;
       if (!link || !link.startsWith("http")) {
-        throw new Error("Nango did not return a valid connect link. Check the integration key in app.nango.dev.");
+        throw new Error("Nango did not return a valid connect link.");
       }
       const popup = window.open(link, "nango-connect", "width=520,height=720");
-      if (!popup) {
-        throw new Error("Popup blocked — allow popups for this site, or open the link manually.");
-      }
+      if (!popup) throw new Error("Popup blocked — allow popups for this site.");
       const started = Date.now();
       await new Promise<void>((resolve) => {
         const t = setInterval(() => {
@@ -98,180 +116,148 @@ export function IntegrationsView({
       const sync = await fetch("/api/nango/sync", { method: "POST" });
       const syncData = await sync.json().catch(() => null);
       if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync.");
-      window.location.reload();
+      router.refresh();
     } catch (e) {
-      setNangoError(e instanceof Error ? e.message : "Could not connect.");
+      setNangoError(e instanceof Error ? e.message : "Connect failed.");
     } finally {
       setNangoBusy(null);
     }
   }
 
   function startConnect(id: string) {
-    // GitHub / Vercel: PAT dialog — avoids blank Google page from misconfigured Nango OAuth
-    const preferToken = id === "github" || id === "vercel" || id === "resend";
-    if (preferToken && connectable[id]) {
-      setOpening(id);
+    if (nangoOn && nangoSet.has(id)) {
+      void connectNango(id);
       return;
     }
-    if (nangoOn && nangoSet.has(id)) void connectNango(id);
-    else if (connectable[id]) setOpening(id);
+    if (connectable[id]) setOpening(id);
+  }
+
+  function canConnect(id: string) {
+    return Boolean(connectable[id]) || (nangoOn && nangoSet.has(id));
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[920px] px-4 py-8 sm:px-6">
-      <div className="overflow-hidden rounded-[24px] border border-line bg-rail shadow-[0_24px_80px_-40px_rgba(0,0,0,0.5)]">
-        <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3 sm:px-5">
-          <div className="flex rounded-full bg-sunk p-0.5">
-            <button
-              type="button"
-              onClick={() => setTab("connectors")}
-              className={cn(
-                "rounded-full px-3.5 py-1.5 text-[13px] font-medium",
-                tab === "connectors" ? "bg-raised text-ink shadow-sm" : "text-ink-4",
-              )}
-            >
-              Connectors
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("skills")}
-              className={cn(
-                "rounded-full px-3.5 py-1.5 text-[13px] font-medium",
-                tab === "skills" ? "bg-raised text-ink shadow-sm" : "text-ink-4",
-              )}
-            >
-              Skills
-            </button>
+    <div className="min-h-[calc(100dvh-3.5rem)] bg-[#0a0a0a] text-white">
+      <div className="mx-auto max-w-[920px] px-5 pb-16 pt-10 sm:px-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-white">
+              Plugins
+            </h1>
+            <p className="mt-1.5 text-[15px] text-white/55">
+              Work with Trove across your favorite tools.
+            </p>
           </div>
-          <div className="relative min-w-[160px] flex-1">
-            <FiSearch size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+          <label className="relative block w-full sm:max-w-[260px]">
+            <FiSearch
+              size={15}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
+            />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search…"
-              className="h-9 w-full rounded-full border border-line bg-sunk pl-9 pr-3 text-[13px] text-ink outline-none placeholder:text-ink-4 focus:border-accent"
+              placeholder="Search plugins"
+              className="h-11 w-full rounded-full border border-white/10 bg-white/5 pl-10 pr-4 text-[14px] text-white outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.08]"
             />
-          </div>
-          <Link
-            href="/skills"
-            className="rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] font-medium text-ink-2 hover:bg-hover"
-          >
-            New Connector
-          </Link>
+          </label>
         </div>
 
-        <div className="max-h-[min(72vh,720px)] overflow-y-auto p-4 sm:p-5">
-          {tab === "skills" ? (
-            <div className="space-y-3">
-              <p className="text-[13px] text-ink-3">
-                Skills are capabilities the AI uses while you chat or build. Open the full catalog for details.
-              </p>
-              <Link
-                href="/skills"
-                className="inline-flex rounded-full bg-accent px-4 py-2 text-[13px] font-medium text-white"
-              >
-                Open Skills
-              </Link>
+        {nangoError ? (
+          <p className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-[13px] text-rose-200">
+            {nangoError}
+          </p>
+        ) : null}
+
+        {installed.length > 0 ? (
+          <section className="mt-10">
+            <p className="text-[13px] font-medium text-white/50">
+              Installed <span className="text-white/30">›</span>
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {installed.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/integrations/${s.id}`}
+                  title={s.name}
+                  className="group relative grid size-[52px] place-items-center rounded-2xl bg-white shadow-[0_8px_24px_rgba(0,0,0,.35)] ring-1 ring-white/10 transition hover:scale-105 hover:ring-white/30"
+                >
+                  <ServiceMark id={s.id} name={s.name} size={30} />
+                </Link>
+              ))}
             </div>
-          ) : (
-            <>
-              {nangoError ? (
-                <p className="mb-4 rounded-xl border border-critical/30 bg-critical/10 px-3 py-2 text-[13px] text-critical">
-                  {nangoError}
-                </p>
-              ) : null}
+          </section>
+        ) : null}
 
-              <section>
-                <h2 className="text-[13px] font-semibold text-ink">Connected</h2>
-                {optimistic.length === 0 ? (
-                  <p className="mt-3 text-[13px] text-ink-4">
-                    Nothing connected yet. Add GitHub with a personal access token (repo scope), then deploy from Sites.
-                  </p>
-                ) : (
-                  <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {optimistic.map((c) => {
-                      const meta = SERVICES.find((s) => s.id === c.service);
-                      return (
-                        <li
-                          key={c.service}
-                          className="flex items-center gap-3 rounded-2xl border border-line bg-raised/60 px-3.5 py-3"
-                        >
-                          <ServiceMark id={c.service} name={meta?.name ?? c.service} size={36} />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[14px] font-medium text-ink">
-                              {meta?.name ?? c.service}
-                            </p>
-                            <p className="truncate text-[12px] text-ink-4">
-                              {c.account || meta?.blurb || "Connected"}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            disabled={pending}
-                            onClick={() => remove(c.service)}
-                            className="rounded-full border border-line px-2.5 py-1 text-[12px] text-positive hover:border-critical/40 hover:text-critical"
-                          >
-                            <span className="inline-flex items-center gap-1">
-                              <FiCheck size={12} /> Added
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </section>
-
-              <section className="mt-8">
-                <h2 className="text-[13px] font-semibold text-ink">Featured</h2>
-                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {featured.map((s) => {
-                    const can =
-                      Boolean(connectable[s.id]) || (nangoOn && nangoSet.has(s.id));
-                    return (
-                      <li
-                        key={s.id}
-                        className="flex items-center gap-3 rounded-2xl border border-line/80 bg-canvas/40 px-3.5 py-3 transition hover:bg-hover/50"
+        <section className="mt-12">
+          <h2 className="text-[13px] font-medium text-white/50">Popular</h2>
+          <ul className="mt-4 grid gap-1 sm:grid-cols-2">
+            {popular.map((s) => {
+              const on = byId.has(s.id);
+              return (
+                <li key={s.id}>
+                  <div className="group flex items-center gap-3.5 rounded-2xl px-2.5 py-3 transition hover:bg-white/[0.04]">
+                    <Link
+                      href={`/integrations/${s.id}`}
+                      className="grid size-[48px] shrink-0 place-items-center rounded-2xl bg-white shadow-md ring-1 ring-black/5"
+                    >
+                      <ServiceMark id={s.id} name={s.name} size={28} />
+                    </Link>
+                    <Link href={`/integrations/${s.id}`} className="min-w-0 flex-1">
+                      <p className="truncate text-[15px] font-medium text-white">{s.name}</p>
+                      <p className="truncate text-[13px] text-white/45">{s.blurb}</p>
+                    </Link>
+                    {on ? (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => remove(s.id)}
+                        className="grid size-9 shrink-0 place-items-center rounded-full border border-emerald-400/30 bg-emerald-500/15 text-emerald-300"
+                        title="Connected — click to disconnect"
                       >
-                        <ServiceMark id={s.id} name={s.name} size={36} />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[14px] font-medium text-ink">{s.name}</p>
-                          <p className="truncate text-[12px] text-ink-4">{s.blurb}</p>
-                        </div>
-                        {can ? (
-                          <button
-                            type="button"
-                            disabled={!signedIn || nangoBusy !== null}
-                            onClick={() => startConnect(s.id)}
-                            className="shrink-0 rounded-full border border-line bg-raised px-3 py-1 text-[12.5px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50"
-                          >
-                            {nangoBusy === s.id ? "…" : "Add"}
-                          </button>
+                        <FiCheck size={16} />
+                      </button>
+                    ) : canConnect(s.id) ? (
+                      <button
+                        type="button"
+                        disabled={!signedIn || nangoBusy !== null}
+                        onClick={() => startConnect(s.id)}
+                        className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 text-white/70 transition hover:border-white/30 hover:bg-white/10 hover:text-white disabled:opacity-40"
+                        aria-label={`Add ${s.name}`}
+                      >
+                        {nangoBusy === s.id ? (
+                          <span className="text-[12px]">…</span>
                         ) : (
-                          <span className="shrink-0 text-[11.5px] text-ink-4">Soon</span>
+                          <FiPlus size={18} />
                         )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/integrations/${s.id}`}
+                        className="grid size-9 shrink-0 place-items-center rounded-full border border-white/10 text-white/40"
+                      >
+                        <FiPlus size={18} />
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
-              {nangoOn ? (
-                <p className="mt-6 text-[12px] text-ink-4">
-                  Other OAuth apps use Nango. GitHub uses a personal access token.{" "}
-                  <a
-                    href="https://app.nango.dev"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-accent hover:underline"
-                  >
-                    Nango <FiExternalLink size={11} />
-                  </a>
-                </p>
-              ) : null}
-            </>
-          )}
-        </div>
+        {nangoOn ? (
+          <p className="mt-10 flex items-center gap-1.5 text-[12.5px] text-white/35">
+            OAuth apps via Nango
+            <a
+              href="https://app.nango.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sky-400 hover:underline"
+            >
+              <FiExternalLink size={11} />
+            </a>
+          </p>
+        ) : null}
       </div>
 
       {opening && connectable[opening] ? (
