@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     shortcut: "/icon",
   },
   category: "technology",
-  authors: [{ name: site.name }],
+  authors: [{ name: site.name, url: site.url }],
   creator: site.name,
   publisher: site.name,
   robots: {
@@ -96,6 +96,9 @@ export const metadata: Metadata = {
       },
     ],
   },
+  other: {
+    "instagram:site": site.instagram,
+  },
   formatDetection: { telephone: false, address: false, email: false },
 };
 
@@ -118,6 +121,7 @@ function StructuredData() {
         "@type": "Organization",
         "@id": `${site.url}/#organization`,
         name: site.name,
+        alternateName: ["Trove AI", "troveai", "troveai.site"],
         url: site.url,
         logo: {
           "@type": "ImageObject",
@@ -128,34 +132,43 @@ function StructuredData() {
         image: `${site.url}${site.ogImagePath}`,
         description: site.shortDescription,
         email: site.email,
+        sameAs: [site.instagramUrl],
       },
       {
         "@type": "WebSite",
         "@id": `${site.url}/#website`,
         url: site.url,
         name: site.name,
-        alternateName: "Trove AI",
+        alternateName: ["Trove AI", "troveai.site"],
         description: site.description,
         publisher: { "@id": `${site.url}/#organization` },
         inLanguage: "en",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${site.url}/chat?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
       },
       {
         "@type": "SoftwareApplication",
         "@id": `${site.url}/#app`,
         name: site.name,
-        applicationCategory: "DeveloperApplication",
+        alternateName: "Trove AI Workspace",
+        applicationCategory: "BusinessApplication",
+        applicationSubCategory: "AI Workspace",
         operatingSystem: "Web",
         description: site.description,
         url: site.url,
         featureList: [
+          "All-in-one AI workspace for building and shipping work",
           "Generate a complete website from a prompt and refine it in chat",
           "Build custom AI agents with their own instructions and tools",
           "Run a team of four AI agents on a single task",
           "Write documents and export them as Word .docx",
           "Build spreadsheets and export them as Excel .xlsx",
-          "Generate runnable code, slide outlines, design specs and research",
-          "AI image generation via Puter.js (no API keys)",
-          "Reminders with browser notifications",
+          "Generate presentations, designs, code, and research",
+          "Live preview and publishable sites",
+          "Integrations (GitHub, Slack, and more)",
         ],
         offers: PLANS.map((plan) => ({
           "@type": "Offer",
@@ -163,6 +176,37 @@ function StructuredData() {
           price: String(plan.price),
           priceCurrency: "USD",
         })),
+        publisher: { "@id": `${site.url}/#organization` },
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${site.url}/#faq`,
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "What is the best AI workspace for building websites and files?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Trove is an AI workspace that turns one prompt into finished websites, documents, spreadsheets, decks, designs, and code you can refine, export, and publish. Visit https://troveai.site",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "What is Trove AI?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Trove (troveai.site) is an all-in-one AI workspace and agent platform. Describe what you want in chat — Trove builds websites, docs, sheets, slides, and more. Follow @troveai.site on Instagram.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "How is Trove different from ChatGPT?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "ChatGPT answers questions. Trove is built to produce finished work — live website previews, downloadable files, multi-agent runs, and an AI design studio — inside one workspace at https://troveai.site",
+            },
+          },
+        ],
       },
     ],
   };

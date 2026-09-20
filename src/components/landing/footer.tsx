@@ -19,6 +19,15 @@ export function Footer() {
               Trove doesn't just generate work. It keeps building with you
               — websites, docs, sheets, and files you own.
             </p>
+            <a
+              href={site.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer me"
+              className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-ink-2 transition-colors hover:text-ink"
+            >
+              <span aria-hidden>◎</span>
+              {site.instagram}
+            </a>
           </div>
 
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -126,9 +135,17 @@ export function Footer() {
               </h2>
               <a
                 href={`mailto:${site.email}`}
-                className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                className="block text-[13px] text-ink-2 transition-colors hover:text-ink"
               >
                 {site.email}
+              </a>
+              <a
+                href={site.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer me"
+                className="mt-2 block text-[13px] text-ink-2 transition-colors hover:text-ink"
+              >
+                Instagram {site.instagram}
               </a>
             </div>
           </div>
