@@ -1,7 +1,6 @@
 /**
  * Deck model + lenient markdown parser.
- *
- * One type system for text (title + body). Layouts vary; typography does not.
+ * Layouts, themes, and image briefs vary per deck.
  */
 
 export type SlideLayout =
@@ -12,23 +11,38 @@ export type SlideLayout =
   | "quote"
   | "section";
 
+export type DeckFont = "sans" | "serif" | "display";
+export type DeckPattern = "solid" | "grid" | "dots" | "waves" | "diagonal" | "mesh";
+
+export type DeckTheme = {
+  name: string;
+  accent: string;
+  font: DeckFont;
+  pattern: DeckPattern;
+};
+
 export type Slide = {
   title: string;
   bullets: string[];
   note: string;
-  /** Visual structure. Default "bullets". */
   layout: SlideLayout;
-  /**
-   * Optional image URL or a short photo brief the UI can show as a placeholder.
-   * Models write: Image: <url or description>
-   */
   image?: string;
+  theme?: DeckTheme;
+};
+
+export const DEFAULT_THEME: DeckTheme = {
+  name: "studio",
+  accent: "#7C5CFF",
+  font: "sans",
+  pattern: "solid",
 };
 
 const NOTE = /^note\s*[:—–-]\s*(.+)$/i;
 const BULLET = /^\s*(?:[-*•]|\d+[.)])\s+(.*)$/;
 const LAYOUT = /^layout\s*[:—–-]\s*(title|bullets|split|photo|quote|section)\s*$/i;
 const IMAGE = /^image\s*[:—–-]\s*(.+)$/i;
+const THEME =
+  /^theme\s*[:—–-]\s*(.+?)\s*\|\s*accent\s*(#[0-9a-fA-F]{3,8})\s*\|\s*font\s*(sans|serif|display)\s*\|\s*pattern\s*(solid|grid|dots|waves|diagonal|mesh)\s*$/i;
 
 const LAYOUTS = new Set<SlideLayout>([
   "title",
@@ -72,9 +86,11 @@ export function parseDeck(markdown: string): Slide[] {
   const slides: Slide[] = [];
   let current: Slide | null = null;
   let firstHeading = true;
+  let deckTheme: DeckTheme | undefined;
 
   const push = () => {
     if (current && (current.title || current.bullets.length)) {
+      if (deckTheme) current.theme = deckTheme;
       slides.push(finalize(current));
     }
   };
@@ -106,9 +122,34 @@ export function parseDeck(markdown: string): Slide[] {
       continue;
     }
 
-    if (!current) continue;
-    const plain = clean(raw);
+    const plainEarly = clean(raw);
+    if (!current) {
+      if (plainEarly) {
+        const themeMatchEarly = plainEarly.match(THEME);
+        if (themeMatchEarly) {
+          deckTheme = {
+            name: themeMatchEarly[1].trim(),
+            accent: themeMatchEarly[2],
+            font: themeMatchEarly[3].toLowerCase() as DeckFont,
+            pattern: themeMatchEarly[4].toLowerCase() as DeckPattern,
+          };
+        }
+      }
+      continue;
+    }
+    const plain = plainEarly;
     if (!plain) continue;
+
+    const themeMatch = plain.match(THEME);
+    if (themeMatch) {
+      deckTheme = {
+        name: themeMatch[1].trim(),
+        accent: themeMatch[2],
+        font: themeMatch[3].toLowerCase() as DeckFont,
+        pattern: themeMatch[4].toLowerCase() as DeckPattern,
+      };
+      continue;
+    }
 
     const layoutMatch = plain.match(LAYOUT);
     if (layoutMatch && LAYOUTS.has(layoutMatch[1].toLowerCase() as SlideLayout)) {
@@ -144,6 +185,13 @@ export function parseDeck(markdown: string): Slide[] {
 export function serialiseDeck(slides: Slide[]): string {
   if (!slides.length) return "";
   const out: string[] = [];
+  const theme = slides.find((s) => s.theme)?.theme;
+  if (theme) {
+    out.push(
+      `Theme: ${theme.name} | accent ${theme.accent} | font ${theme.font} | pattern ${theme.pattern}`,
+      "",
+    );
+  }
   slides.forEach((s, i) => {
     if (i === 0 && s.layout === "title" && !s.bullets.length) {
       out.push(`# ${s.title || "Untitled deck"}`, "");
@@ -172,9 +220,6 @@ export function deckFilename(slides: Slide[], fallback: string): string {
   );
 }
 
-/**
- * Turn an Image: brief into a real picture URL via Pollinations.
- */
 export function resolveSlideImage(image?: string): string | undefined {
   if (!image) return undefined;
   const s = image.trim();
@@ -190,19 +235,24 @@ function hashSeed(s: string): number {
   return Math.abs(h) % 1_000_000;
 }
 
-/** Attach resolved image URLs; prefer photo/split when an image exists. */
+/** Resolve Image: briefs to URLs; fill missing photos for photo/split/odd slides. */
 export function enrichDeckImages(slides: Slide[]): Slide[] {
-  return slides.map((slide) => {
+  return slides.map((slide, i) => {
+    const brief =
+      slide.image ||
+      [slide.title, slide.bullets[0], slide.bullets[1]].filter(Boolean).join(", ") ||
+      `unique presentation visual ${i + 1}`;
     const image =
       resolveSlideImage(slide.image) ??
-      (slide.layout === "photo" || slide.layout === "split"
-        ? resolveSlideImage(
-            slide.title || slide.bullets[0] || "abstract professional presentation",
-          )
+      (slide.layout === "photo" ||
+      slide.layout === "split" ||
+      slide.layout === "title" ||
+      i % 2 === 1
+        ? resolveSlideImage(brief)
         : undefined);
     if (!image) return slide;
     let layout = slide.layout;
-    if (layout === "bullets") layout = "split";
+    if (layout === "bullets" && image) layout = "split";
     return { ...slide, image, layout };
   });
 }
