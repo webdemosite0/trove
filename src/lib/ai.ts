@@ -43,9 +43,12 @@ function errText(e: unknown): string {
 }
 
 function shouldFallOver(message: string): boolean {
-  return /429|402|500|502|504|quota|rate.?limit|exhaust|billing|insufficient|subscription_required|401|403|invalid.?api.?key|incorrect api key|not available|404|503|overload|context.?length|maximum context|empty response|model.?not.?found|no model|timed?\s?out|ECONNRESET|fetch failed|network/i.test(
-    message,
-  );
+  // Always continue the provider chain unless this is clearly a user-credits stop.
+  // Narrow matching previously aborted after one backend and left slides on "Build paused".
+  if (/you have used all .* credits|out of credits|payment required/i.test(message)) {
+    return false;
+  }
+  return true;
 }
 
 function groundingMayBeTheProblem(message: string): boolean {
@@ -225,9 +228,6 @@ export async function streamText(
       ? compat.find((provider) => provider.id === preferred) ?? null
       : null;
 
-  // A direct user selection gets the first attempt. Search is a Gemini-only
-  // capability here, so another selected backend runs without grounding; if it
-  // fails, Gemini can still take over and search as part of the fallback path.
   if (selectedCompat) {
     try {
       console.warn(`ai: user selected ${describe(selectedCompat)}`);
@@ -250,8 +250,6 @@ export async function streamText(
   const tryGrounding = Boolean(opts.search) && groundingAvailable();
   const gpt = primaryGpt();
 
-  // Auto keeps the historical fast path: Astra first when no web grounding is
-  // required. Explicit Gemini skips this so the picker actually means Gemini.
   if (preferred === "auto" && gpt && !tryGrounding) {
     try {
       console.warn(`ai: stream primary ${describe(gpt)}`);
@@ -321,31 +319,14 @@ export async function streamText(
       }
     }
 
-    // If Gemini was explicitly selected, or another explicit backend already
-    // failed, Astra is the first non-Gemini fallback when it is configured.
-    if (
-      gpt &&
-      gpt.id !== preferred &&
-      (tryGrounding || preferred !== "auto")
-    ) {
-      try {
-        console.warn(`ai: stream fallback ${describe(gpt)}`);
-        return await compatStream({
-          provider: gpt,
-          turns: opts.turns,
-          system: opts.systemWithoutSearch ?? opts.system,
-          temperature,
-          maxOutputTokens,
-          onUsage: opts.onUsage,
-        });
-      } catch (e) {
-        const reason = errText(e);
-        attempts.push({ label: describe(gpt), reason });
-        if (!shouldFallOver(reason)) throw e;
-      }
-    }
+    // After Gemini fails, always walk every remaining compat provider.
+    const remaining = orderedCompat().filter((p) => {
+      if (selectedCompat && p.id === selectedCompat.id) return false;
+      if (preferred === "auto" && gpt && p.id === gpt.id) return false;
+      return true;
+    });
 
-    for (const provider of secondaryCompat().filter((item) => item.id !== preferred)) {
+    for (const provider of remaining) {
       try {
         console.warn(`ai: stream via ${describe(provider)}`);
         return await compatStream({
