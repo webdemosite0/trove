@@ -61,6 +61,9 @@ export const site = {
   ],
   locale: "en_US",
   twitter: "@trove",
+  /** Default social share image (Next.js opengraph-image route). */
+  ogImagePath: "/opengraph-image",
+  ogImageAlt: "Trove — describe what you want and it gets built",
 } as const;
 
 export const publicRoutes = [

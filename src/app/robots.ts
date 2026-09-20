@@ -27,7 +27,17 @@ const AI_CRAWLERS = [
 ];
 
 const publicRule = {
-  allow: ["/", "/about", "/pricing", "/privacy", "/terms", "/features/"],
+  allow: [
+    "/",
+    "/about",
+    "/pricing",
+    "/privacy",
+    "/terms",
+    "/features/",
+    "/indexnow.txt",
+    "/opengraph-image",
+    "/sitemap.xml",
+  ],
   disallow: privateRoutes,
 };
 
