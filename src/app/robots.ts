@@ -5,6 +5,10 @@ import { privateRoutes, site } from "@/lib/site";
  * Public marketing pages stay crawlable by search engines and AI discovery
  * bots. Authenticated workspaces, project builders, APIs and account surfaces
  * are explicitly excluded so private/user-specific URLs do not enter search.
+ *
+ * Note: do not emit a Host: line. It is a Yandex extension; Bing Webmaster
+ * Tools flags it as "Syntax not understood" even with a bare hostname.
+ * Canonical host is already declared via Sitemap + site redirects.
  */
 const AI_CRAWLERS = [
   "GPTBot",
@@ -41,15 +45,6 @@ const publicRule = {
   disallow: privateRoutes,
 };
 
-/** Bing/Yandex Host: prefers bare hostname — not a full URL with scheme. */
-function robotsHost(): string {
-  try {
-    return new URL(site.url).host;
-  } catch {
-    return site.url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
-  }
-}
-
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -57,6 +52,5 @@ export default function robots(): MetadataRoute.Robots {
       ...AI_CRAWLERS.map((userAgent) => ({ userAgent, ...publicRule })),
     ],
     sitemap: `${site.url}/sitemap.xml`,
-    host: robotsHost(),
   };
 }
