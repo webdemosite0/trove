@@ -52,6 +52,7 @@ export function MobileComposer({
   const [files, setFiles] = React.useState<Attachment[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const box = React.useRef<HTMLTextAreaElement>(null);
+  const picker = React.useRef<HTMLInputElement>(null);
 
   const resize = React.useCallback(() => {
     const el = box.current;
@@ -153,24 +154,29 @@ export function MobileComposer({
       />
 
       <div className="flex items-center gap-0.5 px-1 pb-0.5">
-        <label
+        <button
+          type="button"
+          aria-label="Attach files"
+          disabled={disabled}
+          onClick={() => picker.current?.click()}
           className={cn(
             "grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition-colors active:bg-hover",
             disabled && "pointer-events-none opacity-40",
           )}
         >
           <Ico icon={FiPlus} motion="grow" size={20} />
-          <span className="sr-only">Attach files</span>
-          <input
+        </button>
+        <input
+            ref={picker}
             type="file"
             multiple
+            disabled={disabled}
             className="hidden"
             onChange={(e) => {
               void pick(e.target.files);
               e.target.value = "";
             }}
           />
-        </label>
 
         {model && modelOptions?.length && onModelChange ? (
           <ModelPicker

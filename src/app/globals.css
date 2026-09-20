@@ -2313,3 +2313,58 @@ a[role="button"]:active {
     }
   }
 }
+
+/* Mobile editors use one pane at a time; their contents, not the page shell,
+   own scrolling. Real target sizes avoid overlapping invisible hit areas. */
+.mobile-editor-tabs {
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 6px max(8px, env(safe-area-inset-right)) 6px max(8px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-canvas);
+}
+.mobile-editor-tabs button {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-3);
+}
+.mobile-editor-tabs button[aria-pressed="true"] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+@media (max-width: 1023px) {
+  .mobile-viewport { height: var(--mobile-viewport-height, 100dvh); }
+  .mobile-editor-tabs { display: flex; }
+  .mobile-editor { padding-bottom: env(safe-area-inset-bottom); }
+  .mobile-editor > header { gap: 8px; padding: 8px 12px; }
+  .deck-editor > header > div:first-child,
+  .design-editor > header > div:first-child { flex-basis: 100%; }
+  .mobile-editor button,
+  .composer button,
+  .nx-mobile-drawer button,
+  .nx-mobile-drawer a { min-height: 44px; min-width: 44px; }
+  .mobile-editor input:not([type="range"]),
+  .mobile-editor textarea,
+  .composer textarea,
+  .nx-mobile input:not([type="range"]),
+  .nx-mobile textarea,
+  .nx-mobile select { font-size: 16px; }
+  .composer > div:last-child { flex-wrap: wrap; gap: 4px; padding-inline: 8px; }
+  .composer .tap-44::after { content: none; }
+  .mobile-composer-dock { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  .sheet-editor td input { min-height: 44px; }
+  .deck-editor .slide-actions { opacity: 1; }
+  .deck-editor > div > aside:first-child ol { flex-wrap: wrap; align-content: start; }
+  .deck-editor > div > aside:first-child li { width: calc(50% - 4px); }
+  .mobile-editor :is(pre, p) { overflow-wrap: anywhere; }
+  .nx-mobile main { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nx-mobile-drawer { animation: none; transition: none; }
+}

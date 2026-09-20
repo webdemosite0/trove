@@ -10,6 +10,7 @@ import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { isMobile } from "@/lib/device";
 import { MobileShell } from "@/components/mobile/shell";
+import { MobileViewport } from "@/components/mobile/viewport";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -65,7 +66,8 @@ export default async function StudioLayout({
       <ToastProvider>
         <Backdrop />
         <CommandPalette recents={recents} />
-        <div className="flex h-dvh min-h-0 overflow-hidden">
+        <MobileViewport />
+        <div className="mobile-viewport flex h-dvh min-h-0 overflow-hidden">
           <Sidebar user={user} balance={balance} />
           <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />

@@ -60,6 +60,15 @@ export function DesignView({
   const [current, setCurrent] = useState(0);
   const abort = useRef<AbortController | null>(null);
   const stripRef = useRef<HTMLDivElement>(null);
+  const frameHost = useRef<HTMLDivElement>(null);
+  const [availableWidth, setAvailableWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const element = frameHost.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setAvailableWidth(entry.contentRect.width));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [brief?.platform]);
 
   const run = useCallback(async (b: Brief) => {
     abort.current?.abort();
@@ -198,10 +207,11 @@ export function DesignView({
   }
 
   const frame = FRAME[brief.platform];
+  const fittedZoom = availableWidth === null ? zoom : Math.min(zoom, availableWidth / frame.width);
   const done = screens.filter((s) => s.state === "done").length;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="mobile-editor design-editor flex h-full min-h-0 flex-col overflow-hidden">
       <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-canvas/90 px-4 py-3 backdrop-blur-md lg:px-6">
         <div className="min-w-0 flex-1">
           <p className="text-[11.5px] uppercase tracking-[0.08em] text-ink-4">
@@ -212,7 +222,8 @@ export function DesignView({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <label className="flex items-center gap-2 rounded-[var(--r-control)] border border-line bg-rail px-2.5 py-1.5">
+          <span className="px-2 text-[12px] text-ink-3 lg:hidden">Fit · {Math.round(fittedZoom * 100)}%</span>
+          <label className="hidden items-center gap-2 rounded-[var(--r-control)] border border-line bg-rail px-2.5 py-1.5 lg:flex">
             <span className="text-[11.5px] text-ink-4">Zoom</span>
             <input
               type="range"
@@ -225,7 +236,7 @@ export function DesignView({
               className="w-[86px] accent-[var(--color-accent)]"
             />
             <span className="w-[34px] text-right text-[11.5px] tabular-nums text-ink-4">
-              {Math.round(zoom * 100)}%
+              {Math.round(fittedZoom * 100)}%
             </span>
           </label>
 
@@ -285,10 +296,10 @@ export function DesignView({
                 </button>
               </div>
 
-              <div className="flex justify-center">
+              <div ref={frameHost} className="flex w-full min-w-0 justify-center">
                 <div
                   className="overflow-hidden rounded-[var(--r-card)] border border-line bg-raised shadow-[0_18px_48px_-24px_rgb(0_0_0/0.45)]"
-                  style={{ width: frame.width * zoom, height: frame.height * zoom }}
+                  style={{ width: frame.width * fittedZoom, height: frame.height * fittedZoom, flexShrink: 0 }}
                 >
                   {active.state === "done" ? (
                     <iframe
@@ -298,7 +309,7 @@ export function DesignView({
                       style={{
                         width: frame.width,
                         height: frame.height,
-                        transform: `scale(${zoom})`,
+                        transform: `scale(${fittedZoom})`,
                         transformOrigin: "top left",
                         border: 0,
                       }}
@@ -306,7 +317,7 @@ export function DesignView({
                   ) : active.state === "drawing" ? (
                     <div
                       className="grid place-items-center bg-sunk/40 text-ink-3"
-                      style={{ width: frame.width * zoom, height: frame.height * zoom }}
+                      style={{ width: frame.width * fittedZoom, height: frame.height * fittedZoom }}
                     >
                       <div className="flex flex-col items-center gap-2 text-[13px]">
                         <Ico icon={FiLoader} motion="spin" size={22} className="animate-spin text-accent" live />
@@ -316,14 +327,14 @@ export function DesignView({
                   ) : active.state === "failed" ? (
                     <div
                       className="grid place-items-center bg-sunk/40 px-6 text-center text-[13px] text-critical"
-                      style={{ width: frame.width * zoom, height: frame.height * zoom }}
+                      style={{ width: frame.width * fittedZoom, height: frame.height * fittedZoom }}
                     >
                       {active.error ?? "This screen failed."}
                     </div>
                   ) : (
                     <div
                       className="grid place-items-center bg-sunk/40 text-[13px] text-ink-4"
-                      style={{ width: frame.width * zoom, height: frame.height * zoom }}
+                      style={{ width: frame.width * fittedZoom, height: frame.height * fittedZoom }}
                     >
                       Waiting…
                     </div>
@@ -343,7 +354,7 @@ export function DesignView({
           >
             {screens.map((s, i) => {
               const selected = i === safeIndex;
-              const thumbZoom = 0.18;
+              const thumbZoom = Math.min(112 / frame.width, 88 / frame.height);
               return (
                 <button
                   key={s.name}

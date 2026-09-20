@@ -69,7 +69,7 @@ export function MobileChat({
 
   if (turns.length === 0) {
     return (
-      <div className="flex min-h-full flex-col px-4 pb-6">
+      <div className="flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain px-4 pb-6">
         <div className="nx-rise flex flex-col items-center pb-7 pt-10">
           <Wordmark size={44} sweep={false} />
           <p className="mt-3 text-center text-[13.5px] text-ink-3">
@@ -132,7 +132,7 @@ export function MobileChat({
   }
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-4 py-2">
         <span className="min-w-0 truncate text-[13px] text-ink-4">
           {turns[0]?.text.slice(0, 48)}
@@ -146,7 +146,7 @@ export function MobileChat({
         </button>
       </div>
 
-      <div className="flex-1 space-y-5 px-4 pb-3">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-3">
         {turns.map((t, i) => (
           <Message
             key={t.id}
@@ -160,7 +160,7 @@ export function MobileChat({
         <div ref={bottom} />
       </div>
 
-      <div className="sticky bottom-0 bg-gradient-to-t from-canvas via-canvas to-transparent px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+      <div className="shrink-0 bg-canvas px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
         <MobileComposer
           onSend={send}
           disabled={busy}
