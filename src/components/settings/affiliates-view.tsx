@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import {
   INVITEE_SIGNUP_CREDITS,
   REFERRER_SIGNUP_CREDITS,
+  PAID_REFERRAL_GOAL,
+  PAID_REFERRAL_BONUS_USD,
 } from "@/lib/affiliates-public";
 import { Panel } from "@/components/settings/panel";
 import { cn } from "@/lib/utils";
@@ -12,8 +14,10 @@ interface Stats {
   code: string;
   link: string;
   signups: number;
+  paidSignups: number;
   creditsEarned: number;
-  recent: { email: string; name: string; at: number; credits: number }[];
+  cashUnlocked: boolean;
+  recent: { email: string; name: string; at: number; credits: number; paid?: boolean }[];
 }
 
 export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) {
@@ -59,6 +63,8 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
     },
   ];
 
+  const paidPct = Math.min(100, Math.round((stats.paidSignups / PAID_REFERRAL_GOAL) * 100));
+
   return (
     <div className="space-y-5">
       <section className="relative overflow-hidden rounded-[26px] border border-line p-6 sm:p-8">
@@ -78,20 +84,15 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
             Share Trove. Earn credits.
           </h1>
           <p className="mt-2 max-w-[52ch] text-[14px] leading-relaxed text-ink-3">
-            Hi {name.split(" ")[0] || "there"} — every friend who joins with your link
-            gives you{" "}
-            <span className="font-semibold text-ink">{REFERRER_SIGNUP_CREDITS} credits</span>
-            , and they get{" "}
-            <span className="font-semibold text-ink">{INVITEE_SIGNUP_CREDITS} credits</span>{" "}
-            to start. No promo codes to type — your link does it.
+            Hi {name.split(" ")[0] || "there"} — every friend who joins with your link gives you{" "}
+            <span className="font-semibold text-ink">{REFERRER_SIGNUP_CREDITS} credits</span>, and
+            they get <span className="font-semibold text-ink">{INVITEE_SIGNUP_CREDITS} credits</span>{" "}
+            to start. Hit {PAID_REFERRAL_GOAL} paid upgrades for{" "}
+            <span className="font-semibold text-ink">${PAID_REFERRAL_BONUS_USD}</span>.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <StatChip
-              label="Your signups"
-              value={String(stats.signups)}
-              tone="from-pink-500 to-rose-500"
-            />
+            <StatChip label="Your signups" value={String(stats.signups)} tone="from-pink-500 to-rose-500" />
             <StatChip
               label="Credits earned"
               value={stats.creditsEarned.toLocaleString()}
@@ -102,6 +103,36 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
               value={`+${REFERRER_SIGNUP_CREDITS}`}
               tone="from-cyan-400 to-blue-500"
             />
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 p-[1px] shadow-lg">
+            <div className="rounded-2xl bg-white/90 px-4 py-4 dark:bg-black/50">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[12px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                    Cash reward
+                  </p>
+                  <p className="mt-1 text-[15px] font-semibold text-ink">
+                    {stats.cashUnlocked
+                      ? `You unlocked $${PAID_REFERRAL_BONUS_USD}!`
+                      : `${stats.paidSignups} / ${PAID_REFERRAL_GOAL} paid referrals → $${PAID_REFERRAL_BONUS_USD}`}
+                  </p>
+                  <p className="mt-1 text-[12.5px] text-ink-3">
+                    When 100 people you invite upgrade to a paid plan, you earn $200 in your account.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[22px] font-bold tracking-tight text-ink">${PAID_REFERRAL_BONUS_USD}</p>
+                  <p className="text-[11px] text-ink-4">{paidPct}% there</p>
+                </div>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-rose-500 transition-all"
+                  style={{ width: `${Math.min(100, (stats.paidSignups / PAID_REFERRAL_GOAL) * 100)}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -175,8 +206,8 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
             },
             {
               n: "3",
-              title: "You both get credits",
-              body: `You earn ${REFERRER_SIGNUP_CREDITS}. They start with +${INVITEE_SIGNUP_CREDITS}.`,
+              title: "You both get rewards",
+              body: `+${REFERRER_SIGNUP_CREDITS} credits each signup. 100 paid upgrades unlock $${PAID_REFERRAL_BONUS_USD}.`,
               ring: "from-amber-400 to-orange-500",
             },
           ].map((step) => (
@@ -198,9 +229,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
 
       <Panel title="Recent referrals">
         {stats.recent.length === 0 ? (
-          <p className="text-[13.5px] text-ink-3">
-            No signups yet — share your link to start earning.
-          </p>
+          <p className="text-[13.5px] text-ink-3">No signups yet — share your link to start earning.</p>
         ) : (
           <ul className="divide-y divide-line">
             {stats.recent.map((r, i) => (
@@ -211,7 +240,9 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
                 </div>
                 <div className="text-right">
                   <p className="text-[13px] font-semibold text-emerald-500">+{r.credits}</p>
-                  <p className="text-[11px] text-ink-4">{new Date(r.at).toLocaleDateString()}</p>
+                  <p className="text-[11px] text-ink-4">
+                    {r.paid ? "Paid" : "Free"} · {new Date(r.at).toLocaleDateString()}
+                  </p>
                 </div>
               </li>
             ))}
@@ -222,15 +253,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
   );
 }
 
-function StatChip({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: string;
-}) {
+function StatChip({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
     <div className="rounded-2xl border border-white/20 bg-white/50 p-3.5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
       <p className="text-[11px] font-medium uppercase tracking-wide text-ink-4">{label}</p>
