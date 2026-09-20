@@ -159,15 +159,17 @@ export interface AffiliateStats {
   code: string;
   link: string;
   signups: number;
+  paidSignups: number;
   creditsEarned: number;
-  recent: { email: string; name: string; at: number; credits: number }[];
+  cashUnlocked: boolean;
+  recent: { email: string; name: string; at: number; credits: number; paid: boolean }[];
 }
 
 export async function affiliateStatsFor(userId: string): Promise<AffiliateStats> {
   const code = await ensureAffiliateCode(userId);
   const rows = await all(
     `SELECT r.credits_referrer AS credits, r.created_at AS at,
-            u.email AS email, u.name AS name
+            u.email AS email, u.name AS name, u.plan AS plan
        FROM referrals r
        JOIN users u ON u.id = r.referee_id
       WHERE r.referrer_id = ?
@@ -181,6 +183,7 @@ export async function affiliateStatsFor(userId: string): Promise<AffiliateStats>
     name: str(r.name),
     at: num(r.at),
     credits: num(r.credits),
+    paid: str(r.plan) !== "free" && Boolean(str(r.plan)),
   }));
 
   const totals = await one(
@@ -189,11 +192,23 @@ export async function affiliateStatsFor(userId: string): Promise<AffiliateStats>
     [userId],
   );
 
+  const paidRow = await one(
+    `SELECT COUNT(*) AS n
+       FROM referrals r
+       JOIN users u ON u.id = r.referee_id
+      WHERE r.referrer_id = ? AND u.plan IS NOT NULL AND u.plan <> 'free'`,
+    [userId],
+  );
+
+  const paidSignups = num(paidRow?.n);
+
   return {
     code,
     link: referralUrl(code),
     signups: num(totals?.n),
+    paidSignups,
     creditsEarned: num(totals?.credits),
+    cashUnlocked: paidSignups >= 100,
     recent,
   };
 }
