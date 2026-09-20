@@ -1,0 +1,22 @@
+name: Patch auth-card referral
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/auth-card-parts/**"
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble auth-card
+        run: |
+          mkdir -p src/components/auth
+          cat scripts/auth-card-parts/part1.b64 scripts/auth-card-parts/part2.b64 | base64 -d > src/components/auth/auth-card.tsx
+          git config user.name "trove-bot"
+          git config user.email "bot@troveai.site"
+          git add src/components/auth/auth-card.tsx
+          git diff --cached --quiet || git commit -m "Apply referral-aware auth-card"
+          git push
