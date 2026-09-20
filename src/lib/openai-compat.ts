@@ -1,4 +1,5 @@
 import "server-only";
+import type { Turn, Usage, OnUsage } from "@/lib/gemini";
 
 export type CompatProvider = {
   id: string;
@@ -42,7 +43,6 @@ export function compatProviders(): CompatProvider[] {
       label: "OpenRouter",
       baseUrl: "https://openrouter.ai/api/v1",
       apiKey: openrouter,
-      // Prefer Gemma for presentation-quality generation when OpenRouter is selected
       model:
         process.env.OPENROUTER_MODEL?.trim() ||
         process.env.SLIDES_MODEL?.trim() ||
@@ -76,7 +76,7 @@ export function compatProviders(): CompatProvider[] {
   return out;
 }
 
-function toMessages(turns: { role: string; text: string }[], system: string) {
+function toMessages(turns: Turn[], system: string) {
   const messages: { role: string; content: string }[] = [{ role: "system", content: system }];
   for (const t of turns) {
     messages.push({ role: t.role === "model" ? "assistant" : "user", content: t.text });
@@ -84,13 +84,26 @@ function toMessages(turns: { role: string; text: string }[], system: string) {
   return messages;
 }
 
+function readUsage(u: unknown): Usage | null {
+  if (!u || typeof u !== "object") return null;
+  const d = u as Record<string, unknown>;
+  const prompt = Number(d.prompt_tokens ?? d.promptTokens ?? 0);
+  const response = Number(d.completion_tokens ?? d.responseTokens ?? 0);
+  if (!Number.isFinite(prompt) && !Number.isFinite(response)) return null;
+  return {
+    promptTokens: prompt || 0,
+    responseTokens: response || 0,
+    totalTokens: (prompt || 0) + (response || 0),
+  };
+}
+
 export async function compatGenerate(opts: {
   provider: CompatProvider;
-  turns: { role: string; text: string }[];
+  turns: Turn[];
   system: string;
   temperature?: number;
   maxOutputTokens?: number;
-  onUsage?: (u: { inputTokens: number; outputTokens: number; totalTokens: number }) => void;
+  onUsage?: OnUsage;
 }): Promise<string> {
   const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
   const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -119,22 +132,18 @@ export async function compatGenerate(opts: {
   const data = await res.json();
   const content = data?.choices?.[0]?.message?.content;
   if (typeof content !== "string") throw new Error(`${provider.label}: empty response`);
-  const usage = data?.usage;
-  if (usage && onUsage) {
-    const inputTokens = Number(usage.prompt_tokens || 0);
-    const outputTokens = Number(usage.completion_tokens || 0);
-    onUsage({ inputTokens, outputTokens, totalTokens: inputTokens + outputTokens });
-  }
+  const usage = readUsage(data?.usage);
+  if (usage) onUsage?.(usage);
   return content;
 }
 
 export async function compatStream(opts: {
   provider: CompatProvider;
-  turns: { role: string; text: string }[];
+  turns: Turn[];
   system: string;
   temperature?: number;
   maxOutputTokens?: number;
-  onUsage?: (u: { inputTokens: number; outputTokens: number; totalTokens: number }) => void;
+  onUsage?: OnUsage;
 }): Promise<ReadableStream<Uint8Array>> {
   const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
   const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -165,17 +174,14 @@ export async function compatStream(opts: {
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let inputTokens = 0;
-  let outputTokens = 0;
+  let usage: Usage | null = null;
 
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          if (onUsage && (inputTokens || outputTokens)) {
-            onUsage({ inputTokens, outputTokens, totalTokens: inputTokens + outputTokens });
-          }
+          if (usage) onUsage?.(usage);
           controller.close();
           return;
         }
@@ -193,11 +199,8 @@ export async function compatStream(opts: {
             if (typeof delta === "string" && delta) {
               controller.enqueue(new TextEncoder().encode(delta));
             }
-            const usage = json?.usage;
-            if (usage) {
-              inputTokens = Number(usage.prompt_tokens || inputTokens);
-              outputTokens = Number(usage.completion_tokens || outputTokens);
-            }
+            const seen = readUsage(json?.usage);
+            if (seen) usage = seen;
           } catch {
             /* ignore partial */
           }
