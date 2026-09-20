@@ -24,6 +24,20 @@ function isImagePrompt(text: string): boolean {
   );
 }
 
+function distanceFromBottom(anchor: HTMLElement | null): number {
+  if (!anchor) return 0;
+  let node: HTMLElement | null = anchor.parentElement;
+  while (node && node !== document.body) {
+    const style = getComputedStyle(node);
+    if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+      return node.scrollHeight - node.scrollTop - node.clientHeight;
+    }
+    node = node.parentElement;
+  }
+  const doc = document.documentElement;
+  return doc.scrollHeight - window.scrollY - window.innerHeight;
+}
+
 /**
  * Conversation hook: transcript, request, stream, save.
  * Server routes only (no client Puter login prompts).
@@ -49,10 +63,54 @@ export function useChatThread({
   const bottom = useRef<HTMLDivElement>(null);
   const nextId = useRef(restored?.messages.length ?? 0);
   const abortRef = useRef<AbortController | null>(null);
+  /** Only auto-scroll while the user is near the bottom (or just sent a message). */
+  const stickToBottom = useRef(true);
+  const scrollRaf = useRef(0);
+  const lastScrollLen = useRef(0);
 
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (!stickToBottom.current) return;
+    const el = bottom.current;
+    if (!el) return;
+    cancelAnimationFrame(scrollRaf.current);
+    scrollRaf.current = requestAnimationFrame(() => {
+      // Prefer scrolling the nearest overflow parent to avoid page-level jitter.
+      let node: HTMLElement | null = el.parentElement;
+      while (node && node !== document.body) {
+        const style = getComputedStyle(node);
+        if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+          if (behavior === "smooth") {
+            node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
+          } else {
+            node.scrollTop = node.scrollHeight;
+          }
+          return;
+        }
+        node = node.parentElement;
+      }
+      el.scrollIntoView({ block: "end", behavior });
+    });
+  }, []);
+
+  // Track whether the user has scrolled away from the bottom.
   useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [turns]);
+    const onScroll = () => {
+      stickToBottom.current = distanceFromBottom(bottom.current) < 140;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => window.removeEventListener("scroll", onScroll, true);
+  }, []);
+
+  // Auto-scroll on new content only when stuck to bottom.
+  // During streaming use instant scroll + rAF throttle to avoid "smooth" jank.
+  useEffect(() => {
+    const len = turns.reduce((n, t) => n + t.text.length, 0) + turns.length;
+    if (len === lastScrollLen.current) return;
+    lastScrollLen.current = len;
+    scrollToBottom(busy ? "auto" : "smooth");
+  }, [turns, busy, scrollToBottom]);
+
+  useEffect(() => () => cancelAnimationFrame(scrollRaf.current), []);
 
   const finishReply = useCallback(
     (replyId: number, text: string) => {
@@ -177,6 +235,7 @@ export function useChatThread({
 
   const send = useCallback(
     (text: string, files?: Attachment[]) => {
+      stickToBottom.current = true;
       const history = [
         ...turns,
         { id: nextId.current++, role: "user" as const, text, files },
@@ -187,14 +246,21 @@ export function useChatThread({
     [turns, run],
   );
 
-  const retry = useCallback(() => void run(turns), [turns, run]);
+  const retry = useCallback(() => {
+    stickToBottom.current = true;
+    void run(turns);
+  }, [turns, run]);
 
-  const regenerate = useCallback(() => void run(turns.slice(0, -1)), [turns, run]);
+  const regenerate = useCallback(() => {
+    stickToBottom.current = true;
+    void run(turns.slice(0, -1));
+  }, [turns, run]);
 
   const clear = useCallback(() => {
     abortRef.current?.abort();
     setTurns([]);
     setError(null);
+    stickToBottom.current = true;
     reset();
   }, [reset]);
 

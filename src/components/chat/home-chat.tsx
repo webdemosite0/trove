@@ -104,8 +104,8 @@ export function HomeChat({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-20 border-b border-line bg-canvas/85 px-5 backdrop-blur-md lg:px-8">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
+      <header className="shrink-0 z-20 border-b border-line bg-canvas/85 px-5 backdrop-blur-md lg:px-8">
         <div className="mx-auto flex h-14 max-w-[760px] items-center justify-between gap-3">
           <span className="truncate text-[14px] text-ink">
             {turns[0]?.text.slice(0, 64)}
@@ -119,7 +119,7 @@ export function HomeChat({
         </div>
       </header>
 
-      <div className="flex-1 px-5 pb-8 pt-7 lg:px-8">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-7 lg:px-8">
         <div className="mx-auto max-w-[760px] space-y-7">
           {turns.map((t, i) => (
             <Message
@@ -136,11 +136,11 @@ export function HomeChat({
             />
           ))}
           {error ? <ErrorNote message={error} onRetry={retry} /> : null}
-          <div ref={bottom} />
+          <div ref={bottom} className="h-px w-full shrink-0" aria-hidden />
         </div>
       </div>
 
-      <div className="sticky bottom-0 bg-gradient-to-t from-canvas via-canvas to-transparent px-5 pb-5 pt-3 lg:px-8">
+      <div className="shrink-0 border-t border-line/60 bg-canvas px-5 pb-5 pt-3 lg:px-8">
         <div className="mx-auto max-w-[760px]">
           <Composer
             onSend={send}
