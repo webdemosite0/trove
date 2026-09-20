@@ -41,6 +41,15 @@ const publicRule = {
   disallow: privateRoutes,
 };
 
+/** Bing/Yandex Host: prefers bare hostname — not a full URL with scheme. */
+function robotsHost(): string {
+  try {
+    return new URL(site.url).host;
+  } catch {
+    return site.url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  }
+}
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -48,6 +57,6 @@ export default function robots(): MetadataRoute.Robots {
       ...AI_CRAWLERS.map((userAgent) => ({ userAgent, ...publicRule })),
     ],
     sitemap: `${site.url}/sitemap.xml`,
-    host: site.url,
+    host: robotsHost(),
   };
 }
