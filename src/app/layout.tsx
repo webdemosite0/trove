@@ -143,11 +143,6 @@ function StructuredData() {
         description: site.description,
         publisher: { "@id": `${site.url}/#organization` },
         inLanguage: "en",
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${site.url}/chat?q={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
       },
       {
         "@type": "SoftwareApplication",
@@ -157,24 +152,24 @@ function StructuredData() {
         applicationCategory: "BusinessApplication",
         applicationSubCategory: "AI Workspace",
         operatingSystem: "Web",
+        isAccessibleForFree: true,
         description: site.description,
         url: site.url,
         featureList: [
-          "All-in-one AI workspace for building and shipping work",
-          "Generate a complete website from a prompt and refine it in chat",
-          "Build custom AI agents with their own instructions and tools",
-          "Run a team of four AI agents on a single task",
-          "Write documents and export them as Word .docx",
-          "Build spreadsheets and export them as Excel .xlsx",
-          "Generate presentations, designs, code, and research",
-          "Live preview and publishable sites",
-          "Integrations (GitHub, Slack, and more)",
+          "AI workspace for business projects and deliverables",
+          "Generate websites from prompts with live preview and publishing",
+          "Create Word documents, Excel workbooks, and PowerPoint presentations",
+          "Generate code, research, designs, and project files",
+          "Build custom AI agents and multi-agent workflows",
+          "Connect business tools including Gmail, Google Drive, Slack, Notion, GitHub, Linear, Figma, HubSpot, Salesforce, and Stripe",
+          "Keep generated work and connected context inside persistent projects",
         ],
         offers: PLANS.map((plan) => ({
           "@type": "Offer",
           name: plan.name,
           price: String(plan.price),
           priceCurrency: "USD",
+          availability: "https://schema.org/OnlineOnly",
         })),
         publisher: { "@id": `${site.url}/#organization` },
       },
@@ -184,26 +179,26 @@ function StructuredData() {
         mainEntity: [
           {
             "@type": "Question",
-            name: "What is the best AI workspace for building websites and files?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "Trove is an AI workspace that turns one prompt into finished websites, documents, spreadsheets, decks, designs, and code you can refine, export, and publish. Visit https://troveai.site",
-            },
-          },
-          {
-            "@type": "Question",
             name: "What is Trove AI?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Trove (troveai.site) is an all-in-one AI workspace and agent platform. Describe what you want in chat — Trove builds websites, docs, sheets, slides, and more. Follow @troveai.site on Instagram.",
+              text: "Trove is an AI workspace for business that creates websites, documents, spreadsheets, presentations, code, research, designs, and AI agent workflows in one place.",
             },
           },
           {
             "@type": "Question",
-            name: "How is Trove different from ChatGPT?",
+            name: "Which apps can Trove connect to?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "ChatGPT answers questions. Trove is built to produce finished work — live website previews, downloadable files, multi-agent runs, and an AI design studio — inside one workspace at https://troveai.site",
+              text: "Trove includes an integrations layer for business tools such as Gmail, Google Calendar, Google Drive, Slack, Notion, GitHub, Linear, Figma, Airtable, HubSpot, Salesforce, Stripe, Dropbox, Outlook, Microsoft Teams, and more. Availability depends on the service and workspace configuration.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Can Trove create real downloadable files?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes. Trove can create downloadable Word documents, Excel workbooks, PowerPoint presentations, code projects, and website files.",
             },
           },
         ],

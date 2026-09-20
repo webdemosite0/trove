@@ -12,6 +12,7 @@ import {
 } from "@/components/landing/showcase";
 import { PricingPreview, FinalCta } from "@/components/landing/sections";
 import { ProductProof } from "@/components/landing/product-proof";
+import { IntegrationNetwork } from "@/components/landing/integration-network";
 import { TrustSection } from "@/components/landing/trust";
 import { Testimonials } from "@/components/landing/testimonials";
 import { Faq } from "@/components/landing/faq";
@@ -19,9 +20,25 @@ import { PLANS } from "@/lib/credits";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
-  title: "Trove — Describe What You Want. Trove Builds It.",
+  title: "Trove AI Workspace — Build, Connect, and Ship Business Work",
   description:
-    "Turn one prompt into finished work you can actually use — websites, documents, spreadsheets, decks, and code you can refine, export, or publish with Trove.",
+    "Trove is an AI workspace for businesses: create websites, documents, spreadsheets, decks, code and research, then connect the tools your team already uses.",
+  keywords: [
+    "AI workspace for business",
+    "AI business workspace",
+    "AI integrations",
+    "AI agents for business",
+    "AI website builder",
+    "AI documents",
+    "AI spreadsheets",
+    "AI presentations",
+  ],
+  openGraph: {
+    title: "Trove AI Workspace — Build, Connect, and Ship Business Work",
+    description:
+      "Create real business deliverables and connect the tools your team already uses in one AI workspace.",
+    url: "/",
+  },
 };
 
 export default async function Landing() {
@@ -38,6 +55,7 @@ export default async function Landing() {
       <main className="relative z-10">
         <Hero freeCredits={free.monthly} />
         <ProductProof />
+        <IntegrationNetwork />
         <ProductMockup />
         <FeatureGrid />
         <HubDiagram />

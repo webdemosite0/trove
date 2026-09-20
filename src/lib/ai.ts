@@ -147,7 +147,9 @@ export async function generateText(
   };
 
   const gpt = primaryGpt();
-  if (gpt) {
+  // Compat providers currently only receive text messages. If a request includes
+  // images/PDFs, send it to Gemini first so the attachment is actually analyzed.
+  if (gpt && !opts.extraParts?.length) {
     try {
       console.warn(`ai: primary ${describe(gpt)}`);
       return await compatGenerate({

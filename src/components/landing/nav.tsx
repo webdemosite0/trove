@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/#capabilities", label: "Product" },
+  { href: "/#integrations", label: "Integrations" },
   { href: "/features/ai-agents", label: "Agents" },
   { href: "/features/documents-and-spreadsheets", label: "Files" },
   { href: "/pricing", label: "Pricing" },
@@ -54,12 +55,12 @@ export function LandingNav() {
           <Wordmark size={16} sweep={false} />
         </Link>
 
-        <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 md:flex">
+        <nav aria-label="Sections" className="ml-6 hidden items-center gap-1 lg:flex">
           {LINKS.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="rounded-[var(--r-chip)] px-3 py-2 text-[14px] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+              className="rounded-[var(--r-chip)] px-2.5 py-2 text-[13.5px] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
             >
               {l.label}
             </a>
