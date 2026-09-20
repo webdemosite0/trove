@@ -40,6 +40,10 @@ function safeNext(value: string): string | null {
   return value;
 }
 
+function withReferralWelcome(path: string) {
+  return `${path}${path.includes("?") ? "&" : "?"}welcome=referral`;
+}
+
 async function sendVerification(user: { id: string; email: string; name: string }) {
   const token = await issueToken(user.id, "verify-email");
   const link = `${site.url}/verify-email/confirm?token=${token}`;
@@ -158,7 +162,7 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
     redirect("/launching?next=/onboarding");
   }
 
-  redirect(`/launching?next=${encodeURIComponent(next ?? "/chat")}`);
+  redirect(`/launching?next=${encodeURIComponent(withReferralWelcome(next ?? "/chat"))}`);
 }
 
 export async function logOut() {
