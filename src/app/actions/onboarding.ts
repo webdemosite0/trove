@@ -19,6 +19,10 @@ export type OnboardingPayload = {
   businessAnalysis?: string;
 };
 
+function withReferralWelcome(path: string) {
+  return `${path}${path.includes("?") ? "&" : "?"}welcome=referral`;
+}
+
 export async function finishOnboarding(payload: OnboardingPayload) {
   const user = await currentUser();
   if (!user) redirect("/login?next=/onboarding");
@@ -49,11 +53,11 @@ export async function finishOnboarding(payload: OnboardingPayload) {
   const goal = payload.goal || "explore";
   if (goal === "website") {
     const q = (payload.firstIdea || "Build a modern landing page for my business").trim();
-    redirect(`/websites?q=${encodeURIComponent(q.slice(0, 2000))}`);
+    redirect(withReferralWelcome(`/websites?q=${encodeURIComponent(q.slice(0, 2000))}`));
   }
-  if (goal === "documents") redirect("/documents");
-  if (goal === "spreadsheets") redirect("/spreadsheets");
-  if (goal === "agents") redirect("/agents");
-  if (goal === "code") redirect("/code");
-  redirect("/chat");
+  if (goal === "documents") redirect(withReferralWelcome("/documents"));
+  if (goal === "spreadsheets") redirect(withReferralWelcome("/spreadsheets"));
+  if (goal === "agents") redirect(withReferralWelcome("/agents"));
+  if (goal === "code") redirect(withReferralWelcome("/code"));
+  redirect(withReferralWelcome("/chat"));
 }
