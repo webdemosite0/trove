@@ -7,6 +7,7 @@ import {
   FIDELITIES,
   PLATFORMS,
   screenPrompt,
+  updateScreenPrompt,
   type Brief,
   type Fidelity,
   type Platform,
@@ -32,9 +33,22 @@ What separates your work from a template:
   something to add later — if a screen has a list, decide what it looks like
   with nothing in it.
 
+BRAND + THEME CONSISTENCY (critical for multi-screen projects)
+- One product name and one logo mark for the whole set. Same SVG geometry,
+  same wordmark spelling, same placement language (header / tab / splash).
+- Shared :root design tokens (--bg, --surface, --text, --muted, --accent,
+  --accent-text, --line, --radius, --shadow) used everywhere instead of
+  one-off colours that drift between screens.
+- Navigation mirrors the screen list and highlights the current screen.
+
+WORKING CONTROLS
+- Icons are inline SVG inside real buttons/links — not decorative orphans.
+- Hover, active, and focus states on interactive elements.
+- Tabs, toggles, and menus must change visible state.
+
 You never reference an external asset. Every icon is inline SVG, every colour
-is a literal value, every font is a system stack. The document renders with no
-network, or it renders as a blank rectangle.`;
+is a token or literal value, every font is a system stack. The document renders
+with no network, or it renders as a blank rectangle.`;
 
 /** Rejects a value the client made up, rather than trusting the body. */
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -59,11 +73,17 @@ export async function POST(req: NextRequest) {
   let brief: Brief;
   let screen = "";
   let timeZone = "UTC";
+  let instruction = "";
+  let previousHtml = "";
+  let priorThemeHint = "";
 
   try {
     const body = await req.json();
     screen = String(body?.screen ?? "").slice(0, 80);
     timeZone = safeTimeZone(body?.timeZone);
+    instruction = String(body?.instruction ?? "").slice(0, 800);
+    previousHtml = String(body?.previousHtml ?? "").slice(0, 32000);
+    priorThemeHint = String(body?.priorThemeHint ?? "").slice(0, 1200);
 
     const raw = body?.brief ?? {};
     brief = {
@@ -95,9 +115,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const userPrompt =
+      instruction && previousHtml
+        ? updateScreenPrompt(brief, screen, instruction, previousHtml)
+        : screenPrompt(brief, screen, priorThemeHint || undefined);
+
     const html = await generateText({
       system: [SYSTEM, OBEY_FORMAT, situation({ timeZone, canSearch: false })].join("\n\n"),
-      turns: [{ role: "user", text: screenPrompt(brief, screen) }],
+      turns: [{ role: "user", text: userPrompt }],
       // Low. A screen is a considered layout, not a brainstorm, and a high
       // temperature here produces novelty in places nobody wanted it.
       temperature: 0.4,
