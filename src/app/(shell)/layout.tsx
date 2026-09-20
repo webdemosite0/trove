@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { Sidebar } from "@/components/shell/sidebar";
-import { TopBar } from "@/components/shell/top-bar";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { NavProvider } from "@/components/shell/nav-state";
 import { Backdrop } from "@/components/shell/backdrop";
@@ -10,7 +8,7 @@ import { MobileShell } from "@/components/mobile/shell";
 import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
-import { AnnouncementBanner } from "@/components/shell/announcement-banner";
+import { AppChrome } from "@/components/shell/app-chrome";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -56,14 +54,14 @@ export default async function ShellLayout({
       <ToastProvider>
         <Backdrop />
         <CommandPalette recents={recents} />
-        <div className="flex min-h-screen">
-          <Sidebar user={user} balance={balance} isAdmin={isAdminEmail(user?.email)} />
-          <main className="flex min-w-0 flex-1 flex-col">
-            <TopBar initial={user?.name?.slice(0, 1)} due={due} />
-            <AnnouncementBanner />
-            <div className="app-page-in min-w-0 flex-1">{children}</div>
-          </main>
-        </div>
+        <AppChrome
+          user={user}
+          balance={balance}
+          due={due}
+          isAdmin={isAdminEmail(user?.email)}
+        >
+          {children}
+        </AppChrome>
       </ToastProvider>
     </NavProvider>
   );
