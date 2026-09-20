@@ -35,7 +35,6 @@ import { ThemeToggle } from "@/components/shell/theme";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
-import { CreditMeter } from "@/components/shell/credit-meter";
 import { Tooltip } from "@/components/ui/tooltip";
 
 interface Item {
@@ -48,24 +47,13 @@ interface Item {
 const PRIMARY: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
-  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
-  { href: "/documents", label: "Docs", icon: TbFileText, motion: "lift" },
-  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "pop" },
-  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "grow" },
-  { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
-  { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
-  { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
-  { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
+  { href: "/sites", label: "Sites", icon: TbWorld, motion: "spin" },
+  { href: "/docs", label: "Docs", icon: TbFileText, motion: "tilt" },
+  { href: "/sheets", label: "Sheets", icon: TbTable, motion: "nudge" },
+  { href: "/decks", label: "Decks", icon: TbPresentation, motion: "pop" },
+  { href: "/design", label: "Design", icon: TbPalette, motion: "lift" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "wiggle" },
 ];
-
-const MORE: Item[] = [
-  { href: "/integrations", label: "Apps", icon: TbPlugConnected, motion: "open" },
-  { href: "/reminders", label: "Alerts", icon: TbBell, motion: "ring" },
-];
-
-function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(href + "/");
-}
 
 function NavRow({
   item,
@@ -78,62 +66,69 @@ function NavRow({
   onNavigate?: () => void;
   compact?: boolean;
 }) {
-  const active = isActive(pathname, item.href);
+  const active =
+    pathname === item.href ||
+    (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+
+  if (compact) {
+    return (
+      <Tooltip label={item.label} side="right">
+        <Link
+          href={item.href}
+          onClick={onNavigate}
+          aria-current={active ? "page" : undefined}
+          className={cn(
+            "grid h-9 w-9 place-items-center rounded-lg transition-colors",
+            active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
+          )}
+        >
+          <Ico icon={item.icon} motion={item.motion} size={17} />
+        </Link>
+      </Tooltip>
+    );
+  }
+
   return (
     <Link
       href={item.href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      title={compact ? item.label : undefined}
       className={cn(
-        "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] font-medium transition-colors",
+        "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
         active
-          ? "bg-accent-soft text-accent"
-          : "text-ink hover:bg-hover hover:text-ink",
-        compact && "justify-center px-0",
+          ? "bg-hover font-medium text-ink"
+          : "text-ink-2 hover:bg-hover hover:text-ink",
       )}
     >
       <Ico
         icon={item.icon}
         motion={item.motion}
-        active={active}
-        size={18}
-        className={cn(
-          "shrink-0",
-          active ? "text-accent" : "text-ink opacity-90 group-hover:opacity-100",
-        )}
+        size={17}
+        className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
       />
-      {!compact ? (
-        <span className={cn("truncate", active ? "text-accent" : "text-ink")}>
-          {item.label}
-        </span>
-      ) : null}
+      <span className="truncate">{item.label}</span>
     </Link>
   );
 }
 
 function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
-  const wrap = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
+    return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
   return (
-    <div ref={wrap} className="relative">
+    <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
         className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover"
@@ -200,7 +195,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
               className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-hover"
             >
               <FiLogOut size={15} className="text-ink" />
-              Sign out
+              Log out
             </button>
           </form>
         </div>
@@ -209,35 +204,61 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
   );
 }
 
+function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <Link
+      href="/settings/affiliates"
+      onClick={onNavigate}
+      className="group relative block overflow-hidden rounded-2xl p-[1px] shadow-sm transition hover:scale-[1.02]"
+      style={{
+        background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
+      }}
+    >
+      <div className="relative rounded-[15px] bg-rail/95 px-3 py-3 backdrop-blur-sm dark:bg-black/70">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-4 -top-4 size-16 rounded-full opacity-40 blur-2xl"
+          style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
+        />
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-fuchsia-500">
+          Refer & earn
+        </p>
+        <p className="mt-1 text-[13px] font-semibold leading-snug text-ink">
+          Share Trove · get credits
+        </p>
+        <p className="mt-0.5 text-[11px] text-ink-3">100 paid invites → $200</p>
+        <span className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-accent">
+          Open affiliates
+          <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 function RailBody({
   user,
-  balance,
-  onNavigate,
   onCollapse,
+  onNavigate,
 }: {
   user: User | null;
-  balance: Balance | null;
-  onNavigate?: () => void;
+  balance?: Balance | null;
   onCollapse?: () => void;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
 
   return (
     <>
-      <div className="flex shrink-0 items-center justify-between px-3 pt-3.5">
-        <Link
-          href="/dashboard"
-          onClick={onNavigate}
-          aria-label="Trove home"
-          className="inline-flex items-center gap-2 text-ink"
-        >
-          <TroveOrb size={26} state="idle" />
-          <Wordmark size={15} sweep={false} />
+      <div className="flex shrink-0 items-center gap-2 px-3 pb-2 pt-3">
+        <Link href="/chat" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2">
+          <TroveOrb size={28} />
+          <Wordmark size={18} />
         </Link>
         {onCollapse ? (
           <button
+            type="button"
             onClick={onCollapse}
-            aria-label="Collapse sidebar"
             title="Toggle sidebar  ⌘B"
             className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
           >
@@ -246,36 +267,25 @@ function RailBody({
         ) : null}
       </div>
 
-      <div className="shrink-0 px-3 pt-3">
+      <div className="px-2.5 pb-2">
         <Link
           href="/chat"
           onClick={onNavigate}
-          className="group flex h-9 w-full items-center gap-2.5 rounded-[var(--r-control)] border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink transition-colors hover:border-line-strong hover:bg-hover"
+          className="btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white"
         >
-          <span className="grid size-6 place-items-center rounded-full bg-accent/12 text-accent">
-            <Ico icon={FiPlus} motion="open" size={14} className="text-accent" />
-          </span>
+          <FiPlus size={15} />
           New chat
         </Link>
       </div>
 
-      <nav
-        aria-label="Main"
-        className="mt-4 min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2.5 pb-2 scrollbar-none"
-      >
+      <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2 scrollbar-none">
         {PRIMARY.map((it) => (
-          <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
-        ))}
-
-        <div className="my-3 border-t border-line" />
-
-        {MORE.map((it) => (
           <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
         ))}
       </nav>
 
       <div className="shrink-0 space-y-2 border-t border-line p-2.5">
-        <CreditMeter balance={balance} />
+        <ReferralPromo onNavigate={onNavigate} />
 
         {user ? (
           <UserMenu user={user} onNavigate={onNavigate} />
@@ -357,20 +367,16 @@ export function Sidebar({
     <>
       <aside
         className={cn(
-          "nx-sidebar nx-no-print fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-line bg-rail text-ink lg:flex",
-          "transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "nx-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail text-ink transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:flex",
           collapsed ? "w-[64px]" : "w-[240px]",
         )}
       >
         {collapsed ? (
-          <div className="flex h-full min-h-0 flex-col items-center overflow-hidden py-3">
-            <div className="flex shrink-0 flex-col items-center gap-1">
-              <Link href="/dashboard" aria-label="Trove home" className="mb-1">
-                <TroveOrb size={28} state="idle" />
-              </Link>
+          <div className="flex h-full min-h-0 flex-col items-center overflow-hidden px-1.5 py-3">
+            <div className="flex w-full flex-col items-center">
               <button
+                type="button"
                 onClick={() => setCollapsed(false)}
-                aria-label="Expand sidebar"
                 title="Toggle sidebar  ⌘B"
                 className="mb-1 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
               >
@@ -393,16 +399,18 @@ export function Sidebar({
             </div>
 
             <div className="mt-1 shrink-0 pt-1">
-              <CreditMeter balance={balance} collapsed />
+              <Link
+                href="/settings/affiliates"
+                title="Refer & earn"
+                className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-[11px] font-bold text-white shadow-md"
+              >
+                $
+              </Link>
             </div>
           </div>
         ) : (
           <div className="flex h-full min-h-0 flex-col overflow-hidden">
-            <RailBody
-              user={user}
-              balance={balance}
-              onCollapse={() => setCollapsed(true)}
-            />
+            <RailBody user={user} balance={balance} onCollapse={() => setCollapsed(true)} />
           </div>
         )}
       </aside>
