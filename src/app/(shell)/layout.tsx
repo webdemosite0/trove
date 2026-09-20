@@ -9,6 +9,7 @@ import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { AppChrome } from "@/components/shell/app-chrome";
+import { AuthReferralAnnouncement } from "@/components/shell/auth-referral-announcement";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -39,6 +40,7 @@ export default async function ShellLayout({
     return (
       <ToastProvider>
         <Backdrop />
+        <AuthReferralAnnouncement />
         <MobileShell
           user={{ name: user.name, email: user.email }}
           balance={balance}
