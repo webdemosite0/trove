@@ -65,14 +65,17 @@ export function bundle(files: ProjectFile[], entry = "index.html"): string {
 
   if (index) {
     // Vite shells only mount #root and load /src/main.jsx — blank in srcdoc.
+    // Always treat module+src entry as Vite, even if the HTML has marketing markup.
     const looksLikeViteShell =
       /type=["']module["']/i.test(index.content) &&
-      (/src\/main\.(jsx|tsx|js)/i.test(index.content) || /\/src\//i.test(index.content)) &&
-      !/<h1|<section|<main|class=["'][^"']*hero/i.test(index.content);
+      (/src\/main\.(jsx|tsx|js)/i.test(index.content) ||
+        /src\/App\.(jsx|tsx|js)/i.test(index.content) ||
+        /\/src\//i.test(index.content));
 
     if (looksLikeViteShell) {
       const react = reactCdnPreview(files);
       if (react) return react;
+      // Fall through only if we truly have no App/main to render.
     }
 
     let html = index.content;
@@ -141,10 +144,14 @@ function stripModules(src: string): string {
 function reactCdnPreview(files: ProjectFile[]): string {
   const app =
     files.find((f) => /(?:^|\/)App\.(jsx|tsx|js)$/i.test(f.path)) ??
-    files.find((f) => /src\/main\.(jsx|tsx|js)$/i.test(f.path));
+    files.find((f) => /src\/main\.(jsx|tsx|js)$/i.test(f.path)) ??
+    files.find((f) => /(?:^|\/)main\.(jsx|tsx)$/i.test(f.path)) ??
+    files.find((f) => /src\/pages\/Index\.(jsx|tsx)$/i.test(f.path));
   if (!app) {
-    // Last resort: any substantial HTML file
-    const html = files.find((f) => f.path.endsWith(".html") && f.content.length > 80);
+    // Last resort: any substantial HTML file (non-empty body)
+    const html = files.find(
+      (f) => f.path.endsWith(".html") && f.content.length > 80 && /<body[\s>]/i.test(f.content),
+    );
     return html?.content || "";
   }
 
