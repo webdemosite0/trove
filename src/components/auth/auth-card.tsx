@@ -3,16 +3,13 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
-import { FiAlertCircle, FiCheck, FiLoader, FiMail, FiLock } from "@/components/ui/icons";
+import { FiAlertCircle, FiCheck, FiLoader } from "@/components/ui/icons";
 import { logIn, signUp, type AuthState } from "@/app/actions/auth";
 import { Ico } from "@/components/ui/ico";
 import { PasswordField } from "@/components/auth/password-field";
 
-const standardField =
-  "h-12 w-full rounded-[15px] border border-black/[0.08] bg-[#fbfbfc] pl-11 pr-4 text-[14px] text-zinc-950 outline-none transition-[border-color,box-shadow,background] placeholder:text-zinc-400 hover:bg-white focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10";
-
-const compactField =
-  "h-11 w-full rounded-[13px] border border-black/[0.08] bg-[#fbfbfc] pl-10 pr-3.5 text-[13.5px] text-zinc-950 outline-none transition-[border-color,box-shadow,background] placeholder:text-zinc-400 hover:bg-white focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 sm:h-[46px]";
+const fieldClass =
+  "h-12 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-[14px] text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10";
 
 const OAUTH_ERRORS: Record<string, string> = {
   "google-unconfigured":
@@ -56,7 +53,6 @@ export function AuthCard({
   justVerified?: boolean;
 }) {
   const isLogin = mode === "login";
-  const inputClass = isLogin ? compactField : standardField;
   const [state, action, pending] = useActionState<AuthState, FormData>(
     isLogin ? logIn : signUp,
     {},
@@ -69,106 +65,77 @@ export function AuthCard({
   const error = state.error ?? urlError;
 
   return (
-    <div className="w-full">
-      <div className={isLogin ? "mb-5" : "mb-7"}>
-        <span className="inline-flex items-center gap-2 rounded-full border border-black/[0.06] bg-[#fafafa] px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-[0.14em] text-zinc-500 sm:text-[10px]">
-          <span className="size-1.5 rounded-full bg-blue-500" />
-          {isLogin ? "Welcome back" : "Start building"}
-        </span>
-        <h1
-          className={
-            isLogin
-              ? "mt-3 max-w-[13ch] text-[28px] font-semibold leading-[1.04] tracking-[-0.04em] text-zinc-950 sm:text-[31px] lg:text-[32px]"
-              : "mt-4 max-w-[12ch] text-[34px] font-semibold leading-[1.02] tracking-[-0.04em] text-zinc-950 sm:text-[38px]"
-          }
-        >
-          {isLogin ? "Sign in to keep building." : "Create your Trove workspace."}
-        </h1>
-        <p
-          className={
-            isLogin
-              ? "mt-2.5 max-w-[42ch] text-[12.5px] leading-5 text-zinc-500 sm:text-[13px]"
-              : "mt-3 max-w-[42ch] text-[13.5px] leading-6 text-zinc-500"
-          }
-        >
-          {isLogin
-            ? "Your projects, files, websites and connected tools are waiting exactly where you left them."
-            : "Turn prompts into websites, documents, spreadsheets, presentations and code — all in one place."}
-        </p>
-      </div>
+    <div className="w-full text-center">
+      <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[24px]">
+        {isLogin ? "Sign in to Trove" : "Sign up to Trove"}
+      </h1>
+      <p className="mt-2 text-[13.5px] leading-5 text-slate-500">
+        {isLogin
+          ? "Welcome back — enter your details to continue"
+          : "Please enter your email to create your workspace"}
+      </p>
 
       {justVerified ? (
-        <div className={isLogin ? "mb-4 flex items-start gap-2.5 rounded-[13px] border border-emerald-200 bg-emerald-50 px-3 py-2.5" : "mb-5 flex items-start gap-2.5 rounded-[15px] border border-emerald-200 bg-emerald-50 px-3.5 py-3"}>
+        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-left">
           <Ico icon={FiCheck} motion="check" size={14} className="mt-0.5 shrink-0 text-emerald-600" />
-          <p className="text-[12.5px] leading-5 text-emerald-800">Email confirmed. Sign in to continue.</p>
+          <p className="text-[12.5px] leading-5 text-emerald-800">
+            Email confirmed. Sign in to continue.
+          </p>
         </div>
       ) : null}
 
-      <form action={action} className={isLogin ? "space-y-3" : "space-y-4"}>
+      <form action={action} className="mt-7 space-y-3.5 text-left">
         {next ? <input type="hidden" name="next" value={next} /> : null}
-
-        {!isLogin ? (
-          <label className="block">
-            <span className="mb-1.5 block text-[12.5px] font-semibold text-zinc-700">Name</span>
-            <input
-              className="h-12 w-full rounded-[15px] border border-black/[0.08] bg-[#fbfbfc] px-4 text-[14px] text-zinc-950 outline-none transition-[border-color,box-shadow,background] placeholder:text-zinc-400 hover:bg-white focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-              name="name"
-              placeholder="Your name"
-              autoComplete="name"
-              required
-            />
-          </label>
+        {isLogin ? (
+          <input type="hidden" name="keepSignedIn" value={keepSignedIn ? "1" : "0"} />
         ) : null}
 
         <label className="block">
-          <span className={isLogin ? "mb-1 block text-[12px] font-semibold text-zinc-700" : "mb-1.5 block text-[12.5px] font-semibold text-zinc-700"}>Email</span>
-          <span className="relative block">
-            <FiMail size={isLogin ? 15 : 16} className={isLogin ? "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" : "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"} />
-            <input
-              className={inputClass}
-              name="email"
-              type="email"
-              placeholder="you@company.com"
-              autoComplete="email"
-              required
-            />
-          </span>
+          <span className="mb-1.5 block text-[13px] font-medium text-slate-700">Email</span>
+          <input
+            className={fieldClass}
+            name="email"
+            type="email"
+            placeholder="Enter email"
+            autoComplete="email"
+            required
+          />
         </label>
 
         <label className="block">
-          <span className={isLogin ? "mb-1 flex items-center justify-between text-[12px] font-semibold text-zinc-700" : "mb-1.5 flex items-center justify-between text-[12.5px] font-semibold text-zinc-700"}>
+          <span className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-slate-700">
             <span>Password</span>
             {isLogin ? (
-              <Link href="/login" className="font-medium text-blue-600 transition hover:text-blue-700">
-                Forgot password?
+              <Link
+                href="/login"
+                className="font-medium text-sky-600 transition hover:text-sky-700"
+              >
+                Forgot?
               </Link>
             ) : null}
           </span>
-          <span className="relative block">
-            <FiLock size={isLogin ? 15 : 16} className={isLogin ? "pointer-events-none absolute left-3.5 top-1/2 z-[1] -translate-y-1/2 text-zinc-400" : "pointer-events-none absolute left-4 top-1/2 z-[1] -translate-y-1/2 text-zinc-400"} />
-            <PasswordField
-              className={inputClass}
-              placeholder="Enter your password"
-              autoComplete={isLogin ? "current-password" : "new-password"}
-              showStrength={!isLogin}
-            />
-          </span>
+          <PasswordField
+            className={fieldClass}
+            placeholder={isLogin ? "Enter password" : "Create a password"}
+            autoComplete={isLogin ? "current-password" : "new-password"}
+            showStrength={!isLogin}
+          />
         </label>
 
         {isLogin ? (
-          <label className="flex cursor-pointer items-center gap-2 text-[12px] text-zinc-500">
+          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-slate-500">
             <input
               type="checkbox"
               checked={keepSignedIn}
               onChange={(e) => setKeepSignedIn(e.target.checked)}
-              className="size-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500/20"
+              className="size-3.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500/20"
             />
             Keep me signed in
           </label>
         ) : null}
 
         {error ? (
-          <div className={isLogin ? "flex items-start gap-2.5 rounded-[13px] border border-red-200 bg-red-50 px-3 py-2.5" : "flex items-start gap-2.5 rounded-[15px] border border-red-200 bg-red-50 px-3.5 py-3"}>
+          <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3">
             <Ico icon={FiAlertCircle} motion="alert" size={14} className="mt-0.5 shrink-0 text-red-500" />
             <p className="text-[12.5px] leading-5 text-red-700">{error}</p>
           </div>
@@ -177,77 +144,79 @@ export function AuthCard({
         <button
           type="submit"
           disabled={pending}
-          className={
-            isLogin
-              ? "group flex h-11 w-full items-center justify-center gap-2 rounded-[13px] border border-black bg-[#0b0b0c] text-[13.5px] font-semibold text-white shadow-[0_9px_22px_-12px_rgba(15,23,42,0.65)] transition hover:bg-[#151517] active:translate-y-px disabled:opacity-60 sm:h-[46px]"
-              : "group flex h-12 w-full items-center justify-center gap-2 rounded-[15px] border border-black bg-[#0b0b0c] text-[14px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(15,23,42,0.7),0_0_0_1px_rgba(59,130,246,0.10)] transition hover:bg-[#151517] hover:shadow-[0_14px_28px_-14px_rgba(15,23,42,0.8),0_0_0_3px_rgba(59,130,246,0.08)] active:translate-y-px disabled:opacity-60"
-          }
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-sky-300 text-[14.5px] font-semibold text-sky-950 transition hover:bg-sky-400 disabled:opacity-60"
         >
-          {pending ? <Ico icon={FiLoader} motion="spin" size={16} className="animate-spin" /> : null}
-          {isLogin ? "Continue to Trove" : "Create workspace"}
-          {!pending ? <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span> : null}
+          {pending ? (
+            <>
+              <Ico icon={FiLoader} motion="spin" size={16} />
+              {isLogin ? "Signing in…" : "Creating account…"}
+            </>
+          ) : isLogin ? (
+            "Sign in"
+          ) : (
+            "Create account"
+          )}
         </button>
       </form>
 
-      <div className={isLogin ? "my-4 flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-zinc-400" : "my-5 flex items-center gap-3 text-[9.5px] font-semibold uppercase tracking-[0.16em] text-zinc-400"}>
-        <span className="h-px flex-1 bg-zinc-200" />
-        or continue with
-        <span className="h-px flex-1 bg-zinc-200" />
-      </div>
+      {(googleEnabled || microsoftEnabled) ? (
+        <>
+          <div className="my-6 flex items-center gap-3">
+            <span className="h-px flex-1 bg-slate-200" />
+            <span className="text-[12px] text-slate-400">
+              Or {isLogin ? "sign in" : "sign up"} with
+            </span>
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
 
-      <div className="grid grid-cols-2 gap-2.5">
-        {googleEnabled ? (
-          <a
-            href="/api/auth/google"
-            className={isLogin ? "flex h-10 items-center justify-center gap-2 rounded-[12px] border border-black/[0.08] bg-white text-[12px] font-medium text-zinc-700 shadow-sm transition hover:border-black/[0.12] hover:bg-zinc-50 sm:h-[42px]" : "flex h-11 items-center justify-center gap-2 rounded-[14px] border border-black/[0.08] bg-white text-[12.5px] font-medium text-zinc-700 shadow-sm transition hover:border-black/[0.12] hover:bg-zinc-50"}
-          >
-            <FcGoogle size={18} />
-            Google
-          </a>
-        ) : (
-          <span className={isLogin ? "flex h-10 items-center justify-center gap-2 rounded-[12px] border border-zinc-100 text-[12px] text-zinc-300 sm:h-[42px]" : "flex h-11 items-center justify-center gap-2 rounded-[14px] border border-zinc-100 text-[12.5px] text-zinc-300"}>
-            Google
-          </span>
-        )}
-        {microsoftEnabled ? (
-          <a
-            href="/api/auth/microsoft"
-            className={isLogin ? "flex h-10 items-center justify-center gap-2 rounded-[12px] border border-black/[0.08] bg-white text-[12px] font-medium text-zinc-700 shadow-sm transition hover:border-black/[0.12] hover:bg-zinc-50 sm:h-[42px]" : "flex h-11 items-center justify-center gap-2 rounded-[14px] border border-black/[0.08] bg-white text-[12.5px] font-medium text-zinc-700 shadow-sm transition hover:border-black/[0.12] hover:bg-zinc-50"}
-          >
-            <MicrosoftIcon />
-            Microsoft
-          </a>
-        ) : (
-          <span
-            title="Add Microsoft env vars on Vercel to enable"
-            className={isLogin ? "flex h-10 cursor-not-allowed items-center justify-center gap-2 rounded-[12px] border border-zinc-200 bg-white text-[12px] font-medium text-zinc-400 sm:h-[42px]" : "flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-[14px] border border-zinc-200 bg-white text-[12.5px] font-medium text-zinc-400"}
-          >
-            <MicrosoftIcon />
-            Microsoft
-          </span>
-        )}
-      </div>
+          <div className="space-y-2.5">
+            {googleEnabled ? (
+              <a
+                href="/api/auth/google"
+                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-[13.5px] font-medium text-slate-800 transition hover:bg-slate-50"
+              >
+                <FcGoogle size={18} />
+                {isLogin ? "Sign in with Google" : "Sign up with Google"}
+              </a>
+            ) : null}
+            {microsoftEnabled ? (
+              <a
+                href="/api/auth/microsoft"
+                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-[13.5px] font-medium text-slate-800 transition hover:bg-slate-50"
+              >
+                <MicrosoftIcon />
+                {isLogin ? "Sign in with Microsoft" : "Sign up with Microsoft"}
+              </a>
+            ) : (
+              <span
+                title="Add Microsoft env vars on Vercel to enable"
+                className="flex h-11 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-[13.5px] font-medium text-slate-400"
+              >
+                <MicrosoftIcon />
+                Microsoft
+              </span>
+            )}
+          </div>
+        </>
+      ) : null}
 
-      <div className={isLogin ? "mt-4 flex items-center justify-between gap-3 border-t border-black/[0.06] pt-4" : "mt-6 flex items-center justify-between gap-3 border-t border-black/[0.06] pt-5"}>
-        <p className={isLogin ? "text-[12px] text-zinc-500" : "text-[12.5px] text-zinc-500"}>
-          {isLogin ? (
-            <>
-              New to Trove?{" "}
-              <Link href="/signup" className="font-semibold text-zinc-900 transition hover:text-blue-600">
-                Create account
-              </Link>
-            </>
-          ) : (
-            <>
-              Already have an account?{" "}
-              <Link href="/login" className="font-semibold text-zinc-900 transition hover:text-blue-600">
-                Sign in
-              </Link>
-            </>
-          )}
-        </p>
-        <span className="hidden text-[10px] text-zinc-400 sm:inline">Encrypted session</span>
-      </div>
+      <p className="mt-7 text-[13px] text-slate-500">
+        {isLogin ? (
+          <>
+            New to Trove?{" "}
+            <Link href="/signup" className="font-semibold text-sky-600 hover:text-sky-700">
+              Create account
+            </Link>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold text-sky-600 hover:text-sky-700">
+              Login
+            </Link>
+          </>
+        )}
+      </p>
     </div>
   );
 }

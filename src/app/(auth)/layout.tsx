@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { BrandLockup } from "@/components/brand/logo";
-import { AuthIllustration } from "@/components/auth/auth-illustration";
 
 /**
- * Responsive auth shell: compact on laptops, full-width on phones, and capped
- * on large displays so the sign-in experience never feels oversized.
+ * Centered auth shell inspired by modern SaaS signup (soft canvas, floating
+ * product frames, single focused card). Login and signup share this chrome.
  */
 export default function AuthLayout({
   children,
@@ -12,35 +11,107 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-[#f4f4f6] p-2 sm:p-3 lg:p-4">
-      <div className="mx-auto grid w-full max-w-[1120px] overflow-hidden rounded-[24px] border border-black/[0.06] bg-white shadow-[0_24px_80px_-38px_rgba(15,23,42,0.24)] sm:rounded-[28px] lg:min-h-[min(700px,calc(100dvh-32px))] lg:grid-cols-[0.94fr_1.06fr]">
-        <section className="relative flex min-w-0 flex-col px-5 py-5 sm:px-7 sm:py-6 lg:px-9 lg:py-7 xl:px-11 xl:py-8">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_20%_0%,rgba(59,130,246,0.07),transparent_58%)]" />
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#eef2f9] px-4 py-10 sm:px-6">
+      {/* Soft grid */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.55]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(148,163,184,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.18) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+          maskImage:
+            "radial-gradient(ellipse 75% 70% at 50% 45%, black 20%, transparent 75%)",
+        }}
+      />
+      {/* Ambient glows */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-24 top-1/4 h-[420px] w-[420px] rounded-full bg-sky-300/25 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-20 bottom-1/4 h-[380px] w-[380px] rounded-full bg-indigo-300/20 blur-3xl"
+      />
 
-          <div className="relative flex items-center justify-between">
-            <Link href="/" className="inline-flex w-fit" aria-label="Trove home">
-              <BrandLockup orbSize={30} wordSize={19} sweep={false} />
+      {/* Floating product mockups — left */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-[-8%] top-[12%] hidden w-[280px] rotate-[-8deg] lg:block xl:left-[4%] xl:w-[320px]"
+      >
+        <div className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.28)] backdrop-blur">
+          <div className="mb-2 flex items-center gap-1.5 px-1">
+            <span className="size-2 rounded-full bg-red-400/80" />
+            <span className="size-2 rounded-full bg-amber-400/80" />
+            <span className="size-2 rounded-full bg-emerald-400/80" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {["#f0abfc", "#93c5fd", "#86efac", "#fcd34d"].map((c, i) => (
+              <div
+                key={i}
+                className="aspect-[4/3] rounded-xl"
+                style={{
+                  background: `linear-gradient(145deg, ${c}, white 120%)`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="mt-2.5 h-2 w-2/3 rounded-full bg-slate-200/80" />
+          <div className="mt-1.5 h-2 w-1/2 rounded-full bg-slate-100" />
+        </div>
+      </div>
+
+      {/* Floating product mockups — right */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-[-6%] bottom-[10%] hidden w-[260px] rotate-[7deg] lg:block xl:right-[5%] xl:w-[300px]"
+      >
+        <div className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.25)] backdrop-blur">
+          <div className="mb-2 h-24 rounded-xl bg-gradient-to-br from-sky-100 via-indigo-50 to-violet-100" />
+          <div className="space-y-1.5 px-0.5">
+            <div className="h-2 w-3/4 rounded-full bg-slate-200/90" />
+            <div className="h-2 w-1/2 rounded-full bg-slate-100" />
+            <div className="mt-2 h-8 w-full rounded-lg bg-sky-200/70" />
+          </div>
+        </div>
+      </div>
+
+      {/* Small floating chips */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-[18%] top-[18%] hidden size-12 items-center justify-center rounded-2xl border border-white/70 bg-white shadow-lg lg:flex"
+      >
+        <span className="text-lg">✦</span>
+      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-[20%] top-[22%] hidden size-11 items-center justify-center rounded-2xl border border-white/70 bg-white shadow-lg lg:flex"
+      >
+        <span className="text-base">◇</span>
+      </div>
+
+      {/* Center card */}
+      <div className="relative z-10 w-full max-w-[440px]">
+        <div className="rounded-[28px] border border-white/80 bg-white px-7 py-9 shadow-[0_24px_80px_-28px_rgba(15,23,42,0.22)] sm:px-10 sm:py-11">
+          <div className="mb-8 flex justify-center">
+            <Link href="/" className="inline-flex" aria-label="Trove home">
+              <BrandLockup orbSize={34} wordSize={22} sweep={false} />
             </Link>
-            <span className="hidden items-center gap-1.5 rounded-full border border-black/[0.06] bg-[#fafafa] px-2.5 py-1 text-[10px] font-medium text-zinc-500 sm:inline-flex">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              Secure workspace
-            </span>
           </div>
+          {children}
+        </div>
 
-          <div className="relative my-auto w-full max-w-[370px] py-6 sm:py-7 lg:py-5">
-            {children}
-          </div>
-
-          <div className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-black/[0.06] pt-3 text-[10.5px] text-zinc-400">
-            <span>© {new Date().getFullYear()} Trove</span>
-            <Link href="/privacy" className="transition hover:text-zinc-700">Privacy</Link>
-            <Link href="/terms" className="transition hover:text-zinc-700">Terms</Link>
-          </div>
-        </section>
-
-        <section className="relative min-h-[190px] border-t border-black/[0.06] sm:min-h-[220px] lg:min-h-0 lg:border-l lg:border-t-0">
-          <AuthIllustration />
-        </section>
+        <p className="mt-6 text-center text-[11px] text-slate-400">
+          <Link href="/privacy" className="transition hover:text-slate-600">
+            Privacy
+          </Link>
+          <span className="mx-2">·</span>
+          <Link href="/terms" className="transition hover:text-slate-600">
+            Terms
+          </Link>
+          <span className="mx-2">·</span>
+          © {new Date().getFullYear()} Trove
+        </p>
       </div>
     </main>
   );
