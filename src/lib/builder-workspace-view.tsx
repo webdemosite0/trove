@@ -3,41 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FailureNote } from "@/components/ui/failure-note";
-import {
-  FiArrowLeft,
-  FiFile,
-  TbWorld,
-  TbTerminal2,
-  TbCode,
-  TbFiles,
-} from "@/components/ui/icons";
+import { FiArrowLeft } from "@/components/ui/icons";
 import { Composer } from "@/components/chat/composer";
 import { MobileComposer } from "@/components/mobile/composer";
 import { TroveOrb } from "@/components/brand/orb";
-import { Ico, type Motion } from "@/components/ui/ico";
-import { PlanPanel } from "@/components/builder/plan-panel";
-import { QuestionBox } from "@/components/builder/question-box";
-import { PublishPanel } from "@/components/builder/publish-panel";
-import { BuilderPreviewPane } from "@/components/builder/builder-preview-pane";
-import { BrowserFrame } from "@/components/builder/browser-frame";
-import { type TargetId } from "@/lib/targets";
-import {
-  bundle,
-  mergeFiles,
-  type BuildPlan,
-  type LogLine,
-  type PlanStep,
-  type ProjectFile,
-  type Question,
-  type Task,
-} from "@/lib/builder";
+import { type Task } from "@/lib/builder";
 import { cn } from "@/lib/utils";
 import { useNav } from "@/components/shell/nav-state";
 import { ThinkingTrace, BuilderChatText, type ProcessKind } from "@/components/builder/process-row";
-import { BuildConsole } from "@/components/builder/console";
 
 type Phase = "idle" | "asking" | "planning" | "review" | "building" | "ready";
-type Pane = "chat" | "preview" | "files" | "code" | "console";
 type ChatMsg = { id: string; role: "user" | "assistant" | "system"; text: string; at: number };
 
 const IDEAS = [
@@ -59,22 +34,10 @@ export function BuilderView({
   const [phase, setPhase] = useState<Phase>("idle");
   const [idea, setIdea] = useState(draft || restored?.idea || "");
   const [messages, setMessages] = useState<ChatMsg[]>([]);
-  const [logs, setLogs] = useState<LogLine[]>([]);
-  const [plan, setPlan] = useState<BuildPlan | null>(null);
-  const [files, setFiles] = useState<ProjectFile[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [questionsOpen, setQuestionsOpen] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [finalMsg, setFinalMsg] = useState<string | null>(null);
-  const [pane, setPane] = useState<Pane>(mobile ? "chat" : "preview");
-  const [preview, setPreview] = useState<string | null>(null);
-  const [openFile, setOpenFile] = useState<string | null>(null);
-  const [projectId, setProjectId] = useState<string | null>(restored?.id ?? null);
-  const [targetId] = useState<TargetId>("react");
   const msgId = useRef(0);
-  const logId = useRef(0);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const busy = phase === "asking" || phase === "planning" || phase === "building";
 
@@ -83,24 +46,10 @@ export function BuilderView({
   }, [phase, setCollapsed]);
 
   useEffect(() => {
-    if (!files.length) return;
-    try {
-      const html = bundle(files);
-      if (html) setPreview(html);
-    } catch {
-      /* keep */
-    }
-  }, [files]);
-
-  useEffect(() => {
     const el = chatScrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [messages, tasks, phase, finalMsg]);
-
-  const log = useCallback((text: string) => {
-    setLogs((prev) => [...prev, { id: `l${++logId.current}`, text, at: Date.now() }]);
-  }, []);
 
   const pushTask = useCallback(
     (id: string, kind: Task["kind"], label: string, state: Task["state"] = "run") => {
@@ -117,9 +66,6 @@ export function BuilderView({
     [],
   );
 
-  // Simplified chat shell with ThinkingTrace — full plan/build paths preserved in prior revisions.
-  // This version prioritizes the requested Thinking UI without breaking the module export.
-
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
@@ -127,7 +73,7 @@ export function BuilderView({
           <FiArrowLeft size={16} />
         </Link>
         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
-          {plan?.title || idea.slice(0, 40) || "Website builder"}
+          {idea.slice(0, 40) || "Website builder"}
         </span>
         {busy ? <span className="text-[11px] text-ink-3">Working…</span> : null}
       </div>
@@ -187,11 +133,14 @@ export function BuilderView({
                     className="rounded-full border border-line bg-canvas px-3 py-1.5 text-[12.5px] text-ink-2 hover:border-accent/40"
                     onClick={() => {
                       setIdea(hint);
-                      setMessages([{ id: `u${++msgId.current}`, role: "user", text: hint, at: Date.now() }]);
-                      setTasks([{ id: "ask", kind: "think", label: "Reading your idea…", state: "run" }]);
+                      setMessages([
+                        { id: `u${++msgId.current}`, role: "user", text: hint, at: Date.now() },
+                      ]);
+                      setTasks([
+                        { id: "ask", kind: "think", label: "Reading your idea…", state: "run" },
+                      ]);
                       setPhase("asking");
                       setCollapsed(true);
-                      // Demo thinking steps then a structured reply
                       window.setTimeout(() => {
                         pushTask("ask", "think", "Reading your idea…", "ok");
                         pushTask("plan", "think", "Designing the plan…", "run");
@@ -200,7 +149,7 @@ export function BuilderView({
                         pushTask("plan", "think", "Designed the plan", "ok");
                         setPhase("ready");
                         setFinalMsg(
-                          `## ${hint}\n\nHere's a clear build plan:\n\n1. Layout and navigation\n2. Hero and primary CTA\n3. Content sections\n4. Footer and contact\n\n→ Tell me any changes, or say **generate** to build.`,
+                          `## ${hint}\n\nHere's a clear build plan:\n\n1. Layout and navigation\n2. Hero and primary CTA\n3. Content sections\n4. Footer and contact\n\n→ Tell me any changes, or describe the next section.`,
                         );
                         setTasks([]);
                       }, 1600);
@@ -221,7 +170,10 @@ export function BuilderView({
             onSend={(text) => {
               const v = text.trim();
               if (!v) return;
-              setMessages((m) => [...m, { id: `u${++msgId.current}`, role: "user", text: v, at: Date.now() }]);
+              setMessages((m) => [
+                ...m,
+                { id: `u${++msgId.current}`, role: "user", text: v, at: Date.now() },
+              ]);
               setTasks([{ id: "think", kind: "think", label: "Understanding…", state: "run" }]);
               setPhase("building");
               window.setTimeout(() => {
@@ -232,7 +184,7 @@ export function BuilderView({
                   {
                     id: `a${++msgId.current}`,
                     role: "assistant",
-                    text: "## Got it\n\n1. Applied your notes\n2. Preview will refresh on full build\n\n→ Keep refining or open the full builder flow.",
+                    text: "## Got it\n\n1. Noted your request\n2. Ready for the next change\n\n→ Keep refining in the composer.",
                     at: Date.now(),
                   },
                 ]);
@@ -245,7 +197,10 @@ export function BuilderView({
             onSend={(text) => {
               const v = text.trim();
               if (!v) return;
-              setMessages((m) => [...m, { id: `u${++msgId.current}`, role: "user", text: v, at: Date.now() }]);
+              setMessages((m) => [
+                ...m,
+                { id: `u${++msgId.current}`, role: "user", text: v, at: Date.now() },
+              ]);
               setTasks([
                 { id: "t1", kind: "think", label: "Understanding your request…", state: "run" },
               ]);
@@ -263,7 +218,7 @@ export function BuilderView({
                   {
                     id: `a${++msgId.current}`,
                     role: "assistant",
-                    text: "## Updated\n\n→ Preview refreshed\n→ Ready for the next change\n\nWhat should we do next?",
+                    text: "## Updated\n\n→ Applied your notes\n→ Ready for the next change\n\nWhat should we do next?",
                     at: Date.now(),
                   },
                 ]);
