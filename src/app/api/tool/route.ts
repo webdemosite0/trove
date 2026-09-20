@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { streamText, type Source } from "@/lib/ai";
+import { streamText, generateText, type Source } from "@/lib/ai";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
@@ -19,79 +19,93 @@ output: a header row, correct alignment, and realistic, internally consistent
 values. Add any formulas as a short list under the table using spreadsheet
 syntax (e.g. =SUM(B2:B13)). Keep prose to two sentences at most.`,
 
-  slides: `You are Trove's presentation designer. Every deck must feel unique.
+  slides: `You are Trove's presentation designer. Produce a varied, visual deck.
 
-UNIQUENESS (critical)
-- Never reuse the same slide titles, bullet phrasing, or stock structure as a generic pitch deck.
-- Invent a distinctive narrative arc for THIS topic only (e.g. story, problem→insight→proof, timeline, debate, case study, manifesto).
-- Pick ONE visual pattern for the whole deck and stick to it. Patterns rotate across decks: cinematic photo essays, bold section chapters, split evidence panels, quote-led argument, data-story (still no tables — use short metric phrases), minimal manifesto, scrapbook photo + caption.
-- Avoid clichés: "Key Features", "Our Solution", "Thank You", "Next Steps", "Agenda", "Overview", "Why Us", "The Problem" as generic labels unless the user used those exact words.
-- Headings should be specific to the subject (e.g. "Latency under 40ms in Mumbai" not "Performance").
-- Bullets: 3–5 max, under 12 words, no trailing period, concrete nouns and numbers when possible.
+UNIQUENESS: Do not reuse generic labels like "Key Features", "Our Solution",
+"Thank You", or "Agenda". Titles and bullets must be specific to THIS topic.
+Vary the narrative shape (story, timeline, case study, manifesto) and mix layouts.
 
 Format, exactly:
-- First line after any theme block: "# " deck title (title slide, no bullets).
-- Optional deck theme line (once, near the top):
+- Start with "# " and the deck title on its own — title slide, no bullets.
+- Optional once near the top:
   Theme: <name> | accent #<hex> | font sans|serif|display | pattern solid|grid|dots|waves|diagonal|mesh
-  Example: Theme: midnight studio | accent #7C5CFF | font display | pattern mesh
-- Then "## Slide N — Title" for each content slide.
-- After each heading: Layout: title|bullets|split|photo|quote|section
-- For split and photo slides ALWAYS add: Image: <concrete photo brief>
-  Briefs describe a real scene/object/texture — never "illustration of X" or "abstract concept".
-  Examples: "neon ramen stall reflection in rainy Tokyo alley", "cross-section of lithium cell under macro light", "hand holding cracked smartphone screen in sunlight"
-- Bullets with "- " when the layout needs them.
-- Speaker note: Note: one spoken sentence.
+- Then one "## Slide N — Title" per content slide.
+- After the heading, optionally one line: Layout: title|bullets|split|photo|quote|section
+- For most content slides add: Image: short concrete photo brief (what to show, not "illustration of…")
+  Examples: "crowded trading floor at night", "electric vehicle on mountain road", "founder sketching on glass whiteboard"
+- Then 3-5 bullets starting with "- " (skip bullets for title/section/quote when needed)
+- Then a one-line speaker note: Note: ...
 
-Layout mix (required):
-- At least 40% of slides must be photo or split WITH Image: lines.
-- Include at least one section or quote slide.
-- Vary layouts — never more than two bullets-only slides in a row.
+Layouts (mix them — do not use only bullets; at least half of the deck should be split or photo):
+- title: opening / closing statement
+- section: chapter break, big title only
+- bullets: classic points (default)
+- split: text left + Image photo panel right — always include Image:
+- photo: full-bleed image with title bar — always include Image:
+- quote: one strong line (+ optional attribution as second bullet)
 
-Length: 7–11 slides. No filler, no tables, no "Questions?".
-When the user asks to change fonts, colors, or style in a follow-up, update the Theme: line and rewrite slide titles/copy to match — do not ignore theme requests.`,
+Typography is one system only (the product applies a single text style).
+Vary layout and imagery, not fonts. Bullets are phrases under 12 words, no
+trailing full stop, specific. Aim for 7-10 slides. Include at least two
+photo or split slides with Image: lines. No filler, no "Thank you", no tables.
+When the user asks to change fonts or colors, update the Theme: line and copy.`,
 
   design: `You are Trove's product designer. Deliver a concrete UI design system.
 
 Structure the answer as:
 ## Concept — one sentence product feeling
 ## Layout — structure, hierarchy, key screens
-## Color & type — palette and type roles
-## Components — primary controls and states
-## Motion — what moves and why
-Be specific. Prefer real copy over lorem.`,
+## Colour — 5–7 hex values with roles (canvas, ink, accent, etc.)
+## Type — one type family, sizes and weights only (do not mix many faces)
+## Spacing — base unit and common multiples
+## Components — buttons, inputs, cards, states (hover/focus/disabled)
+## Motion — 2–3 subtle interaction notes
+## Responsive — mobile vs desktop behaviour
+
+Be decisive. Pick values; do not offer alternatives. Prefer one cohesive
+visual system over decorative variety.`,
 
   research: `You are Trove's research analyst. Structure the answer as: a
-one-sentence answer, then key findings with confidence, then open questions.
-Prefer primary sources. Mark uncertainty clearly.`,
+two-sentence summary, then "## Findings" with substantiated points, then
+"## Open questions" listing what you could not determine.
+
+You can search the web. Prefer what you find there to what you remember,
+and say when a claim comes from a source rather than from prior knowledge.
+Anything you could not verify belongs under Open questions rather than being
+stated confidently. Never invent statistics, dates, or citations — the
+sources you actually used are listed under your answer, so a citation that
+is not among them is visibly wrong.`,
+
+  code: `You are Trove's engineer. Lead with the code in a fenced block with the
+correct language tag. It must be complete and runnable — no placeholders, no
+"// implementation here". Follow with a short explanation of the important
+decisions and any edge cases the caller must handle.`,
 };
 
 const SEARCHES = new Set(["research"]);
 
 export async function POST(req: NextRequest) {
-  let body: {
-    tool?: string;
-    prompt?: string;
-    messages?: Turn[];
-    attachments?: Attachment[];
-    timeZone?: string;
-  };
+  let tool = "";
+  let prompt = "";
+  let messages: Turn[] = [];
+  let attachments: Attachment[] = [];
+  let timeZone = "UTC";
   try {
-    body = await req.json();
+    const body = await req.json();
+    tool = String(body?.tool ?? "");
+    prompt = String(body?.prompt ?? "").trim();
+    messages = readTurns(body);
+    attachments = Array.isArray(body?.attachments) ? body.attachments : [];
+    timeZone = safeTimeZone(body?.timeZone);
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const tool = String(body.tool || "").trim();
-  let messages = Array.isArray(body.messages) ? readTurns(body.messages) : [];
-  let prompt = String(body.prompt || "").trim();
-  const attachments = Array.isArray(body.attachments) ? body.attachments : [];
-  const timeZone = safeTimeZone(body.timeZone);
-
   if (!messages.length && prompt) messages = [{ role: "user", text: prompt }];
   prompt = lastUserText(messages) || prompt;
 
-  const system = TOOL_PROMPTS[tool];
-  if (!system) return Response.json({ error: "Unknown tool." }, { status: 400 });
+  const toolSystem = TOOL_PROMPTS[tool];
+  if (!toolSystem) return Response.json({ error: "Unknown tool." }, { status: 400 });
   if (prompt.length < 3 && attachments.length === 0) {
     return Response.json({ error: "Describe what you need." }, { status: 400 });
   }
@@ -115,32 +129,37 @@ export async function POST(req: NextRequest) {
   }
 
   const promptFor = (canSearch: boolean) =>
-    [system, OBEY_FORMAT, situation({ timeZone, canSearch })].join("\n\n");
+    [toolSystem, OBEY_FORMAT, situation({ timeZone, canSearch })].join("\n\n");
+
+  const turns =
+    messages.length > 0
+      ? messages
+      : ([{ role: "user", text: "Work from the attached files." }] as Turn[]);
+  const system = promptFor(SEARCHES.has(tool));
+  const systemWithoutSearch = promptFor(false);
+  const onUsage = (u: {
+    totalTokens: number;
+    promptTokens?: number;
+    responseTokens?: number;
+  }) => {
+    if (!account) return;
+    try {
+      void spend(account.userId, tool, u.totalTokens);
+    } catch (err) {
+      console.warn("tool: spend failed —", err);
+    }
+  };
 
   try {
     let sources: Source[] = [];
 
-    // Same provider path as docs/sheets (auto). High temp only for slides variety.
-    // Never force OpenRouter — a bad model/key caused Build paused + infinite Try again.
-    const isSlides = tool === "slides";
     const stream = await streamText({
-      onUsage: (u) => {
-        if (!account) return;
-        try {
-          void spend(account.userId, tool, u.totalTokens);
-        } catch (err) {
-          console.warn("tool: spend failed —", err);
-        }
-      },
-      turns: messages.length
-        ? messages
-        : [{ role: "user", text: "Work from the attached files." }],
-      system: promptFor(SEARCHES.has(tool)),
-      systemWithoutSearch: promptFor(false),
-      temperature: isSlides ? 0.9 : 0.75,
+      onUsage,
+      turns,
+      system,
+      systemWithoutSearch,
+      temperature: 0.75,
       maxOutputTokens: 4096,
-      // auto = Explabs → Gemini → OpenRouter → …
-      preferredProvider: "auto",
       extraParts: attachments.length ? toParts(attachments) : undefined,
       search: SEARCHES.has(tool),
       onSources: (s) => {
@@ -166,9 +185,36 @@ export async function POST(req: NextRequest) {
         "Cache-Control": "no-store",
       },
     });
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    console.error("tool route", tool, message);
-    return Response.json({ error: message }, { status: 502 });
+  } catch (streamErr) {
+    console.error("tool route stream failed —", tool, streamErr);
+    // Non-stream fallback when SSE path fails across providers
+    try {
+      const text = await generateText({
+        onUsage,
+        turns,
+        system,
+        systemWithoutSearch,
+        temperature: 0.75,
+        maxOutputTokens: 4096,
+        extraParts: attachments.length ? toParts(attachments) : undefined,
+        search: SEARCHES.has(tool),
+      });
+      if (!text?.trim()) {
+        throw new Error("Empty model response");
+      }
+      return new Response(text, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Unknown error";
+      console.error("tool route generate failed —", tool, message);
+      return Response.json(
+        { error: "Trove could not finish this step. Please try again." },
+        { status: 502 },
+      );
+    }
   }
 }
