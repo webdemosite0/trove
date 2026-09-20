@@ -18,6 +18,7 @@ import { site } from "@/lib/site";
 import { consumeRateLimit, requestIdentity } from "@/lib/rate-limit";
 import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
 import { opsAlert } from "@/lib/ops-alert";
+import { applyReferralOnSignup } from "@/lib/affiliates";
 
 export interface AuthState {
   error?: string;
@@ -94,6 +95,12 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   const user = await createUser(email, name, password, {
     emailVerified: !mustVerifyEmail,
   });
+
+  const refCode = String(form.get("ref") ?? "").trim();
+  await applyReferralOnSignup(user.id, refCode || null).catch((e) => {
+    console.error("[auth] referral apply failed", e);
+  });
+
   await trackEvent({
     event: ANALYTICS_EVENTS.signupCompleted,
     userId: user.id,
@@ -138,7 +145,6 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
 
   const mustVerifyEmail = verificationEnforced();
   if (!row.emailVerified && !mustVerifyEmail) {
-    // Mail is unavailable, so do not strand an older unverified account.
     await markVerified(row.id);
   }
 
@@ -148,7 +154,6 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
     redirect("/verify-email");
   }
 
-  // Incomplete onboarding always wins over a deep link
   if (!row.onboardingDone) {
     redirect("/launching?next=/onboarding");
   }
