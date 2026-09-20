@@ -148,3 +148,50 @@
     transform: none !important;
   }
 }
+
+
+@keyframes ob-ai-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ob-ai-spin-reverse {
+  to { transform: rotate(-360deg); }
+}
+@keyframes ob-ai-scan {
+  0%, 100% { transform: scale(0.78); opacity: 0.18; }
+  50% { transform: scale(1.16); opacity: 0.52; }
+}
+@keyframes ob-ai-dot {
+  0%, 100% { transform: scale(0.75); opacity: 0.55; }
+  50% { transform: scale(1); opacity: 1; }
+}
+
+.ob-ai-spin {
+  border-top-color: var(--color-accent);
+  border-right-color: color-mix(in oklab, var(--color-accent) 62%, transparent);
+  animation: ob-ai-spin 2.8s linear infinite;
+}
+
+.ob-ai-ring-2 {
+  animation: ob-ai-spin-reverse 8s linear infinite;
+}
+
+.ob-ai-scan {
+  background: radial-gradient(circle, color-mix(in oklab, var(--color-accent) 20%, transparent), transparent 68%);
+}
+
+.ob-ai-scan-live {
+  animation: ob-ai-scan 1.7s ease-in-out infinite;
+}
+
+.ob-ai-dot {
+  animation: ob-ai-dot 0.95s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-ai-spin,
+  .ob-ai-ring-2,
+  .ob-ai-scan-live,
+  .ob-ai-dot {
+    animation: none !important;
+  }
+}
