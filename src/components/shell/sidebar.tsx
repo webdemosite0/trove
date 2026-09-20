@@ -52,7 +52,7 @@ const PRIMARY: Item[] = [
   { href: "/sheets", label: "Sheets", icon: TbTable, motion: "nudge" },
   { href: "/decks", label: "Decks", icon: TbPresentation, motion: "pop" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "lift" },
-  { href: "/agents", label: "Agents", icon: TbRobot, motion: "wiggle" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake" },
 ];
 
 function NavRow({
