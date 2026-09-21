@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 import { Backdrop } from "@/components/shell/backdrop";
-import { CommandPalette } from "@/components/shell/command-palette";
 import { NavProvider } from "@/components/shell/nav-state";
-import { Sidebar } from "@/components/shell/sidebar";
-import { TopBar } from "@/components/shell/top-bar";
 import { resolveShell } from "@/components/shell/guard";
 import { ToastProvider } from "@/components/ui/toast";
-import { countDueReminders } from "@/app/actions/reminders";
-import { listAllRecents } from "@/lib/recents";
 import { isMobile } from "@/lib/device";
 import { MobileShell } from "@/components/mobile/shell";
-import { MobileViewport } from "@/components/mobile/viewport";
+import { StudioChrome } from "@/components/shell/studio-chrome";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -38,17 +33,17 @@ export default async function StudioLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const gate = await resolveShell();
+  const [gate, mobile] = await Promise.all([resolveShell(), isMobile()]);
   if (!gate.ok) return gate.screen;
-  const { user, balance } = gate;
+  const { user } = gate;
 
-  if (await isMobile()) {
+  if (mobile) {
     return (
       <ToastProvider>
         <Backdrop />
         <MobileShell
           user={{ name: user.name, email: user.email }}
-          balance={balance}
+          balance={null}
         >
           {children}
         </MobileShell>
@@ -56,24 +51,11 @@ export default async function StudioLayout({
     );
   }
 
-  const [due, recents] = await Promise.all([
-    countDueReminders(),
-    listAllRecents(6),
-  ]);
-
   return (
     <NavProvider>
       <ToastProvider>
         <Backdrop />
-        <CommandPalette recents={recents} />
-        <MobileViewport />
-        <div className="mobile-viewport flex h-dvh min-h-0 overflow-hidden">
-          <Sidebar user={user} balance={balance} />
-          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            <TopBar initial={user?.name?.slice(0, 1)} due={due} />
-            <div className="relative min-h-0 flex-1 overflow-hidden">{children}</div>
-          </main>
-        </div>
+        <StudioChrome user={user}>{children}</StudioChrome>
       </ToastProvider>
     </NavProvider>
   );
