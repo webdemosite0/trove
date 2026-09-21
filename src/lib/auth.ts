@@ -196,7 +196,10 @@ export async function lastTokenAt(userId: string, purpose: string): Promise<numb
   return row ? num(row.created_at) : 0;
 }
 
-export async function startSession(userId: string) {
+export async function startSession(
+  userId: string,
+  opts?: { persistent?: boolean },
+) {
   const token = randomBytes(32).toString("hex");
   const expires = Date.now() + SESSION_DAYS * 86_400_000;
 
@@ -207,12 +210,13 @@ export async function startSession(userId: string) {
   ]);
 
   const jar = await cookies();
+  const persistent = opts?.persistent !== false;
   jar.set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: SESSION_DAYS * 86_400,
+    ...(persistent ? { maxAge: SESSION_DAYS * 86_400 } : {}),
   });
 }
 
