@@ -23,7 +23,7 @@ const cards = [
 export default function SupportPage() {
   return (
     <section className="space-y-5">
-      <div className="rounded-[22px] border border-black/[0.05] bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,.04)]">
+      <div className="rounded-[22px] border border-line bg-raised p-6 shadow-[var(--sh-1)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
           Help & Support
         </p>
@@ -44,25 +44,25 @@ export default function SupportPage() {
           </a>
           <Link
             href="/settings/account"
-            className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
+            className="inline-flex h-10 items-center rounded-xl border border-line bg-raised px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
           >
             Account & security
           </Link>
           <a
             href="/status"
-            className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
+            className="inline-flex h-10 items-center rounded-xl border border-line bg-raised px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
           >
             System status
           </a>
           <Link
             href="/security"
-            className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
+            className="inline-flex h-10 items-center rounded-xl border border-line bg-raised px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
           >
             Security
           </Link>
           <a
             href={`mailto:${site.email}?subject=Trove%20abuse%20report`}
-            className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
+            className="inline-flex h-10 items-center rounded-xl border border-line bg-raised px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
           >
             Report abuse
           </a>
@@ -73,7 +73,7 @@ export default function SupportPage() {
         {cards.map((card) => (
           <article
             key={card.title}
-            className="rounded-[20px] border border-black/[0.05] bg-white/80 p-5 shadow-[0_12px_34px_rgba(15,23,42,.03)]"
+            className="rounded-[20px] border border-line bg-raised/90 p-5 shadow-[var(--sh-1)]"
           >
             <h2 className="text-sm font-semibold text-ink">{card.title}</h2>
             <p className="mt-2 text-[13px] leading-5 text-ink-3">{card.body}</p>
@@ -81,7 +81,7 @@ export default function SupportPage() {
         ))}
       </div>
 
-      <div className="rounded-[20px] border border-black/[0.05] bg-white/70 p-5">
+      <div className="rounded-[20px] border border-line bg-raised/80 p-5">
         <h2 className="text-sm font-semibold text-ink">Useful details for a bug report</h2>
         <p className="mt-2 text-[13px] leading-5 text-ink-3">
           Include the feature you were using, the approximate time, the browser/device,
