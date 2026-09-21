@@ -25,9 +25,14 @@ export function AppChrome({
 }) {
   const pathname = usePathname();
   const isSettings = pathname === "/settings" || pathname.startsWith("/settings/");
-  const [shellMeta, setShellMeta] = useState<{ due: number; recents: Recent[] }>({
+  const [shellMeta, setShellMeta] = useState<{
+    due: number;
+    recents: Recent[];
+    balance: Balance | null;
+  }>({
     due: 0,
     recents: [],
+    balance,
   });
 
   useEffect(() => {
@@ -43,13 +48,18 @@ export function AppChrome({
       })
         .then(async (res) => {
           if (!res.ok) return null;
-          return (await res.json()) as { due?: number; recents?: Recent[] };
+          return (await res.json()) as {
+            due?: number;
+            recents?: Recent[];
+            balance?: Balance | null;
+          };
         })
         .then((data) => {
           if (!data) return;
           setShellMeta({
             due: Number(data.due) || 0,
             recents: Array.isArray(data.recents) ? data.recents : [],
+            balance: data.balance ?? null,
           });
         })
         .catch(() => null);
@@ -89,10 +99,14 @@ export function AppChrome({
   return (
     <div className="flex min-h-screen">
       <CommandPalette recents={shellMeta.recents} />
-      <Sidebar user={user} balance={balance} isAdmin={isAdmin} />
+      <Sidebar user={user} balance={shellMeta.balance} isAdmin={isAdmin} />
       <main className="relative flex min-w-0 flex-1 flex-col">
         <AuthReferralAnnouncement />
-        <TopBar initial={user?.name?.slice(0, 1)} due={shellMeta.due} balance={balance} />
+        <TopBar
+          initial={user?.name?.slice(0, 1)}
+          due={shellMeta.due}
+          balance={shellMeta.balance}
+        />
         <AnnouncementBanner />
         <div className="app-page-in min-w-0 flex-1">{children}</div>
       </main>
