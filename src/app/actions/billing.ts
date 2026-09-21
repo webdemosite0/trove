@@ -7,8 +7,8 @@ import { planById } from "@/lib/credits";
 import { lemonConfigured, lemonPurchasable } from "@/lib/lemon";
 import { purchasable as stripePurchasable, stripeConfigured } from "@/lib/stripe";
 
-function canBuy(planId: string): boolean {
-  return lemonPurchasable(planId) || stripePurchasable(planId);
+function canBuy(planId: string, interval: "month" | "year"): boolean {
+  return lemonPurchasable(planId, interval) || stripePurchasable(planId, interval);
 }
 
 export async function choosePlan(plan: string) {
@@ -43,14 +43,19 @@ export async function billingState() {
       stripeReady: false,
       lemonReady: false,
       paymentsReady: false,
-      purchasable: {} as Record<string, boolean>,
+      purchasable: {} as Record<string, { month: boolean; year: boolean }>,
       subscription: null,
     };
   }
 
   const sub = await subscriptionFor(user.id);
-  const canBuyMap: Record<string, boolean> = {};
-  for (const p of [planById("pro"), planById("team")]) canBuyMap[p.id] = canBuy(p.id);
+  const canBuyMap: Record<string, { month: boolean; year: boolean }> = {};
+  for (const p of [planById("pro"), planById("team")]) {
+    canBuyMap[p.id] = {
+      month: canBuy(p.id, "month"),
+      year: canBuy(p.id, "year"),
+    };
+  }
 
   const lemonReady = lemonConfigured();
   const stripeReady = stripeConfigured();
