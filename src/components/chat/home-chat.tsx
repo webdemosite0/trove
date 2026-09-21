@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { FailureNote } from "@/components/ui/failure-note";
 import { Composer } from "@/components/chat/composer";
@@ -15,6 +15,11 @@ import {
   ProjectPicker,
   type ChatProjectOption,
 } from "@/components/chat/project-picker";
+import {
+  writeLocalProjectFiles,
+  type LocalProjectFile,
+  type LocalProjectWorkspace,
+} from "@/lib/local-project";
 
 export function HomeChat({
   restored = null,
@@ -39,21 +44,50 @@ export function HomeChat({
       ? initialProjectId
       : null,
   );
+  const [localProject, setLocalProject] = useState<LocalProjectWorkspace | null>(null);
+
+  const applyLocalFiles = useCallback(
+    async (changes: LocalProjectFile[]) => {
+      if (!localProject) return;
+      await writeLocalProjectFiles(localProject.handle, changes);
+      setLocalProject((current) => {
+        if (!current) return current;
+        const merged = new Map(current.files.map((file) => [file.path, file]));
+        for (const file of changes) merged.set(file.path, file);
+        return { ...current, files: [...merged.values()] };
+      });
+    },
+    [localProject],
+  );
 
   const { turns, busy, error, send, retry, regenerate, clear, bottom } = useChatThread({
     restored,
     mode,
     projectId,
+    localProject: localProject
+      ? { name: localProject.name, files: localProject.files }
+      : null,
+    onApplyLocalFiles: applyLocalFiles,
   });
 
   const projectControl = (
     <ProjectPicker
       projects={projects}
       value={projectId}
-      onChange={setProjectId}
-      onCreated={(project) =>
-        setProjects((items) => [project, ...items.filter((item) => item.id !== project.id)])
-      }
+      onChange={(id) => {
+        setProjectId(id);
+        if (id) setLocalProject(null);
+      }}
+      onCreated={(project) => {
+        setLocalProject(null);
+        setProjects((items) => [project, ...items.filter((item) => item.id !== project.id)]);
+      }}
+      localName={localProject?.name || ""}
+      onLocalFolder={(workspace) => {
+        setProjectId(null);
+        setLocalProject(workspace);
+      }}
+      onClearLocal={() => setLocalProject(null)}
       disabled={busy}
       compact
     />
