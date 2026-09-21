@@ -169,7 +169,7 @@ export function Composer({
     }
   }
 
-  const beamActive = focused || disabled || voice.listening;
+  const beamActive = disabled || voice.listening || dragging;
 
   const shell = (
     <div
