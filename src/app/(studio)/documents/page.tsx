@@ -1,7 +1,6 @@
 import { DocumentView } from "./document-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { redirect } from "next/navigation";
-import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Docs" };
 
@@ -16,13 +15,12 @@ export default async function DocsPage({
   const recents = await listRecents("docs");
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
       <DocumentView
         recents={recents}
         recentsLabel={RECENT_LABEL.docs}
         key="new"
       />
-      <AllWorkSection limit={18} />
     </div>
   );
 }

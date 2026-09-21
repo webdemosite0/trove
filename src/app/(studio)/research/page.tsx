@@ -1,6 +1,5 @@
 import { ToolPage } from "@/components/tools/tool-page";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
-import { AllWorkSection } from "@/components/work/all-work-section";
 import { redirect } from "next/navigation";
 
 export const metadata = { title: "Research" };
@@ -16,7 +15,7 @@ export default async function ResearchPage({
   const recents = await listRecents("research");
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
       <ToolPage
         tool="research"
         title="Research"
@@ -32,7 +31,6 @@ export default async function ResearchPage({
         recentsLabel={RECENT_LABEL.research}
         key="new"
       />
-      <AllWorkSection limit={18} />
     </div>
   );
 }

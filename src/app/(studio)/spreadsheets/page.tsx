@@ -1,7 +1,6 @@
 import { SpreadsheetView } from "./spreadsheet-view";
 import { listRecents, RECENT_LABEL } from "@/lib/recents";
 import { redirect } from "next/navigation";
-import { AllWorkSection } from "@/components/work/all-work-section";
 
 export const metadata = { title: "Sheets" };
 
@@ -16,13 +15,12 @@ export default async function SheetsPage({
   const recents = await listRecents("sheets");
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
       <SpreadsheetView
         recents={recents}
         recentsLabel={RECENT_LABEL.sheets}
         key="new"
       />
-      <AllWorkSection limit={18} />
     </div>
   );
 }
