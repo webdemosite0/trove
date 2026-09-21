@@ -197,6 +197,8 @@ async function handle(req: NextRequest) {
     );
   }
 
+  const project = projectId ? await loadProject(projectId).catch(() => null) : null;
+
   after(async () => {
     await Promise.all([
       trackEvent({
@@ -220,7 +222,6 @@ async function handle(req: NextRequest) {
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const connectorContext = await buildChatConnectorContext(lastUser);
-  const project = projectId ? await loadProject(projectId).catch(() => null) : null;
   const projectContext = projectSystemContext(project);
 
   // Connector requests must never take the generic "simple chat" path because
@@ -229,7 +230,8 @@ async function handle(req: NextRequest) {
   const simple =
     isSimpleTurn(turns) &&
     attachments.length === 0 &&
-    connectorContext.requested.length === 0;
+    connectorContext.requested.length === 0 &&
+    !projectContext;
   const wantSearch =
     connectorContext.requested.length === 0 && needsWebSearch(lastUser);
   const resolved = modeFor(mode);
