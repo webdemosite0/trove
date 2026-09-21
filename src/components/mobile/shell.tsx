@@ -86,6 +86,7 @@ export function MobileShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  const [liveBalance, setLiveBalance] = React.useState<Balance | null>(balance);
   const closeNavigation = React.useCallback(() => setOpen(false), []);
   const studio = ["/chat", "/documents", "/spreadsheets", "/slides", "/design", "/research", "/code"].some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
@@ -96,6 +97,23 @@ export function MobileShell({
     pathname.startsWith("/project/");
 
   React.useEffect(() => setOpen(false), [pathname]);
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/shell-meta", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return (await res.json()) as { balance?: Balance | null };
+      })
+      .then((data) => {
+        if (data) setLiveBalance(data.balance ?? null);
+      })
+      .catch(() => null);
+    return () => controller.abort();
+  }, []);
 
   const title = ALL.find((dest) => isActive(pathname, dest.href))?.label ?? "Trove";
 
@@ -129,14 +147,14 @@ export function MobileShell({
             ) : null}
 
             <span className="flex-1" />
-            {balance ? (
+            {liveBalance ? (
               <Link
                 href="/plans"
-                aria-label={`${balance.remaining.toLocaleString()} credits remaining. View plan and usage`}
+                aria-label={`${liveBalance.remaining.toLocaleString()} credits remaining. View plan and usage`}
                 className="flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-line/80 bg-raised/90 px-2.5 text-[12px] font-semibold tabular-nums text-ink-2 shadow-sm"
               >
                 <span className="text-accent">✦</span>
-                {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(balance.remaining)}
+                {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(liveBalance.remaining)}
               </Link>
             ) : null}
           </div>
