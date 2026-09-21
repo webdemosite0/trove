@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { IconType } from "react-icons";
-import { SiAndroid, SiApple, SiWindows11 } from "react-icons/si";
+import type { ComponentType } from "react";
+import { SiAndroid, SiApple } from "react-icons/si";
 import {
   FiCheck,
   FiDownload,
@@ -26,7 +26,7 @@ type Platform = {
   name: string;
   eyebrow: string;
   description: string;
-  Icon: IconType;
+  Icon: ComponentType<{ size?: number | string; className?: string }>;
   requirements: string;
   steps: string[];
 };
@@ -37,7 +37,7 @@ const PLATFORMS: Platform[] = [
     name: "Windows",
     eyebrow: "Desktop app",
     description: "Pin Trove to Start or the taskbar and launch it in its own app window.",
-    Icon: SiWindows11,
+    Icon: FiMonitor,
     requirements: "Windows 10/11 · Edge or Chrome",
     steps: [
       "Open Trove in Microsoft Edge or Google Chrome.",
