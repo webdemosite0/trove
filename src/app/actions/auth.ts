@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   createUser,
   currentUser,
+  consumeToken,
   endSession,
   findByEmail,
   issueToken,
