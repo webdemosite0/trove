@@ -256,19 +256,68 @@ export async function balanceFor(
     };
   }
 
-  const granted = await ensureGrant(userId, planId, period);
+  const plan = planById(planId);
+  const now = Date.now();
+  const since = now - RATE_WINDOW_MS;
 
-  const row = await one(
-    `SELECT COALESCE(SUM(credits), 0) AS used, COALESCE(SUM(tokens), 0) AS tokens
-       FROM credit_spends WHERE user_id = ? AND period = ?`,
-    [userId, period],
+  // Keep the monthly grant in one upsert. Never shrink an existing grant when
+  // a plan changes mid-period; preserve the previous behavior without a
+  // separate SELECT + optional UPDATE.
+  await run(
+    `INSERT INTO credit_grants (user_id, period, plan, credits, created_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, period) DO UPDATE SET
+       credits = CASE
+         WHEN excluded.credits > credit_grants.credits THEN excluded.credits
+         ELSE credit_grants.credits
+       END,
+       plan = CASE
+         WHEN excluded.credits >= credit_grants.credits THEN excluded.plan
+         ELSE credit_grants.plan
+       END`,
+    [userId, period, plan.id, plan.monthly, now],
   );
 
+  // Monthly and rolling-window usage are calculated together instead of two
+  // separate aggregate queries.
+  const row = await one(
+    `SELECT
+       COALESCE((SELECT credits FROM credit_grants WHERE user_id = ? AND period = ?), ?) AS granted,
+       COALESCE(SUM(CASE WHEN period = ? THEN credits ELSE 0 END), 0) AS used,
+       COALESCE(SUM(CASE WHEN period = ? THEN tokens ELSE 0 END), 0) AS tokens,
+       COALESCE(SUM(CASE WHEN created_at >= ? THEN credits ELSE 0 END), 0) AS window_used,
+       MIN(CASE WHEN created_at >= ? THEN created_at END) AS window_oldest
+     FROM credit_spends
+     WHERE user_id = ? AND (period = ? OR created_at >= ?)`,
+    [
+      userId,
+      period,
+      plan.monthly,
+      period,
+      period,
+      since,
+      since,
+      userId,
+      period,
+      since,
+    ],
+  );
+
+  const granted = num(row?.granted) || plan.monthly;
   const used = num(row?.used);
-  const window = await rateWindowFor(userId, planId);
+  const windowUsed = num(row?.window_used);
+  const oldest = row?.window_oldest != null ? num(row.window_oldest) : 0;
+  const windowRemaining = Math.max(0, plan.windowLimit - windowUsed);
+  const window: RateWindow = {
+    used: windowUsed,
+    limit: plan.windowLimit,
+    remaining: windowRemaining,
+    resetsAt: oldest > 0 ? new Date(oldest + RATE_WINDOW_MS) : new Date(now),
+    exhausted: windowRemaining <= 0,
+  };
 
   return {
-    plan: planById(planId),
+    plan,
     granted,
     used,
     remaining: Math.max(0, granted - used),
