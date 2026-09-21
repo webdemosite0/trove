@@ -5,7 +5,7 @@ import type { ProjectFile } from "@/lib/builder";
 import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /**
  * Legacy alias for POST /api/publish.
