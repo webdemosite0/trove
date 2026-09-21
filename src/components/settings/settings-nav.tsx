@@ -15,7 +15,6 @@ import {
   FiDownload,
   FiBriefcase,
   TbHelpCircle,
-  FiShare2,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +40,6 @@ const BILLING: Section[] = [
   { href: "/settings/payment-methods", label: "Payment methods", icon: FiCreditCard },
   { href: "/settings/billing", label: "Billing history", icon: FiFileText },
   { href: "/settings/usage", label: "Usage", icon: FiActivity },
-  { href: "/settings/affiliates", label: "Affiliates", icon: FiShare2 },
 ];
 
 const WORKSPACE: Section[] = [
