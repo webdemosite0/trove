@@ -5,6 +5,7 @@ import { useSaved } from "@/lib/use-saved";
 import type { Attachment } from "@/lib/attachments";
 import type { ModeId } from "@/lib/modes";
 import { localTimeZone } from "@/lib/context";
+import type { LocalProjectFile } from "@/lib/local-project";
 
 export interface Turn {
   id: number;
@@ -68,10 +69,14 @@ export function useChatThread({
   restored,
   mode,
   projectId = null,
+  localProject = null,
+  onApplyLocalFiles,
 }: {
   restored?: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
   mode: ModeId;
   projectId?: string | null;
+  localProject?: { name: string; files: LocalProjectFile[] } | null;
+  onApplyLocalFiles?: (files: LocalProjectFile[]) => Promise<void>;
 }) {
   const { save, reset } = useSaved("chat", restored?.id ?? null);
 
@@ -210,6 +215,12 @@ export function useChatThread({
             mode,
             model: "auto",
             projectId,
+            localProject: localProject
+              ? {
+                  name: localProject.name,
+                  files: localProject.files,
+                }
+              : null,
             timeZone: localTimeZone(),
             attachments: files?.map(({ name, mimeType, size, data, kind }) => ({
               name,
@@ -257,30 +268,38 @@ export function useChatThread({
         flush();
 
         let finalReply = fullReply;
-        if (projectId) {
-          const edits = parseProjectEdits(fullReply);
-          if (edits.length) {
-            try {
-              const apply = await fetch(
-                `/api/projects/${encodeURIComponent(projectId)}/apply`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ files: edits }),
-                },
-              );
-              const data = await apply.json().catch(() => null);
-              if (!apply.ok) {
-                throw new Error(data?.error || "Could not apply project changes.");
-              }
-              finalReply = cleanProjectReply(fullReply, edits.length);
-              window.dispatchEvent(new Event("trove:shell-meta-refresh"));
-            } catch (applyError) {
-              finalReply =
-                cleanProjectReply(fullReply, 0) +
-                "\n\nProject files were not saved: " +
-                (applyError instanceof Error ? applyError.message : "unknown error");
+        const edits = parseProjectEdits(fullReply);
+        if (localProject && onApplyLocalFiles && edits.length) {
+          try {
+            await onApplyLocalFiles(edits);
+            finalReply = cleanProjectReply(fullReply, edits.length);
+          } catch (applyError) {
+            finalReply =
+              cleanProjectReply(fullReply, 0) +
+              "\n\nLocal project files were not saved: " +
+              (applyError instanceof Error ? applyError.message : "unknown error");
+          }
+        } else if (projectId && edits.length) {
+          try {
+            const apply = await fetch(
+              `/api/projects/${encodeURIComponent(projectId)}/apply`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ files: edits }),
+              },
+            );
+            const data = await apply.json().catch(() => null);
+            if (!apply.ok) {
+              throw new Error(data?.error || "Could not apply project changes.");
             }
+            finalReply = cleanProjectReply(fullReply, edits.length);
+            window.dispatchEvent(new Event("trove:shell-meta-refresh"));
+          } catch (applyError) {
+            finalReply =
+              cleanProjectReply(fullReply, 0) +
+              "\n\nProject files were not saved: " +
+              (applyError instanceof Error ? applyError.message : "unknown error");
           }
         }
 
@@ -302,7 +321,7 @@ export function useChatThread({
         setBusy(false);
       }
     },
-    [save, mode, projectId, runImage],
+    [save, mode, projectId, localProject, onApplyLocalFiles, runImage],
   );
 
   const send = useCallback(
