@@ -99,20 +99,31 @@ export function MobileShell({
   React.useEffect(() => setOpen(false), [pathname]);
 
   React.useEffect(() => {
-    const controller = new AbortController();
-    void fetch("/api/shell-meta", {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok) return null;
-        return (await res.json()) as { balance?: Balance | null };
+    let controller: AbortController | null = null;
+
+    const loadBalance = () => {
+      controller?.abort();
+      controller = new AbortController();
+      void fetch("/api/shell-meta?only=balance", {
+        cache: "no-store",
+        signal: controller.signal,
       })
-      .then((data) => {
-        if (data) setLiveBalance(data.balance ?? null);
-      })
-      .catch(() => null);
-    return () => controller.abort();
+        .then(async (res) => {
+          if (!res.ok) return null;
+          return (await res.json()) as { balance?: Balance | null };
+        })
+        .then((data) => {
+          if (data) setLiveBalance(data.balance ?? null);
+        })
+        .catch(() => null);
+    };
+
+    loadBalance();
+    window.addEventListener("trove:shell-meta-refresh", loadBalance);
+    return () => {
+      controller?.abort();
+      window.removeEventListener("trove:shell-meta-refresh", loadBalance);
+    };
   }, []);
 
   const title = ALL.find((dest) => isActive(pathname, dest.href))?.label ?? "Trove";
