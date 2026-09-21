@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { saveDesignScreen } from "@/lib/design-saves";
 import {
   FIDELITIES,
@@ -112,6 +113,15 @@ export async function POST(req: NextRequest) {
       );
     }
     throw e;
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "design",
+      limit: 24,
+    });
+    if (limited) return limited;
   }
 
   try {
