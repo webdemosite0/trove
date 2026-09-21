@@ -76,12 +76,12 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
       </div>
 
       <div className="relative mx-auto max-w-[960px] text-center">
-        <div className="lp-hero-in mb-3.5 inline-flex items-center rounded-full border border-black/[0.08] bg-white/80 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-700 shadow-sm backdrop-blur-md sm:mb-5 sm:px-4 sm:text-[11px]">
+        <div className="lp-hero-in mb-3.5 inline-flex items-center rounded-full border border-line bg-raised/80 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-2 shadow-sm backdrop-blur-md sm:mb-5 sm:px-4 sm:text-[11px]">
           AI THAT SHIPS REAL FILES
         </div>
 
         <h1
-          className="lp-hero-in text-[clamp(1.95rem,1.4rem+2.8vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.038em] text-zinc-950"
+          className="lp-hero-in text-[clamp(1.95rem,1.4rem+2.8vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.038em] text-ink"
           style={{ animationDelay: "60ms" }}
         >
           Describe it once.
@@ -92,15 +92,15 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         </h1>
 
         <p
-          className="lp-hero-in mx-auto mt-3 max-w-[50ch] text-[13.5px] leading-6 text-zinc-600 sm:mt-4 sm:text-[16px] sm:leading-relaxed lg:text-[17px]"
+          className="lp-hero-in mx-auto mt-3 max-w-[50ch] text-[13.5px] leading-6 text-ink-3 sm:mt-4 sm:text-[16px] sm:leading-relaxed lg:text-[17px]"
           style={{ animationDelay: "120ms" }}
         >
           Real deliverables you can refine, export, and keep — websites, documents, spreadsheets, presentations, and code in the same project.
         </p>
 
         <div className="lp-hero-in mx-auto mt-5 max-w-[740px] sm:mt-7" style={{ animationDelay: "180ms" }}>
-          <div className="rounded-[22px] border border-white/80 bg-white/82 p-1.5 shadow-[0_24px_80px_-24px_rgba(99,102,241,0.35),0_0_0_1px_rgba(99,102,241,0.06)] backdrop-blur-xl sm:rounded-[28px] sm:p-2">
-            <div className="relative flex min-h-[72px] flex-col rounded-[17px] bg-gradient-to-b from-zinc-50/90 to-white px-3.5 py-2.5 ring-1 ring-zinc-200/80 sm:min-h-[84px] sm:rounded-[22px] sm:px-4 sm:py-3">
+          <div className="rounded-[22px] border border-line bg-raised/82 p-1.5 shadow-[0_24px_80px_-24px_rgba(99,102,241,0.35),0_0_0_1px_rgba(99,102,241,0.06)] backdrop-blur-xl sm:rounded-[28px] sm:p-2">
+            <div className="relative flex min-h-[72px] flex-col rounded-[17px] bg-gradient-to-b from-sunk/90 to-raised px-3.5 py-2.5 ring-1 ring-line sm:min-h-[84px] sm:rounded-[22px] sm:px-4 sm:py-3">
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
@@ -111,18 +111,18 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                   }
                 }}
                 rows={2}
-                className="w-full resize-none bg-transparent text-[14px] leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400 sm:text-[15.5px]"
+                className="w-full resize-none bg-transparent text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-4 sm:text-[15.5px]"
                 placeholder=""
                 aria-label="Describe what to build"
               />
               {!value && (
-                <span className="pointer-events-none absolute left-3.5 top-3 max-w-[calc(100%-4.6rem)] text-left text-[13.5px] leading-5 text-zinc-400 sm:left-4 sm:top-3.5 sm:text-[15.5px]">
+                <span className="pointer-events-none absolute left-3.5 top-3 max-w-[calc(100%-4.6rem)] text-left text-[13.5px] leading-5 text-ink-4 sm:left-4 sm:top-3.5 sm:text-[15.5px]">
                   {typed}
                   <span className="ml-0.5 inline-block h-[1.1em] w-[2px] animate-pulse bg-violet-500 align-middle" />
                 </span>
               )}
               <div className="mt-auto flex items-center justify-between gap-2 pt-2.5 sm:pt-3">
-                <p className="hidden text-[11.5px] text-zinc-400 sm:block">Enter to build · Shift+Enter for new line</p>
+                <p className="hidden text-[11.5px] text-ink-4 sm:block">Enter to build · Shift+Enter for new line</p>
                 <span className="sm:hidden" />
                 <button
                   type="button"
@@ -136,11 +136,11 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[10px] text-zinc-500 sm:mt-4 sm:gap-x-3 sm:text-[12px]">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[10px] text-ink-3 sm:mt-4 sm:gap-x-3 sm:text-[12px]">
             <span>HTML · React · Vite</span>
-            <span className="text-zinc-300">·</span>
+            <span className="text-ink-4">·</span>
             <span>Publish live</span>
-            <span className="text-zinc-300">·</span>
+            <span className="text-ink-4">·</span>
             <span>Download real files</span>
           </div>
 
@@ -152,10 +152,10 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                   key={chip.label}
                   type="button"
                   onClick={() => go(chip.prompt)}
-                  className="lp-chip-in inline-flex items-center gap-1.5 rounded-full border border-zinc-200/90 bg-white/90 px-2.5 py-1.5 text-[10.5px] font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-zinc-950 hover:shadow-md sm:px-3.5 sm:py-2 sm:text-[13px]"
+                  className="lp-chip-in inline-flex items-center gap-1.5 rounded-full border border-line bg-raised/90 px-2.5 py-1.5 text-[10.5px] font-medium text-ink-2 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:text-ink hover:shadow-md sm:px-3.5 sm:py-2 sm:text-[13px]"
                   style={{ animationDelay: `${220 + i * 40}ms` }}
                 >
-                  <Icon size={13} className="text-black" aria-hidden />
+                  <Icon size={13} className="text-ink" aria-hidden />
                   {chip.label}
                 </button>
               );
@@ -163,7 +163,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           </div>
         </div>
 
-        <p className="lp-hero-in mt-4 text-[10.5px] text-zinc-500 sm:mt-5 sm:text-[13px]" style={{ animationDelay: "280ms" }}>
+        <p className="lp-hero-in mt-4 text-[10.5px] text-ink-3 sm:mt-5 sm:text-[13px]" style={{ animationDelay: "280ms" }}>
           {freeCredits > 0 ? (
             <>
               <span className="font-medium text-emerald-600">{freeCredits} free credits</span>{" "}on signup · No card required
