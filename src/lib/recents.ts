@@ -1,6 +1,7 @@
 import "server-only";
 
 import { all, batch, uid, num, str } from "@/lib/db";
+import { cache } from "react";
 import { currentUser } from "@/lib/auth";
 
 /** Every page that produces something worth coming back to. */
@@ -162,7 +163,7 @@ export async function listRecents(
  * different question from "your last six spreadsheets" — hence a separate
  * query rather than calling listRecents ten times and merging.
  */
-export async function listAllRecents(limit = 12): Promise<Recent[]> {
+async function readAllRecents(limit = 12): Promise<Recent[]> {
   try {
     const user = await currentUser();
     if (!user) return [];
@@ -190,5 +191,7 @@ export async function listAllRecents(limit = 12): Promise<Recent[]> {
     return [];
   }
 }
+
+export const listAllRecents = cache(readAllRecents);
 
 export { relativeTime } from "@/lib/time";
