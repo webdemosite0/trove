@@ -5,6 +5,7 @@ import { one, str } from "@/lib/db";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -97,6 +98,15 @@ ${situation({ timeZone, canSearch: false })}`;
       { error: `Could not reach the database to check your credits: ${why}` },
       { status: 503 },
     );
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "agent",
+      limit: 50,
+    });
+    if (limited) return limited;
   }
 
   try {
