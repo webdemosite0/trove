@@ -14,7 +14,6 @@ import {
 import { Ico } from "@/components/ui/ico";
 import { useVoice } from "@/components/chat/use-voice";
 import { ModePicker } from "@/components/chat/mode-picker";
-import { ModelPicker } from "@/components/chat/model-picker";
 import { AttachMenu } from "@/components/chat/attach-menu";
 import { ConnectorChip } from "@/components/chat/connector-chip";
 import {
@@ -25,7 +24,6 @@ import {
   type ConnectedConnectorOption,
 } from "@/components/chat/connector-mention-menu";
 import type { ModeId } from "@/lib/modes";
-import type { ChatModelId, ChatModelOption } from "@/lib/chat-models";
 import {
   MAX_FILES,
   MAX_TOTAL_BYTES,
@@ -40,9 +38,6 @@ export function Composer({
   initialValue = "",
   mode,
   onModeChange,
-  model,
-  modelOptions,
-  onModelChange,
   placeholder = "Ask anything, or describe what to build…",
   autoFocus = false,
   disabled = false,
@@ -54,9 +49,6 @@ export function Composer({
   initialValue?: string;
   mode?: ModeId;
   onModeChange?: (id: ModeId) => void;
-  model?: ChatModelId;
-  modelOptions?: ChatModelOption[];
-  onModelChange?: (id: ChatModelId) => void;
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
@@ -356,16 +348,6 @@ export function Composer({
               }}
             />
           </>
-        ) : null}
-
-        {model && modelOptions?.length && onModelChange ? (
-          <ModelPicker
-            value={model}
-            options={modelOptions}
-            onChange={onModelChange}
-            disabled={disabled}
-            compact={compact}
-          />
         ) : null}
 
         {mode && onModeChange ? (
