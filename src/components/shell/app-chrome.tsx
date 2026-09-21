@@ -31,32 +31,43 @@ export function AppChrome({
   });
 
   useEffect(() => {
-    if (isSettings) return;
-    const controller = new AbortController();
+    let controller: AbortController | null = null;
 
-    void fetch("/api/shell-meta", {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok) return null;
-        return (await res.json()) as { due?: number; recents?: Recent[] };
-      })
-      .then((data) => {
-        if (!data) return;
-        setShellMeta({
-          due: Number(data.due) || 0,
-          recents: Array.isArray(data.recents) ? data.recents : [],
-        });
-      })
-      .catch(() => null);
+    const load = () => {
+      controller?.abort();
+      controller = new AbortController();
 
-    return () => controller.abort();
-  }, [isSettings]);
+      void fetch("/api/shell-meta", {
+        cache: "no-store",
+        signal: controller.signal,
+      })
+        .then(async (res) => {
+          if (!res.ok) return null;
+          return (await res.json()) as { due?: number; recents?: Recent[] };
+        })
+        .then((data) => {
+          if (!data) return;
+          setShellMeta({
+            due: Number(data.due) || 0,
+            recents: Array.isArray(data.recents) ? data.recents : [],
+          });
+        })
+        .catch(() => null);
+    };
+
+    load();
+    window.addEventListener("trove:shell-meta-refresh", load);
+    return () => {
+      controller?.abort();
+      window.removeEventListener("trove:shell-meta-refresh", load);
+    };
+  }, []);
 
   if (isSettings) {
     return (
-      <div className="relative min-h-screen bg-canvas">
+      <>
+        <CommandPalette recents={shellMeta.recents} />
+        <div className="relative min-h-screen bg-canvas">
         <AuthReferralAnnouncement />
         <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-[1100px] items-center gap-3 px-4 sm:px-6">
@@ -70,7 +81,8 @@ export function AppChrome({
           </div>
         </header>
         <div className="app-page-in min-w-0">{children}</div>
-      </div>
+        </div>
+      </>
     );
   }
 
