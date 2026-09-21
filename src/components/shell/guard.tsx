@@ -2,20 +2,16 @@ import { redirect } from "next/navigation";
 import { Backdrop } from "@/components/shell/backdrop";
 import { SetupNeeded } from "@/components/shell/setup-needed";
 import { currentUser, type User } from "@/lib/auth";
-import { myBalance, type Balance } from "@/lib/credits";
 import { storageIsEphemeral, tursoVars } from "@/lib/db";
 
 export type ShellGate =
-  | { ok: true; user: User; balance: Balance | null }
+  | { ok: true; user: User }
   | { ok: false; screen: React.ReactNode };
 
 export async function resolveShell(): Promise<ShellGate> {
   let user: User | null = null;
-  let balance: Balance | null = null;
-
   try {
     user = await currentUser();
-    balance = await myBalance();
   } catch (e) {
     const digest = (e as { digest?: unknown })?.digest;
     if (
@@ -71,5 +67,5 @@ export async function resolveShell(): Promise<ShellGate> {
   // Mandatory product onboarding before any workspace surface
   if (!user.onboardingDone) redirect("/onboarding");
 
-  return { ok: true, user, balance };
+  return { ok: true, user };
 }
