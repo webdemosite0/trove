@@ -7,6 +7,8 @@ import { MobileShell } from "@/components/mobile/shell";
 import { isMobile } from "@/lib/device";
 import { AppChrome } from "@/components/shell/app-chrome";
 import { AuthReferralAnnouncement } from "@/components/shell/auth-referral-announcement";
+import { balanceFor } from "@/lib/credits";
+import type { Balance } from "@/lib/types";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -24,11 +26,17 @@ export default async function ShellLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Sequential await keeps ShellGate narrowing reliable under tsc.
   const gate = await resolveShell();
-  if (!gate.ok) return gate.screen;
+  if (gate.ok === false) return gate.screen;
+
   const user = gate.user;
-  const balance = gate.balance ?? null;
+
+  let balance: Balance | null = null;
+  try {
+    balance = await balanceFor(user.id, user.plan, { email: user.email });
+  } catch {
+    balance = null;
+  }
 
   if (await isMobile()) {
     return (
