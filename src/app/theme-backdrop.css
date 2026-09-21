@@ -66,7 +66,19 @@
 
 /* Match page fill to photo in light */
 :root[data-theme="light"] {
-  --color-canvas: #f4f2ff;
+  --color-canvas: #f7f3ff;
+  --color-rail: #fcfaff;
+  --color-sunk: #f0ecff;
+  --color-raised: #fffefe;
+  --color-hover: #ece6ff;
+  --color-line: #e2daf5;
+  --color-line-strong: #cfc2ee;
+  --color-accent: #6846e8;
+  --color-accent-soft: #eee8ff;
+  --color-violet: #a447e6;
+  --btn-a: #7048e8;
+  --btn-b: #3f67e8;
+  --btn-glow: rgb(112 72 232 / 0.30);
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
@@ -81,27 +93,30 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-canvas: #09090f;
-  --color-rail: #0c0c14;
-  --color-sunk: #111118;
-  --color-raised: #16161f;
-  --color-hover: #1e1e2a;
+  --color-canvas: #070613;
+  --color-rail: #0d0a1c;
+  --color-sunk: #131026;
+  --color-raised: #1a1631;
+  --color-hover: #241e42;
   --color-ink: #f5f5f7;
   --color-ink-2: #e8e8ed;
   --color-ink-3: #a8a8b3;
   --color-ink-4: #7e7e8a;
-  --color-line: #2a2a36;
-  --color-line-strong: #3a3a4a;
-  --color-accent: #6bb3ff;
-  --color-accent-soft: #0f1c33;
-  --color-violet: #8ec5ff;
+  --color-line: #302850;
+  --color-line-strong: #493b75;
+  --color-accent: #8b7cff;
+  --color-accent-soft: #1d173b;
+  --color-violet: #d275ff;
+  --btn-a: #7c4dff;
+  --btn-b: #3478f6;
+  --btn-glow: rgb(124 77 255 / 0.38);
   --scrollbar: #2a2a36;
   --scrollbar-hover: #3a3a4a;
   --chip-hover-line: #45455a;
   --hairline: rgb(180 200 255 / 0.16);
   --bezel: rgb(180 200 255 / 0.06);
-  --focus-ring: rgb(107 179 255 / 0.28);
-  --focus-line: rgb(107 179 255 / 0.85);
+  --focus-ring: rgb(139 124 255 / 0.30);
+  --focus-line: rgb(139 124 255 / 0.90);
   --elev: 0 12px 40px -12px rgb(0 0 0 / 0.65);
   --elev-lift: 0 20px 56px -16px rgb(0 0 0 / 0.75);
   --sh-1: 0 1px 2px rgb(0 0 0 / 0.35);
@@ -156,4 +171,57 @@
 :root[data-theme="dark"] .chip:hover {
   border-color: var(--chip-hover-line);
   background: var(--color-hover);
+}
+
+
+/* -------------------------------------------------------------- */
+/* Colorful theme language — shared across the whole product.     */
+/* These rules intentionally live in the theme layer, not pages.  */
+/* -------------------------------------------------------------- */
+:root[data-theme="light"] .panel {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--color-raised) 92%, #f7d9ff 8%),
+      color-mix(in oklab, var(--color-raised) 94%, #dce8ff 6%)
+    );
+  border-color: color-mix(in oklab, var(--color-line) 80%, var(--color-violet) 20%);
+}
+
+:root[data-theme="dark"] .panel {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--color-raised) 88%, #7c3aed 12%),
+      color-mix(in oklab, var(--color-raised) 92%, #2563eb 8%)
+    );
+  border-color: color-mix(in oklab, var(--color-line) 74%, var(--color-violet) 26%);
+}
+
+:root[data-theme="light"] .composer {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, white 94%, #f4d9ff 6%),
+      color-mix(in oklab, white 95%, #dceaff 5%)
+    );
+}
+
+:root[data-theme="dark"] .composer {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--color-raised) 88%, #6d28d9 12%),
+      color-mix(in oklab, var(--color-raised) 91%, #0ea5e9 9%)
+    );
+}
+
+:root[data-theme="light"] .rail-item-active,
+:root[data-theme="dark"] .rail-item-active {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-accent-soft) 88%, var(--color-violet) 12%),
+      color-mix(in oklab, var(--color-hover) 90%, #38bdf8 10%)
+    );
 }
