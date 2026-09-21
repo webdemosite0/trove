@@ -163,9 +163,9 @@ export async function listRecents(
  * different question from "your last six spreadsheets" — hence a separate
  * query rather than calling listRecents ten times and merging.
  */
-async function readAllRecents(limit = 12): Promise<Recent[]> {
+async function readAllRecents(limit = 12, userId?: string): Promise<Recent[]> {
   try {
-    const user = await currentUser();
+    const user = userId ? { id: userId } : await currentUser();
     if (!user) return [];
 
     const rows = await all(
