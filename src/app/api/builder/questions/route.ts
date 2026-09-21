@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -130,6 +131,15 @@ export async function POST(req: NextRequest) {
       { error: `Could not reach the database to check your credits: ${why}` },
       { status: 503 },
     );
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "builder-questions",
+      limit: 40,
+    });
+    if (limited) return limited;
   }
 
   try {
