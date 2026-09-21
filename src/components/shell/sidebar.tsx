@@ -13,8 +13,6 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
-  TbBell,
-  TbUsers,
   TbRobot,
   TbWorld,
   TbHome,
@@ -22,9 +20,7 @@ import {
   TbTable,
   TbPresentation,
   TbPalette,
-  TbSearch,
   TbMessageCircle,
-  TbPlugConnected,
   TbHelpCircle,
 } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
