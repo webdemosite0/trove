@@ -21,12 +21,12 @@ export default async function PaymentMethodsPage() {
         </p>
       </div>
 
-      <div className="rounded-[22px] border border-black/[0.06] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,.05)] sm:p-6">
+      <div className="rounded-[22px] border border-line bg-raised p-5 shadow-[var(--sh-1)] sm:p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="grid h-12 w-[72px] place-items-center rounded-2xl border border-black/[0.06] bg-[#f7f8fa]">
-              <div className="h-6 w-10 rounded-md border border-black/[0.16] bg-white shadow-sm">
-                <div className="mt-1 h-1.5 w-full bg-black/[0.08]" />
+            <div className="grid h-12 w-[72px] place-items-center rounded-2xl border border-line bg-sunk">
+              <div className="h-6 w-10 rounded-md border border-line-strong bg-raised shadow-sm">
+                <div className="mt-1 h-1.5 w-full bg-line-strong/60" />
               </div>
             </div>
             <div>
@@ -52,11 +52,11 @@ export default async function PaymentMethodsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-[20px] border border-black/[0.06] bg-white p-5">
+        <div className="rounded-[20px] border border-line bg-raised p-5 shadow-[var(--sh-1)]">
           <p className="text-[12px] font-semibold text-ink">Secure payment handling</p>
           <p className="mt-2 text-[12.5px] leading-5 text-ink-4">Trove never stores full card numbers or CVV details. Payment information is handled by Lemon Squeezy.</p>
         </div>
-        <div className="rounded-[20px] border border-black/[0.06] bg-white p-5">
+        <div className="rounded-[20px] border border-line bg-raised p-5 shadow-[var(--sh-1)]">
           <p className="text-[12px] font-semibold text-ink">Need billing help?</p>
           <p className="mt-2 text-[12.5px] leading-5 text-ink-4">For failed payments, card changes, tax details, or receipts, open the secure billing portal.</p>
         </div>
