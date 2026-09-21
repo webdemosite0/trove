@@ -46,26 +46,26 @@ export function BuildConsole({
     .filter((line): line is LogLine & { text: string } => Boolean(line.text));
 
   return (
-    <div className={cn("flex min-h-0 flex-col overflow-hidden bg-white text-black", className)}>
-      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-black/10 px-3">
-        <FiZap size={13} className="text-black" />
-        <span className="text-[12px] font-semibold text-black">Build activity</span>
+    <div className={cn("flex min-h-0 flex-col overflow-hidden bg-raised text-ink", className)}>
+      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-line px-3">
+        <FiZap size={13} className="text-ink" />
+        <span className="text-[12px] font-semibold text-ink">Build activity</span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto px-3 py-3 text-[12.5px] leading-[1.65] text-black">
+      <div className="min-h-0 flex-1 overflow-auto px-3 py-3 text-[12.5px] leading-[1.65] text-ink">
         {cleanLines.map((line) => (
-          <div key={`build-${line.id}`} className="flex items-start gap-2.5 py-1 text-black">
+          <div key={`build-${line.id}`} className="flex items-start gap-2.5 py-1 text-ink">
             {line.level === "ok" ? (
-              <FiCheck size={13} className="mt-1 shrink-0 text-black" />
+              <FiCheck size={13} className="mt-1 shrink-0 text-ink" />
             ) : (
-              <FiFileText size={13} className="mt-1 shrink-0 text-black" />
+              <FiFileText size={13} className="mt-1 shrink-0 text-ink" />
             )}
-            <span className="min-w-0 flex-1 break-words text-black">{line.text}</span>
+            <span className="min-w-0 flex-1 break-words text-ink">{line.text}</span>
           </div>
         ))}
 
         {files.length > 0 ? (
-          <div className="mt-2 border-t border-black/10 pt-2 text-black">
+          <div className="mt-2 border-t border-line pt-2 text-ink">
             <span className="font-medium">{files.length}</span> project file{files.length === 1 ? "" : "s"} ready
           </div>
         ) : null}
