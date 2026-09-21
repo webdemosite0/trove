@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { one, run, uid, num, str } from "@/lib/db";
 
 const COOKIE = "nx_session";
@@ -240,7 +241,7 @@ export async function endSession() {
   }
 }
 
-export async function currentUser(): Promise<User | null> {
+async function readCurrentUser(): Promise<User | null> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
@@ -269,6 +270,13 @@ export async function currentUser(): Promise<User | null> {
 
   return rowToUser(row);
 }
+
+/**
+ * Server Components often ask for the current user from the layout, page,
+ * recents, reminders and billing during the same render. React request cache
+ * turns those duplicate Turso lookups into one authentication query.
+ */
+export const currentUser = cache(readCurrentUser);
 
 export async function requireUser() {
   const user = await currentUser();
