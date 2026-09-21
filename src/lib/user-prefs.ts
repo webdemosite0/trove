@@ -4,6 +4,28 @@ import { currentUser } from "@/lib/auth";
 import { one, run, str } from "@/lib/db";
 import { listConnections } from "@/lib/connections";
 
+export const BUSINESS_INSTRUCTIONS_START = "<!-- TROVE_BUSINESS_PROFILE_START -->";
+export const BUSINESS_INSTRUCTIONS_END = "<!-- TROVE_BUSINESS_PROFILE_END -->";
+
+export function splitBusinessInstructions(text: string) {
+  const value = String(text || "");
+  const start = value.indexOf(BUSINESS_INSTRUCTIONS_START);
+  const end = value.indexOf(BUSINESS_INSTRUCTIONS_END);
+
+  if (start === -1 || end === -1 || end < start) {
+    return { manual: value.trim(), business: "" };
+  }
+
+  return {
+    manual: (value.slice(0, start) + value.slice(end + BUSINESS_INSTRUCTIONS_END.length)).trim(),
+    business: value.slice(start, end + BUSINESS_INSTRUCTIONS_END.length).trim(),
+  };
+}
+
+export function mergeInstructionLayers(manual: string, business: string) {
+  return [manual.trim(), business.trim()].filter(Boolean).join("\n\n").slice(0, 4000);
+}
+
 export async function getInstructions(userId?: string): Promise<string> {
   const user = userId ? { id: userId } : await currentUser();
   if (!user) return "";
@@ -13,6 +35,18 @@ export async function getInstructions(userId?: string): Promise<string> {
   } catch {
     return "";
   }
+}
+
+export async function getManualInstructions(userId?: string): Promise<string> {
+  return splitBusinessInstructions(await getInstructions(userId)).manual;
+}
+
+export async function setManualInstructions(
+  text: string,
+): Promise<{ ok: true } | { error: string }> {
+  const current = await getInstructions();
+  const { business } = splitBusinessInstructions(current);
+  return setInstructions(mergeInstructionLayers(text.slice(0, 4000), business));
 }
 
 export async function setInstructions(text: string): Promise<{ ok: true } | { error: string }> {
