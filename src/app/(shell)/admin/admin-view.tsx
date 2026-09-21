@@ -299,7 +299,7 @@ export function AdminView({ email }: { email: string }) {
                 onClick={() => setTab(t.id)}
                 className={cn(
                   "inline-flex shrink-0 items-center justify-center gap-2 rounded-[12px] px-4 py-2.5 text-[13.5px] font-medium transition sm:flex-1",
-                  on ? "bg-ink text-white shadow-sm" : "text-ink-3 hover:bg-hover hover:text-ink",
+                  on ? "btn-grad text-white shadow-sm" : "text-ink-3 hover:bg-hover hover:text-ink",
                 )}
               >
                 <Icon size={16} />
@@ -497,7 +497,7 @@ export function AdminView({ email }: { email: string }) {
                   ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <button type="button" disabled={busy || !title.trim() || !body.trim()} onClick={() => void publish()} className="inline-flex h-11 items-center gap-1.5 rounded-[12px] bg-ink px-5 text-[13.5px] font-semibold text-white disabled:opacity-50">
+                  <button type="button" disabled={busy || !title.trim() || !body.trim()} onClick={() => void publish()} className="inline-flex h-11 items-center gap-1.5 btn-grad rounded-[12px] px-5 text-[13.5px] font-semibold text-white disabled:opacity-50">
                     {editId ? <FiCheck size={15} /> : <FiPlus size={15} />}
                     {editId ? "Save" : "Publish"}
                   </button>
