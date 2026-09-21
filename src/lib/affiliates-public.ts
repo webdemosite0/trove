@@ -7,3 +7,4 @@ export const REF_COOKIE = "trove_ref";
 /** Cash bonus when you hit this many *paid* referred accounts. */
 export const PAID_REFERRAL_GOAL = 100;
 export const PAID_REFERRAL_BONUS_USD = 200;
+export const PAID_REFERRAL_QUALIFY_DAYS = 30;
