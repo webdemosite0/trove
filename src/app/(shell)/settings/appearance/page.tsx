@@ -1,6 +1,6 @@
 import { ThemePicker } from "@/components/settings/theme-picker";
 
-export const metadata = { title: "Appearance" };
+export const metadata = { title: "Dark Mode & Light Mode" };
 
 export default function AppearanceSettingsPage() {
   // No session needed: the theme lives in the browser, so this screen works
