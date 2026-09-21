@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { CommandPalette } from "@/components/shell/command-palette";
 import { NavProvider } from "@/components/shell/nav-state";
 import { Backdrop } from "@/components/shell/backdrop";
 import { resolveShell } from "@/components/shell/guard";
 import { ToastProvider } from "@/components/ui/toast";
 import { MobileShell } from "@/components/mobile/shell";
 import { isMobile } from "@/lib/device";
-import { countDueReminders } from "@/app/actions/reminders";
-import { listAllRecents } from "@/lib/recents";
 import { AppChrome } from "@/components/shell/app-chrome";
 import { AuthReferralAnnouncement } from "@/components/shell/auth-referral-announcement";
 
@@ -27,18 +24,9 @@ export default async function ShellLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const gatePromise = resolveShell();
-  const secondaryPromise = Promise.all([
-    countDueReminders(),
-    listAllRecents(12),
-    isMobile(),
-  ]);
-
-  const gate = await gatePromise;
+  const [gate, mobile] = await Promise.all([resolveShell(), isMobile()]);
   if (!gate.ok) return gate.screen;
   const { user, balance } = gate;
-  const [due, allRecents, mobile] = await secondaryPromise;
-  const recents = allRecents.slice(0, 6);
 
   if (mobile) {
     return (
@@ -59,11 +47,9 @@ export default async function ShellLayout({
     <NavProvider>
       <ToastProvider>
         <Backdrop />
-        <CommandPalette recents={recents} />
         <AppChrome
           user={user}
           balance={balance}
-          due={due}
           isAdmin={isAdminEmail(user?.email)}
         >
           {children}
