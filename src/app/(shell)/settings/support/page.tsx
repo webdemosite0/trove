@@ -54,6 +54,18 @@ export default function SupportPage() {
           >
             System status
           </a>
+          <Link
+            href="/security"
+            className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
+          >
+            Security
+          </Link>
+          <a
+            href={`mailto:${site.email}?subject=Trove%20abuse%20report`}
+            className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-hover"
+          >
+            Report abuse
+          </a>
         </div>
       </div>
 
