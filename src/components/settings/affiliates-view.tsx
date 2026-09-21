@@ -6,6 +6,7 @@ import {
   REFERRER_SIGNUP_CREDITS,
   PAID_REFERRAL_GOAL,
   PAID_REFERRAL_BONUS_USD,
+  PAID_REFERRAL_QUALIFY_DAYS,
 } from "@/lib/affiliates-public";
 import { Panel } from "@/components/settings/panel";
 import { cn } from "@/lib/utils";
@@ -110,15 +111,15 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[12px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                    Cash reward
+                    Cash reward eligibility
                   </p>
                   <p className="mt-1 text-[15px] font-semibold text-ink">
                     {stats.cashUnlocked
-                      ? `You unlocked $${PAID_REFERRAL_BONUS_USD}!`
-                      : `${stats.paidSignups} / ${PAID_REFERRAL_GOAL} paid referrals → $${PAID_REFERRAL_BONUS_USD}`}
+                      ? `Payout review unlocked: ${PAID_REFERRAL_BONUS_USD}`
+                      : `${stats.paidSignups} / ${PAID_REFERRAL_GOAL} qualified paid referrals → ${PAID_REFERRAL_BONUS_USD}`}
                   </p>
                   <p className="mt-1 text-[12.5px] text-ink-3">
-                    When 100 people you invite upgrade to a paid plan, you earn $200 in your account.
+                    A paid referral qualifies after {PAID_REFERRAL_QUALIFY_DAYS} active days. At 100 qualified referrals, your account becomes eligible for a $200 payout review.
                   </p>
                 </div>
                 <div className="text-right">
@@ -207,7 +208,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
             {
               n: "3",
               title: "You both get rewards",
-              body: `+${REFERRER_SIGNUP_CREDITS} credits each signup. 100 paid upgrades unlock $${PAID_REFERRAL_BONUS_USD}.`,
+              body: `+${REFERRER_SIGNUP_CREDITS} credits each signup. 100 paid referrals that remain active for ${PAID_REFERRAL_QUALIFY_DAYS} days unlock a ${PAID_REFERRAL_BONUS_USD} payout review.`,
               ring: "from-amber-400 to-orange-500",
             },
           ].map((step) => (
