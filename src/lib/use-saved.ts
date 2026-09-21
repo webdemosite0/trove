@@ -57,6 +57,7 @@ export function useSaved(kind: string, initialId?: string | null) {
         const data = await res.json();
         if (data?.id) {
           idRef.current = data.id;
+          window.dispatchEvent(new Event("trove:shell-meta-refresh"));
           const workspaceRoot = WORKSPACE_ROOTS[kind];
 
           // Creation happens on the clean product page. Once the first result
