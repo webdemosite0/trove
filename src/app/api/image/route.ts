@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -44,6 +45,15 @@ export async function POST(req: NextRequest) {
       { error: `Could not check credits: ${message}` },
       { status: 503 },
     );
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "image",
+      limit: 12,
+    });
+    if (limited) return limited;
   }
 
   const errors: string[] = [];
