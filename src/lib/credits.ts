@@ -387,6 +387,7 @@ export class RateWindowExceeded extends Error {
 export async function requireCredits(): Promise<{
   userId: string;
   balance: Balance;
+  instructions: string;
 } | null> {
   const user = await currentUser();
   if (!user) return null;
@@ -394,13 +395,13 @@ export async function requireCredits(): Promise<{
   const balance = await balanceFor(user.id, user.plan, { email: user.email });
 
   if (balance.unlimited) {
-    return { userId: user.id, balance };
+    return { userId: user.id, balance, instructions: user.instructions };
   }
 
   if (balance.remaining <= 0) throw new OutOfCredits(balance);
   if (balance.window.exhausted) throw new RateWindowExceeded(balance);
 
-  return { userId: user.id, balance };
+  return { userId: user.id, balance, instructions: user.instructions };
 }
 
 export interface UsageRow {
