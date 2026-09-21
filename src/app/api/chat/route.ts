@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { streamText, type Source, type Turn } from "@/lib/ai";
-import { instructionsBlock, connectedToolsBlock } from "@/lib/user-prefs";
+import { instructionsBlock } from "@/lib/user-prefs";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import {
@@ -11,13 +11,7 @@ import {
 } from "@/lib/credits";
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import { isChatModelId, type ChatModelId } from "@/lib/chat-models";
-import { listConnections, secretFor } from "@/lib/connections";
-import {
-  isSlackToken,
-  recentSlackMessages,
-  listSlackChannels,
-  formatSlackMessagesForModel,
-} from "@/lib/slack";
+import { buildChatConnectorContext } from "@/lib/chat-connectors";
 import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
@@ -38,7 +32,7 @@ Never invent channel messages, repos, files, or API results.
 Never say you "cannot use the integration directly" if that app is connected — if live data is missing, say exactly what is needed (e.g. bot token with channels:history, invite the bot to the channel).
 - Slack — with a bot token, the server can list channels and read recent messages; with webhook-only, post only.
 - GitHub — list repos / profile when the server injects them; deploy via Website builder Deploy to GitHub.
-- @mentions (@slack, @github) request that connector; same live-data rules apply.
+- @mentions select connected apps for this request. @slack and @github have direct live-data adapters in chat; other selected apps must be described specifically if their requested action is not implemented.
 Do not claim you executed a deploy unless they used Deploy in the builder.`;
 
 const SYSTEM_FAST = `You are Trove. Answer briefly and naturally. No tools, no search, no long preambles.`;
@@ -166,126 +160,29 @@ async function handle(req: NextRequest) {
     }),
   ]);
 
-  const simple = isSimpleTurn(turns) && attachments.length === 0;
-  const wantSearch = !simple;
+  const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
+  const connectorContext = await buildChatConnectorContext(lastUser);
+
+  // Connector requests must never take the generic "simple chat" path because
+  // that path intentionally omits tools/live context. They also should not use
+  // public web search as a substitute for the user's private connected data.
+  const simple =
+    isSimpleTurn(turns) &&
+    attachments.length === 0 &&
+    connectorContext.requested.length === 0;
+  const wantSearch = !simple && connectorContext.requested.length === 0;
   const resolved = modeFor(mode);
 
-  let connectedNote = "";
-  try {
-    const conns = await listConnections();
-    if (conns.length) {
-      connectedNote =
-        "\n\nCurrently connected for this user: " +
-        conns.map((c) => `${c.service}${c.account ? ` (${c.account})` : ""}`).join(", ") +
-        ".";
-    }
-  } catch {
-    /* ignore */
-  }
-
   const custom = await instructionsBlock().catch(() => "");
-  const toolsNote = await connectedToolsBlock().catch(() => "");
-
-  let liveToolContext = "";
-  const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
-  if (/@github\b|list (my )?repos|my github/i.test(lastUser)) {
-    try {
-      const tok = await secretFor("github");
-      if (tok && !tok.trim().startsWith("{")) {
-        const res = await fetch("https://api.github.com/user/repos?per_page=20&sort=updated", {
-          headers: {
-            Authorization: `Bearer ${tok}`,
-            Accept: "application/vnd.github+json",
-            "User-Agent": "trove",
-          },
-        });
-        if (res.ok) {
-          const repos = (await res.json()) as {
-            full_name?: string;
-            private?: boolean;
-            html_url?: string;
-          }[];
-          liveToolContext =
-            "\n\nLIVE GITHUB DATA (from the user's connected token — use this, do not invent repos):\n" +
-            repos
-              .map(
-                (r) =>
-                  `- ${r.full_name}${r.private ? " (private)" : ""} ${r.html_url ?? ""}`,
-              )
-              .join("\n");
-        } else {
-          liveToolContext = `\n\nGitHub API returned ${res.status}. Ask the user to reconnect GitHub under Integrations.`;
-        }
-      } else if (tok?.trim().startsWith("{")) {
-        liveToolContext =
-          "\n\nGitHub is linked via Nango. The connection exists; for a full repo list use a PAT under Integrations or Nango proxy.";
-      } else {
-        liveToolContext =
-          "\n\nGitHub is not connected. Tell the user to open Integrations and connect GitHub.";
-      }
-    } catch (e) {
-      console.error(
-        "[chat/github] live data failed",
-        e instanceof Error ? e.message : String(e),
-      );
-      liveToolContext =
-        "\n\nGitHub could not be reached. Ask the user to reconnect GitHub under Integrations.";
-    }
-  }
-
-  // Slack — read recent channel messages when the user asks.
-  if (!liveToolContext && /@slack\b|\bslack\b/i.test(lastUser)) {
-    try {
-      const tok = await secretFor("slack");
-      if (!tok) {
-        liveToolContext =
-          "\n\nSlack is not connected. Tell the user to open Integrations and connect Slack with a Bot User OAuth Token (xoxb-) that has channels:history and channels:read, then invite the bot to the channel.";
-      } else if (!isSlackToken(tok)) {
-        liveToolContext =
-          "\n\nSlack is connected as an incoming webhook only (send-only). It cannot read channel messages. Tell the user to reconnect under Integrations with a Bot User OAuth Token (xoxb-) and scopes channels:history, channels:read (plus groups:* for private channels), then /invite the bot into the channel.";
-      } else {
-        const channelMatch =
-          lastUser.match(/#([a-z0-9_-]+)/i) ||
-          lastUser.match(/\bchannel\s+#?([a-z0-9_-]+)/i) ||
-          lastUser.match(/\bin\s+#([a-z0-9_-]+)/i);
-        let channel = (channelMatch?.[1] ?? "").toLowerCase();
-        if (["the", "a", "an", "my", "our", "this", "that", "channel"].includes(channel)) {
-          channel = "";
-        }
-        if (!channel) {
-          const channels = await listSlackChannels(tok, 25);
-          if (channels.length) {
-            liveToolContext =
-              "\n\nLIVE SLACK DATA — channels available:\n" +
-              channels.map((c) => `- #${c.name}${c.isPrivate ? " (private)" : ""}`).join("\n") +
-              "\nThe user did not name a channel. Summarize the list and ask which channel to read.";
-          } else {
-            liveToolContext =
-              "\n\nSlack token works but no channels were returned. The bot may need to be invited to channels.";
-          }
-        } else {
-          const result = await recentSlackMessages(tok, channel, 20);
-          liveToolContext =
-            "\n\n" + formatSlackMessagesForModel(result.channelName, result.messages);
-        }
-      }
-    } catch (e) {
-      console.error(
-        "[chat/slack] live data failed",
-        e instanceof Error ? e.message : String(e),
-      );
-      liveToolContext =
-        "\n\nSlack could not be read: " +
-        (e instanceof Error ? e.message : "unknown error") +
-        ". Tell the user the exact fix (scopes, invite bot, reconnect).";
-    }
-  }
 
   const promptFor = (canSearch: boolean) =>
     simple
       ? SYSTEM_FAST + custom
       : [
-          SYSTEM + connectedNote + toolsNote + custom + liveToolContext,
+          SYSTEM +
+            connectorContext.connectedNote +
+            connectorContext.liveContext +
+            custom,
           OBEY_FORMAT,
           situation({ timeZone, canSearch }),
           hintFor(mode),
