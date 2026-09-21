@@ -84,6 +84,8 @@ Production must use Turso/libSQL rather than an ephemeral local SQLite file.
 Before launch:
 
 - confirm the production database is durable
+- create an encrypted operator snapshot with `npm run backup:db` (this is a
+  secondary export, not a replacement for the database provider's native backup)
 - enable the provider's backup / point-in-time recovery capability
 - record who has permission to restore it
 - take a pre-launch backup
