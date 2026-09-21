@@ -35,7 +35,7 @@ export function lemonConfigured(): boolean {
 /**
  * Resolve Lemon variant for a plan + billing interval.
  * Monthly: LEMONSQUEEZY_VARIANT_PRO / _TEAM
- * Yearly:  LEMONSQUEEZY_VARIANT_PRO_YEARLY / _TEAM_YEARLY (falls back to monthly if unset)
+ * Yearly:  LEMONSQUEEZY_VARIANT_PRO_YEARLY / _TEAM_YEARLY
  */
 export function variantFor(
   planId: string,
@@ -43,8 +43,7 @@ export function variantFor(
 ): string | null {
   const base = planId.toUpperCase();
   if (interval === "year") {
-    const yearly = numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}_YEARLY`]);
-    if (yearly) return yearly;
+    return numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}_YEARLY`]);
   }
   return numericId(process.env[`LEMONSQUEEZY_VARIANT_${base}`]);
 }
