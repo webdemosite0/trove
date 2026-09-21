@@ -35,7 +35,7 @@ export default async function StudioLayout({
 }) {
   const [gate, mobile] = await Promise.all([resolveShell(), isMobile()]);
   if (!gate.ok) return gate.screen;
-  const { user } = gate;
+  const { user, balance } = gate;
 
   if (mobile) {
     return (
@@ -43,7 +43,7 @@ export default async function StudioLayout({
         <Backdrop />
         <MobileShell
           user={{ name: user.name, email: user.email }}
-          balance={null}
+          balance={balance}
         >
           {children}
         </MobileShell>

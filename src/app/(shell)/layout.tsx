@@ -26,7 +26,7 @@ export default async function ShellLayout({
 }) {
   const [gate, mobile] = await Promise.all([resolveShell(), isMobile()]);
   if (!gate.ok) return gate.screen;
-  const { user } = gate;
+  const { user, balance } = gate;
 
   if (mobile) {
     return (
@@ -35,7 +35,7 @@ export default async function ShellLayout({
         <AuthReferralAnnouncement />
         <MobileShell
           user={{ name: user.name, email: user.email }}
-          balance={null}
+          balance={balance}
         >
           {children}
         </MobileShell>
@@ -49,7 +49,7 @@ export default async function ShellLayout({
         <Backdrop />
         <AppChrome
           user={user}
-          balance={null}
+          balance={balance}
           isAdmin={isAdminEmail(user?.email)}
         >
           {children}
