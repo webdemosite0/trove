@@ -65,7 +65,7 @@ export function PlansView({
   currentPlan: string | null;
   signedIn: boolean;
   stripeReady: boolean;
-  purchasable: Record<string, boolean>;
+  purchasable: Record<string, { month: boolean; year: boolean }>;
   subscription: Subscription | null;
   checkout: "done" | "cancelled" | null;
 }) {
@@ -249,7 +249,7 @@ export function PlansView({
           const active = currentPlan === t.id;
           const paid = t.price > 0;
           const featured = t.id === "pro";
-          const buyable = paid ? Boolean(purchasable[t.id]) : true;
+          const buyable = paid ? Boolean(purchasable[t.id]?.[interval]) : true;
           const amount = priceForInterval(t, interval);
           const savePct = yearlyDiscountPercent(t);
           const perMonthYearly =
