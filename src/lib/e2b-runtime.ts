@@ -312,6 +312,88 @@ export function assertSafeE2BCommand(command: string) {
   return value;
 }
 
+
+const PRODUCTION_OUTPUT_DIR = ".trove-dist";
+const MAX_PUBLISH_OUTPUT_BYTES = 15_000_000;
+const MAX_PUBLISH_FILE_BYTES = 5_000_000;
+
+export async function buildE2BProductionSite(
+  sandbox: Sandbox,
+  projectFiles: ProjectFile[],
+): Promise<{ html: string; files: ProjectFile[] }> {
+  await syncE2BProject(sandbox, projectFiles);
+
+  await sandbox.commands.run(
+    \`rm -rf "\${PRODUCTION_OUTPUT_DIR}" && npx vite build --base=/ --outDir "\${PRODUCTION_OUTPUT_DIR}" --emptyOutDir\`,
+    {
+      cwd: PROJECT_ROOT,
+      timeoutMs: 240_000,
+    },
+  );
+
+  const exportScript = \`
+const fs = require("fs");
+const path = require("path");
+const root = path.resolve(process.cwd(), ".trove-dist");
+const textExt = /\\\\.(?:html?|css|m?js|cjs|json|svg|txt|xml|map|webmanifest)$/i;
+let total = 0;
+const rows = [];
+
+function walk(dir) {
+  for (const name of fs.readdirSync(dir)) {
+    const abs = path.join(dir, name);
+    const stat = fs.statSync(abs);
+    if (stat.isDirectory()) {
+      walk(abs);
+      continue;
+    }
+    const rel = path.relative(root, abs).split(path.sep).join("/");
+    const buf = fs.readFileSync(abs);
+    if (buf.length > 5000000) {
+      throw new Error("PUBLISH_FILE_TOO_LARGE:" + rel);
+    }
+    total += buf.length;
+    if (total > 15000000) {
+      throw new Error("PUBLISH_OUTPUT_TOO_LARGE");
+    }
+    const encoding = textExt.test(rel) ? "utf8" : "base64";
+    rows.push({
+      path: rel,
+      encoding,
+      content: encoding === "utf8" ? buf.toString("utf8") : buf.toString("base64"),
+    });
+  }
+}
+
+if (!fs.existsSync(root)) throw new Error("PUBLISH_OUTPUT_MISSING");
+walk(root);
+process.stdout.write(JSON.stringify(rows));
+\`;
+
+  const exported = await sandbox.commands.run(
+    \`node --input-type=commonjs -e \${JSON.stringify(exportScript)}\`,
+    {
+      cwd: PROJECT_ROOT,
+      timeoutMs: 60_000,
+    },
+  );
+
+  let files: ProjectFile[] = [];
+  try {
+    const parsed = JSON.parse(exported.stdout || "[]") as ProjectFile[];
+    if (Array.isArray(parsed)) files = parsed;
+  } catch {
+    throw new Error("Production build finished, but Trove could not read its output.");
+  }
+
+  const index = files.find((file) => file.path === "index.html");
+  if (!index?.content?.trim()) {
+    throw new Error("Production build did not create index.html.");
+  }
+
+  return { html: index.content, files };
+}
+
 export async function runE2BCommand(sandbox: Sandbox, command: string) {
   const value = assertSafeE2BCommand(command);
 
