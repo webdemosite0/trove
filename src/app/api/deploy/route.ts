@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { publishSite } from "@/lib/publish";
 import type { ProjectFile } from "@/lib/builder";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -14,6 +15,20 @@ export async function POST(req: NextRequest) {
   const user = await currentUser();
   if (!user) {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  }
+
+  const limit = await consumeRateLimit({
+    scope: "publish",
+    identity: user.id,
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+    failClosed: true,
+  });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many publish requests. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+    );
   }
 
   try {
