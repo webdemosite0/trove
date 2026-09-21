@@ -277,6 +277,8 @@ export const MIGRATIONS: string[] = [
   `ALTER TABLE users ADD COLUMN onboarding_meta TEXT NOT NULL DEFAULT ''`,
   // Existing accounts already use the product — don't force the intro again.
   `UPDATE users SET onboarding_done = 1 WHERE onboarding_done = 0 AND created_at < ${Date.now() - 60_000}`,
+  `CREATE INDEX IF NOT EXISTS recents_by_user_created ON recents (user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS credit_spends_by_user_created ON credit_spends (user_id, created_at DESC)`,
 ];
 
 export const REPAIRS = `
