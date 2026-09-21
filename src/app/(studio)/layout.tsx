@@ -11,19 +11,24 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Studio routes share shell auth; credits load client-side via /api/shell-meta. */
+/**
+ * Studio layout (websites, documents, spreadsheets, slides, design).
+ * Auth via resolveShell. Credits are loaded in StudioChrome (/api/shell-meta).
+ * Do not read balance from the shell gate here.
+ */
 export default async function StudioLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const gate = await resolveShell();
-  if (gate.ok === false) return gate.screen;
+  const result = await resolveShell();
+  if (!result.ok) {
+    return result.screen;
+  }
 
-  const user = gate.user;
-  const mobile = await isMobile();
+  const { user } = result;
 
-  if (mobile) {
+  if (await isMobile()) {
     return (
       <ToastProvider>
         <Backdrop />

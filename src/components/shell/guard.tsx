@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { Backdrop } from "@/components/shell/backdrop";
 import { SetupNeeded } from "@/components/shell/setup-needed";
 import { currentUser, type User } from "@/lib/auth";
-import type { Balance } from "@/lib/types";
 import { storageIsEphemeral, tursoVars } from "@/lib/db";
+import { balanceFor } from "@/lib/credits";
+import type { Balance } from "@/lib/types";
 
 export type ShellGate =
   | { ok: true; user: User; balance: Balance | null }
@@ -67,5 +68,12 @@ export async function resolveShell(): Promise<ShellGate> {
   if (!user.emailVerified) redirect("/verify-email");
   if (!user.onboardingDone) redirect("/onboarding");
 
-  return { ok: true, user, balance: null };
+  let balance: Balance | null = null;
+  try {
+    balance = await balanceFor(user.id, user.plan, { email: user.email });
+  } catch (e) {
+    console.error("shell guard: balance load failed —", e);
+  }
+
+  return { ok: true, user, balance };
 }
