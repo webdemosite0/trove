@@ -207,11 +207,11 @@ export async function AllWorkSection({
             <Link
               key={`${item.source}:${item.kind}:${item.id}`}
               href={item.href}
-              className="group overflow-hidden rounded-[18px] border border-black/[0.065] bg-white shadow-[0_10px_32px_-24px_rgba(15,23,42,.28)] transition duration-200 hover:-translate-y-0.5 hover:border-black/[0.12] hover:shadow-[0_16px_38px_-22px_rgba(15,23,42,.28)]"
+              className="group overflow-hidden rounded-[18px] border border-line bg-raised shadow-[var(--sh-1)] transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--elev)]"
             >
               <Preview item={item} />
-              <div className="flex items-center gap-3 border-t border-black/[0.055] px-3.5 py-3">
-                <span className="grid h-8 min-w-8 place-items-center rounded-[9px] bg-black/[0.045] px-1.5 text-[9.5px] font-bold tracking-[-0.02em] text-black/55">
+              <div className="flex items-center gap-3 border-t border-line px-3.5 py-3">
+                <span className="grid h-8 min-w-8 place-items-center rounded-[9px] bg-sunk px-1.5 text-[9.5px] font-bold tracking-[-0.02em] text-ink-3">
                   {meta.badge}
                 </span>
                 <span className="min-w-0 flex-1">
