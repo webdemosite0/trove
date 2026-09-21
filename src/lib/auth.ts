@@ -20,6 +20,7 @@ export interface User {
   emailVerified: boolean;
   provider: string;
   onboardingDone: boolean;
+  instructions: string;
 }
 
 export function hashPassword(password: string) {
@@ -46,6 +47,7 @@ function rowToUser(row: Record<string, unknown>): User {
     emailVerified: num(row.email_verified) === 1,
     provider: str(row.provider) || "password",
     onboardingDone: num(row.onboarding_done) === 1,
+    instructions: str(row.instructions),
   };
 }
 
@@ -79,6 +81,7 @@ export async function createUser(
     emailVerified: Boolean(verified),
     provider,
     onboardingDone: false,
+    instructions: "",
   };
 }
 
@@ -247,7 +250,7 @@ async function readCurrentUser(): Promise<User | null> {
   if (!token) return null;
 
   const row = await one(
-    `SELECT u.id, u.email, u.name, u.plan, u.email_verified, u.provider, u.onboarding_done, s.expires_at
+    `SELECT u.id, u.email, u.name, u.plan, u.email_verified, u.provider, u.onboarding_done, u.instructions, s.expires_at
        FROM sessions s
        JOIN users u ON u.id = s.user_id
       WHERE s.token IN (?, ?)`,
