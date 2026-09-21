@@ -78,15 +78,15 @@ function Avatar({ name }: { name: string }) {
 
 function Card({ q }: { q: Quote }) {
   return (
-    <figure className="w-[min(100%,320px)] shrink-0 rounded-[22px] border border-zinc-200/90 bg-white p-5 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.28)] sm:p-6">
-      <blockquote className="text-[14.5px] leading-relaxed text-zinc-700">
+    <figure className="w-[min(100%,320px)] shrink-0 rounded-[22px] border border-zinc-200/90 bg-white p-5 dark:border-line dark:bg-raised shadow-[0_12px_40px_-24px_rgba(15,23,42,0.28)] sm:p-6">
+      <blockquote className="text-[14.5px] leading-relaxed text-zinc-700 dark:text-ink-2">
         &ldquo;{q.text}&rdquo;
       </blockquote>
       <figcaption className="mt-5 flex items-center gap-3">
         <Avatar name={q.name} />
         <span>
-          <span className="block text-[13.5px] font-semibold text-zinc-900">{q.name}</span>
-          <span className="block text-[12.5px] text-zinc-500">{q.role}</span>
+          <span className="block text-[13.5px] font-semibold text-zinc-900 dark:text-ink">{q.name}</span>
+          <span className="block text-[12.5px] text-zinc-500 dark:text-ink-4">{q.role}</span>
         </span>
       </figcaption>
     </figure>
@@ -123,13 +123,13 @@ export function Testimonials({ quotes }: { quotes?: Quote[] }) {
       />
 
       <Reveal className="mx-auto max-w-[640px] text-center">
-        <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3.5 py-1 text-[12px] font-medium text-zinc-600 shadow-sm">
+        <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3.5 dark:border-line dark:bg-raised py-1 text-[12px] font-medium text-zinc-600 shadow-sm">
           Testimonials
         </span>
-        <h2 className="mt-5 text-[clamp(1.85rem,1.2rem+2vw,2.85rem)] font-semibold tracking-[-0.03em] text-zinc-900">
+        <h2 className="mt-5 text-[clamp(1.85rem,1.2rem+2vw,2.85rem)] font-semibold tracking-[-0.03em] text-zinc-900 dark:text-ink">
           What our users say
         </h2>
-        <p className="mt-3 text-[15px] text-zinc-500">
+        <p className="mt-3 text-[15px] text-zinc-500 dark:text-ink-4">
           See what builders and teams say about shipping with Trove.
         </p>
       </Reveal>
