@@ -254,3 +254,44 @@
   display: inline-block;
   animation: nx-thinking-dot 1.15s ease-in-out infinite;
 }
+
+
+/* Sidebar intentionally keeps Trove's earlier neutral palette.
+ * The workspace can be colorful without turning navigation into decoration. */
+:root[data-theme="light"] .nx-sidebar {
+  --color-rail: #fbfaf8;
+  --color-sunk: #f1efea;
+  --color-raised: #ffffff;
+  --color-hover: #edebe5;
+  --color-ink: #101014;
+  --color-ink-2: #101014;
+  --color-ink-3: #3f3f4a;
+  --color-ink-4: #63636f;
+  --color-line: #e6e3dc;
+  --color-line-strong: #d6d2c8;
+  --color-accent: #4f46e5;
+  --color-accent-soft: #eeecfd;
+  --color-violet: #6366f1;
+  --btn-a: #4f46e5;
+  --btn-b: #4338ca;
+  --btn-glow: rgb(79 70 229 / 0.26);
+}
+
+:root[data-theme="dark"] .nx-sidebar {
+  --color-rail: #0c0c14;
+  --color-sunk: #111118;
+  --color-raised: #16161f;
+  --color-hover: #1e1e2a;
+  --color-ink: #f5f5f7;
+  --color-ink-2: #e8e8ed;
+  --color-ink-3: #a8a8b3;
+  --color-ink-4: #7e7e8a;
+  --color-line: #2a2a36;
+  --color-line-strong: #3a3a4a;
+  --color-accent: #6bb3ff;
+  --color-accent-soft: #0f1c33;
+  --color-violet: #8ec5ff;
+  --btn-a: #2563eb;
+  --btn-b: #1d4ed8;
+  --btn-glow: rgb(37 99 235 / 0.30);
+}
