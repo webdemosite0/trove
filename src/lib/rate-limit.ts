@@ -59,7 +59,7 @@ export async function consumeRateLimit(opts: {
 
   try {
     await ensureTable();
-    await run(
+    const row = await one(
       `INSERT INTO security_rate_limits (key_hash, count, reset_at)
        VALUES (?, 1, ?)
        ON CONFLICT(key_hash) DO UPDATE SET
@@ -70,13 +70,9 @@ export async function consumeRateLimit(opts: {
          reset_at = CASE
            WHEN security_rate_limits.reset_at <= ? THEN ?
            ELSE security_rate_limits.reset_at
-         END`,
+         END
+       RETURNING count, reset_at`,
       [keyHash, resetAt, now, now, resetAt],
-    );
-
-    const row = await one(
-      `SELECT count, reset_at FROM security_rate_limits WHERE key_hash = ?`,
-      [keyHash],
     );
     const count = num(row?.count);
     const currentReset = num(row?.reset_at) || resetAt;
