@@ -17,6 +17,13 @@ import { ModePicker } from "@/components/chat/mode-picker";
 import { ModelPicker } from "@/components/chat/model-picker";
 import { AttachMenu } from "@/components/chat/attach-menu";
 import { ConnectorChip } from "@/components/chat/connector-chip";
+import {
+  ConnectorMentionMenu,
+  connectorMentionAt,
+  filterConnectorOptions,
+  useConnectedConnectors,
+  type ConnectedConnectorOption,
+} from "@/components/chat/connector-mention-menu";
 import type { ModeId } from "@/lib/modes";
 import type { ChatModelId, ChatModelOption } from "@/lib/chat-models";
 import {
@@ -62,6 +69,7 @@ export function Composer({
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [cursor, setCursor] = useState(initialValue.length);
   const ref = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
 
@@ -70,11 +78,21 @@ export function Composer({
   );
 
   const ready = (value.trim().length > 0 || files.length > 0) && !disabled;
+  const mention = connectorMentionAt(value, cursor);
+  const { items: connectorOptions, loading: connectorsLoading } =
+    useConnectedConnectors(focused || Boolean(mention));
+  const connectedIds = new Set(connectorOptions.map((item) => item.id));
   const mentionedIds = Array.from(
     new Set(
-      [...value.matchAll(/@([a-z0-9][\w.-]*)/gi)].map((m) => m[1].toLowerCase()),
+      [...value.matchAll(/@([a-z0-9][\w.-]*)/gi)]
+        .map((m) => m[1].toLowerCase())
+        .filter((id) => connectedIds.has(id)),
     ),
   );
+  const mentionItems = mention
+    ? filterConnectorOptions(connectorOptions, mention.query)
+    : [];
+  const mentionOpen = Boolean(mention) && focused && !disabled;
 
   function grow(el: HTMLTextAreaElement) {
     el.style.height = "0px";
@@ -120,11 +138,30 @@ export function Composer({
     });
   }
 
+  function selectConnector(item: ConnectedConnectorOption) {
+    if (!mention) return;
+    const token = `@${item.id} `;
+    const nextValue =
+      value.slice(0, mention.start) + token + value.slice(mention.end);
+    const nextCursor = mention.start + token.length;
+
+    setValue(nextValue);
+    setCursor(nextCursor);
+    requestAnimationFrame(() => {
+      const el = ref.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(nextCursor, nextCursor);
+      grow(el);
+    });
+  }
+
   function send() {
     if (!ready) return;
     onSend?.(value.trim(), files.length ? files : undefined);
     files.forEach((a) => a.preview && URL.revokeObjectURL(a.preview));
     setValue("");
+    setCursor(0);
     setFiles([]);
     setError(null);
     if (ref.current) {
@@ -158,6 +195,16 @@ export function Composer({
           : "rounded-[24px] shadow-[var(--sh-2)]",
       )}
     >
+      {mentionOpen ? (
+        <ConnectorMentionMenu
+          items={connectorOptions}
+          query={mention?.query ?? ""}
+          loading={connectorsLoading}
+          onSelect={selectConnector}
+          compact={compact}
+        />
+      ) : null}
+
       {files.length > 0 ? (
         <div className="flex flex-wrap gap-2 px-3.5 pt-3.5">
           {files.map((a, i) => (
@@ -217,7 +264,7 @@ export function Composer({
       {mentionedIds.length ? (
         <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
           {mentionedIds.map((id) => (
-            <ConnectorChip key={id} id={id} tone="dark" />
+            <ConnectorChip key={id} id={id} tone="light" />
           ))}
         </div>
       ) : null}
@@ -230,7 +277,14 @@ export function Composer({
         disabled={disabled}
         onChange={(e) => {
           setValue(e.target.value);
+          setCursor(e.target.selectionStart ?? e.target.value.length);
           grow(e.target);
+        }}
+        onSelect={(e) => {
+          setCursor(e.currentTarget.selectionStart ?? e.currentTarget.value.length);
+        }}
+        onClick={(e) => {
+          setCursor(e.currentTarget.selectionStart ?? e.currentTarget.value.length);
         }}
         onPaste={(e) => {
           if (!allowAttachments) return;
@@ -244,6 +298,16 @@ export function Composer({
         onBlur={() => setFocused(false)}
         onKeyDown={(e) => {
           if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+          if (mentionOpen && e.key === "Enter" && mentionItems.length) {
+            e.preventDefault();
+            selectConnector(mentionItems[0]);
+            return;
+          }
+          if (mentionOpen && e.key === "Escape") {
+            e.preventDefault();
+            setCursor(-1);
+            return;
+          }
           // A phone's return key inserts a line break. Explicit modifier+Enter
           // still sends when a hardware keyboard is attached.
           if (window.matchMedia("(pointer: coarse)").matches && !e.ctrlKey && !e.metaKey) return;
