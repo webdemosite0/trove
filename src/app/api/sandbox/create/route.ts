@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     identity: user.id,
     limit: 30,
     windowMs: 10 * 60 * 1000,
+    failClosed: true,
   });
   if (!limit.allowed) {
     return NextResponse.json(
