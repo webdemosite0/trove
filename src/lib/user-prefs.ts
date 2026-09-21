@@ -32,14 +32,18 @@ export async function setInstructions(text: string): Promise<{ ok: true } | { er
   }
 }
 
-export async function instructionsBlock(userId?: string): Promise<string> {
-  const text = (await getInstructions(userId)).trim();
+export function formatInstructionsBlock(value: string): string {
+  const text = String(value || "").trim();
   if (!text) return "";
   return (
     `\n\nCUSTOM INSTRUCTIONS FROM THE USER (always follow these preferences):\n` +
     text +
     `\n`
   );
+}
+
+export async function instructionsBlock(userId?: string): Promise<string> {
+  return formatInstructionsBlock(await getInstructions(userId));
 }
 
 /** Connected apps the model is allowed to use with live server-fetched data. */
