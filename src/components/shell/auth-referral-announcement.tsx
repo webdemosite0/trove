@@ -56,7 +56,7 @@ export function AuthReferralAnnouncement() {
                 Share Trove · get credits
               </h2>
               <p className="mt-1 text-[12.5px] leading-relaxed text-ink-3 sm:text-[13px]">
-                Invite people to Trove, earn credits for signups, and unlock a $200 reward after 100 paid referrals.
+                Invite people to Trove, earn credits for signups, and unlock a $200 payout review after 100 qualified paid referrals.
               </p>
 
               <Link
