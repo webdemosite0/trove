@@ -66,7 +66,7 @@ export default async function StatusPage() {
         System status
       </p>
 
-      <div className="mt-4 rounded-[24px] border border-black/[0.06] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,.05)] sm:p-8">
+      <div className="mt-4 rounded-[24px] border border-line bg-raised p-6 shadow-[0_20px_60px_rgba(15,23,42,.05)] sm:p-8">
         <div className="flex items-start gap-3">
           <span
             aria-hidden
@@ -87,7 +87,7 @@ export default async function StatusPage() {
         </div>
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-[22px] border border-black/[0.06] bg-white">
+      <div className="mt-5 overflow-hidden rounded-[22px] border border-line bg-raised">
         {services.map((service, index) => (
           <div
             key={service.name}
@@ -112,7 +112,7 @@ export default async function StatusPage() {
         ))}
       </div>
 
-      <div className="mt-6 rounded-[20px] border border-black/[0.05] bg-white/70 p-5">
+      <div className="mt-6 rounded-[20px] border border-line bg-raised/75 p-5">
         <h2 className="text-sm font-semibold text-ink">Still having trouble?</h2>
         <p className="mt-2 text-[13px] leading-5 text-ink-3">
           A service can be operational while an individual project still needs help.
