@@ -11,6 +11,7 @@ const PUBLIC_PAGES = new Set([
   "/about",
   "/privacy",
   "/terms",
+  "/security",
   "/status",
 ]);
 
