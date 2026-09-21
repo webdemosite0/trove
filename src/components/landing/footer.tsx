@@ -120,6 +120,14 @@ export function Footer() {
                 </li>
                 <li>
                   <Link
+                    href="/security"
+                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Security
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/sitemap.xml"
                     className="text-[13px] text-ink-2 transition-colors hover:text-ink"
                   >
