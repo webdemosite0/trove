@@ -195,7 +195,7 @@ export function MobileComposer({
       {mentionedIds.length ? (
         <div className="flex flex-wrap gap-1.5 px-3 pt-2">
           {mentionedIds.map((id) => (
-            <ConnectorChip key={id} id={id} tone="light" />
+            <ConnectorChip key={id} id={id} tone="auto" />
           ))}
         </div>
       ) : null}
