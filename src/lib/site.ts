@@ -94,6 +94,7 @@ export const publicRoutes = [
   { path: "/status", priority: 0.5, changeFrequency: "daily" as const },
   { path: "/privacy", priority: 0.4, changeFrequency: "yearly" as const },
   { path: "/terms", priority: 0.4, changeFrequency: "yearly" as const },
+  { path: "/security", priority: 0.4, changeFrequency: "yearly" as const },
 ];
 
 /**
