@@ -13,6 +13,7 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
+  FiShare2,
   TbRobot,
   TbWorld,
   TbHome,
@@ -49,6 +50,7 @@ const PRIMARY: Item[] = [
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "pop" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "lift" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake" },
+  { href: "/affiliates", label: "Affiliates", icon: FiShare2, motion: "pop" },
 ];
 
 function NavRow({
@@ -262,7 +264,7 @@ function ReferralPromoSurface({
 function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Link
-      href="/settings/affiliates"
+      href="/affiliates"
       onClick={onNavigate}
       className="group relative block overflow-hidden rounded-2xl p-[1px] transition hover:scale-[1.02]"
       style={{
@@ -443,7 +445,7 @@ export function Sidebar({
 
             <div className="mt-1 shrink-0 pt-1">
               <Link
-                href="/settings/affiliates"
+                href="/affiliates"
                 title="Refer & earn"
                 className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-[11px] font-bold text-white shadow-md"
               >
