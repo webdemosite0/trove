@@ -94,7 +94,7 @@ export default async function UsageSettingsPage({
   return (
     <div className="space-y-5">
       {/* Hero status — primary decision surface */}
-      <section className="overflow-hidden rounded-[var(--r-panel)] border border-line bg-gradient-to-br from-violet-50/80 via-white to-indigo-50/50 p-5 shadow-sm sm:p-6">
+      <section className="overflow-hidden rounded-[var(--r-panel)] border border-line bg-gradient-to-br from-violet-50/80 via-raised to-indigo-50/50 dark:from-violet-500/10 dark:via-raised dark:to-indigo-500/10 p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-violet-600">
@@ -120,7 +120,7 @@ export default async function UsageSettingsPage({
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {/* Monthly — long-term safety */}
-          <div className="rounded-2xl border border-line bg-white/90 p-4 shadow-sm">
+          <div className="rounded-2xl border border-line bg-raised/95 p-4 shadow-[var(--sh-1)]">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[12.5px] font-medium text-ink-3">This month</span>
               <span className="rounded-full bg-sunk px-2 py-0.5 text-[11px] font-medium text-ink-4">
@@ -157,10 +157,10 @@ export default async function UsageSettingsPage({
           </div>
 
           {/* 5-hour window — Codex-style burst */}
-          <div className="rounded-2xl border border-line bg-white/90 p-4 shadow-sm">
+          <div className="rounded-2xl border border-line bg-raised/95 p-4 shadow-[var(--sh-1)]">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[12.5px] font-medium text-ink-3">5-hour window</span>
-              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
                 Like Codex
               </span>
             </div>
@@ -218,7 +218,7 @@ export default async function UsageSettingsPage({
           ].map((tip) => (
             <div
               key={tip.t}
-              className="rounded-xl border border-line/80 bg-white/60 px-3.5 py-3"
+              className="rounded-xl border border-line/80 bg-raised/65 px-3.5 py-3"
             >
               <p className="text-[13px] font-medium text-ink">{tip.t}</p>
               <p className="mt-0.5 text-[12px] text-ink-4">{tip.d}</p>
