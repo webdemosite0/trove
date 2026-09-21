@@ -6,10 +6,21 @@ import { balanceFor } from "@/lib/credits";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   const user = await currentUser();
   if (!user) {
     return Response.json({ due: 0, recents: [], balance: null }, { status: 401 });
+  }
+
+  const only = new URL(req.url).searchParams.get("only");
+  if (only === "balance") {
+    const balance = await balanceFor(user.id, user.plan, { email: user.email }).catch(
+      () => null,
+    );
+    return Response.json(
+      { balance },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
   }
 
   const [due, recents, balance] = await Promise.all([
