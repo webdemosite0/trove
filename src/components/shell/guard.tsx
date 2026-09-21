@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { Backdrop } from "@/components/shell/backdrop";
 import { SetupNeeded } from "@/components/shell/setup-needed";
 import { currentUser, type User } from "@/lib/auth";
+import type { Balance } from "@/lib/types";
 import { storageIsEphemeral, tursoVars } from "@/lib/db";
 
 export type ShellGate =
-  | { ok: true; user: User }
+  | { ok: true; user: User; balance: Balance | null }
   | { ok: false; screen: React.ReactNode };
 
 export async function resolveShell(): Promise<ShellGate> {
@@ -66,5 +67,5 @@ export async function resolveShell(): Promise<ShellGate> {
   if (!user.emailVerified) redirect("/verify-email");
   if (!user.onboardingDone) redirect("/onboarding");
 
-  return { ok: true, user };
+  return { ok: true, user, balance: null };
 }
