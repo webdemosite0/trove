@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { saveProject } from "@/lib/projects";
+import { currentUser } from "@/lib/auth";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +11,25 @@ export const dynamic = "force-dynamic";
  * Used by the websites builder before the first build.
  */
 export async function POST(req: Request) {
+  const user = await currentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Sign in to create a site." }, { status: 401 });
+  }
+
+  const rate = await consumeRateLimit({
+    scope: "site-create",
+    identity: user.id,
+    limit: 60,
+    windowMs: 60 * 60 * 1000,
+    failClosed: true,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many site drafts. Try again later." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
+    );
+  }
+
   let body: { title?: string; idea?: string; name?: string; prompt?: string } = {};
   try {
     body = await req.json();
