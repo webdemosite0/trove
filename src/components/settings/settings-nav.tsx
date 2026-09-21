@@ -13,6 +13,7 @@ import {
   FiSun,
   FiFileText,
   FiDownload,
+  FiBriefcase,
   TbHelpCircle,
   FiShare2,
 } from "@/components/ui/icons";
@@ -27,6 +28,7 @@ interface Section {
 
 const ACCOUNT: Section[] = [
   { href: "/settings", label: "Profile", icon: FiUser },
+  { href: "/settings/business", label: "Business", icon: FiBriefcase },
   { href: "/settings/account", label: "Account & security", icon: FiShield },
   { href: "/settings/appearance", label: "Light & Dark Mode", icon: FiSun },
   { href: "/settings/download", label: "Download app", icon: FiDownload },
