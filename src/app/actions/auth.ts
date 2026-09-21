@@ -17,6 +17,7 @@ import { storageIsEphemeral, tursoVars } from "@/lib/db";
 import {
   mailerConfigured,
   passwordResetEmail,
+  passwordSignupReady,
   sendMail,
   verificationEmail,
   verificationEnforced,
@@ -67,6 +68,14 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   }
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
+  }
+
+  if (!passwordSignupReady()) {
+    await opsAlert("password_signup_mail_unavailable", {});
+    return {
+      error:
+        "Email signup is temporarily unavailable while email delivery is being configured. Use Google or Microsoft sign-in, or try again later.",
+    };
   }
 
   const signupLimit = await consumeRateLimit({
