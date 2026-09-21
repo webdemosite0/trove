@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Studio layout (websites, documents, spreadsheets, slides, design).
- * Auth via resolveShell. Credits are loaded in StudioChrome (/api/shell-meta).
- * Do not read balance from the shell gate here.
+ * Studio layout — websites, documents, spreadsheets, slides, design.
+ * Auth: resolveShell(). Credits: StudioChrome via /api/shell-meta.
+ * NOTE: This file intentionally does not read balance from the shell gate.
  */
 export default async function StudioLayout({
   children,
