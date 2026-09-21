@@ -178,32 +178,63 @@ function connect(): Promise<Client> {
       await client.executeMultiple(schema);
     }
 
-    // Column additions run one at a time: ALTER TABLE ADD COLUMN throws
-    // once the column exists, which is the normal case on every start after
-    // the first, and a batch would abandon everything after the throw.
-    for (const statement of MIGRATIONS) {
+    // Persist migration state in the database. Previously every serverless
+    // cold start replayed every ALTER/CREATE migration over the network. On a
+    // remote Turso database that added dozens of round trips before the first
+    // page could render.
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS trove_schema_state (
+        key TEXT PRIMARY KEY,
+        applied_at INTEGER NOT NULL
+      )
+    `);
+
+    const state = await client.execute(
+      "SELECT key FROM trove_schema_state WHERE key LIKE 'migration:%' OR key = 'repairs:1'",
+    );
+    const applied = new Set(state.rows.map((row) => String(row.key || "")));
+    const markers: { sql: string; args: InValue[] }[] = [];
+
+    // MIGRATIONS is append-only. The array index is the durable migration id.
+    for (let index = 0; index < MIGRATIONS.length; index += 1) {
+      const key = `migration:${index}`;
+      if (applied.has(key)) continue;
+
       try {
-        await client.execute(statement);
+        await client.execute(MIGRATIONS[index]);
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        // "duplicate column name" is the expected outcome, not a problem.
+        // Existing production databases predate the ledger. Duplicate columns
+        // mean that migration was already applied and can safely be marked.
         if (!/duplicate column name/i.test(message)) {
           console.error("db: migration skipped —", message);
+          continue;
         }
+      }
+
+      markers.push({
+        sql: "INSERT OR IGNORE INTO trove_schema_state (key, applied_at) VALUES (?, ?)",
+        args: [key, Date.now()],
+      });
+    }
+
+    if (!applied.has("repairs:1")) {
+      try {
+        await client.executeMultiple(REPAIRS);
+        markers.push({
+          sql: "INSERT OR IGNORE INTO trove_schema_state (key, applied_at) VALUES (?, ?)",
+          args: ["repairs:1", Date.now()],
+        });
+      } catch (e) {
+        console.error(
+          "db: repairs skipped —",
+          e instanceof Error ? e.message : String(e),
+        );
       }
     }
 
-    // Repairs run even when the schema was skipped — a database that already
-    // has every table is precisely the one carrying rows that need fixing.
-    // They are cheap and match nothing once applied, but must never take the
-    // app down: a bad row is worth less than a working page.
-    try {
-      await client.executeMultiple(REPAIRS);
-    } catch (e) {
-      console.error(
-        "db: repairs skipped —",
-        e instanceof Error ? e.message : String(e),
-      );
+    if (markers.length) {
+      await client.batch(markers, "write");
     }
 
     return client;
