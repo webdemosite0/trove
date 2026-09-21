@@ -3,6 +3,7 @@ import { streamText, generateText, type Source } from "@/lib/ai";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { lastUserText, readTurns, type Turn } from "@/lib/thread";
 
 export const runtime = "nodejs";
@@ -126,6 +127,15 @@ export async function POST(req: NextRequest) {
       { error: `Could not reach the database to check your credits: ${why}` },
       { status: 503 },
     );
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "tool",
+      limit: 60,
+    });
+    if (limited) return limited;
   }
 
   const promptFor = (canSearch: boolean) =>
