@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { streamText, type Source, type Turn } from "@/lib/ai";
 import { instructionsBlock } from "@/lib/user-prefs";
 import { toParts, type Attachment } from "@/lib/attachments";
@@ -142,23 +142,25 @@ async function handle(req: NextRequest) {
     );
   }
 
-  await Promise.all([
-    trackEvent({
-      event: ANALYTICS_EVENTS.chatPrompt,
-      userId: account.userId,
-      path: "/chat",
-      properties: {
-        model,
-        mode: typeof mode === "string" ? mode.slice(0, 40) : "auto",
-        hasAttachments: attachments.length > 0,
-      },
-    }),
-    trackEventOncePerUser({
-      event: ANALYTICS_EVENTS.firstPrompt,
-      userId: account.userId,
-      path: "/chat",
-    }),
-  ]);
+  after(async () => {
+    await Promise.all([
+      trackEvent({
+        event: ANALYTICS_EVENTS.chatPrompt,
+        userId: account!.userId,
+        path: "/chat",
+        properties: {
+          model,
+          mode: typeof mode === "string" ? mode.slice(0, 40) : "auto",
+          hasAttachments: attachments.length > 0,
+        },
+      }),
+      trackEventOncePerUser({
+        event: ANALYTICS_EVENTS.firstPrompt,
+        userId: account!.userId,
+        path: "/chat",
+      }),
+    ]);
+  });
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const connectorContext = await buildChatConnectorContext(lastUser);
@@ -173,7 +175,7 @@ async function handle(req: NextRequest) {
   const wantSearch = !simple && connectorContext.requested.length === 0;
   const resolved = modeFor(mode);
 
-  const custom = await instructionsBlock().catch(() => "");
+  const custom = await instructionsBlock(account.userId).catch(() => "");
 
   const promptFor = (canSearch: boolean) =>
     simple
