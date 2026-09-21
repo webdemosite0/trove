@@ -4,7 +4,7 @@ import { one, all, run, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { encrypt, decrypt, hint, canStoreSecrets } from "@/lib/secrets";
 import { providerFor } from "@/lib/providers";
-import { resolveNangoAccessToken } from "@/lib/nango";
+import { nangoIntegrationFor, resolveNangoAccessToken } from "@/lib/nango";
 
 export interface Connection {
   service: string;
@@ -116,24 +116,37 @@ export async function secretFor(service: string): Promise<string | null> {
   );
   if (!row) return null;
 
-  const raw = decrypt(str(row.secret));
+  const stored = str(row.secret);
+  const kind = str(row.kind);
+
+  // Direct credentials are encrypted. Nango rows only contain an opaque
+  // connection id + integration metadata, never the provider access token,
+  // so legacy rows may safely contain that identifier without TROVE_SECRET.
+  const raw = decrypt(stored) ?? (kind === "nango" ? stored : null);
   if (!raw) return null;
 
-  // Nango-stored payload: { nango: true, connectionId, integration }
-  if (str(row.kind) === "nango" || raw.includes('"nango"')) {
+  if (kind === "nango" || raw.includes('"nango"')) {
+    let connectionId = "";
+    let integration = nangoIntegrationFor(service) ?? "";
+
     try {
       const p = JSON.parse(raw) as {
         nango?: boolean;
         connectionId?: string;
         integration?: string;
       };
-      if (p.nango && p.connectionId && p.integration) {
-        const token = await resolveNangoAccessToken(p.integration, p.connectionId);
-        if (token) return token;
-      }
+      connectionId = String(p.connectionId ?? "").trim();
+      integration = String(p.integration ?? integration).trim();
     } catch {
-      /* fall through */
+      // Older Nango rows stored just the opaque connection id.
+      connectionId = raw.trim();
     }
+
+    if (connectionId && integration) {
+      const token = await resolveNangoAccessToken(integration, connectionId);
+      if (token) return token;
+    }
+    return null;
   }
 
   return raw;
