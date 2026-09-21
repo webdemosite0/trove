@@ -44,12 +44,12 @@ const LABELS: Record<string, string> = {
 export function ConnectorChip({
   id,
   className,
-  tone = "dark",
+  tone = "auto",
 }: {
   id: string;
   className?: string;
   /** dark = in-composer / dark bubbles; light = light user bubble */
-  tone?: "dark" | "light";
+  tone?: "dark" | "light" | "auto";
 }) {
   const key = id.toLowerCase().replace(/^@/, "").trim();
   const label =
@@ -65,7 +65,9 @@ export function ConnectorChip({
         "mx-0.5 inline-flex select-none items-center gap-1.5 rounded-full py-0.5 pl-1 pr-2.5 align-middle text-[13px] font-medium",
         tone === "dark"
           ? "border border-white/10 bg-[#2a2a2c] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-          : "border border-black/[0.08] bg-white text-ink shadow-sm",
+          : tone === "light"
+            ? "border border-black/[0.08] bg-white text-ink shadow-sm"
+            : "border border-line bg-sunk text-ink shadow-sm",
         className,
       )}
       contentEditable={false}
