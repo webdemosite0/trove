@@ -27,16 +27,20 @@ export default async function ShellLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const gate = await resolveShell();
-  if (!gate.ok) return gate.screen;
-  const { user, balance } = gate;
-
-  const [due, recents] = await Promise.all([
+  const gatePromise = resolveShell();
+  const secondaryPromise = Promise.all([
     countDueReminders(),
-    listAllRecents(6),
+    listAllRecents(12),
+    isMobile(),
   ]);
 
-  if (await isMobile()) {
+  const gate = await gatePromise;
+  if (!gate.ok) return gate.screen;
+  const { user, balance } = gate;
+  const [due, allRecents, mobile] = await secondaryPromise;
+  const recents = allRecents.slice(0, 6);
+
+  if (mobile) {
     return (
       <ToastProvider>
         <Backdrop />
