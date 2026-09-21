@@ -33,22 +33,68 @@ import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
 import { Tooltip } from "@/components/ui/tooltip";
 
+type ItemTone =
+  | "indigo"
+  | "sky"
+  | "cyan"
+  | "emerald"
+  | "amber"
+  | "violet"
+  | "fuchsia"
+  | "rose";
+
 interface Item {
   href: string;
   label: string;
   icon: IconType;
   motion: Motion;
+  tone: ItemTone;
 }
 
+const TONE: Record<ItemTone, { icon: string; tile: string }> = {
+  indigo: {
+    icon: "text-indigo-600 dark:text-indigo-300",
+    tile: "bg-indigo-500/10 ring-indigo-500/15",
+  },
+  sky: {
+    icon: "text-sky-600 dark:text-sky-300",
+    tile: "bg-sky-500/10 ring-sky-500/15",
+  },
+  cyan: {
+    icon: "text-cyan-600 dark:text-cyan-300",
+    tile: "bg-cyan-500/10 ring-cyan-500/15",
+  },
+  emerald: {
+    icon: "text-emerald-600 dark:text-emerald-300",
+    tile: "bg-emerald-500/10 ring-emerald-500/15",
+  },
+  amber: {
+    icon: "text-amber-600 dark:text-amber-300",
+    tile: "bg-amber-500/10 ring-amber-500/15",
+  },
+  violet: {
+    icon: "text-violet-600 dark:text-violet-300",
+    tile: "bg-violet-500/10 ring-violet-500/15",
+  },
+  fuchsia: {
+    icon: "text-fuchsia-600 dark:text-fuchsia-300",
+    tile: "bg-fuchsia-500/10 ring-fuchsia-500/15",
+  },
+  rose: {
+    icon: "text-rose-600 dark:text-rose-300",
+    tile: "bg-rose-500/10 ring-rose-500/15",
+  },
+};
+
 const PRIMARY: Item[] = [
-  { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
-  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
-  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
-  { href: "/documents", label: "Docs", icon: TbFileText, motion: "tilt" },
-  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "nudge" },
-  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "pop" },
-  { href: "/design", label: "Design", icon: TbPalette, motion: "lift" },
-  { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake" },
+  { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop", tone: "indigo" },
+  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift", tone: "sky" },
+  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin", tone: "cyan" },
+  { href: "/documents", label: "Docs", icon: TbFileText, motion: "tilt", tone: "violet" },
+  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "nudge", tone: "emerald" },
+  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "pop", tone: "amber" },
+  { href: "/design", label: "Design", icon: TbPalette, motion: "lift", tone: "fuchsia" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake", tone: "rose" },
 ];
 
 function NavRow({
@@ -78,7 +124,15 @@ function NavRow({
             active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
-          <Ico icon={item.icon} motion={item.motion} size={17} />
+          <span
+            className={cn(
+              "grid size-7 place-items-center rounded-lg ring-1",
+              TONE[item.tone].tile,
+              TONE[item.tone].icon,
+            )}
+          >
+            <Ico icon={item.icon} motion={item.motion} size={16} />
+          </span>
         </Link>
       </Tooltip>
     );
@@ -96,12 +150,15 @@ function NavRow({
           : "text-ink-2 hover:bg-hover hover:text-ink",
       )}
     >
-      <Ico
-        icon={item.icon}
-        motion={item.motion}
-        size={17}
-        className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
-      />
+      <span
+        className={cn(
+          "grid size-8 shrink-0 place-items-center rounded-xl ring-1 transition-transform group-hover:scale-[1.04]",
+          TONE[item.tone].tile,
+          TONE[item.tone].icon,
+        )}
+      >
+        <Ico icon={item.icon} motion={item.motion} size={16} />
+      </span>
       <span className="truncate">{item.label}</span>
     </Link>
   );
