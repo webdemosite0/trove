@@ -27,9 +27,9 @@ const FACE: Record<
   capacity: {
     icon: FiCpu,
     motion: "scan",
-    tone: "text-black",
-    tint: "bg-black/[0.04]",
-    ring: "border-black/10",
+    tone: "text-ink",
+    tint: "bg-sunk",
+    ring: "border-line",
   },
   auth: {
     icon: FiLock,
@@ -41,16 +41,16 @@ const FACE: Record<
   network: {
     icon: FiWifiOff,
     motion: "shake",
-    tone: "text-black",
-    tint: "bg-black/[0.04]",
-    ring: "border-black/10",
+    tone: "text-ink",
+    tint: "bg-sunk",
+    ring: "border-line",
   },
   unknown: {
     icon: FiAlertTriangle,
     motion: "alert",
-    tone: "text-black",
-    tint: "bg-black/[0.04]",
-    ring: "border-black/10",
+    tone: "text-ink",
+    tint: "bg-sunk",
+    ring: "border-line",
   },
 };
 
@@ -73,7 +73,7 @@ export function FailureNote({
     <div
       role="alert"
       className={cn(
-        "nx-in group rounded-[var(--r-panel)] border bg-white p-4 text-black backdrop-blur-sm",
+        "nx-in group rounded-[var(--r-panel)] border bg-raised p-4 text-ink backdrop-blur-sm shadow-[var(--sh-1)]",
         face.ring,
         compact ? "p-3.5" : "p-4 sm:p-5",
         className,
@@ -97,12 +97,12 @@ export function FailureNote({
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className={cn("font-semibold text-black", compact ? "text-[13.5px]" : "text-[14.5px]")}>
+          <p className={cn("font-semibold text-ink", compact ? "text-[13.5px]" : "text-[14.5px]")}>
             {f.title}
           </p>
           <p
             className={cn(
-              "mt-1 leading-relaxed text-black",
+              "mt-1 leading-relaxed text-ink-2",
               compact ? "text-[12.5px]" : "text-[13.5px]",
             )}
           >
@@ -134,7 +134,7 @@ export function FailureNote({
               <button
                 type="button"
                 onClick={onRetry}
-                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] border border-black/10 bg-white px-3 text-[12.5px] font-medium text-black transition-colors hover:bg-black/[0.03]"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] border border-line bg-sunk px-3 text-[12.5px] font-medium text-ink transition-colors hover:bg-hover"
               >
                 <Ico icon={FiRefreshCw} motion="spin" size={13} />
                 Try again
