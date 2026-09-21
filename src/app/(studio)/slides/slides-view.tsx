@@ -46,6 +46,10 @@ const EXAMPLES = [
   "A product launch deck for a mobile app",
 ];
 
+export function SpreadsheetsPlaceholderRemoved() {
+  return null;
+}
+
 export function SlidesView({
   recents = [],
   recentsLabel = "Recents",
@@ -160,27 +164,24 @@ export function SlidesView({
 
   if (turns.length === 0) {
     return (
-      <div className="nx-in relative mx-auto flex h-full min-h-0 max-w-[760px] flex-col justify-center overflow-y-auto px-5 py-16">
-        <div className="mb-7 text-center">
+      <div className="nx-in relative mx-auto flex w-full max-w-[760px] flex-col px-5 pb-16 pt-10 sm:pt-14">
+        <div className="mb-7 shrink-0 text-center">
           <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[var(--r-panel)] bg-accent/15 text-accent">
             <Ico icon={FiLayout} motion="lift" size={26} />
           </span>
-          <h1 className="text-[27px] font-semibold text-ink">Slides</h1>
+          <h1 className="text-[27px] font-semibold tracking-[-0.02em] text-ink">Decks</h1>
           <p className="mt-1.5 text-[14.5px] text-ink-3">
             Build a visual deck with photos, present it, then export PowerPoint.
           </p>
         </div>
 
-        <Composer onSend={run} placeholder="Create a deck about…" autoFocus />
+        <div className="shrink-0">
+          <Composer onSend={run} placeholder="Create a deck about…" autoFocus />
+        </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-2.5">
-          {EXAMPLES.map((e, i) => (
-            <button
-              key={e}
-              onClick={() => run(e)}
-              className="chip group nx-in"
-              style={{ animationDelay: `${80 + i * 50}ms`, animationFillMode: "backwards" }}
-            >
+          {EXAMPLES.map((e) => (
+            <button key={e} type="button" onClick={() => run(e)} className="chip group">
               {e}
             </button>
           ))}
@@ -477,52 +478,59 @@ export function SlidesView({
                 placeholder="No notes for this slide"
                 aria-label="Speaker notes"
                 rows={6}
-                className="w-full resize-none rounded-[var(--r-control)] border border-line bg-raised px-3 py-2.5 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-4 focus:border-accent/40"
+                className="w-full resize-y rounded-[var(--r-control)] border border-line bg-canvas px-3 py-2 text-[13px] text-ink outline-none focus:border-accent/50"
               />
             ) : (
-              <p className="text-[13px] text-ink-4">No notes for this slide</p>
+              <p className="text-[13px] text-ink-4">Select a slide to edit notes.</p>
             )}
 
             {slide ? (
-              <div className="mt-4">
-                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">
+              <>
+                <p className="mb-1.5 mt-5 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">
                   Layout
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {(["title", "bullets", "split", "photo", "quote", "section"] as const).map(
-                    (L) => (
-                      <button
-                        key={L}
-                        type="button"
-                        onClick={() => deck.setLayout(safeIndex, L)}
-                        className={cn(
-                          "rounded-full px-2.5 py-1 text-[11px] font-medium capitalize transition",
-                          slide.layout === L
-                            ? "bg-accent text-white"
-                            : "bg-raised text-ink-3 hover:bg-hover hover:text-ink",
-                        )}
-                      >
-                        {L}
-                      </button>
-                    ),
-                  )}
+                  {(["title", "bullets", "split", "quote", "section"] as const).map((layout) => (
+                    <button
+                      key={layout}
+                      type="button"
+                      onClick={() => deck.setLayout(safeIndex, layout)}
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-[11.5px] capitalize",
+                        slide.layout === layout
+                          ? "border-accent bg-accent/15 text-accent"
+                          : "border-line text-ink-3 hover:bg-hover",
+                      )}
+                    >
+                      {layout}
+                    </button>
+                  ))}
                 </div>
+              </>
+            ) : null}
+
+            <div className="mt-6 border-t border-line pt-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">
+                Ask the agent
+              </p>
+              <Composer
+                onSend={run}
+                placeholder="Rewrite this slide…"
+                busy={busy}
+              />
+              {error ? (
+                <FailureNote className="mt-3" error={error} onRetry={() => run(prompt)} />
+              ) : null}
+              {prompt ? (
                 <button
                   type="button"
-                  onClick={() => attachImageToSlide(safeIndex)}
+                  onClick={() => downloadMarkdown(text || "", `${filename}.md`)}
                   className="chip group mt-3 w-full !justify-center !px-3 !py-2 !text-[12.5px]"
                 >
-                  <Ico icon={FiImage} motion="pop" size={14} />{" "}
-                  {slide.image && /^https?:\/\//i.test(slide.image)
-                    ? "Regenerate image"
-                    : "Create image"}
+                  <Ico icon={FiDownload} motion="lift" size={13} /> Download markdown
                 </button>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="mobile-composer-dock shrink-0 border-t border-line p-3">
-            <Composer onSend={run} placeholder="Continue the deck…" disabled={busy} compact />
+              ) : null}
+            </div>
           </div>
         </aside>
       </div>
