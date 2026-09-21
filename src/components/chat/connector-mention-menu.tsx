@@ -106,7 +106,7 @@ export function ConnectorMentionMenu({
           : "bottom-[72px] left-3 w-[min(340px,calc(100%-24px))]",
         className,
       )}
-      onMouseDown={(event) => event.preventDefault()}
+      onPointerDown={(event) => event.preventDefault()}
     >
       <div className="flex items-center justify-between gap-3 border-b border-line/70 px-3.5 py-2.5">
         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
