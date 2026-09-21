@@ -6,6 +6,7 @@ import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { expensiveRequestLimit } from "@/lib/rate-limit";
+import { buildChatConnectorContext } from "@/lib/chat-connectors";
 
 export const runtime = "nodejs";
 
@@ -56,6 +57,9 @@ export async function POST(req: NextRequest) {
     tools = [];
   }
 
+  const lastUser = [...turns].reverse().find((turn) => turn.role === "user")?.text ?? "";
+  const connectorContext = await buildChatConnectorContext(lastUser);
+
   const system = `You are ${agent.name}, a specialist agent on a Trove engineering team.
 
 Your role: ${agent.role}
@@ -63,13 +67,16 @@ Your role: ${agent.role}
 Your operating instructions:
 ${agent.instructions}
 
-${
-  tools.length
-    ? `Capabilities you were configured with: ${tools.join(", ")}. You cannot
-actually call these yet — if a request needs one, say precisely what you would
-run and what you would need, rather than pretending you executed it.`
-    : `You have no tool access. Do not claim to have run anything.`
-}
+${tools.length ? `Agent-specific capabilities configured: ${tools.join(", ")}.` : ""}
+
+TROVE CONNECTOR BRIDGE
+Connected integrations may be selected with @mentions. When LIVE connector data
+is supplied below, use it as ground truth. Never claim a connected integration
+is unavailable merely because you cannot see it from the model itself. If a
+specific connector action lacks an adapter or permission, explain that exact
+limitation and do not invent data.
+${connectorContext.connectedNote}
+${connectorContext.liveContext}
 
 Stay in role. Be concrete and brief. Never invent results you did not compute.
 
