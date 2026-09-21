@@ -24,11 +24,13 @@ export default async function ShellLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [gate, mobile] = await Promise.all([resolveShell(), isMobile()]);
+  // Sequential await keeps ShellGate narrowing reliable under tsc.
+  const gate = await resolveShell();
   if (!gate.ok) return gate.screen;
-  const { user, balance } = gate;
+  const user = gate.user;
+  const balance = gate.balance ?? null;
 
-  if (mobile) {
+  if (await isMobile()) {
     return (
       <ToastProvider>
         <Backdrop />
