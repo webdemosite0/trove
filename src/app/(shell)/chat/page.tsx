@@ -4,27 +4,29 @@ import { listAllRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
-import { availableChatModels } from "@/lib/chat-models.server";
+import { listUserProjects } from "@/lib/projects";
 
 export const metadata = { title: "Chat" };
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string; q?: string }>;
+  searchParams: Promise<{ c?: string; q?: string; p?: string }>;
 }) {
-  const { c, q } = await searchParams;
-  const [saved, user, activity, mobile] = await Promise.all([
+  const { c, q, p } = await searchParams;
+  const [saved, user, activity, mobile, projects] = await Promise.all([
     c ? loadConversation(c) : Promise.resolve(null),
     currentUser(),
     listAllRecents(12),
     isMobile(),
+    listUserProjects(40),
   ]);
 
   const props = {
     name: user?.name?.split(" ")[0] ?? "there",
     activity,
-    models: availableChatModels(),
+    projects,
+    initialProjectId: typeof p === "string" ? p.slice(0, 128) : null,
     restored: saved
       ? { id: saved.id, title: saved.title, messages: saved.messages }
       : null,
