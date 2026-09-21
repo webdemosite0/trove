@@ -3,6 +3,8 @@
 export interface ProjectFile {
   path: string;
   content: string;
+  /** Published build assets may be base64 encoded when they are binary. */
+  encoding?: "utf8" | "base64";
 }
 
 export type TaskKind = "skill" | "read" | "write" | "check" | "think" | "plan";
