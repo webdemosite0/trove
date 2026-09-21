@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSaved } from "@/lib/use-saved";
 import type { Attachment } from "@/lib/attachments";
 import type { ModeId } from "@/lib/modes";
-import type { ChatModelId } from "@/lib/chat-models";
 import { localTimeZone } from "@/lib/context";
 
 export interface Turn {
@@ -21,6 +20,30 @@ function isImagePrompt(text: string): boolean {
       text,
     ) || /\b(txt2img|text to image|image of)\b/i.test(text)
   );
+}
+
+function parseProjectEdits(text: string) {
+  const files: { path: string; content: string }[] = [];
+  const re = /<<<FILE:\s*(.+?)\s*>>>\s*\n([\s\S]*?)<<<END>>>/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = re.exec(text))) {
+    const path = match[1].trim().replace(/^\/+/, "");
+    if (!path || path.includes("..")) continue;
+    files.push({ path, content: match[2].replace(/\s+$/, "") + "\n" });
+  }
+
+  return files;
+}
+
+function cleanProjectReply(text: string, changed: number) {
+  const withoutFiles = text
+    .replace(/<<<FILE:\s*.+?\s*>>>\s*\n[\s\S]*?<<<END>>>/g, "")
+    .trim();
+  const summary = withoutFiles.match(/SUMMARY:\s*([\s\S]*)$/i)?.[1]?.trim();
+  const body = summary || withoutFiles.replace(/SUMMARY:\s*/i, "").trim();
+  if (body) return body;
+  return changed ? `Updated ${changed} project file${changed === 1 ? "" : "s"}.` : text;
 }
 
 function distanceFromBottom(anchor: HTMLElement | null): number {
@@ -44,11 +67,11 @@ function distanceFromBottom(anchor: HTMLElement | null): number {
 export function useChatThread({
   restored,
   mode,
-  model,
+  projectId = null,
 }: {
   restored?: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
   mode: ModeId;
-  model: ChatModelId;
+  projectId?: string | null;
 }) {
   const { save, reset } = useSaved("chat", restored?.id ?? null);
 
@@ -185,7 +208,8 @@ export function useChatThread({
           body: JSON.stringify({
             messages: history.map(({ role, text }) => ({ role, text })),
             mode,
-            model,
+            model: "auto",
+            projectId,
             timeZone: localTimeZone(),
             attachments: files?.map(({ name, mimeType, size, data, kind }) => ({
               name,
@@ -204,6 +228,7 @@ export function useChatThread({
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffered = "";
+        let fullReply = "";
         let raf = 0;
 
         const flush = () => {
@@ -219,7 +244,9 @@ export function useChatThread({
         for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
-          buffered += decoder.decode(value, { stream: true });
+          const piece = decoder.decode(value, { stream: true });
+          fullReply += piece;
+          buffered += piece;
           // Coalesce network chunks into at most one React update per frame.
           // Fast providers can otherwise trigger dozens of full transcript
           // renders per second.
@@ -229,12 +256,43 @@ export function useChatThread({
         if (raf) cancelAnimationFrame(raf);
         flush();
 
+        let finalReply = fullReply;
+        if (projectId) {
+          const edits = parseProjectEdits(fullReply);
+          if (edits.length) {
+            try {
+              const apply = await fetch(
+                `/api/projects/${encodeURIComponent(projectId)}/apply`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ files: edits }),
+                },
+              );
+              const data = await apply.json().catch(() => null);
+              if (!apply.ok) {
+                throw new Error(data?.error || "Could not apply project changes.");
+              }
+              finalReply = cleanProjectReply(fullReply, edits.length);
+              window.dispatchEvent(new Event("trove:shell-meta-refresh"));
+            } catch (applyError) {
+              finalReply =
+                cleanProjectReply(fullReply, 0) +
+                "\n\nProject files were not saved: " +
+                (applyError instanceof Error ? applyError.message : "unknown error");
+            }
+          }
+        }
+
         setTurns((t) => {
-          void save(
-            t.map(({ role, text }) => ({ role, text })),
-            t[0]?.text,
+          const next = t.map((x) =>
+            x.id === replyId ? { ...x, text: finalReply } : x,
           );
-          return t;
+          void save(
+            next.map(({ role, text }) => ({ role, text })),
+            next[0]?.text,
+          );
+          return next;
         });
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -244,7 +302,7 @@ export function useChatThread({
         setBusy(false);
       }
     },
-    [save, mode, model, runImage],
+    [save, mode, projectId, runImage],
   );
 
   const send = useCallback(
