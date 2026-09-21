@@ -38,7 +38,7 @@ async function slackApi(
 export async function listSlackChannels(
   token: string,
   limit = 30,
-): Promise<{ id: string; name: string; isPrivate: boolean }[]> {
+): Promise<{ id: string; name: string; isPrivate: boolean; isMember: boolean }[]> {
   const data = await slackApi(token, "conversations.list", {
     types: "public_channel,private_channel",
     exclude_archived: "true",
@@ -53,6 +53,7 @@ export async function listSlackChannels(
         id: String(row.id ?? ""),
         name: String(row.name ?? ""),
         isPrivate: Boolean(row.is_private),
+        isMember: Boolean(row.is_member),
       };
     })
     .filter((c) => c.id && c.name);
@@ -75,6 +76,137 @@ export interface SlackMessage {
   text: string;
   ts: string;
   time: string;
+}
+
+export interface SlackIdentity {
+  team: string;
+  user: string;
+  teamId: string;
+  userId: string;
+  url: string;
+}
+
+export async function slackIdentity(token: string): Promise<SlackIdentity> {
+  const data = await slackApi(token, "auth.test");
+  if (!data.ok) throw new Error(String(data.error ?? "auth.test failed"));
+  return {
+    team: String(data.team ?? ""),
+    user: String(data.user ?? ""),
+    teamId: String(data.team_id ?? ""),
+    userId: String(data.user_id ?? ""),
+    url: String(data.url ?? ""),
+  };
+}
+
+export interface SlackWorkspaceMessage extends SlackMessage {
+  channel: string;
+  channelId: string;
+}
+
+export async function recentSlackMessagesAcrossChannels(
+  token: string,
+  opts: { channelLimit?: number; perChannel?: number; totalLimit?: number } = {},
+): Promise<{
+  messages: SlackWorkspaceMessage[];
+  readableChannels: string[];
+  skippedChannels: number;
+}> {
+  const channelLimit = Math.min(20, Math.max(1, opts.channelLimit ?? 10));
+  const perChannel = Math.min(10, Math.max(1, opts.perChannel ?? 5));
+  const totalLimit = Math.min(50, Math.max(1, opts.totalLimit ?? 24));
+
+  const channels = await listSlackChannels(token, 100);
+  const ordered = [
+    ...channels.filter((c) => c.isMember),
+    ...channels.filter((c) => !c.isMember),
+  ].slice(0, channelLimit);
+
+  const messages: SlackWorkspaceMessage[] = [];
+  const readableChannels: string[] = [];
+  let skippedChannels = 0;
+
+  for (const channel of ordered) {
+    try {
+      const data = await slackApi(token, "conversations.history", {
+        channel: channel.id,
+        limit: String(perChannel),
+      });
+      if (!data.ok) {
+        const error = String(data.error ?? "");
+        if (
+          error === "not_in_channel" ||
+          error === "channel_not_found" ||
+          error === "missing_scope"
+        ) {
+          skippedChannels += 1;
+          continue;
+        }
+        throw new Error(error || "conversations.history failed");
+      }
+
+      readableChannels.push(channel.name);
+      const list = Array.isArray(data.messages) ? data.messages : [];
+      for (const item of list) {
+        const row = item as Record<string, unknown>;
+        const text = String(row.text ?? "").trim();
+        if (!text) continue;
+        const ts = String(row.ts ?? "");
+        const sec = Number(ts.split(".")[0] || 0);
+        messages.push({
+          channel: channel.name,
+          channelId: channel.id,
+          user: String(row.username ?? row.user ?? "user"),
+          text,
+          ts,
+          time: sec ? new Date(sec * 1000).toISOString() : "",
+        });
+      }
+    } catch (error) {
+      skippedChannels += 1;
+      console.warn(
+        "[slack] channel history skipped",
+        channel.name,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  messages.sort((a, b) => Number(b.ts) - Number(a.ts));
+
+  return {
+    messages: messages.slice(0, totalLimit),
+    readableChannels,
+    skippedChannels,
+  };
+}
+
+export function formatSlackWorkspaceMessagesForModel(
+  messages: SlackWorkspaceMessage[],
+  readableChannels: string[],
+  skippedChannels = 0,
+): string {
+  if (!messages.length) {
+    return (
+      "LIVE SLACK DATA — no recent readable messages were returned. " +
+      (readableChannels.length
+        ? `Readable channels checked: ${readableChannels.map((c) => `#${c}`).join(", ")}.`
+        : "No readable channels were available to this Slack credential.") +
+      (skippedChannels ? ` ${skippedChannels} channel(s) could not be read with the current scopes/membership.` : "")
+    );
+  }
+
+  const lines = messages.map((m) => {
+    const when = m.time ? m.time.replace("T", " ").replace(/\.\d+Z$/, " UTC") : m.ts;
+    return `- [${when}] #${m.channel} — ${m.user}: ${m.text.replace(/\n/g, " ")}`;
+  });
+
+  return (
+    `LIVE SLACK DATA — newest recent messages across readable channels (${messages.length}):\n` +
+    lines.join("\n") +
+    (skippedChannels
+      ? `\n${skippedChannels} channel(s) were skipped because the connected Slack credential could not read them.`
+      : "")
+  );
 }
 
 export async function recentSlackMessages(
