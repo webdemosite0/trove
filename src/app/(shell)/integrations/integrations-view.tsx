@@ -137,41 +137,41 @@ export function IntegrationsView({
   }
 
   return (
-    <div className="min-h-[calc(100dvh-3.5rem)] bg-[#0a0a0a] text-white">
+    <div className="min-h-[calc(100dvh-3.5rem)] bg-transparent text-ink">
       <div className="mx-auto max-w-[920px] px-5 pb-16 pt-10 sm:px-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-white">
+            <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-ink">
               Plugins
             </h1>
-            <p className="mt-1.5 text-[15px] text-white/55">
+            <p className="mt-1.5 text-[15px] text-ink-3">
               Work with Trove across your favorite tools.
             </p>
           </div>
           <label className="relative block w-full sm:max-w-[260px]">
             <FiSearch
               size={15}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4"
             />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search plugins"
-              className="h-11 w-full rounded-full border border-white/10 bg-white/5 pl-10 pr-4 text-[14px] text-white outline-none placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.08]"
+              className="h-11 w-full rounded-full border border-line bg-raised pl-10 pr-4 text-[14px] text-ink outline-none shadow-[var(--sh-1)] placeholder:text-ink-4 focus:border-accent"
             />
           </label>
         </div>
 
         {nangoError ? (
-          <p className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-[13px] text-rose-200">
+          <p className="mt-4 rounded-xl border border-critical/35 bg-critical-soft px-3.5 py-2.5 text-[13px] text-critical">
             {nangoError}
           </p>
         ) : null}
 
         {installed.length > 0 ? (
           <section className="mt-10">
-            <p className="text-[13px] font-medium text-white/50">
-              Installed <span className="text-white/30">›</span>
+            <p className="text-[13px] font-medium text-ink-3">
+              Installed <span className="text-ink-4">›</span>
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               {installed.map((s) => (
@@ -179,7 +179,7 @@ export function IntegrationsView({
                   key={s.id}
                   href={`/integrations/${s.id}`}
                   title={s.name}
-                  className="group relative grid size-[52px] place-items-center rounded-2xl bg-white shadow-[0_8px_24px_rgba(0,0,0,.35)] ring-1 ring-white/10 transition hover:scale-105 hover:ring-white/30"
+                  className="group relative grid size-[52px] place-items-center rounded-2xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:scale-105 hover:ring-line-strong"
                 >
                   <ServiceMark id={s.id} name={s.name} size={30} />
                 </Link>
@@ -189,29 +189,29 @@ export function IntegrationsView({
         ) : null}
 
         <section className="mt-12">
-          <h2 className="text-[13px] font-medium text-white/50">Popular</h2>
+          <h2 className="text-[13px] font-medium text-ink-3">Popular</h2>
           <ul className="mt-4 grid gap-1 sm:grid-cols-2">
             {popular.map((s) => {
               const on = byId.has(s.id);
               return (
                 <li key={s.id}>
-                  <div className="group flex items-center gap-3.5 rounded-2xl px-2.5 py-3 transition hover:bg-white/[0.04]">
+                  <div className="group flex items-center gap-3.5 rounded-2xl px-2.5 py-3 transition hover:bg-hover/70">
                     <Link
                       href={`/integrations/${s.id}`}
-                      className="grid size-[48px] shrink-0 place-items-center rounded-2xl bg-white shadow-md ring-1 ring-black/5"
+                      className="grid size-[48px] shrink-0 place-items-center rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line"
                     >
                       <ServiceMark id={s.id} name={s.name} size={28} />
                     </Link>
                     <Link href={`/integrations/${s.id}`} className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-medium text-white">{s.name}</p>
-                      <p className="truncate text-[13px] text-white/45">{s.blurb}</p>
+                      <p className="truncate text-[15px] font-medium text-ink">{s.name}</p>
+                      <p className="truncate text-[13px] text-ink-3">{s.blurb}</p>
                     </Link>
                     {on ? (
                       <button
                         type="button"
                         disabled={pending}
                         onClick={() => remove(s.id)}
-                        className="grid size-9 shrink-0 place-items-center rounded-full border border-emerald-400/30 bg-emerald-500/15 text-emerald-300"
+                        className="grid size-9 shrink-0 place-items-center rounded-full border border-positive/30 bg-positive-soft text-positive"
                         title="Connected — click to disconnect"
                       >
                         <FiCheck size={16} />
@@ -221,7 +221,7 @@ export function IntegrationsView({
                         type="button"
                         disabled={!signedIn || nangoBusy !== null}
                         onClick={() => startConnect(s.id)}
-                        className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 text-white/70 transition hover:border-white/30 hover:bg-white/10 hover:text-white disabled:opacity-40"
+                        className="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-accent/50 hover:bg-hover hover:text-ink disabled:opacity-40"
                         aria-label={`Add ${s.name}`}
                       >
                         {nangoBusy === s.id ? (
@@ -233,7 +233,7 @@ export function IntegrationsView({
                     ) : (
                       <Link
                         href={`/integrations/${s.id}`}
-                        className="grid size-9 shrink-0 place-items-center rounded-full border border-white/10 text-white/40"
+                        className="grid size-9 shrink-0 place-items-center rounded-full border border-white/10 text-ink-4"
                       >
                         <FiPlus size={18} />
                       </Link>
@@ -246,13 +246,13 @@ export function IntegrationsView({
         </section>
 
         {nangoOn ? (
-          <p className="mt-10 flex items-center gap-1.5 text-[12.5px] text-white/35">
+          <p className="mt-10 flex items-center gap-1.5 text-[12.5px] text-ink-4">
             OAuth apps via Nango
             <a
               href="https://app.nango.dev"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sky-400 hover:underline"
+              className="inline-flex items-center gap-1 text-accent hover:underline"
             >
               <FiExternalLink size={11} />
             </a>
