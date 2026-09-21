@@ -42,9 +42,14 @@ export const metadata: Metadata = {
   keywords: [...site.keywords],
   applicationName: site.name,
   icons: {
-    icon: [{ url: "/icon", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
-    shortcut: "/icon",
+    icon: [
+      { url: "/api/app-icon/192?v=trove-t-20260921", sizes: "192x192", type: "image/png" },
+      { url: "/api/app-icon/512?v=trove-t-20260921", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon?v=trove-t-20260921", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/api/app-icon/192?v=trove-t-20260921",
   },
   category: "technology",
   authors: [{ name: site.name, url: site.url }],
@@ -125,9 +130,9 @@ function StructuredData() {
         url: site.url,
         logo: {
           "@type": "ImageObject",
-          url: `${site.url}/apple-icon`,
-          width: 180,
-          height: 180,
+          url: `${site.url}/api/app-icon/512?v=trove-t-20260921`,
+          width: 512,
+          height: 512,
         },
         image: `${site.url}${site.ogImagePath}`,
         description: site.shortDescription,
