@@ -264,7 +264,7 @@ export function Composer({
       {mentionedIds.length ? (
         <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
           {mentionedIds.map((id) => (
-            <ConnectorChip key={id} id={id} tone="light" />
+            <ConnectorChip key={id} id={id} tone="auto" />
           ))}
         </div>
       ) : null}
