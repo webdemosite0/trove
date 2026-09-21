@@ -45,6 +45,7 @@ export function AuthCard({
   oauthError,
   next,
   justVerified = false,
+  passwordReset = false,
   referralCode,
 }: {
   mode: "login" | "signup";
@@ -53,6 +54,7 @@ export function AuthCard({
   oauthError?: string;
   next?: string;
   justVerified?: boolean;
+  passwordReset?: boolean;
   /** From /r/CODE or ?ref= — applied automatically, no manual code field. */
   referralCode?: string;
 }) {
@@ -97,11 +99,11 @@ export function AuthCard({
           : "Please enter your email to create your workspace"}
       </p>
 
-      {justVerified ? (
+      {justVerified || passwordReset ? (
         <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-left">
           <Ico icon={FiCheck} motion="check" size={14} className="mt-0.5 shrink-0 text-emerald-600" />
           <p className="text-[12.5px] leading-5 text-emerald-800">
-            Email confirmed. Sign in to continue.
+            {passwordReset ? "Password updated. Sign in with your new password." : "Email confirmed. Sign in to continue."}
           </p>
         </div>
       ) : null}
@@ -156,7 +158,7 @@ export function AuthCard({
           <span className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-slate-700">
             <span>Password</span>
             {isLogin ? (
-              <Link href="/login" className="font-medium text-sky-600 transition hover:text-sky-700">
+              <Link href="/forgot-password" className="font-medium text-sky-600 transition hover:text-sky-700">
                 Forgot?
               </Link>
             ) : null}
