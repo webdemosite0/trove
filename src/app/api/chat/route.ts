@@ -37,6 +37,15 @@ Do not claim you executed a deploy unless they used Deploy in the builder.`;
 
 const SYSTEM_FAST = `You are Trove. Answer briefly and naturally. No tools, no search, no long preambles.`;
 
+function needsWebSearch(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (/https?:\/\/|\bwww\./i.test(t)) return true;
+  return /\b(search|browse|look up|find online|on the web|internet|source this|cite sources|latest|current|today|tonight|this week|this month|recent news|breaking|live score|weather|stock price|market price|exchange rate|opening hours|release date|just announced|newly released)\b/i.test(
+    t,
+  );
+}
+
 function isSimpleTurn(turns: Turn[]): boolean {
   const last = [...turns].reverse().find((t) => t.role === "user");
   if (!last) return false;
@@ -172,7 +181,8 @@ async function handle(req: NextRequest) {
     isSimpleTurn(turns) &&
     attachments.length === 0 &&
     connectorContext.requested.length === 0;
-  const wantSearch = !simple && connectorContext.requested.length === 0;
+  const wantSearch =
+    connectorContext.requested.length === 0 && needsWebSearch(lastUser);
   const resolved = modeFor(mode);
 
   const custom = await instructionsBlock(account.userId).catch(() => "");
