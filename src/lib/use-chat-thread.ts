@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSaved } from "@/lib/use-saved";
 import type { Attachment } from "@/lib/attachments";
 import type { ModeId } from "@/lib/modes";
@@ -51,7 +50,6 @@ export function useChatThread({
   mode: ModeId;
   model: ChatModelId;
 }) {
-  const router = useRouter();
   const { save, reset } = useSaved("chat", restored?.id ?? null);
 
   const [turns, setTurns] = useState<Turn[]>(() =>
@@ -122,9 +120,8 @@ export function useChatThread({
         );
         return next;
       });
-      router.refresh();
     },
-    [router, save],
+    [save],
   );
 
   const runImage = useCallback(
@@ -206,14 +203,32 @@ export function useChatThread({
         }
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
+        let buffered = "";
+        let raf = 0;
+
+        const flush = () => {
+          raf = 0;
+          if (!buffered) return;
+          const chunk = buffered;
+          buffered = "";
           setTurns((t) =>
             t.map((x) => (x.id === replyId ? { ...x, text: x.text + chunk } : x)),
           );
+        };
+
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffered += decoder.decode(value, { stream: true });
+          // Coalesce network chunks into at most one React update per frame.
+          // Fast providers can otherwise trigger dozens of full transcript
+          // renders per second.
+          if (!raf) raf = requestAnimationFrame(flush);
         }
+
+        if (raf) cancelAnimationFrame(raf);
+        flush();
+
         setTurns((t) => {
           void save(
             t.map(({ role, text }) => ({ role, text })),
@@ -221,7 +236,6 @@ export function useChatThread({
           );
           return t;
         });
-        router.refresh();
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
         setTurns((t) => t.filter((x) => x.id !== replyId));
@@ -230,7 +244,7 @@ export function useChatThread({
         setBusy(false);
       }
     },
-    [router, save, mode, model, runImage],
+    [save, mode, model, runImage],
   );
 
   const send = useCallback(
