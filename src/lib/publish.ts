@@ -2,6 +2,10 @@ import "server-only";
 
 import { one, run, uid } from "@/lib/db";
 import { bundle, type ProjectFile } from "@/lib/builder";
+import {
+  buildE2BProductionSite,
+  connectOrCreateSandbox,
+} from "@/lib/e2b-runtime";
 
 function cleanRootDomain(value: string | undefined) {
   return String(value || "troveai.site")
@@ -335,6 +339,31 @@ export function isViteShell(html: string): boolean {
   );
 }
 
+function needsProductionBuild(
+  html: string | undefined | null,
+  files: ProjectFile[] | undefined | null,
+) {
+  if (!Array.isArray(files) || !files.length) return false;
+
+  const index = files.find(
+    (file) => file.path === "index.html" || file.path.endsWith("/index.html"),
+  );
+  const packageFile = files.find((file) => file.path === "package.json");
+  const packageText = packageFile?.content || "";
+  const hasVite =
+    /["']vite["']\s*:/.test(packageText) ||
+    /["']@vitejs\/plugin-react["']\s*:/.test(packageText);
+  const hasAppSource = files.some((file) =>
+    /(?:^|\/)src\/.*\.(?:jsx|tsx|js|ts)$/i.test(file.path),
+  );
+
+  return (
+    isViteShell(index?.content || "") ||
+    isViteShell(html || "") ||
+    (hasVite && hasAppSource)
+  );
+}
+
 export function buildPublishHtml(
   html: string | undefined | null,
   files: ProjectFile[] | undefined | null,
@@ -404,7 +433,36 @@ export async function publishSite(opts: {
 
   const slug = check.normalized;
   const title = String(opts.title || slug).slice(0, 120);
-  const html = buildPublishHtml(opts.html, opts.files, title);
+
+  let publishFiles = Array.isArray(opts.files) ? opts.files : [];
+  let html = "";
+
+  if (needsProductionBuild(opts.html, publishFiles)) {
+    let sandbox: Awaited<ReturnType<typeof connectOrCreateSandbox>>["sandbox"] | null = null;
+    try {
+      const connected = await connectOrCreateSandbox(null, opts.projectId || slug);
+      sandbox = connected.sandbox;
+      const built = await buildE2BProductionSite(sandbox, publishFiles);
+      publishFiles = built.files;
+      html = built.html;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const err = new Error(
+        message.includes("E2B_API_KEY")
+          ? "Production publishing is temporarily unavailable."
+          : "The site could not be compiled for production. Open Preview, fix any build error, then Publish again.",
+      ) as Error & { status?: number };
+      err.status = message.includes("E2B_API_KEY") ? 503 : 422;
+      throw err;
+    } finally {
+      if (sandbox) {
+        await sandbox.kill().catch(() => undefined);
+      }
+    }
+  } else {
+    html = buildPublishHtml(opts.html, publishFiles, title);
+  }
+
   if (!html.trim()) {
     const err = new Error(
       "No website content to publish. Build the site in preview first, then Publish.",
@@ -413,15 +471,27 @@ export async function publishSite(opts: {
     throw err;
   }
 
-  const filesJson =
-    Array.isArray(opts.files) && opts.files.length
-      ? JSON.stringify(
-          opts.files.map((file) => ({
-            path: String(file.path || "").replace(/^\/+/, "").slice(0, 240),
-            content: String(file.content ?? "").slice(0, 500_000),
-          })),
-        )
-      : null;
+  let storedBytes = 0;
+  const normalizedFiles = publishFiles.map((file) => {
+    const path = String(file.path || "").replace(/^\/+/, "").slice(0, 240);
+    const content = String(file.content ?? "");
+    storedBytes += Buffer.byteLength(content, "utf8");
+    return {
+      path,
+      content,
+      ...(file.encoding ? { encoding: file.encoding } : {}),
+    };
+  });
+
+  if (storedBytes > 22_000_000) {
+    const err = new Error(
+      "This production build is too large to publish. Remove large local assets and try again.",
+    ) as Error & { status?: number };
+    err.status = 413;
+    throw err;
+  }
+
+  const filesJson = normalizedFiles.length ? JSON.stringify(normalizedFiles) : null;
 
   const existing = await one(
     `SELECT version, user_id, project_id FROM published_sites WHERE slug = ?`,
