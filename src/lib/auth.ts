@@ -148,13 +148,18 @@ export async function completeOnboarding(
   }
 }
 
-export async function issueToken(userId: string, purpose: string): Promise<string> {
+export async function issueToken(
+  userId: string,
+  purpose: string,
+  opts?: { ttlMs?: number },
+): Promise<string> {
   const token = randomBytes(32).toString("hex");
+  const ttlMs = Math.max(5 * 60_000, opts?.ttlMs ?? TOKEN_HOURS * 3_600_000);
   await run(`DELETE FROM auth_tokens WHERE user_id = ? AND purpose = ?`, [userId, purpose]);
   await run(
     `INSERT INTO auth_tokens (token, user_id, purpose, expires_at, created_at)
      VALUES (?, ?, ?, ?, ?)`,
-    [token, userId, purpose, Date.now() + TOKEN_HOURS * 3_600_000, Date.now()],
+    [token, userId, purpose, Date.now() + ttlMs, Date.now()],
   );
   return token;
 }
@@ -201,6 +206,17 @@ export async function startSession(userId: string) {
     path: "/",
     maxAge: SESSION_DAYS * 86_400,
   });
+}
+
+export async function resetPassword(userId: string, password: string) {
+  await run(`UPDATE users SET password_hash = ?, provider = 'password' WHERE id = ?`, [
+    hashPassword(password),
+    userId,
+  ]);
+  // A password reset is an account-recovery event. Revoke every existing
+  // session so a stolen session cannot survive the credential change.
+  await run(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
+  await run(`DELETE FROM auth_tokens WHERE user_id = ? AND purpose = 'reset-password'`, [userId]);
 }
 
 export async function endSession() {
