@@ -61,10 +61,16 @@ export function ThemePicker() {
 
   return (
     <Panel
-      title="Appearance"
-      description="Applies to this browser. It is remembered on this device rather than on your account, so another machine can be set differently."
+      title="Light Mode & Dark Mode"
+      description="Choose how Trove looks on this device. Light Mode uses bright, soft surfaces; Dark Mode uses deep surfaces with higher-contrast controls. System Default follows your device automatically."
     >
-      <div role="radiogroup" aria-label="Colour theme" className="grid gap-3 sm:grid-cols-3">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-line bg-sunk px-2.5 py-1 text-[11px] font-medium text-ink-3">
+          Current: {THEME_OPTIONS.find((option) => option.value === theme)?.label ?? "Light Mode"}
+        </span>
+        <span className="text-[11.5px] text-ink-4">Saved only in this browser</span>
+      </div>
+      <div role="radiogroup" aria-label="Light Mode and Dark Mode" className="grid gap-3 sm:grid-cols-3">
         {THEME_OPTIONS.map((o) => {
           const active = theme === o.value;
           return (
@@ -75,11 +81,11 @@ export function ThemePicker() {
               aria-checked={active}
               onClick={() => choose(o.value)}
               className={cn(
-                "group rounded-[var(--r-card)] border p-2 text-left transition-[border-color,box-shadow]",
+                "group rounded-[18px] border bg-raised p-2.5 text-left transition-[border-color,box-shadow,transform] hover:-translate-y-0.5",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
                 active
-                  ? "border-accent shadow-[0_0_0_1px_var(--color-accent)]"
-                  : "border-line hover:border-line-strong",
+                  ? "border-accent shadow-[0_0_0_1px_var(--color-accent),var(--elev)]"
+                  : "border-line shadow-[var(--sh-1)] hover:border-line-strong hover:shadow-[var(--elev)]",
               )}
             >
               {/* System is drawn as two halves side by side rather than a
@@ -88,7 +94,7 @@ export function ThemePicker() {
                   "whichever your machine is set to". */}
               <span
                 aria-hidden
-                className="flex h-[72px] overflow-hidden rounded-[var(--r-control)] border border-line"
+                className="flex h-[88px] overflow-hidden rounded-[14px] border border-line"
               >
                 {o.value === "system" ? (
                   <>
@@ -104,11 +110,11 @@ export function ThemePicker() {
                 )}
               </span>
 
-              <span className="mt-2 flex items-center gap-1.5 px-0.5 pb-0.5">
+              <span className="mt-2.5 flex items-center gap-2 px-0.5 pb-0.5">
                 <o.icon size={14} className={active ? "text-accent" : "text-ink-4"} />
                 <span
                   className={cn(
-                    "text-[13px]",
+                    "text-[13px] tracking-[-0.01em]",
                     active ? "font-medium text-ink" : "text-ink-2",
                   )}
                 >
