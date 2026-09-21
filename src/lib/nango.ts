@@ -225,15 +225,19 @@ export async function syncNangoConnections(): Promise<{ synced: string[] }> {
     });
 
     if (!canStoreSecrets()) {
+      // This payload contains only Nango identifiers, not an OAuth access token.
+      // Keeping the integration id with the connection id lets server-side chat
+      // resolve a fresh provider token later even when secret encryption is off.
       await run(
         `INSERT INTO connections (user_id, service, kind, secret, account, hint, verified_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (user_id, service) DO UPDATE SET
            kind = excluded.kind,
+           secret = excluded.secret,
            account = excluded.account,
            hint = excluded.hint,
            verified_at = excluded.verified_at`,
-        [user.id, service, "nango", connectionId, account, "via Nango", now],
+        [user.id, service, "nango", payload, account, "via Nango", now],
       );
     } else {
       await run(
