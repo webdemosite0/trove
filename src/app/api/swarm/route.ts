@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { remember } from "@/lib/recents";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -80,6 +81,15 @@ restating the task.`;
       { error: `Could not reach the database to check your credits: ${why}` },
       { status: 503 },
     );
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "swarm",
+      limit: 60,
+    });
+    if (limited) return limited;
   }
 
   try {
