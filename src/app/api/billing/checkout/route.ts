@@ -124,7 +124,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const price = priceFor(plan.id);
+  const price = priceFor(plan.id, interval);
   if (!price) {
     await opsAlert("billing_config_missing", {
       provider: "stripe",
