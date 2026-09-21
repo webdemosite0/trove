@@ -11,9 +11,7 @@ import {
   type Attachment,
 } from "@/lib/attachments";
 import { ModePicker } from "@/components/chat/mode-picker";
-import { ModelPicker } from "@/components/chat/model-picker";
 import type { ModeId } from "@/lib/modes";
-import type { ChatModelId, ChatModelOption } from "@/lib/chat-models";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
 import { ConnectorChip } from "@/components/chat/connector-chip";
@@ -28,9 +26,9 @@ import {
 /**
  * The phone composer.
  *
- * The phone gets a dedicated composer so controls remain thumb-sized. Model
- * and response-style pickers collapse into compact pills while their menus
- * open as bottom sheets, keeping the text box usable even on 320px screens.
+ * The phone gets a dedicated composer so controls remain thumb-sized.
+ * Project and response-style controls stay compact so the text box remains
+ * usable even on 320px screens.
  */
 export function MobileComposer({
   onSend,
@@ -38,9 +36,7 @@ export function MobileComposer({
   placeholder = "Ask anything, or describe what to build…",
   mode,
   onModeChange,
-  model,
-  modelOptions,
-  onModelChange,
+  leading,
   autoFocus = false,
   initialValue = "",
 }: {
@@ -49,9 +45,7 @@ export function MobileComposer({
   placeholder?: string;
   mode?: ModeId;
   onModeChange?: (id: ModeId) => void;
-  model?: ChatModelId;
-  modelOptions?: ChatModelOption[];
-  onModelChange?: (id: ChatModelId) => void;
+  leading?: React.ReactNode;
   autoFocus?: boolean;
   /** Prefills the box — an idea typed before signing in, for instance. */
   initialValue?: string;
@@ -255,15 +249,7 @@ export function MobileComposer({
             }}
           />
 
-        {model && modelOptions?.length && onModelChange ? (
-          <ModelPicker
-            value={model}
-            options={modelOptions}
-            onChange={onModelChange}
-            disabled={disabled}
-            touch
-          />
-        ) : null}
+        {leading}
 
         {mode && onModeChange ? (
           <ModePicker value={mode} onChange={onModeChange} disabled={disabled} touch />
