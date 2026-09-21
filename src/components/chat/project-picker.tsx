@@ -9,6 +9,11 @@ import {
   FiX,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
+import {
+  localFolderSupported,
+  pickLocalProject,
+  type LocalProjectWorkspace,
+} from "@/lib/local-project";
 
 export interface ChatProjectOption {
   id: string;
@@ -23,6 +28,9 @@ export function ProjectPicker({
   value,
   onChange,
   onCreated,
+  localName = "",
+  onLocalFolder,
+  onClearLocal,
   disabled = false,
   compact = false,
 }: {
@@ -30,6 +38,9 @@ export function ProjectPicker({
   value: string | null;
   onChange: (id: string | null) => void;
   onCreated?: (project: ChatProjectOption) => void;
+  localName?: string;
+  onLocalFolder?: (workspace: LocalProjectWorkspace) => void;
+  onClearLocal?: () => void;
   disabled?: boolean;
   compact?: boolean;
 }) {
@@ -37,6 +48,7 @@ export function ProjectPicker({
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [pending, setPending] = useState(false);
+  const [openingLocal, setOpeningLocal] = useState(false);
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
 
@@ -44,6 +56,28 @@ export function ProjectPicker({
     () => projects.find((project) => project.id === value) ?? null,
     [projects, value],
   );
+  const localActive = Boolean(localName);
+
+  async function openLocal() {
+    if (!localFolderSupported() || openingLocal) {
+      setError("Local folders require Chrome or Edge on desktop.");
+      return;
+    }
+    setOpeningLocal(true);
+    setError("");
+    try {
+      const workspace = await pickLocalProject();
+      onLocalFolder?.(workspace);
+      setOpen(false);
+    } catch (e) {
+      const name = e instanceof DOMException ? e.name : "";
+      if (name !== "AbortError") {
+        setError(e instanceof Error ? e.message : "Could not open local folder.");
+      }
+    } finally {
+      setOpeningLocal(false);
+    }
+  }
 
   async function create() {
     const projectName = name.trim();
@@ -82,7 +116,7 @@ export function ProjectPicker({
         className={cn(
           "group inline-flex items-center gap-1.5 rounded-full border transition",
           compact ? "h-8 px-2.5 text-[11.5px]" : "h-9 px-3 text-[12.5px]",
-          active
+          active || localActive
             ? "border-violet-400/25 bg-violet-500/10 text-ink shadow-[0_4px_18px_-12px_var(--btn-glow)]"
             : "border-line bg-raised/70 text-ink-3 hover:border-line-strong hover:bg-hover hover:text-ink",
           disabled && "opacity-50",
@@ -91,9 +125,9 @@ export function ProjectPicker({
         aria-haspopup="menu"
         title={active ? `Project: ${active.name}` : "Choose project"}
       >
-        <FiFolder size={compact ? 13 : 14} className={active ? "text-violet-500 dark:text-violet-300" : "text-ink-4"} />
+        <FiFolder size={compact ? 13 : 14} className={active || localActive ? "text-violet-500 dark:text-violet-300" : "text-ink-4"} />
         <span className="max-w-[120px] truncate font-medium">
-          {active?.name || "Project"}
+          {localName || active?.name || "Project"}
         </span>
         <FiChevronDown size={11} className={cn("text-ink-4 transition", open && "rotate-180")} />
       </button>
@@ -122,18 +156,19 @@ export function ProjectPicker({
                 type="button"
                 onClick={() => {
                   onChange(null);
+                  onClearLocal?.();
                   setOpen(false);
                 }}
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-hover",
-                  !active && "bg-accent-soft/45",
+                  !active && !localActive && "bg-accent-soft/45",
                 )}
               >
                 <span className="grid size-8 place-items-center rounded-xl bg-sunk text-ink-4">
                   <FiX size={14} />
                 </span>
                 <span className="flex-1 text-[12.5px] font-medium text-ink">No project</span>
-                {!active ? <FiCheck size={13} className="text-accent" /> : null}
+                {!active && !localActive ? <FiCheck size={13} className="text-accent" /> : null}
               </button>
 
               {projects.map((project) => (
@@ -141,6 +176,7 @@ export function ProjectPicker({
                   key={project.id}
                   type="button"
                   onClick={() => {
+                    onClearLocal?.();
                     onChange(project.id);
                     setOpen(false);
                   }}
@@ -162,6 +198,35 @@ export function ProjectPicker({
             </div>
 
             <div className="border-t border-line p-2">
+              <button
+                type="button"
+                onClick={() => void openLocal()}
+                disabled={openingLocal}
+                className={cn(
+                  "mb-1 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left transition",
+                  localActive
+                    ? "bg-gradient-to-r from-fuchsia-500/10 to-sky-500/10 text-ink"
+                    : "text-ink-2 hover:bg-hover",
+                )}
+              >
+                <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500/15 to-sky-500/15 text-fuchsia-500 dark:text-fuchsia-300">
+                  <FiFolder size={14} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] font-semibold">
+                    {openingLocal ? "Opening folder…" : localActive ? localName : "Open local folder"}
+                  </span>
+                  <span className="block text-[10.5px] text-ink-4">
+                    Chrome / Edge · reads code, skips secrets and build folders
+                  </span>
+                </span>
+                {localActive ? <FiCheck size={13} className="text-accent" /> : null}
+              </button>
+
+              {error && !creating ? (
+                <p className="px-2 pb-1 text-[10.5px] text-critical">{error}</p>
+              ) : null}
+
               {creating ? (
                 <div className="rounded-xl bg-sunk p-2">
                   <input
