@@ -48,7 +48,7 @@ export default async function Landing() {
   const free = PLANS[0];
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#f4f2ff]">
+    <div className="relative min-h-screen overflow-x-hidden bg-canvas text-ink">
       <LandingScene />
       <LandingNav />
 
