@@ -1,38 +1,62 @@
-/* Sidebar — dark mode hierarchy */
-:root:not([data-theme="light"]) .nx-sidebar,
-:root[data-theme="dark"] .nx-sidebar {
-  color: #f5f5f7;
-  background: color-mix(in oklab, var(--color-rail) 94%, #000 6%);
-  border-color: var(--color-line);
+/* Sidebar theme polish. Theme state is explicit on <html>. */
+
+.nx-referral-light {
+  display: block;
+}
+.nx-referral-dark {
+  display: none;
 }
 
-:root:not([data-theme="light"]) .nx-sidebar a,
-:root:not([data-theme="light"]) .nx-sidebar button,
+:root[data-theme="dark"] .nx-referral-light {
+  display: none;
+}
+:root[data-theme="dark"] .nx-referral-dark {
+  display: block;
+}
+
+:root[data-theme="light"] .nx-sidebar {
+  color: var(--color-ink);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.78), rgb(249 248 253 / 0.92));
+  border-color: color-mix(in oklab, var(--color-line) 88%, transparent);
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.5);
+}
+
+:root[data-theme="light"] .nx-sidebar [aria-current="page"] {
+  background: color-mix(in oklab, var(--color-accent-soft) 68%, white);
+  color: var(--color-accent);
+}
+
+:root[data-theme="light"] .nx-sidebar [aria-current="page"] .ico,
+:root[data-theme="light"] .nx-sidebar [aria-current="page"] span {
+  color: var(--color-accent);
+}
+
+:root[data-theme="dark"] .nx-sidebar {
+  color: #f5f5f7;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--color-rail) 96%, #101527 4%), var(--color-rail));
+  border-color: var(--color-line);
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.018);
+}
+
 :root[data-theme="dark"] .nx-sidebar a,
 :root[data-theme="dark"] .nx-sidebar button {
   color: #c8c8d0;
 }
 
-:root:not([data-theme="light"]) .nx-sidebar a:hover,
-:root:not([data-theme="light"]) .nx-sidebar button:hover,
 :root[data-theme="dark"] .nx-sidebar a:hover,
 :root[data-theme="dark"] .nx-sidebar button:hover {
   color: #f5f5f7;
   background: var(--color-hover);
 }
 
-:root:not([data-theme="light"]) .nx-sidebar .ico,
-:root:not([data-theme="light"]) .nx-sidebar svg,
 :root[data-theme="dark"] .nx-sidebar .ico,
 :root[data-theme="dark"] .nx-sidebar svg {
   color: #a8a8b3;
   stroke: currentColor;
 }
 
-:root:not([data-theme="light"]) .nx-sidebar a:hover .ico,
-:root:not([data-theme="light"]) .nx-sidebar a:hover svg,
-:root:not([data-theme="light"]) .nx-sidebar button:hover .ico,
-:root:not([data-theme="light"]) .nx-sidebar button:hover svg,
 :root[data-theme="dark"] .nx-sidebar a:hover .ico,
 :root[data-theme="dark"] .nx-sidebar a:hover svg,
 :root[data-theme="dark"] .nx-sidebar button:hover .ico,
@@ -40,17 +64,12 @@
   color: #e8e8ed;
 }
 
-/* Active row keeps accent */
-:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"],
-:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"] .ico,
-:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"] span,
 :root[data-theme="dark"] .nx-sidebar [aria-current="page"],
 :root[data-theme="dark"] .nx-sidebar [aria-current="page"] .ico,
 :root[data-theme="dark"] .nx-sidebar [aria-current="page"] span {
   color: var(--color-accent);
 }
 
-:root:not([data-theme="light"]) .nx-sidebar [aria-current="page"],
 :root[data-theme="dark"] .nx-sidebar [aria-current="page"] {
   background: color-mix(in oklab, var(--color-accent-soft) 70%, var(--color-hover));
 }
