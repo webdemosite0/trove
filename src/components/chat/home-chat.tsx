@@ -8,48 +8,61 @@ import { Message } from "@/components/chat/message";
 import { Greeting } from "@/components/chat/greeting";
 import { StarterCards } from "@/components/home/starter-cards";
 import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
-import {
-  DEFAULT_CHAT_MODEL,
-  type ChatModelId,
-  type ChatModelOption,
-} from "@/lib/chat-models";
 import { useChatThread } from "@/lib/use-chat-thread";
 import { ContinuePanel } from "@/components/home/recent-panels";
 import type { Recent } from "@/lib/recents";
+import {
+  ProjectPicker,
+  type ChatProjectOption,
+} from "@/components/chat/project-picker";
 
 export function HomeChat({
   restored = null,
   name = "there",
   activity = [],
   draft: initialDraft = "",
-  models = [],
+  projects: initialProjects = [],
+  initialProjectId = null,
 }: {
   restored?: { id: string; title: string; messages: { role: "user" | "model"; text: string }[] } | null;
   name?: string;
   activity?: Recent[];
   draft?: string;
-  models?: ChatModelOption[];
+  projects?: ChatProjectOption[];
+  initialProjectId?: string | null;
 }) {
   const [draft, setDraft] = useState(initialDraft);
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
-  const [model, setModel] = useState<ChatModelId>(
-    models.some((option) => option.id === DEFAULT_CHAT_MODEL)
-      ? DEFAULT_CHAT_MODEL
-      : (models[0]?.id ?? DEFAULT_CHAT_MODEL),
+  const [projects, setProjects] = useState<ChatProjectOption[]>(initialProjects);
+  const [projectId, setProjectId] = useState<string | null>(
+    initialProjectId && initialProjects.some((project) => project.id === initialProjectId)
+      ? initialProjectId
+      : null,
   );
 
   const { turns, busy, error, send, retry, regenerate, clear, bottom } = useChatThread({
     restored,
     mode,
-    model,
+    projectId,
   });
 
-  const composerModelProps = {
-    model,
-    modelOptions: models,
-    onModelChange: setModel,
+  const projectControl = (
+    <ProjectPicker
+      projects={projects}
+      value={projectId}
+      onChange={setProjectId}
+      onCreated={(project) =>
+        setProjects((items) => [project, ...items.filter((item) => item.id !== project.id)])
+      }
+      disabled={busy}
+      compact
+    />
+  );
+
+  const composerProps = {
     mode,
     onModeChange: setMode,
+    leading: projectControl,
   };
 
   if (turns.length === 0) {
@@ -58,7 +71,7 @@ export function HomeChat({
         <div className="relative z-[1] flex flex-1 flex-col items-center px-5 pb-14 pt-[6vh] lg:pt-[9vh]">
           <div className="w-full max-w-[720px] text-center">
             <div className="nx-rise">
-              <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-indigo-200/60 bg-white/70 px-3 py-1 text-[12px] font-medium text-indigo-600 shadow-sm backdrop-blur-sm">
+              <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-violet-300/30 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-sky-500/10 px-3 py-1 text-[12px] font-medium text-violet-600 shadow-sm backdrop-blur-sm dark:text-violet-300">
                 <span className="text-[13px]">✦</span>
                 Powered by Trove AI
               </div>
@@ -79,7 +92,7 @@ export function HomeChat({
                 key={draft}
                 initialValue={draft}
                 onSend={send}
-                {...composerModelProps}
+                {...composerProps}
                 autoFocus
                 disabled={busy}
               />
@@ -146,7 +159,7 @@ export function HomeChat({
             onSend={send}
             placeholder="Reply…"
             disabled={busy}
-            {...composerModelProps}
+            {...composerProps}
           />
         </div>
       </div>
