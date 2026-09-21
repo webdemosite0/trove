@@ -1,0 +1,22 @@
+name: Global launch gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Production URL to validate
+        required: true
+        default: https://troveai.site
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Global launch readiness
+        run: npm run check:launch -- "${{ inputs.url }}"
