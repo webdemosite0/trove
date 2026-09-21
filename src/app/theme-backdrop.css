@@ -225,3 +225,32 @@
       color-mix(in oklab, var(--color-hover) 90%, #38bdf8 10%)
     );
 }
+
+
+/* Sidebar uses the same atmospheric gradient language as the workspace.
+   Icons stay neutral; the background carries the color. */
+:root[data-theme="light"] .nx-sidebar {
+  background:
+    radial-gradient(ellipse 90% 42% at 8% 8%, rgba(168,85,247,0.16), transparent 62%),
+    radial-gradient(ellipse 85% 38% at 94% 20%, rgba(59,130,246,0.14), transparent 60%),
+    linear-gradient(180deg, rgba(251,247,255,0.96), rgba(242,246,255,0.94));
+  backdrop-filter: blur(18px);
+}
+
+:root[data-theme="dark"] .nx-sidebar {
+  background:
+    radial-gradient(ellipse 95% 42% at 8% 8%, rgba(124,58,237,0.22), transparent 62%),
+    radial-gradient(ellipse 80% 36% at 92% 18%, rgba(37,99,235,0.16), transparent 58%),
+    linear-gradient(180deg, rgba(13,10,28,0.97), rgba(8,7,20,0.97));
+  backdrop-filter: blur(18px);
+}
+
+@keyframes nx-thinking-dot {
+  0%, 65%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-1px); }
+}
+
+.nx-thinking-dot {
+  display: inline-block;
+  animation: nx-thinking-dot 1.15s ease-in-out infinite;
+}
