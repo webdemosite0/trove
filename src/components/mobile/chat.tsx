@@ -8,15 +8,14 @@ import { Message } from "@/components/chat/message";
 import { MobileComposer } from "@/components/mobile/composer";
 import { Wordmark } from "@/components/brand/logo";
 import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
-import {
-  DEFAULT_CHAT_MODEL,
-  type ChatModelId,
-  type ChatModelOption,
-} from "@/lib/chat-models";
 import { useChatThread } from "@/lib/use-chat-thread";
 import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
 import { StarterCards } from "@/components/home/starter-cards";
+import {
+  ProjectPicker,
+  type ChatProjectOption,
+} from "@/components/chat/project-picker";
 
 const TOOLS: { href: string; label: string; icon: IconType }[] = [
   { href: "/websites", label: "Websites", icon: TbWorld },
@@ -34,7 +33,8 @@ export function MobileChat({
   name = "there",
   activity = [],
   draft: initialDraft = "",
-  models = [],
+  projects: initialProjects = [],
+  initialProjectId = null,
 }: {
   restored?: {
     id: string;
@@ -44,27 +44,40 @@ export function MobileChat({
   name?: string;
   activity?: Recent[];
   draft?: string;
-  models?: ChatModelOption[];
+  projects?: ChatProjectOption[];
+  initialProjectId?: string | null;
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
-  const [model, setModel] = React.useState<ChatModelId>(
-    models.some((option) => option.id === DEFAULT_CHAT_MODEL)
-      ? DEFAULT_CHAT_MODEL
-      : (models[0]?.id ?? DEFAULT_CHAT_MODEL),
-  );
   const [draft, setDraft] = React.useState(initialDraft);
+  const [projects, setProjects] = React.useState<ChatProjectOption[]>(initialProjects);
+  const [projectId, setProjectId] = React.useState<string | null>(
+    initialProjectId && initialProjects.some((project) => project.id === initialProjectId)
+      ? initialProjectId
+      : null,
+  );
   const { turns, busy, error, send, retry, clear, bottom } = useChatThread({
     restored,
     mode,
-    model,
+    projectId,
   });
 
-  const composerModelProps = {
-    model,
-    modelOptions: models,
-    onModelChange: setModel,
+  const projectControl = (
+    <ProjectPicker
+      projects={projects}
+      value={projectId}
+      onChange={setProjectId}
+      onCreated={(project) =>
+        setProjects((items) => [project, ...items.filter((item) => item.id !== project.id)])
+      }
+      disabled={busy}
+      compact
+    />
+  );
+
+  const composerProps = {
     mode,
     onModeChange: setMode,
+    leading: projectControl,
   };
 
   if (turns.length === 0) {
@@ -81,7 +94,7 @@ export function MobileChat({
           <MobileComposer
             onSend={send}
             disabled={busy}
-            {...composerModelProps}
+            {...composerProps}
             key={draft}
             initialValue={draft}
           />
@@ -165,7 +178,7 @@ export function MobileChat({
           onSend={send}
           disabled={busy}
           placeholder="Reply…"
-          {...composerModelProps}
+          {...composerProps}
         />
       </div>
     </div>
