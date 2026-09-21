@@ -15,8 +15,8 @@ const teamWorkspacesEnabled = process.env.TROVE_TEAM_WORKSPACES_ENABLED?.trim() 
 export const metadata: Metadata = {
   title: "Pricing",
   description: teamWorkspacesEnabled
-    ? `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month, a 5-hour burst window, and every tool included. Pro is ${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team is ${teamPlan.price} for ${teamPlan.monthly.toLocaleString()}.`
-    : `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month and every tool included. Pro is ${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team workspaces are coming soon.`,
+    ? `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month, a 5-hour burst window, and every tool included. Pro is $${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team is $${teamPlan.price} for ${teamPlan.monthly.toLocaleString()}.`
+    : `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month and every tool included. Pro is $${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team workspaces are coming soon.`,
   alternates: { canonical: "/pricing" },
   openGraph: {
     type: "website",
