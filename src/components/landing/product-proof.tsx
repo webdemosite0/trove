@@ -104,10 +104,10 @@ function ProofCard({ ex }: { ex: (typeof EXAMPLES)[number] }) {
       className={`group flex flex-col rounded-[17px] border p-4 transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.28)] sm:rounded-[18px] sm:p-5 ${ex.tint}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="grid size-8 place-items-center rounded-xl bg-white/75 text-black ring-1 ring-black/[0.07] sm:size-9">
+        <span className="grid size-8 place-items-center rounded-xl bg-raised/80 text-ink ring-1 ring-line sm:size-9">
           <Icon size={17} />
         </span>
-        <span className="rounded-full bg-black/[0.05] px-2.5 py-0.5 text-[9.5px] font-medium text-ink-3 dark:bg-white/10 sm:text-[11px]">
+        <span className="rounded-full bg-sunk px-2.5 py-0.5 text-[9.5px] font-medium text-ink-3 dark:bg-white/10 sm:text-[11px]">
           {ex.file}
         </span>
       </div>
