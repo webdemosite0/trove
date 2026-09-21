@@ -209,38 +209,52 @@ function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
     <Link
       href="/settings/affiliates"
       onClick={onNavigate}
-      className="group relative block overflow-hidden rounded-2xl p-[1px] shadow-[0_8px_24px_-12px_rgba(79,70,229,0.35)] transition hover:scale-[1.02] hover:shadow-[0_12px_30px_-12px_rgba(79,70,229,0.45)] dark:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.78)] dark:hover:shadow-[0_16px_40px_-14px_rgba(0,0,0,0.88)]"
-      style={{
-        background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
-      }}
+      className="group block"
+      aria-label="Refer and earn with Trove"
     >
-      <div className="relative overflow-hidden rounded-[15px] bg-white/94 px-3 py-3 backdrop-blur-sm dark:bg-black/72">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-4 -top-4 size-16 rounded-full opacity-25 blur-2xl dark:opacity-45"
-          style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-6 -left-5 size-14 rounded-full opacity-15 blur-2xl dark:opacity-30"
-          style={{ background: "linear-gradient(135deg,#a78bfa,#fbbf24)" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-50/55 via-transparent to-sky-50/55 dark:from-fuchsia-500/[0.06] dark:via-transparent dark:to-sky-500/[0.08]"
-        />
-        <div className="relative">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-fuchsia-500 dark:text-fuchsia-400">
-            Refer & earn
-          </p>
-          <p className="mt-1 text-[13px] font-semibold leading-snug text-slate-950 dark:text-white">
-            Share Trove · get credits
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-600 dark:text-zinc-400">100 qualified paid → $200</p>
-          <span className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-blue-600 dark:text-sky-400">
-            Open affiliates
-            <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
+      <div className="nx-referral-light overflow-hidden rounded-2xl border border-indigo-200/70 bg-gradient-to-br from-white via-indigo-50/75 to-sky-50/80 p-3.5 shadow-[0_12px_28px_-16px_rgba(79,70,229,0.28)] transition duration-[var(--t-card)] group-hover:-translate-y-0.5 group-hover:border-indigo-300 group-hover:shadow-[0_16px_34px_-16px_rgba(79,70,229,0.35)]">
+        <div className="flex items-start gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500 text-[13px] font-bold text-white shadow-sm">
+            $
           </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-600">
+              Refer & earn
+            </span>
+            <span className="mt-0.5 block text-[13px] font-semibold leading-snug text-slate-950">
+              Share Trove · get credits
+            </span>
+            <span className="mt-1 block text-[11px] leading-4 text-slate-600">
+              100 qualified paid → $200
+            </span>
+          </span>
+          <FiChevronRight
+            size={14}
+            className="mt-1 shrink-0 text-indigo-500 transition-transform group-hover:translate-x-0.5"
+          />
+        </div>
+      </div>
+
+      <div className="nx-referral-dark overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#171727] via-[#12131f] to-[#0e1824] p-3.5 shadow-[0_16px_36px_-16px_rgba(0,0,0,0.9)] transition duration-[var(--t-card)] group-hover:-translate-y-0.5 group-hover:border-sky-400/25">
+        <div className="flex items-start gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-400 text-[13px] font-bold text-white shadow-[0_8px_22px_-8px_rgba(99,102,241,.8)]">
+            $
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-sky-300">
+              Refer & earn
+            </span>
+            <span className="mt-0.5 block text-[13px] font-semibold leading-snug text-white">
+              Share Trove · get credits
+            </span>
+            <span className="mt-1 block text-[11px] leading-4 text-white/55">
+              100 qualified paid → $200
+            </span>
+          </span>
+          <FiChevronRight
+            size={14}
+            className="mt-1 shrink-0 text-sky-300 transition-transform group-hover:translate-x-0.5"
+          />
         </div>
       </div>
     </Link>
