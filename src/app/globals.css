@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Trove uses an explicit data-theme switch. Bind Tailwind dark: utilities to
+   that value so they never disagree with the selected mode. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ============================================================
    Trove — dark tokens
    ============================================================ */
