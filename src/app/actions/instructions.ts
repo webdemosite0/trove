@@ -1,6 +1,6 @@
 "use server";
 
-import { setInstructions } from "@/lib/user-prefs";
+import { setManualInstructions } from "@/lib/user-prefs";
 import { revalidatePath } from "next/cache";
 
 export type InstructionsState = { ok?: boolean; error?: string };
@@ -10,7 +10,7 @@ export async function saveInstructions(
   form: FormData,
 ): Promise<InstructionsState> {
   const text = String(form.get("instructions") ?? "");
-  const result = await setInstructions(text);
+  const result = await setManualInstructions(text);
   if ("error" in result) return { error: result.error };
   revalidatePath("/settings/instructions");
   revalidatePath("/chat");
