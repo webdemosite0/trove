@@ -212,6 +212,15 @@ async function githubContext(connected: boolean) {
 export async function buildChatConnectorContext(
   lastUserText: string,
 ): Promise<ChatConnectorContext> {
+  const requested = requestedServices(lastUserText);
+
+  // Most chat turns do not ask for an integration. Avoid an auth + database
+  // lookup on every normal message just to discover connected apps that will
+  // not be used.
+  if (!requested.length) {
+    return { connectedNote: "", liveContext: "", requested: [] };
+  }
+
   let connections: Connection[] = [];
   try {
     connections = await listConnections();
@@ -220,7 +229,6 @@ export async function buildChatConnectorContext(
   }
 
   const connectedSet = new Set(connections.map((connection) => connection.service));
-  const requested = requestedServices(lastUserText);
 
   const connectedNote = connections.length
     ? "\n\nCONNECTED APPS: " + connections.map(connectionLabel).join(", ") + "."
