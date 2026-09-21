@@ -43,3 +43,7 @@ next-env.d.ts
 # local database
 .data/
 !.env.example
+
+# operator database snapshots — contain private user data
+/backups/
+/trove-backup-*.json
