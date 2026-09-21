@@ -11,6 +11,7 @@ import {
   BellOff,
   Bot,
   Box,
+  Briefcase,
   Calendar,
   Check,
   ChevronDown,
@@ -93,6 +94,7 @@ import {
   Trash2,
   TriangleAlert,
   Unplug,
+  Upload,
   User,
   Users,
   WifiOff,
@@ -126,6 +128,7 @@ export const FiArrowRight = /*#__PURE__*/ grok(ArrowRight);
 export const FiArrowUp = /*#__PURE__*/ grok(ArrowUp);
 export const FiBell = /*#__PURE__*/ grok(Bell);
 export const FiBellOff = /*#__PURE__*/ grok(BellOff);
+export const FiBriefcase = /*#__PURE__*/ grok(Briefcase);
 export const FiCalendar = /*#__PURE__*/ grok(Calendar);
 export const FiCheck = /*#__PURE__*/ grok(Check);
 export const FiChevronDown = /*#__PURE__*/ grok(ChevronDown);
@@ -186,6 +189,7 @@ export const FiTerminal = /*#__PURE__*/ grok(Terminal);
 export const FiThumbsDown = /*#__PURE__*/ grok(ThumbsDown);
 export const FiThumbsUp = /*#__PURE__*/ grok(ThumbsUp);
 export const FiTrash2 = /*#__PURE__*/ grok(Trash2);
+export const FiUpload = /*#__PURE__*/ grok(Upload);
 export const FiUser = /*#__PURE__*/ grok(User);
 export const FiUsers = /*#__PURE__*/ grok(Users);
 export const FiWifiOff = /*#__PURE__*/ grok(WifiOff);
