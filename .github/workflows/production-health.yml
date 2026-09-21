@@ -3,7 +3,7 @@ name: Production health
 on:
   schedule:
     # Run off the hour so this does not compete with typical top-of-hour cron traffic.
-    - cron: "17 * * * *"
+    - cron: "2,17,32,47 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -53,6 +53,12 @@ jobs:
             console.error("Trove production health failed:");
             for (const failure of failures) console.error(`- ${failure}`);
             process.exit(1);
+          }
+
+          const readiness = health.launchReadiness;
+          if (readiness && readiness.readyForGlobalPaidLaunch !== true) {
+            console.warn("Trove is operational but not fully launch-ready:");
+            for (const item of readiness.missing || []) console.warn(`- ${item}`);
           }
 
           console.log("Trove production health is OK.");
