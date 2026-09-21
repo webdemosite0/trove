@@ -117,7 +117,7 @@ export function MobileComposer({
 
   const mention = connectorMentionAt(value, cursor);
   const { items: connectorOptions, loading: connectorsLoading } =
-    useConnectedConnectors(focused || Boolean(mention));
+    useConnectedConnectors(Boolean(mention));
   const connectedIds = new Set(connectorOptions.map((item) => item.id));
   const mentionedIds = Array.from(
     new Set(
