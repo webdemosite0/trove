@@ -141,6 +141,12 @@ export function verificationEnforced(): boolean {
   return mailerConfigured();
 }
 
+export function passwordSignupReady(): boolean {
+  if (mailerConfigured()) return true;
+  if (process.env.NODE_ENV !== "production") return true;
+  return process.env.TROVE_ALLOW_UNVERIFIED_PASSWORD_SIGNUP?.trim() === "1";
+}
+
 export function verificationEmail(name: string, link: string) {
   const subject = `Confirm your email for ${site.name}`;
   const text =
