@@ -9,11 +9,18 @@ import {
   issueToken,
   lastTokenAt,
   markVerified,
+  resetPassword as resetUserPassword,
   startSession,
   verifyPassword,
 } from "@/lib/auth";
 import { storageIsEphemeral, tursoVars } from "@/lib/db";
-import { sendMail, verificationEmail, verificationEnforced } from "@/lib/mail";
+import {
+  mailerConfigured,
+  passwordResetEmail,
+  sendMail,
+  verificationEmail,
+  verificationEnforced,
+} from "@/lib/mail";
 import { site } from "@/lib/site";
 import { consumeRateLimit, requestIdentity } from "@/lib/rate-limit";
 import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
@@ -168,6 +175,71 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
 export async function logOut() {
   await endSession();
   redirect("/login");
+}
+
+export async function requestPasswordReset(
+  _prev: AuthState,
+  form: FormData,
+): Promise<AuthState> {
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const notice =
+    "If that address has a password account, we sent a reset link. Check your inbox and spam folder.";
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return { error: "Enter a valid email address." };
+  }
+
+  const limit = await consumeRateLimit({
+    scope: "auth-password-reset",
+    identity: await requestIdentity(email),
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!limit.allowed) return { notice };
+
+  const row = await findByEmail(email);
+  if (!row || row.provider !== "password" || !row.password_hash) {
+    return { notice };
+  }
+
+  if (!mailerConfigured()) {
+    await opsAlert("password_reset_mail_unavailable", {});
+    return { error: "Password recovery is temporarily unavailable. Please try again later." };
+  }
+
+  const token = await issueToken(row.id, "reset-password", { ttlMs: 60 * 60 * 1000 });
+  const link = `${site.url}/reset-password?token=${encodeURIComponent(token)}`;
+  const mail = passwordResetEmail(row.name || "there", link);
+  const result = await sendMail({ to: row.email, ...mail });
+
+  if (!result.sent) {
+    await opsAlert("password_reset_delivery_failed", {
+      reason: result.reason || "unknown",
+    });
+  }
+
+  return { notice };
+}
+
+export async function resetPassword(
+  _prev: AuthState,
+  form: FormData,
+): Promise<AuthState> {
+  const token = String(form.get("token") ?? "").trim();
+  const password = String(form.get("password") ?? "");
+  const confirm = String(form.get("confirm") ?? "");
+
+  if (!token) return { error: "That reset link is missing its token." };
+  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (password !== confirm) return { error: "Passwords do not match." };
+
+  const result = await consumeToken(token, "reset-password");
+  if (!("userId" in result)) {
+    return { error: "That reset link has already been used, or it expired." };
+  }
+
+  await resetUserPassword(result.userId, password);
+  redirect("/login?reset=1");
 }
 
 export async function resendVerification(): Promise<AuthState> {
