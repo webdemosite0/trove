@@ -43,10 +43,10 @@ interface Item {
 const PRIMARY: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
-  { href: "/sites", label: "Sites", icon: TbWorld, motion: "spin" },
-  { href: "/docs", label: "Docs", icon: TbFileText, motion: "tilt" },
-  { href: "/sheets", label: "Sheets", icon: TbTable, motion: "nudge" },
-  { href: "/decks", label: "Decks", icon: TbPresentation, motion: "pop" },
+  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
+  { href: "/documents", label: "Docs", icon: TbFileText, motion: "tilt" },
+  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "nudge" },
+  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "pop" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "lift" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake" },
 ];
