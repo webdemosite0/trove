@@ -42,8 +42,8 @@ export async function listReminders(): Promise<Reminder[]> {
  * thing the app can honestly say is waiting. There is no read/unread state to
  * report, so none is invented.
  */
-export async function countDueReminders(): Promise<number> {
-  const user = await currentUser();
+export async function countDueReminders(userId?: string): Promise<number> {
+  const user = userId ? { id: userId } : await currentUser();
   if (!user) return 0;
   // This runs in the shell layout, so it is on the path of every page in the
   // app. A dot on a bell is not worth a 500: if the query cannot answer, the
