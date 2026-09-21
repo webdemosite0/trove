@@ -60,11 +60,7 @@ export function useConnectedConnectors(enabled: boolean) {
     loaded.current = true;
     setLoading(true);
 
-    const controller = new AbortController();
-    void fetch("/api/connectors", {
-      cache: "no-store",
-      signal: controller.signal,
-    })
+    void fetch("/api/connectors", { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return { items: [] };
         return (await res.json()) as { items?: ConnectedConnectorOption[] };
@@ -72,14 +68,10 @@ export function useConnectedConnectors(enabled: boolean) {
       .then((data) => {
         setItems(Array.isArray(data.items) ? data.items : []);
       })
-      .catch((error) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          loaded.current = false;
-        }
+      .catch(() => {
+        loaded.current = false;
       })
       .finally(() => setLoading(false));
-
-    return () => controller.abort();
   }, [enabled]);
 
   return { items, loading };
