@@ -204,44 +204,80 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
   );
 }
 
+function ReferralPromoSurface({
+  mode,
+}: {
+  mode: "light" | "dark";
+}) {
+  const dark = mode === "dark";
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-[15px] px-3 py-3 backdrop-blur-sm",
+        dark
+          ? "bg-[#0f1017] text-white ring-1 ring-white/10"
+          : "bg-white text-slate-950 ring-1 ring-black/[0.04]",
+      )}
+    >
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -right-4 -top-4 size-16 rounded-full blur-2xl",
+          dark ? "opacity-55" : "opacity-25",
+        )}
+        style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -bottom-6 -left-5 size-14 rounded-full blur-2xl",
+          dark ? "opacity-35" : "opacity-15",
+        )}
+        style={{ background: "linear-gradient(135deg,#a78bfa,#fbbf24)" }}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0",
+          dark
+            ? "bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-sky-500/[0.10]"
+            : "bg-gradient-to-br from-fuchsia-50/70 via-transparent to-sky-50/70",
+        )}
+      />
+      <div className="relative">
+        <p className={cn("text-[10px] font-bold uppercase tracking-[0.14em]", dark ? "text-fuchsia-300" : "text-fuchsia-600")}>
+          Refer & earn
+        </p>
+        <p className={cn("mt-1 text-[13px] font-semibold leading-snug", dark ? "text-white" : "text-slate-950")}>
+          Share Trove · get credits
+        </p>
+        <p className={cn("mt-0.5 text-[11px]", dark ? "text-zinc-400" : "text-slate-600")}>
+          100 qualified paid → $200
+        </p>
+        <span className={cn("mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold", dark ? "text-sky-300" : "text-blue-600")}>
+          Open affiliates
+          <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Link
       href="/settings/affiliates"
       onClick={onNavigate}
-      className="group relative block overflow-hidden rounded-2xl p-[1px] shadow-[0_8px_24px_-12px_rgba(79,70,229,0.35)] transition hover:scale-[1.02] hover:shadow-[0_12px_30px_-12px_rgba(79,70,229,0.45)] dark:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.78)] dark:hover:shadow-[0_16px_40px_-14px_rgba(0,0,0,0.88)]"
+      className="group relative block overflow-hidden rounded-2xl p-[1px] transition hover:scale-[1.02]"
       style={{
         background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
       }}
     >
-      <div className="relative overflow-hidden rounded-[15px] bg-white/94 px-3 py-3 backdrop-blur-sm dark:bg-black/72">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-4 -top-4 size-16 rounded-full opacity-25 blur-2xl dark:opacity-45"
-          style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-6 -left-5 size-14 rounded-full opacity-15 blur-2xl dark:opacity-30"
-          style={{ background: "linear-gradient(135deg,#a78bfa,#fbbf24)" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-50/55 via-transparent to-sky-50/55 dark:from-fuchsia-500/[0.06] dark:via-transparent dark:to-sky-500/[0.08]"
-        />
-        <div className="relative">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-fuchsia-500 dark:text-fuchsia-400">
-            Refer & earn
-          </p>
-          <p className="mt-1 text-[13px] font-semibold leading-snug text-slate-950 dark:text-white">
-            Share Trove · get credits
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-600 dark:text-zinc-400">100 qualified paid → $200</p>
-          <span className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-blue-600 dark:text-sky-400">
-            Open affiliates
-            <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
-          </span>
-        </div>
+      <div className="block dark:hidden">
+        <ReferralPromoSurface mode="light" />
+      </div>
+      <div className="hidden dark:block">
+        <ReferralPromoSurface mode="dark" />
       </div>
     </Link>
   );
