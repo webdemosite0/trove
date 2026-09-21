@@ -22,7 +22,7 @@ export interface ChatConnectorContext {
 function mentionedServices(text: string) {
   return Array.from(
     new Set(
-      [...text.matchAll(/@([a-z0-9][\\w.-]*)/gi)].map((m) =>
+      [...text.matchAll(/@([a-z0-9][\w.-]*)/gi)].map((m) =>
         m[1].toLowerCase(),
       ),
     ),
@@ -31,8 +31,8 @@ function mentionedServices(text: string) {
 
 function requestedServices(text: string) {
   const requested = new Set(mentionedServices(text));
-  if (/\\bslack\\b/i.test(text)) requested.add("slack");
-  if (/\\bgithub\\b/i.test(text)) requested.add("github");
+  if (/\bslack\b/i.test(text)) requested.add("slack");
+  if (/\bgithub\b/i.test(text)) requested.add("github");
   return [...requested];
 }
 
@@ -45,8 +45,8 @@ function connectionLabel(connection: Connection) {
 function extractSlackChannel(text: string) {
   const match =
     text.match(/#([a-z0-9_-]+)/i) ||
-    text.match(/\\bchannel\\s+#?([a-z0-9_-]+)/i) ||
-    text.match(/\\bin\\s+#([a-z0-9_-]+)/i);
+    text.match(/\bchannel\s+#?([a-z0-9_-]+)/i) ||
+    text.match(/\bin\s+#([a-z0-9_-]+)/i);
   const channel = String(match?.[1] ?? "").toLowerCase();
   if (
     !channel ||
@@ -58,7 +58,7 @@ function extractSlackChannel(text: string) {
 }
 
 function wantsRecentSlackMessages(text: string) {
-  return /\\b(new|newest|latest|recent|messages?|updates?|what(?:'s| is) happening|catch me up|summary|summarize|check)\\b/i.test(
+  return /\b(new|newest|latest|recent|messages?|updates?|what(?:'s| is) happening|catch me up|summary|summarize|check)\b/i.test(
     text,
   );
 }
@@ -95,7 +95,7 @@ async function slackContext(text: string, connected: boolean) {
     const identity = await slackIdentity(token);
     const parts = [identity.team, identity.user].filter(Boolean);
     if (parts.length) {
-      identityLine = "LIVE SLACK ACCOUNT: " + parts.join(" — ") + ".\\n";
+      identityLine = "LIVE SLACK ACCOUNT: " + parts.join(" — ") + ".\n";
     }
   } catch {
     // A token can still have channel access even if auth.test is unavailable.
@@ -126,7 +126,7 @@ async function slackContext(text: string, connected: boolean) {
   const channels = await listSlackChannels(token, 30);
   return (
     identityLine +
-    "LIVE SLACK DATA — channels visible to the connected credential:\\n" +
+    "LIVE SLACK DATA — channels visible to the connected credential:\n" +
     (channels.length
       ? channels
           .map(
@@ -136,7 +136,7 @@ async function slackContext(text: string, connected: boolean) {
               (channel.isPrivate ? " (private)" : "") +
               (channel.isMember ? " (joined)" : ""),
           )
-          .join("\\n")
+          .join("\n")
       : "- No channels returned with the current Slack scopes.")
   );
 }
@@ -194,9 +194,9 @@ async function githubContext(connected: boolean) {
       ? "LIVE GITHUB ACCOUNT: " +
         (profile.name || profile.login || "connected user") +
         (profile.login ? " (@" + profile.login + ")" : "") +
-        ".\\n"
+        ".\n"
       : "") +
-    "LIVE GITHUB DATA — recently updated repositories:\\n" +
+    "LIVE GITHUB DATA — recently updated repositories:\n" +
     repos
       .map(
         (repo) =>
@@ -205,7 +205,7 @@ async function githubContext(connected: boolean) {
           (repo.private ? " (private)" : "") +
           (repo.updated_at ? " — updated " + repo.updated_at : ""),
       )
-      .join("\\n")
+      .join("\n")
   );
 }
 
@@ -223,8 +223,8 @@ export async function buildChatConnectorContext(
   const requested = requestedServices(lastUserText);
 
   const connectedNote = connections.length
-    ? "\\n\\nCONNECTED APPS: " + connections.map(connectionLabel).join(", ") + "."
-    : "\\n\\nCONNECTED APPS: none.";
+    ? "\n\nCONNECTED APPS: " + connections.map(connectionLabel).join(", ") + "."
+    : "\n\nCONNECTED APPS: none.";
 
   const liveParts: string[] = [];
 
@@ -268,7 +268,7 @@ export async function buildChatConnectorContext(
 
   return {
     connectedNote,
-    liveContext: liveParts.length ? "\\n\\n" + liveParts.join("\\n\\n") : "",
+    liveContext: liveParts.length ? "\n\n" + liveParts.join("\n\n") : "",
     requested,
   };
 }
