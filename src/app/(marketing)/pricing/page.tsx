@@ -83,7 +83,7 @@ export default function PricingPage() {
               </p>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
-                <div className="rounded-xl border border-line bg-white/60 px-3 py-2.5">
+                <div className="rounded-xl border border-line bg-raised/70 px-3 py-2.5">
                   <p className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">
                     Month
                   </p>
@@ -91,7 +91,7 @@ export default function PricingPage() {
                     {plan.monthly.toLocaleString()}
                   </p>
                 </div>
-                <div className="rounded-xl border border-line bg-white/60 px-3 py-2.5">
+                <div className="rounded-xl border border-line bg-raised/70 px-3 py-2.5">
                   <p className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">
                     5-hour
                   </p>
