@@ -13,7 +13,6 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
-  FiShare2,
   TbRobot,
   TbWorld,
   TbFileText,
@@ -22,8 +21,7 @@ import {
   TbPalette,
   TbMessageCircle,
   TbHelpCircle,
-  TbLayoutDashboard,
-  TbFiles,
+  TbHome,
 } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
@@ -43,15 +41,14 @@ interface Item {
 }
 
 const PRIMARY: Item[] = [
-  { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "pop" },
+  { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
   { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
-  { href: "/documents", label: "Docs", icon: TbFiles, motion: "tilt" },
+  { href: "/documents", label: "Docs", icon: TbFileText, motion: "tilt" },
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "nudge" },
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "pop" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "lift" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake" },
-  { href: "/affiliates", label: "Affiliates", icon: FiShare2, motion: "pop" },
 ];
 
 function NavRow({
@@ -77,29 +74,11 @@ function NavRow({
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "relative grid h-9 w-9 place-items-center rounded-xl transition-all",
-            active
-              ? "bg-raised shadow-[var(--sh-1)] ring-1 ring-line-strong"
-              : "hover:bg-hover",
+            "grid h-9 w-9 place-items-center rounded-lg transition-colors",
+            active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
-          {active ? (
-            <span
-              aria-hidden
-              className={cn(
-                "absolute -left-1 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full",
-                "bg-accent",
-              )}
-            />
-          ) : null}
-          <span
-            className={cn(
-              "grid size-7 place-items-center rounded-lg ring-1 transition-transform group-hover:scale-[1.04]",
-              "bg-sunk/80 ring-line text-ink-3",
-            )}
-          >
-            <Ico icon={item.icon} motion={item.motion} size={16} />
-          </span>
+          <Ico icon={item.icon} motion={item.motion} size={17} />
         </Link>
       </Tooltip>
     );
@@ -111,38 +90,19 @@ function NavRow({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2 py-1.5 text-[13.5px] transition-all",
+        "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
         active
-          ? "font-semibold text-ink shadow-[inset_0_0_0_1px_var(--color-line)]"
-          : "text-ink-2 hover:bg-hover/80 hover:text-ink",
+          ? "bg-hover font-medium text-ink"
+          : "text-ink-2 hover:bg-hover hover:text-ink",
       )}
     >
-      {active ? (
-        <>
-          <span
-            aria-hidden
-            className={cn(
-              "absolute inset-0 bg-gradient-to-r from-accent-soft/85 via-violet-500/8 to-transparent",
-            )}
-          />
-          <span
-            aria-hidden
-            className={cn(
-              "absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full",
-              "bg-accent",
-            )}
-          />
-        </>
-      ) : null}
-      <span
-        className={cn(
-          "relative z-[1] grid size-8 shrink-0 place-items-center rounded-xl ring-1 transition-all group-hover:scale-[1.04]",
-          "bg-sunk/80 ring-line text-ink-3 group-hover:text-ink",
-        )}
-      >
-        <Ico icon={item.icon} motion={item.motion} size={16} />
-      </span>
-      <span className="relative z-[1] truncate">{item.label}</span>
+      <Ico
+        icon={item.icon}
+        motion={item.motion}
+        size={17}
+        className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
+      />
+      <span className="truncate">{item.label}</span>
     </Link>
   );
 }
