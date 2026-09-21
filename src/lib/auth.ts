@@ -1,11 +1,15 @@
 import "server-only";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { one, run, uid, num, str } from "@/lib/db";
 
 const COOKIE = "nx_session";
 const SESSION_DAYS = 30;
 const TOKEN_HOURS = 24;
+
+function opaqueDigest(value: string) {
+  return `sha256:${createHash("sha256").update(value).digest("hex")}`;
+}
 
 export interface User {
   id: string;
@@ -159,7 +163,7 @@ export async function issueToken(
   await run(
     `INSERT INTO auth_tokens (token, user_id, purpose, expires_at, created_at)
      VALUES (?, ?, ?, ?, ?)`,
-    [token, userId, purpose, Date.now() + ttlMs, Date.now()],
+    [opaqueDigest(token), userId, purpose, Date.now() + ttlMs, Date.now()],
   );
   return token;
 }
@@ -168,13 +172,17 @@ export async function consumeToken(
   token: string,
   purpose: string,
 ): Promise<{ userId: string } | { error: "unknown" | "expired" }> {
+  const digest = opaqueDigest(token);
   const row = await one(
-    `SELECT user_id, expires_at FROM auth_tokens WHERE token = ? AND purpose = ?`,
-    [token, purpose],
+    `SELECT token AS stored_token, user_id, expires_at
+       FROM auth_tokens
+      WHERE token IN (?, ?) AND purpose = ?
+      LIMIT 1`,
+    [digest, token, purpose],
   );
   if (!row) return { error: "unknown" };
 
-  await run(`DELETE FROM auth_tokens WHERE token = ?`, [token]);
+  await run(`DELETE FROM auth_tokens WHERE token = ?`, [str(row.stored_token)]);
 
   if (num(row.expires_at) < Date.now()) return { error: "expired" };
   return { userId: str(row.user_id) };
@@ -193,7 +201,7 @@ export async function startSession(userId: string) {
   const expires = Date.now() + SESSION_DAYS * 86_400_000;
 
   await run(`INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)`, [
-    token,
+    opaqueDigest(token),
     userId,
     expires,
   ]);
@@ -223,7 +231,7 @@ export async function endSession() {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (token) {
-    await run(`DELETE FROM sessions WHERE token = ?`, [token]);
+    await run(`DELETE FROM sessions WHERE token IN (?, ?)`, [opaqueDigest(token), token]);
     jar.delete(COOKIE);
   }
 }
@@ -237,21 +245,21 @@ export async function currentUser(): Promise<User | null> {
     `SELECT u.id, u.email, u.name, u.plan, u.email_verified, u.provider, u.onboarding_done, s.expires_at
        FROM sessions s
        JOIN users u ON u.id = s.user_id
-      WHERE s.token = ?`,
-    [token],
+      WHERE s.token IN (?, ?)`,
+    [opaqueDigest(token), token],
   ).catch(async () =>
     one(
       `SELECT u.id, u.email, u.name, u.plan, u.email_verified, u.provider, s.expires_at
          FROM sessions s
          JOIN users u ON u.id = s.user_id
-        WHERE s.token = ?`,
-      [token],
+        WHERE s.token IN (?, ?)`,
+      [opaqueDigest(token), token],
     ),
   );
 
   if (!row) return null;
   if (num(row.expires_at) < Date.now()) {
-    await run(`DELETE FROM sessions WHERE token = ?`, [token]);
+    await run(`DELETE FROM sessions WHERE token IN (?, ?)`, [opaqueDigest(token), token]);
     return null;
   }
 
