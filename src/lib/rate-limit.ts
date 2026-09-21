@@ -50,6 +50,7 @@ export async function consumeRateLimit(opts: {
   identity: string;
   limit: number;
   windowMs: number;
+  failClosed?: boolean;
 }): Promise<LimitResult> {
   const now = Date.now();
   const resetAt = now + Math.max(1_000, opts.windowMs);
@@ -90,6 +91,34 @@ export async function consumeRateLimit(opts: {
       "rate-limit: check failed",
       error instanceof Error ? error.message : String(error),
     );
-    return { allowed: true, remaining: limit, retryAfterSeconds: 0 };
+    return opts.failClosed
+      ? { allowed: false, remaining: 0, retryAfterSeconds: 30 }
+      : { allowed: true, remaining: limit, retryAfterSeconds: 0 };
   }
+}
+
+
+export async function expensiveRequestLimit(opts: {
+  userId: string;
+  scope: string;
+  limit?: number;
+  windowMs?: number;
+}): Promise<Response | null> {
+  const result = await consumeRateLimit({
+    scope: `expensive:${opts.scope}`,
+    identity: opts.userId,
+    limit: opts.limit ?? 40,
+    windowMs: opts.windowMs ?? 10 * 60 * 1000,
+    failClosed: true,
+  });
+
+  if (result.allowed) return null;
+
+  return Response.json(
+    { error: "Too many requests. Please wait a moment and try again." },
+    {
+      status: 429,
+      headers: { "Retry-After": String(result.retryAfterSeconds) },
+    },
+  );
 }
