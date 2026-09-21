@@ -75,7 +75,7 @@ export default async function MePage() {
         </p>
         <Link
           href="/login"
-          className="mt-6 inline-flex h-11 items-center rounded-full bg-ink px-6 text-[14px] font-semibold text-white transition hover:opacity-90"
+          className="mt-6 inline-flex h-11 items-center btn-grad rounded-full px-6 text-[14px] font-semibold text-white transition hover:opacity-90"
         >
           Log in
         </Link>
@@ -142,7 +142,7 @@ export default async function MePage() {
           <span className="flex-1 text-left text-[14.5px] text-ink-4">
             Ask anything, or describe what to build…
           </span>
-          <span className="grid size-9 place-items-center rounded-full bg-ink text-white">
+          <span className="grid size-9 place-items-center rounded-full btn-grad text-white">
             <FiArrowRight size={16} />
           </span>
         </Link>
@@ -179,8 +179,8 @@ export default async function MePage() {
                   className={`group flex flex-col rounded-[16px] border p-5 transition hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-18px_rgba(15,23,42,0.22)] ${a.tint}`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className="grid size-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-black/5">
-                      <Icon size={20} strokeWidth={1.75} className="text-black" />
+                    <span className="grid size-10 place-items-center rounded-xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line">
+                      <Icon size={20} strokeWidth={1.75} className="text-ink" />
                     </span>
                     <FiArrowRight
                       size={16}
@@ -204,7 +204,7 @@ export default async function MePage() {
                 href={m.href}
                 className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-line-strong hover:text-ink"
               >
-                <Icon size={14} className="text-black" />
+                <Icon size={14} className="text-ink" />
                 {m.label}
               </Link>
             );
