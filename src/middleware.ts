@@ -9,6 +9,7 @@ const PUBLIC_PAGES = new Set([
   "/reset-password",
   "/pricing",
   "/about",
+  "/features",
   "/privacy",
   "/terms",
   "/security",
@@ -16,6 +17,7 @@ const PUBLIC_PAGES = new Set([
 ]);
 
 const PUBLIC_PREFIXES = [
+  "/.well-known/",
   "/features/",
   "/verify-email",
   "/api/auth/",
