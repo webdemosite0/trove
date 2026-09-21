@@ -267,14 +267,9 @@ export async function balanceFor(
     `INSERT INTO credit_grants (user_id, period, plan, credits, created_at)
      VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(user_id, period) DO UPDATE SET
-       credits = CASE
-         WHEN excluded.credits > credit_grants.credits THEN excluded.credits
-         ELSE credit_grants.credits
-       END,
-       plan = CASE
-         WHEN excluded.credits >= credit_grants.credits THEN excluded.plan
-         ELSE credit_grants.plan
-       END`,
+       credits = excluded.credits,
+       plan = excluded.plan
+     WHERE excluded.credits > credit_grants.credits`,
     [userId, period, plan.id, plan.monthly, now],
   );
 
