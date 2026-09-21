@@ -1,9 +1,28 @@
 import type { NextRequest } from "next/server";
 import { createNangoSession, nangoEnabled, nangoIntegrationFor } from "@/lib/nango";
+import { currentUser } from "@/lib/auth";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const user = await currentUser();
+  if (!user) return Response.json({ error: "Sign in to connect services." }, { status: 401 });
+
+  const rate = await consumeRateLimit({
+    scope: "nango-session",
+    identity: user.id,
+    limit: 30,
+    windowMs: 60 * 60 * 1000,
+    failClosed: true,
+  });
+  if (!rate.allowed) {
+    return Response.json(
+      { error: "Too many connection attempts. Try again later." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
+    );
+  }
+
   if (!nangoEnabled()) {
     return Response.json(
       {
