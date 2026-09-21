@@ -10,9 +10,9 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string; verified?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; verified?: string; reset?: string }>;
 }) {
-  const { error, next, verified } = await searchParams;
+  const { error, next, verified, reset } = await searchParams;
 
   return (
     <AuthCard
@@ -22,6 +22,7 @@ export default async function LoginPage({
       oauthError={error}
       next={next}
       justVerified={verified === "1"}
+      passwordReset={reset === "1"}
     />
   );
 }
