@@ -42,6 +42,21 @@ export default function PrivacyPage() {
           answers and files. Do not submit secrets you are not allowed to share
           with those providers under their terms.
         </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Service providers</h2>
+        <p>
+          We use service providers to host the application and database, deliver
+          email, process payments, run AI models and sandboxes, and connect apps
+          you authorize. They receive only the data needed to provide those
+          services under their own contractual and security obligations.
+        </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Your data choices</h2>
+        <p>
+          Signed-in users can download a JSON export of saved account and
+          workspace data from Account settings. You can also delete your account
+          there after cancelling any active paid subscription. Depending on
+          where you live, you may have additional access, correction, deletion,
+          portability, or objection rights; contact us to exercise them.
+        </p>
         <h2 className="pt-2 text-[17px] font-semibold text-ink">Cookies</h2>
         <p>
           We use session cookies to keep you signed in. We do not run advertising
