@@ -12,7 +12,7 @@ export default async function ProjectsPage() {
   return (
     <div className="min-h-screen">
       <div className="mx-auto w-full max-w-[1180px] px-5 pt-10 lg:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4 rounded-[22px] border border-black/[0.055] bg-white/75 p-5 shadow-[0_20px_60px_-42px_rgba(15,23,42,.35)] backdrop-blur-xl sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-4 rounded-[22px] border border-line bg-raised/80 p-5 shadow-[0_20px_60px_-42px_rgba(15,23,42,.35)] backdrop-blur-xl sm:p-6">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">
               Library
@@ -28,13 +28,13 @@ export default async function ProjectsPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               href="/chat"
-              className="rounded-full border border-line bg-white px-4 py-2 text-[13px] font-medium text-ink-2 transition hover:border-line-strong hover:text-ink"
+              className="rounded-full border border-line bg-raised px-4 py-2 text-[13px] font-medium text-ink-2 transition hover:border-line-strong hover:text-ink"
             >
               New chat
             </Link>
             <Link
               href="/websites"
-              className="rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-white transition hover:opacity-90"
+              className="btn-grad rounded-full px-4 py-2 text-[13px] font-medium text-white transition hover:opacity-90"
             >
               New website
             </Link>
