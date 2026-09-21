@@ -125,11 +125,11 @@ export function PluginDetailView({
   const canInstall = Boolean(connectable) || (nangoOn && nangoService);
 
   return (
-    <div className="min-h-[calc(100dvh-3.5rem)] bg-[#050505] text-white">
+    <div className="min-h-[calc(100dvh-3.5rem)] bg-transparent text-ink">
       <div className="mx-auto max-w-[720px] px-5 pb-20 pt-6 sm:px-8">
         <Link
           href="/integrations"
-          className="inline-flex items-center gap-1.5 text-[14px] text-white/50 transition hover:text-white"
+          className="inline-flex items-center gap-1.5 text-[14px] text-ink-3 transition hover:text-ink"
         >
           <FiArrowLeft size={16} />
           Plugins
@@ -137,14 +137,14 @@ export function PluginDetailView({
 
         <div className="mt-10 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
-            <div className="grid size-[72px] place-items-center rounded-[22px] bg-white shadow-[0_12px_40px_rgba(0,0,0,.45)]">
+            <div className="grid size-[72px] place-items-center rounded-[22px] bg-raised shadow-[var(--elev)] ring-1 ring-line">
               <ServiceMark id={service.id} name={service.name} size={44} />
             </div>
             <div>
-              <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-white">
+              <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-ink">
                 {service.name}
               </h1>
-              <p className="mt-1 text-[14.5px] text-white/50">{service.blurb}</p>
+              <p className="mt-1 text-[14.5px] text-ink-3">{service.blurb}</p>
             </div>
           </div>
 
@@ -153,7 +153,7 @@ export function PluginDetailView({
               type="button"
               disabled={pending}
               onClick={uninstall}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-5 text-[14px] font-semibold text-emerald-300"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-positive/30 bg-positive-soft px-5 text-[14px] font-semibold text-positive"
             >
               <FiCheck size={16} />
               Installed
@@ -166,8 +166,8 @@ export function PluginDetailView({
               className={cn(
                 "h-11 rounded-full px-6 text-[14px] font-semibold transition",
                 canInstall
-                  ? "bg-white text-black hover:bg-white/90 disabled:opacity-50"
-                  : "border border-white/15 text-white/40",
+                  ? "btn-grad text-white disabled:opacity-50"
+                  : "border border-line text-ink-4",
               )}
             >
               {busy ? "Connecting…" : canInstall ? "Install plugin" : "Coming soon"}
@@ -175,9 +175,9 @@ export function PluginDetailView({
           )}
         </div>
 
-        {error ? <p className="mt-4 text-[13px] text-rose-300">{error}</p> : null}
+        {error ? <p className="mt-4 text-[13px] text-critical">{error}</p> : null}
 
-        <div className="relative mt-12 overflow-hidden rounded-[28px] border border-white/10">
+        <div className="relative mt-12 overflow-hidden rounded-[28px] border border-line shadow-[var(--elev)]">
           <div
             aria-hidden
             className="absolute inset-0"
@@ -211,7 +211,7 @@ export function PluginDetailView({
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[12.5px] text-white/35">
+        <p className="mt-6 text-center text-[12.5px] text-ink-4">
           {service.category} · Connect once, use in chat
         </p>
       </div>
