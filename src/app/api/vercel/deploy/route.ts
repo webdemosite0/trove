@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { secretFor } from "@/lib/connections";
 import { currentUser } from "@/lib/auth";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,20 @@ export async function POST(req: NextRequest) {
   const user = await currentUser();
   if (!user) {
     return Response.json({ error: "Sign in to deploy." }, { status: 401 });
+  }
+
+  const limit = await consumeRateLimit({
+    scope: "vercel-deploy",
+    identity: user.id,
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+    failClosed: true,
+  });
+  if (!limit.allowed) {
+    return Response.json(
+      { error: "Too many Vercel deploy requests. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+    );
   }
 
   const token = await secretFor("vercel");
