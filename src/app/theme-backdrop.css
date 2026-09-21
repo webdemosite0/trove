@@ -6,7 +6,7 @@
 .nx-photo-bg {
   position: absolute;
   inset: 0;
-  background-color: #f4f2ff;
+  background-color: #f7f3ff;
   background-image:
     radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.5), transparent 72%),
     radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.42), transparent 70%),
@@ -82,7 +82,7 @@
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-canvas: #f4f2ff;
+    --color-canvas: #f7f3ff;
   }
 }
 
@@ -110,8 +110,8 @@
   --btn-a: #7c4dff;
   --btn-b: #3478f6;
   --btn-glow: rgb(124 77 255 / 0.38);
-  --scrollbar: #2a2a36;
-  --scrollbar-hover: #3a3a4a;
+  --scrollbar: #302850;
+  --scrollbar-hover: #493b75;
   --chip-hover-line: #45455a;
   --hairline: rgb(180 200 255 / 0.16);
   --bezel: rgb(180 200 255 / 0.06);
@@ -126,27 +126,27 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-canvas: #09090f;
-    --color-rail: #0c0c14;
-    --color-sunk: #111118;
-    --color-raised: #16161f;
-    --color-hover: #1e1e2a;
+    --color-canvas: #070613;
+    --color-rail: #0d0a1c;
+    --color-sunk: #131026;
+    --color-raised: #1a1631;
+    --color-hover: #241e42;
     --color-ink: #f5f5f7;
     --color-ink-2: #e8e8ed;
     --color-ink-3: #a8a8b3;
     --color-ink-4: #7e7e8a;
-    --color-line: #2a2a36;
-    --color-line-strong: #3a3a4a;
-    --color-accent: #6bb3ff;
-    --color-accent-soft: #0f1c33;
-    --color-violet: #8ec5ff;
-    --scrollbar: #2a2a36;
-    --scrollbar-hover: #3a3a4a;
+    --color-line: #302850;
+    --color-line-strong: #493b75;
+    --color-accent: #8b7cff;
+    --color-accent-soft: #1d173b;
+    --color-violet: #d275ff;
+    --scrollbar: #302850;
+    --scrollbar-hover: #493b75;
     --chip-hover-line: #45455a;
     --hairline: rgb(180 200 255 / 0.16);
     --bezel: rgb(180 200 255 / 0.06);
-    --focus-ring: rgb(107 179 255 / 0.28);
-    --focus-line: rgb(107 179 255 / 0.85);
+    --focus-ring: rgb(139 124 255 / 0.30);
+    --focus-line: rgb(139 124 255 / 0.90);
   }
 }
 
