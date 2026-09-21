@@ -170,6 +170,35 @@ export function verificationEmail(name: string, link: string) {
   return { subject, text, html };
 }
 
+export function passwordResetEmail(name: string, link: string) {
+  const subject = `Reset your password for ${site.name}`;
+  const text =
+    `Hi ${name},\n\n` +
+    `Use this link to reset your ${site.name} password:\n\n` +
+    `${link}\n\n` +
+    `The link works once and expires in 1 hour.\n` +
+    `If you did not request a password reset, ignore this email.\n`;
+
+  const html = `
+    <div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.6;color:#111">
+      <p>Hi ${escapeHtml(name)},</p>
+      <p>Use this link to reset your ${escapeHtml(site.name)} password.</p>
+      <p style="margin:28px 0">
+        <a href="${escapeAttr(link)}"
+           style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;display:inline-block;font-weight:600">
+          Reset password
+        </a>
+      </p>
+      <p style="color:#555;font-size:13px">
+        The link works once and expires in 1 hour. If you did not request a password
+        reset, ignore this email.
+      </p>
+      <p style="color:#888;font-size:12px;word-break:break-all">${escapeHtml(link)}</p>
+    </div>`;
+
+  return { subject, text, html };
+}
+
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
