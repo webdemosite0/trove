@@ -28,13 +28,13 @@ const POINTS = [
 
 export function TrustSection() {
   return (
-    <section className="relative border-y border-zinc-200/80 bg-white/50 px-5 py-20 backdrop-blur-sm lg:py-24">
+    <section className="relative border-y border-zinc-200/80 bg-white/50 dark:border-line dark:bg-raised/35 px-5 py-20 backdrop-blur-sm lg:py-24">
       <div className="mx-auto max-w-[1140px]">
         <Reveal className="mx-auto max-w-[44ch] text-center">
-          <h2 className="text-[clamp(1.6rem,1.1rem+1.5vw,2.2rem)] font-semibold tracking-tight text-zinc-900">
+          <h2 className="text-[clamp(1.6rem,1.1rem+1.5vw,2.2rem)] font-semibold tracking-tight text-zinc-900 dark:text-ink">
             Your projects are not trapped inside a chat.
           </h2>
-          <p className="mt-3 text-[15.5px] leading-relaxed text-zinc-600">
+          <p className="mt-3 text-[15.5px] leading-relaxed text-zinc-600 dark:text-ink-3">
             Trove is built so finished work can leave the product — as files you own, and sites you
             control.
           </p>
@@ -44,12 +44,12 @@ export function TrustSection() {
             const Icon = p.Icon;
             return (
               <Reveal key={p.title} delay={i * 60}>
-                <div className="h-full rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div className="h-full rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-sm dark:border-line dark:bg-raised dark:shadow-[var(--sh-1)] transition hover:-translate-y-0.5 hover:shadow-md">
                   <span className="grid size-10 place-items-center rounded-xl bg-violet-50 text-violet-600">
                     <Icon size={18} />
                   </span>
-                  <h3 className="mt-3 text-[15px] font-semibold text-zinc-900">{p.title}</h3>
-                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-zinc-600">{p.body}</p>
+                  <h3 className="mt-3 text-[15px] font-semibold text-zinc-900 dark:text-ink">{p.title}</h3>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-zinc-600 dark:text-ink-3">{p.body}</p>
                 </div>
               </Reveal>
             );
