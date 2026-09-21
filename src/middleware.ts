@@ -1,7 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Reachable without an account. Everything else needs one. */
-const PUBLIC_PAGES = new Set(["/", "/login", "/signup", "/pricing", "/about"]);
+const PUBLIC_PAGES = new Set([
+  "/",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/pricing",
+  "/about",
+  "/privacy",
+  "/terms",
+  "/status",
+]);
 
 const PUBLIC_PREFIXES = [
   "/features/",
@@ -25,6 +36,24 @@ const PUBLISH_ROOT_DOMAIN = String(
 function isPublic(pathname: string) {
   if (PUBLIC_PAGES.has(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+function secureAppResponse(res: NextResponse): NextResponse {
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.headers.set(
+    "Permissions-Policy",
+    "camera=(), geolocation=(), microphone=(self), browsing-topics=()",
+  );
+  // Do not includeSubDomains: user-published sites currently live on wildcard
+  // subdomains and must remain independently deployable until publishing moves
+  // to a separate registrable domain.
+  if (process.env.NODE_ENV === "production") {
+    res.headers.set("Strict-Transport-Security", "max-age=31536000");
+  }
+  return res;
 }
 
 /**
@@ -123,20 +152,22 @@ export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   const toApex = canonicalHost(req);
-  if (toApex) return toApex;
+  if (toApex) return secureAppResponse(toApex);
 
   if (isPublic(pathname)) {
     const res = pinUi(req, NextResponse.next());
     if (req.cookies.has("nx_guest")) res.cookies.delete("nx_guest");
-    return res;
+    return secureAppResponse(res);
   }
 
-  if (req.cookies.has("nx_session")) return pinUi(req, NextResponse.next());
+  if (req.cookies.has("nx_session")) {
+    return secureAppResponse(pinUi(req, NextResponse.next()));
+  }
 
   if (pathname.startsWith("/api/")) {
     const res = NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
     res.headers.set("X-Robots-Tag", "noindex, nofollow");
-    return res;
+    return secureAppResponse(res);
   }
 
   const url = req.nextUrl.clone();
@@ -149,7 +180,7 @@ export function middleware(req: NextRequest) {
   // can remove stale "Sign in · Trove" results even though the response redirects.
   res.headers.set("X-Robots-Tag", "noindex, nofollow");
   if (req.cookies.has("nx_guest")) res.cookies.delete("nx_guest");
-  return res;
+  return secureAppResponse(res);
 }
 
 export const config = {
