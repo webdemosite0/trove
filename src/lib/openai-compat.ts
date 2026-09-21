@@ -1,6 +1,9 @@
 import "server-only";
 import type { Turn, Usage, OnUsage } from "@/lib/gemini";
 
+const COMPAT_GENERATE_TIMEOUT_MS = 30_000;
+const COMPAT_STREAM_CONNECT_TIMEOUT_MS = 15_000;
+
 export type CompatProvider = {
   id: string;
   label: string;
@@ -109,6 +112,7 @@ export async function compatGenerate(opts: {
   const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
   const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
+    signal: AbortSignal.timeout(COMPAT_GENERATE_TIMEOUT_MS),
     headers: {
       "Content-Type": "application/json",
       Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
@@ -147,9 +151,18 @@ export async function compatStream(opts: {
   onUsage?: OnUsage;
 }): Promise<ReadableStream<Uint8Array>> {
   const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
-  const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
-    method: "POST",
-    headers: {
+  const controller = new AbortController();
+  const connectTimer = setTimeout(
+    () => controller.abort(),
+    COMPAT_STREAM_CONNECT_TIMEOUT_MS,
+  );
+
+  let res: Response;
+  try {
+    res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
       "Content-Type": "application/json",
       Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
       ...(provider.id === "openrouter"
@@ -166,7 +179,11 @@ export async function compatStream(opts: {
       max_tokens: maxOutputTokens,
       stream: true,
     }),
-  });
+    });
+  } finally {
+    clearTimeout(connectTimer);
+  }
+
   if (!res.ok || !res.body) {
     const text = await res.text().catch(() => "");
     throw new Error(`${provider.label} ${res.status}: ${text.slice(0, 240)}`);
