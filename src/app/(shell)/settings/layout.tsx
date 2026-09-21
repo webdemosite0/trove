@@ -25,7 +25,7 @@ export default function SettingsLayout({
               Settings
             </h1>
             <p className="mt-1.5 max-w-[48ch] text-[14px] text-ink-3">
-              Manage your profile, billing, Light & Dark Mode, and affiliate rewards.
+              Manage your profile, billing, appearance, app downloads, and affiliate rewards.
             </p>
           </div>
         </div>
