@@ -32,8 +32,8 @@ export async function setInstructions(text: string): Promise<{ ok: true } | { er
   }
 }
 
-export async function instructionsBlock(): Promise<string> {
-  const text = (await getInstructions()).trim();
+export async function instructionsBlock(userId?: string): Promise<string> {
+  const text = (await getInstructions(userId)).trim();
   if (!text) return "";
   return (
     `\n\nCUSTOM INSTRUCTIONS FROM THE USER (always follow these preferences):\n` +
