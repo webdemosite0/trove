@@ -4,6 +4,7 @@ import { isIP } from "node:net";
 import { currentUser } from "@/lib/auth";
 import { generateText } from "@/lib/ai";
 import { getInstructions, setInstructions } from "@/lib/user-prefs";
+import { updateBusinessProfile } from "@/lib/business-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -174,6 +175,18 @@ Return ONLY valid JSON with keys: summary, industry, audience, voice, instructio
     const combined = [existing, businessBlock].filter(Boolean).join("\n\n").slice(0, 4000);
     const saved = await setInstructions(combined);
     if ("error" in saved) throw new Error(saved.error);
+
+    await updateBusinessProfile(user.id, {
+      businessName,
+      businessUrl: normalizeUrl(businessUrl),
+      businessProfileName:
+        profile instanceof File && profile.size > 0 ? profile.name : undefined,
+      businessAnalysis: String(analysis.summary || "").slice(0, 500),
+      industry: String(analysis.industry || "").slice(0, 120),
+      audience: String(analysis.audience || "").slice(0, 300),
+      voice: String(analysis.voice || "").slice(0, 220),
+      instructions,
+    });
 
     return NextResponse.json({
       ok: true,
