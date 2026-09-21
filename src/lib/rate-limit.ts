@@ -104,21 +104,45 @@ export async function expensiveRequestLimit(opts: {
   limit?: number;
   windowMs?: number;
 }): Promise<Response | null> {
-  const result = await consumeRateLimit({
-    scope: `expensive:${opts.scope}`,
+  const limit = opts.limit ?? 40;
+  const windowMs = opts.windowMs ?? 10 * 60 * 1000;
+
+  const userResult = await consumeRateLimit({
+    scope: `expensive:${opts.scope}:user`,
     identity: opts.userId,
-    limit: opts.limit ?? 40,
-    windowMs: opts.windowMs ?? 10 * 60 * 1000,
+    limit,
+    windowMs,
     failClosed: true,
   });
 
-  if (result.allowed) return null;
+  if (!userResult.allowed) {
+    return Response.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(userResult.retryAfterSeconds) },
+      },
+    );
+  }
+
+  const networkIdentity = await requestIdentity(opts.scope);
+  const networkResult = await consumeRateLimit({
+    scope: `expensive:${opts.scope}:network`,
+    identity: networkIdentity,
+    // Allow normal offices / shared networks while still stopping cheap
+    // multi-account bursts from one client or bot host.
+    limit: Math.max(80, limit * 4),
+    windowMs,
+    failClosed: true,
+  });
+
+  if (networkResult.allowed) return null;
 
   return Response.json(
-    { error: "Too many requests. Please wait a moment and try again." },
+    { error: "Too many requests from this network. Please wait and try again." },
     {
       status: 429,
-      headers: { "Retry-After": String(result.retryAfterSeconds) },
+      headers: { "Retry-After": String(networkResult.retryAfterSeconds) },
     },
   );
 }
