@@ -46,6 +46,24 @@ export default function TermsPage() {
           according to the plan description on the pricing page. We may change
           pricing with notice on the site.
         </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Billing and cancellation</h2>
+        <p>
+          Paid plans renew through the payment provider shown at checkout until
+          you cancel them. Taxes, currency conversion, and payment-method
+          availability can vary by region. Manage or cancel an active
+          subscription from the billing portal. Refund rights required by
+          applicable law are not limited by these terms.
+        </p>
+        <h2 className="pt-2 text-[17px] font-semibold text-ink">Referral rewards</h2>
+        <p>
+          Referral credits and cash rewards are promotional benefits, not wages
+          or guaranteed income. Self-referrals, duplicate or automated accounts,
+          payment abuse, refunds, chargebacks, and other manipulation do not
+          qualify. A paid referral must remain active through the qualification
+          window shown in the affiliate program before it counts toward a cash
+          reward. Cash rewards are subject to account and fraud review before
+          payout, and invalid rewards may be withheld or reversed.
+        </p>
         <h2 className="pt-2 text-[17px] font-semibold text-ink">Disclaimer</h2>
         <p>
           The service is provided as available. AI output can be wrong. Review
