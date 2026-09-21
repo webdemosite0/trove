@@ -7,8 +7,6 @@ import { MobileShell } from "@/components/mobile/shell";
 import { isMobile } from "@/lib/device";
 import { AppChrome } from "@/components/shell/app-chrome";
 import { AuthReferralAnnouncement } from "@/components/shell/auth-referral-announcement";
-import { balanceFor } from "@/lib/credits";
-import type { Balance } from "@/lib/types";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -31,13 +29,6 @@ export default async function ShellLayout({
 
   const user = gate.user;
 
-  let balance: Balance | null = null;
-  try {
-    balance = await balanceFor(user.id, user.plan, { email: user.email });
-  } catch {
-    balance = null;
-  }
-
   if (await isMobile()) {
     return (
       <ToastProvider>
@@ -45,7 +36,7 @@ export default async function ShellLayout({
         <AuthReferralAnnouncement />
         <MobileShell
           user={{ name: user.name, email: user.email }}
-          balance={balance}
+          balance={null}
         >
           {children}
         </MobileShell>
@@ -59,7 +50,7 @@ export default async function ShellLayout({
         <Backdrop />
         <AppChrome
           user={user}
-          balance={balance}
+          balance={null}
           isAdmin={isAdminEmail(user?.email)}
         >
           {children}
