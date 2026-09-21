@@ -23,7 +23,10 @@ const FALLBACK_STATUS = new Set([404, 429, 503]);
 
 /** Google's free tier returns 503 "high demand" sporadically — the identical
  *  request usually succeeds seconds later, so sweep the list more than once. */
-const PASSES = 2;
+// One sweep already tries every configured Gemini model. Repeating the entire
+// list doubled worst-case latency before Trove could fall back to another
+// provider, which made provider trouble look like an app hang.
+const PASSES = 1;
 const REQUEST_TIMEOUT_MS = 45_000;
 const PASS_DELAY_MS = 1200;
 
