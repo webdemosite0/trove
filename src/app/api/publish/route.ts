@@ -13,7 +13,7 @@ import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /**
  * POST /api/publish
