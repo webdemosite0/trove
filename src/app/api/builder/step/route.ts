@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { generateText } from "@/lib/ai";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { skillPrompts, skillLabel } from "@/lib/skills";
 import { targetFor } from "@/lib/targets";
 import { safeProjectPath } from "@/lib/builder";
@@ -195,6 +196,15 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: e.message }, { status: 402 });
     }
     return Response.json({ error: "Sign in to build." }, { status: 401 });
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "builder-step",
+      limit: 36,
+    });
+    if (limited) return limited;
   }
 
   const files = Array.isArray(body.files) ? body.files : [];
