@@ -115,8 +115,8 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
                   </p>
                   <p className="mt-1 text-[15px] font-semibold text-ink">
                     {stats.cashUnlocked
-                      ? `Payout review unlocked: ${PAID_REFERRAL_BONUS_USD}`
-                      : `${stats.paidSignups} / ${PAID_REFERRAL_GOAL} qualified paid referrals → ${PAID_REFERRAL_BONUS_USD}`}
+                      ? `Payout review unlocked: $${PAID_REFERRAL_BONUS_USD}`
+                      : `${stats.paidSignups} / ${PAID_REFERRAL_GOAL} qualified paid referrals → $${PAID_REFERRAL_BONUS_USD}`}
                   </p>
                   <p className="mt-1 text-[12.5px] text-ink-3">
                     A paid referral qualifies after {PAID_REFERRAL_QUALIFY_DAYS} active days. At 100 qualified referrals, your account becomes eligible for a $200 payout review.
@@ -208,7 +208,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
             {
               n: "3",
               title: "You both get rewards",
-              body: `+${REFERRER_SIGNUP_CREDITS} credits each signup. 100 paid referrals that remain active for ${PAID_REFERRAL_QUALIFY_DAYS} days unlock a ${PAID_REFERRAL_BONUS_USD} payout review.`,
+              body: `+${REFERRER_SIGNUP_CREDITS} credits each signup. 100 paid referrals that remain active for ${PAID_REFERRAL_QUALIFY_DAYS} days unlock a $${PAID_REFERRAL_BONUS_USD} payout review.`,
               ring: "from-amber-400 to-orange-500",
             },
           ].map((step) => (
