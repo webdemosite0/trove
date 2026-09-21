@@ -236,7 +236,7 @@ function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
           <p className="mt-1 text-[13px] font-semibold leading-snug text-slate-950 dark:text-white">
             Share Trove · get credits
           </p>
-          <p className="mt-0.5 text-[11px] text-slate-600 dark:text-zinc-400">100 paid invites → $200</p>
+          <p className="mt-0.5 text-[11px] text-slate-600 dark:text-zinc-400">100 qualified paid → $200</p>
           <span className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-blue-600 dark:text-sky-400">
             Open affiliates
             <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
