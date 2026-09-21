@@ -39,6 +39,7 @@ function readForm(form: FormData) {
     password: String(form.get("password") ?? ""),
     name: String(form.get("name") ?? "").trim(),
     next: safeNext(String(form.get("next") ?? "")),
+    keepSignedIn: String(form.get("keepSignedIn") ?? "1") === "1",
   };
 }
 
@@ -145,7 +146,7 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
 }
 
 export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState> {
-  const { email, password, next } = readForm(form);
+  const { email, password, next, keepSignedIn } = readForm(form);
 
   const loginLimit = await consumeRateLimit({
     scope: "auth-login",
@@ -168,7 +169,7 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
     await markVerified(row.id);
   }
 
-  await startSession(row.id);
+  await startSession(row.id, { persistent: keepSignedIn });
 
   if (!row.emailVerified && mustVerifyEmail) {
     redirect("/verify-email");
