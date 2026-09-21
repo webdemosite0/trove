@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { all, one, run, uid, num, str } from "@/lib/db";
 import { grantBonusCredits } from "@/lib/credits";
 import { site } from "@/lib/site";
+import { PAID_REFERRAL_QUALIFY_DAYS } from "@/lib/affiliates-public";
 
 /** Cookie set when someone opens a referral link. */
 export const REF_COOKIE = "trove_ref";
@@ -192,12 +193,16 @@ export async function affiliateStatsFor(userId: string): Promise<AffiliateStats>
     [userId],
   );
 
+  const qualifiedBefore = Date.now() - PAID_REFERRAL_QUALIFY_DAYS * 24 * 60 * 60 * 1000;
   const paidRow = await one(
     `SELECT COUNT(*) AS n
        FROM referrals r
        JOIN users u ON u.id = r.referee_id
-      WHERE r.referrer_id = ? AND u.plan IS NOT NULL AND u.plan <> 'free'`,
-    [userId],
+      WHERE r.referrer_id = ?
+        AND r.created_at <= ?
+        AND u.plan IN ('pro', 'team')
+        AND lower(COALESCE(u.subscription_status, '')) IN ('active', 'trialing', 'on_trial')`,
+    [userId, qualifiedBefore],
   );
 
   const paidSignups = num(paidRow?.n);
