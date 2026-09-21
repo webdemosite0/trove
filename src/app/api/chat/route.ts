@@ -10,7 +10,8 @@ import {
   RateWindowExceeded,
 } from "@/lib/credits";
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
-import { isChatModelId, type ChatModelId } from "@/lib/chat-models";
+import type { ChatModelId } from "@/lib/chat-models";
+import { loadProject } from "@/lib/projects";
 import { buildChatConnectorContext } from "@/lib/chat-connectors";
 import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -33,9 +34,53 @@ Never say you "cannot use the integration directly" if that app is connected —
 - Slack — with a bot token, the server can list channels and read recent messages; with webhook-only, post only.
 - GitHub — list repos / profile when the server injects them; deploy via Website builder Deploy to GitHub.
 - @mentions select connected apps for this request. @slack and @github have direct live-data adapters in chat; other selected apps must be described specifically if their requested action is not implemented.
-Do not claim you executed a deploy unless they used Deploy in the builder.`;
+Do not claim you executed a deploy unless they used Deploy in the builder.
+
+PROJECT WORKSPACES
+When PROJECT WORKSPACE context is supplied, treat those files as the current source of truth.
+If the user asks to change code/files in the selected project, output every changed file in this exact format:
+<<<FILE: relative/path>>>
+complete file contents
+<<<END>>>
+Then add:
+SUMMARY: a concise user-facing explanation of what changed.
+Trove will write those file blocks back into the selected project automatically. Never emit partial files, ellipses, or paths outside the project.`;
 
 const SYSTEM_FAST = `You are Trove. Answer briefly and naturally. No tools, no search, no long preambles.`;
+
+function projectSystemContext(project: Awaited<ReturnType<typeof loadProject>>) {
+  if (!project) return "";
+
+  const preferred = [...project.files].sort((a, b) => {
+    const score = (path: string) =>
+      path === "package.json" ? 0 :
+      /(?:^|\/)src\//.test(path) ? 1 :
+      /\.(?:tsx?|jsx?|css|html|json)$/i.test(path) ? 2 : 3;
+    return score(a.path) - score(b.path);
+  });
+
+  let used = 0;
+  const MAX_TOTAL = 72_000;
+  const blocks: string[] = [];
+
+  for (const file of preferred.slice(0, 24)) {
+    if (!file.content || used >= MAX_TOTAL) break;
+    const room = MAX_TOTAL - used;
+    const body = file.content.slice(0, Math.min(12_000, room));
+    used += body.length;
+    blocks.push(`<<<PROJECT_FILE: ${file.path}>>>\n${body}\n<<<END_PROJECT_FILE>>>`);
+  }
+
+  return [
+    `PROJECT WORKSPACE — ${project.name}`,
+    project.prompt ? `Original project brief: ${project.prompt}` : "",
+    `Current status: ${project.status}. Current files: ${project.files.length}.`,
+    blocks.length ? `Current project files:\n\n${blocks.join("\n\n")}` : "This project does not have files yet.",
+    project.files.length > blocks.length
+      ? "Some project files were omitted from context for size. Ask for a specific file if needed."
+      : "",
+  ].filter(Boolean).join("\n\n");
+}
 
 function needsWebSearch(text: string): boolean {
   const t = text.trim();
@@ -82,7 +127,8 @@ async function handle(req: NextRequest) {
   let turns: Turn[];
   let attachments: Attachment[] = [];
   let mode: unknown;
-  let model: ChatModelId = "auto";
+  const model: ChatModelId = "auto";
+  let projectId = "";
   let timeZone = "UTC";
 
   try {
@@ -90,7 +136,7 @@ async function handle(req: NextRequest) {
     turns = Array.isArray(body?.messages) ? body.messages : [];
     attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     mode = body?.mode;
-    model = isChatModelId(body?.model) ? body.model : "auto";
+    projectId = String(body?.projectId || "").trim().slice(0, 128);
     timeZone = safeTimeZone(body?.timeZone);
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
@@ -161,6 +207,7 @@ async function handle(req: NextRequest) {
           model,
           mode: typeof mode === "string" ? mode.slice(0, 40) : "auto",
           hasAttachments: attachments.length > 0,
+          projectId: project?.id || "",
         },
       }),
       trackEventOncePerUser({
@@ -173,6 +220,8 @@ async function handle(req: NextRequest) {
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const connectorContext = await buildChatConnectorContext(lastUser);
+  const project = projectId ? await loadProject(projectId).catch(() => null) : null;
+  const projectContext = projectSystemContext(project);
 
   // Connector requests must never take the generic "simple chat" path because
   // that path intentionally omits tools/live context. They also should not use
@@ -194,6 +243,7 @@ async function handle(req: NextRequest) {
           SYSTEM +
             connectorContext.connectedNote +
             connectorContext.liveContext +
+            (projectContext ? "\n\n" + projectContext : "") +
             custom,
           OBEY_FORMAT,
           situation({ timeZone, canSearch }),
