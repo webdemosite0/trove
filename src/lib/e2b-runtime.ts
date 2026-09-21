@@ -324,18 +324,18 @@ export async function buildE2BProductionSite(
   await syncE2BProject(sandbox, projectFiles);
 
   await sandbox.commands.run(
-    \`rm -rf "\${PRODUCTION_OUTPUT_DIR}" && npx vite build --base=/ --outDir "\${PRODUCTION_OUTPUT_DIR}" --emptyOutDir\`,
+    `rm -rf "${PRODUCTION_OUTPUT_DIR}" && npx vite build --base=/ --outDir "${PRODUCTION_OUTPUT_DIR}" --emptyOutDir`,
     {
       cwd: PROJECT_ROOT,
       timeoutMs: 240_000,
     },
   );
 
-  const exportScript = \`
+  const exportScript = `
 const fs = require("fs");
 const path = require("path");
 const root = path.resolve(process.cwd(), ".trove-dist");
-const textExt = /\\\\.(?:html?|css|m?js|cjs|json|svg|txt|xml|map|webmanifest)$/i;
+const textExt = /\\.(?:html?|css|m?js|cjs|json|svg|txt|xml|map|webmanifest)$/i;
 let total = 0;
 const rows = [];
 
@@ -349,11 +349,11 @@ function walk(dir) {
     }
     const rel = path.relative(root, abs).split(path.sep).join("/");
     const buf = fs.readFileSync(abs);
-    if (buf.length > 5000000) {
+    if (buf.length > ${MAX_PUBLISH_FILE_BYTES}) {
       throw new Error("PUBLISH_FILE_TOO_LARGE:" + rel);
     }
     total += buf.length;
-    if (total > 15000000) {
+    if (total > ${MAX_PUBLISH_OUTPUT_BYTES}) {
       throw new Error("PUBLISH_OUTPUT_TOO_LARGE");
     }
     const encoding = textExt.test(rel) ? "utf8" : "base64";
@@ -368,10 +368,10 @@ function walk(dir) {
 if (!fs.existsSync(root)) throw new Error("PUBLISH_OUTPUT_MISSING");
 walk(root);
 process.stdout.write(JSON.stringify(rows));
-\`;
+`;
 
   const exported = await sandbox.commands.run(
-    \`node --input-type=commonjs -e \${JSON.stringify(exportScript)}\`,
+    `node --input-type=commonjs -e ${JSON.stringify(exportScript)}`,
     {
       cwd: PROJECT_ROOT,
       timeoutMs: 60_000,
