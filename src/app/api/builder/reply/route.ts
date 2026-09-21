@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "@/lib/ai";
+import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -10,6 +12,29 @@ export const maxDuration = 60;
  * Code-change requests are handled client-side via the step route (refine).
  */
 export async function POST(req: NextRequest) {
+  let account: Awaited<ReturnType<typeof requireCredits>> = null;
+  try {
+    account = await requireCredits();
+  } catch (e) {
+    if (e instanceof OutOfCredits) {
+      return NextResponse.json(
+        { error: e.message, outOfCredits: true, balance: e.balance },
+        { status: 402 },
+      );
+    }
+    return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
+  }
+
+  if (!account) {
+    return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
+  }
+  const limited = await expensiveRequestLimit({
+    userId: account.userId,
+    scope: "builder-reply",
+    limit: 50,
+  });
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const message = String(body.message || "").trim();
@@ -64,6 +89,7 @@ Each option is 3–8 words, actionable, specific to this project.`;
       system: system + (snippets ? `\n\nPartial file context:\n${snippets}` : ""),
       temperature: 0.4,
       maxOutputTokens: 700,
+      onUsage: (u) => account && spend(account.userId, "builder-reply", u.totalTokens),
     });
 
     let reply = (text || "Got it.").trim();
