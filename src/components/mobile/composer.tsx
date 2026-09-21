@@ -16,6 +16,14 @@ import type { ModeId } from "@/lib/modes";
 import type { ChatModelId, ChatModelOption } from "@/lib/chat-models";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
+import { ConnectorChip } from "@/components/chat/connector-chip";
+import {
+  ConnectorMentionMenu,
+  connectorMentionAt,
+  filterConnectorOptions,
+  useConnectedConnectors,
+  type ConnectedConnectorOption,
+} from "@/components/chat/connector-mention-menu";
 
 /**
  * The phone composer.
@@ -51,6 +59,8 @@ export function MobileComposer({
   const [value, setValue] = React.useState(initialValue);
   const [files, setFiles] = React.useState<Attachment[]>([]);
   const [error, setError] = React.useState<string | null>(null);
+  const [focused, setFocused] = React.useState(false);
+  const [cursor, setCursor] = React.useState(initialValue.length);
   const box = React.useRef<HTMLTextAreaElement>(null);
   const picker = React.useRef<HTMLInputElement>(null);
 
@@ -66,6 +76,7 @@ export function MobileComposer({
     if (!text || disabled) return;
     onSend(text, files.length ? files : undefined);
     setValue("");
+    setCursor(0);
     setFiles([]);
     setError(null);
     requestAnimationFrame(resize);
@@ -104,15 +115,58 @@ export function MobileComposer({
     if (next.length) setFiles((f) => [...f, ...next]);
   };
 
+  const mention = connectorMentionAt(value, cursor);
+  const { items: connectorOptions, loading: connectorsLoading } =
+    useConnectedConnectors(focused || Boolean(mention));
+  const connectedIds = new Set(connectorOptions.map((item) => item.id));
+  const mentionedIds = Array.from(
+    new Set(
+      [...value.matchAll(/@([a-z0-9][\w.-]*)/gi)]
+        .map((match) => match[1].toLowerCase())
+        .filter((id) => connectedIds.has(id)),
+    ),
+  );
+  const mentionItems = mention
+    ? filterConnectorOptions(connectorOptions, mention.query)
+    : [];
+  const mentionOpen = Boolean(mention) && focused && !disabled;
+
+  const selectConnector = (item: ConnectedConnectorOption) => {
+    if (!mention) return;
+    const token = `@${item.id} `;
+    const nextValue =
+      value.slice(0, mention.start) + token + value.slice(mention.end);
+    const nextCursor = mention.start + token.length;
+    setValue(nextValue);
+    setCursor(nextCursor);
+    requestAnimationFrame(() => {
+      const el = box.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(nextCursor, nextCursor);
+      resize();
+    });
+  };
+
   const ready = Boolean(value.trim()) && !disabled;
 
   return (
     <div
       className={cn(
-        "composer rounded-[var(--r-hero)] border bg-raised px-1 pb-1 pt-1",
+        "composer relative rounded-[var(--r-hero)] border bg-raised px-1 pb-1 pt-1",
         disabled && "opacity-70",
       )}
     >
+      {mentionOpen ? (
+        <ConnectorMentionMenu
+          items={connectorOptions}
+          query={mention?.query ?? ""}
+          loading={connectorsLoading}
+          onSelect={selectConnector}
+          compact
+        />
+      ) : null}
+
       {files.length ? (
         <ul className="flex gap-2 overflow-x-auto px-3 pb-1 pt-2 scrollbar-none">
           {files.map((f, i) => (
@@ -138,6 +192,14 @@ export function MobileComposer({
         <p className="px-3.5 pb-1 pt-2 text-[12.5px] text-critical">{error}</p>
       ) : null}
 
+      {mentionedIds.length ? (
+        <div className="flex flex-wrap gap-1.5 px-3 pt-2">
+          {mentionedIds.map((id) => (
+            <ConnectorChip key={id} id={id} tone="light" />
+          ))}
+        </div>
+      ) : null}
+
       <textarea
         ref={box}
         rows={2}
@@ -146,7 +208,22 @@ export function MobileComposer({
         autoFocus={autoFocus}
         onChange={(e) => {
           setValue(e.target.value);
+          setCursor(e.target.selectionStart ?? e.target.value.length);
           resize();
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onSelect={(e) => {
+          setCursor(e.currentTarget.selectionStart ?? e.currentTarget.value.length);
+        }}
+        onClick={(e) => {
+          setCursor(e.currentTarget.selectionStart ?? e.currentTarget.value.length);
+        }}
+        onKeyDown={(e) => {
+          if (mentionOpen && e.key === "Enter" && mentionItems.length) {
+            e.preventDefault();
+            selectConnector(mentionItems[0]);
+          }
         }}
         placeholder={disabled ? "Working…" : placeholder}
         aria-label={placeholder}
