@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { generateText, type Source } from "@/lib/ai";
 import { currentUser } from "@/lib/auth";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
+import { expensiveRequestLimit } from "@/lib/rate-limit";
 import {
   loadMission,
   startTask,
@@ -99,6 +100,15 @@ export async function POST(req: NextRequest) {
       { error: `Could not reach the database to check your credits: ${why}` },
       { status: 503 },
     );
+  }
+
+  if (account) {
+    const limited = await expensiveRequestLimit({
+      userId: account.userId,
+      scope: "mission-step",
+      limit: 60,
+    });
+    if (limited) return limited;
   }
 
   await setMissionStatus(missionId, "running");
