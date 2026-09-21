@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { currentUser } from "@/lib/auth";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { secretFor } from "@/lib/connections";
 import {
   isSlackToken,
@@ -15,6 +16,20 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });
+
+  const rate = await consumeRateLimit({
+    scope: "integration-action",
+    identity: user.id,
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+    failClosed: true,
+  });
+  if (!rate.allowed) {
+    return Response.json(
+      { error: "Too many integration actions. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
+    );
+  }
 
   let service = "";
   let action = "";
