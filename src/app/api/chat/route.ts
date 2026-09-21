@@ -136,6 +136,7 @@ async function handle(req: NextRequest) {
     identity: account.userId,
     limit: 120,
     windowMs: 10 * 60 * 1000,
+    failClosed: true,
   });
   if (!requestLimit.allowed) {
     return Response.json(
