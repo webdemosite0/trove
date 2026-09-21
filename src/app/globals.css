@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Trove owns theme selection. Tailwind's default dark variant follows the OS,
+   which made explicit Light/Dark choices disagree with dark: utilities. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ============================================================
    Trove — dark tokens
    ============================================================ */
