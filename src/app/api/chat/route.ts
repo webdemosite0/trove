@@ -82,6 +82,34 @@ function projectSystemContext(project: Awaited<ReturnType<typeof loadProject>>) 
   ].filter(Boolean).join("\n\n");
 }
 
+function localProjectSystemContext(
+  localProject: { name: string; files: { path: string; content: string }[] } | null,
+) {
+  if (!localProject) return "";
+
+  let used = 0;
+  const MAX_TOTAL = 72_000;
+  const blocks: string[] = [];
+
+  for (const file of localProject.files.slice(0, 80)) {
+    if (!file?.path || !file?.content || used >= MAX_TOTAL) continue;
+    const room = MAX_TOTAL - used;
+    const body = String(file.content).slice(0, Math.min(12_000, room));
+    used += body.length;
+    blocks.push(
+      `<<<PROJECT_FILE: ${String(file.path).replace(/^\/+/, "").slice(0, 240)}>>>\n${body}\n<<<END_PROJECT_FILE>>>`,
+    );
+  }
+
+  return [
+    `LOCAL PROJECT WORKSPACE — ${localProject.name}`,
+    `Readable files supplied from the user's selected device folder: ${localProject.files.length}.`,
+    "The user explicitly selected this folder. Treat these files as the current project state.",
+    blocks.length ? blocks.join("\n\n") : "No readable text/code files were supplied.",
+    "When writing changes, use <<<FILE:path>>> complete contents <<<END>>> blocks. Trove will write those changes back to the selected local folder.",
+  ].join("\n\n");
+}
+
 function needsWebSearch(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
@@ -129,6 +157,7 @@ async function handle(req: NextRequest) {
   let mode: unknown;
   const model: ChatModelId = "auto";
   let projectId = "";
+  let localProject: { name: string; files: { path: string; content: string }[] } | null = null;
   let timeZone = "UTC";
 
   try {
@@ -137,6 +166,18 @@ async function handle(req: NextRequest) {
     attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     mode = body?.mode;
     projectId = String(body?.projectId || "").trim().slice(0, 128);
+    if (body?.localProject && typeof body.localProject === "object") {
+      const rawFiles = Array.isArray(body.localProject.files)
+        ? body.localProject.files.slice(0, 80)
+        : [];
+      localProject = {
+        name: String(body.localProject.name || "Local project").slice(0, 120),
+        files: rawFiles.map((file: { path?: unknown; content?: unknown }) => ({
+          path: String(file?.path || "").replace(/^\/+/, "").slice(0, 240),
+          content: String(file?.content || "").slice(0, 220_000),
+        })),
+      };
+    }
     timeZone = safeTimeZone(body?.timeZone);
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
@@ -210,6 +251,7 @@ async function handle(req: NextRequest) {
           mode: typeof mode === "string" ? mode.slice(0, 40) : "auto",
           hasAttachments: attachments.length > 0,
           projectId: project?.id || "",
+          localProject: localProject?.name || "",
         },
       }),
       trackEventOncePerUser({
@@ -222,7 +264,8 @@ async function handle(req: NextRequest) {
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const connectorContext = await buildChatConnectorContext(lastUser);
-  const projectContext = projectSystemContext(project);
+  const projectContext =
+    localProjectSystemContext(localProject) || projectSystemContext(project);
 
   // Connector requests must never take the generic "simple chat" path because
   // that path intentionally omits tools/live context. They also should not use
