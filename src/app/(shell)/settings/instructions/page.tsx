@@ -1,4 +1,4 @@
-import { getInstructions } from "@/lib/user-prefs";
+import { getManualInstructions } from "@/lib/user-prefs";
 import { currentUser } from "@/lib/auth";
 import { SignedOut } from "@/components/settings/signed-out";
 import { InstructionsForm } from "@/components/settings/instructions-form";
@@ -8,7 +8,7 @@ export const metadata = { title: "Custom instructions" };
 export default async function InstructionsPage() {
   const user = await currentUser();
   if (!user) return <SignedOut />;
-  const instructions = await getInstructions(user.id);
+  const instructions = await getManualInstructions(user.id);
   return (
     <div className="mx-auto w-full max-w-[640px]">
       <h1 className="text-[22px] font-semibold tracking-tight text-ink">Custom instructions</h1>
