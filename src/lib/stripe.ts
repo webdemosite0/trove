@@ -1,6 +1,6 @@
 import "server-only";
 import Stripe from "stripe";
-import { PLANS } from "@/lib/credits";
+import { PLANS, type BillingInterval } from "@/lib/credits";
 
 /**
  * Stripe, and the mapping between Trove's plans and Stripe's prices.
@@ -36,20 +36,33 @@ export function stripe(): Stripe {
 }
 
 /** Trove plan id -> Stripe price id. Only plans with a price configured. */
-export function priceFor(planId: string): string | null {
-  const key = `STRIPE_PRICE_${planId.toUpperCase()}`;
+export function priceFor(
+  planId: string,
+  interval: BillingInterval = "month",
+): string | null {
+  const base = planId.toUpperCase();
+  const key =
+    interval === "year"
+      ? `STRIPE_PRICE_${base}_YEARLY`
+      : `STRIPE_PRICE_${base}`;
   return process.env[key]?.trim() || null;
 }
 
 /** The reverse: which plan a Stripe price belongs to. */
 export function planForPrice(priceId: string): string | null {
   for (const plan of PLANS) {
-    if (plan.price > 0 && priceFor(plan.id) === priceId) return plan.id;
+    if (plan.price <= 0) continue;
+    if (priceFor(plan.id, "month") === priceId || priceFor(plan.id, "year") === priceId) {
+      return plan.id;
+    }
   }
   return null;
 }
 
 /** A paid plan is only offerable if Stripe AND its price are both set up. */
-export function purchasable(planId: string): boolean {
-  return stripeConfigured() && Boolean(priceFor(planId));
+export function purchasable(
+  planId: string,
+  interval: BillingInterval = "month",
+): boolean {
+  return stripeConfigured() && Boolean(priceFor(planId, interval));
 }
