@@ -39,7 +39,7 @@ export async function GET(
   // serve stylesheets, scripts, favicons and other text assets from the same host.
   if (requestedPath) {
     const asset = findPublishedFile(files, requestedPath);
-    if (asset) return fileResponse(asset.path, asset.content);
+    if (asset) return fileResponse(asset.path, asset.content, asset.encoding);
   }
 
   let live = await resolveLiveHtml(slug).catch(() => null);
@@ -69,6 +69,7 @@ function parseFiles(raw: string | null): ProjectFile[] {
       .map((file) => ({
         path: String(file.path).replace(/^\/+/, ""),
         content: String(file.content ?? ""),
+        encoding: file.encoding === "base64" ? "base64" : "utf8",
       }));
   } catch {
     return [];
@@ -114,7 +115,15 @@ function isViteShell(h: string): boolean {
   );
 }
 
-function fileResponse(path: string, body: string) {
+function fileResponse(
+  path: string,
+  content: string,
+  encoding: ProjectFile["encoding"] = "utf8",
+) {
+  const body =
+    encoding === "base64"
+      ? new Uint8Array(Buffer.from(content, "base64"))
+      : content;
   return new Response(body, {
     status: 200,
     headers: {
@@ -131,6 +140,16 @@ function contentType(path: string): string {
   if (lower.endsWith(".js") || lower.endsWith(".mjs")) return "text/javascript; charset=utf-8";
   if (lower.endsWith(".json")) return "application/json; charset=utf-8";
   if (lower.endsWith(".svg")) return "image/svg+xml; charset=utf-8";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".gif")) return "image/gif";
+  if (lower.endsWith(".ico")) return "image/x-icon";
+  if (lower.endsWith(".woff")) return "font/woff";
+  if (lower.endsWith(".woff2")) return "font/woff2";
+  if (lower.endsWith(".ttf")) return "font/ttf";
+  if (lower.endsWith(".otf")) return "font/otf";
+  if (lower.endsWith(".wasm")) return "application/wasm";
   if (lower.endsWith(".xml")) return "application/xml; charset=utf-8";
   if (lower.endsWith(".txt")) return "text/plain; charset=utf-8";
   if (lower.endsWith(".html")) return "text/html; charset=utf-8";
