@@ -8,9 +8,9 @@ export type Theme = "system" | "light" | "dark";
 
 export const THEME_KEY = "nx-theme";
 
-export const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(
+export const THEME_SCRIPT = `(function(){try{var k=${JSON.stringify(
   THEME_KEY,
-)});if(t==="system"){delete document.documentElement.dataset.theme}else{document.documentElement.dataset.theme=(t==="dark")?"dark":"light"}}catch(e){document.documentElement.dataset.theme="light"}})()`;
+)},m=window.matchMedia("(prefers-color-scheme: dark)"),a=function(){var t=localStorage.getItem(k);document.documentElement.dataset.theme=t==="dark"?"dark":t==="system"?(m.matches?"dark":"light"):"light"};a();if(m.addEventListener)m.addEventListener("change",a);else if(m.addListener)m.addListener(a)}catch(e){document.documentElement.dataset.theme="light"}})()`;
 
 const listeners = new Set<() => void>();
 
@@ -40,10 +40,10 @@ function getServerSnapshot(): Theme {
   return "light";
 }
 
-const OPTIONS: { value: Theme; label: string; icon: typeof FiSun }[] = [
-  { value: "light", label: "Light", icon: FiSun },
-  { value: "dark", label: "Dark", icon: FiMoon },
-  { value: "system", label: "System", icon: FiMonitor },
+const OPTIONS: { value: Theme; label: string; shortLabel: string; icon: typeof FiSun }[] = [
+  { value: "light", label: "Light Mode", shortLabel: "Light", icon: FiSun },
+  { value: "dark", label: "Dark Mode", shortLabel: "Dark", icon: FiMoon },
+  { value: "system", label: "System Default", shortLabel: "Auto", icon: FiMonitor },
 ];
 
 export const THEME_OPTIONS = OPTIONS;
@@ -53,8 +53,13 @@ export function useTheme(): [Theme, (next: Theme) => void] {
 
   const choose = useCallback((next: Theme) => {
     const root = document.documentElement;
-    if (next === "system") delete root.dataset.theme;
-    else root.dataset.theme = next;
+    const resolved =
+      next === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : next;
+    root.dataset.theme = resolved;
 
     try {
       localStorage.setItem(THEME_KEY, next);
