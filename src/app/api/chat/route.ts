@@ -1,6 +1,6 @@
 import { after, type NextRequest } from "next/server";
 import { streamText, type Source, type Turn } from "@/lib/ai";
-import { instructionsBlock } from "@/lib/user-prefs";
+import { formatInstructionsBlock } from "@/lib/user-prefs";
 import { toParts, type Attachment } from "@/lib/attachments";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import {
@@ -185,7 +185,7 @@ async function handle(req: NextRequest) {
     connectorContext.requested.length === 0 && needsWebSearch(lastUser);
   const resolved = modeFor(mode);
 
-  const custom = await instructionsBlock(account.userId).catch(() => "");
+  const custom = formatInstructionsBlock(account.instructions);
 
   const promptFor = (canSearch: boolean) =>
     simple
