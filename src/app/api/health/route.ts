@@ -76,7 +76,6 @@ export async function GET() {
     e2b: Boolean(process.env.E2B_API_KEY?.trim()),
     sandboxTerminal: process.env.TROVE_SANDBOX_TERMINAL_ENABLED?.trim() === "1",
     opsAlerts: Boolean(process.env.TROVE_ALERT_WEBHOOK_URL?.trim()),
-    sessionSecret: Boolean(process.env.TROVE_SECRET?.trim()),
     passwordRecovery: mailerConfigured(),
     paidPro: paidProReady(),
     publishingIsolated: publishingIsolated(),
@@ -94,7 +93,6 @@ export async function GET() {
     const durable = isRemote || !ephemeral;
     const missing: string[] = [];
     if (!durable) missing.push("durable database");
-    if (!configured.sessionSecret) missing.push("TROVE_SECRET");
     if (!configured.siteUrl) missing.push("SITE_URL");
     if (!configured.aiProviders.length) missing.push("AI provider");
     if (!configured.e2b) missing.push("E2B preview");
