@@ -35,95 +35,23 @@ import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
 import { Tooltip } from "@/components/ui/tooltip";
 
-type ItemTone =
-  | "indigo"
-  | "sky"
-  | "cyan"
-  | "emerald"
-  | "amber"
-  | "violet"
-  | "fuchsia"
-  | "rose"
-  | "orange";
-
 interface Item {
   href: string;
   label: string;
   icon: IconType;
   motion: Motion;
-  tone: ItemTone;
 }
 
-const TONE: Record<
-  ItemTone,
-  { icon: string; tile: string; active: string; marker: string }
-> = {
-  indigo: {
-    icon: "text-indigo-600 dark:text-indigo-300",
-    tile: "bg-indigo-500/10 ring-indigo-500/15",
-    active: "from-indigo-500/14 via-indigo-500/7 to-transparent",
-    marker: "bg-indigo-500",
-  },
-  sky: {
-    icon: "text-sky-600 dark:text-sky-300",
-    tile: "bg-sky-500/10 ring-sky-500/15",
-    active: "from-sky-500/14 via-sky-500/7 to-transparent",
-    marker: "bg-sky-500",
-  },
-  cyan: {
-    icon: "text-cyan-600 dark:text-cyan-300",
-    tile: "bg-cyan-500/10 ring-cyan-500/15",
-    active: "from-cyan-500/14 via-cyan-500/7 to-transparent",
-    marker: "bg-cyan-500",
-  },
-  emerald: {
-    icon: "text-emerald-600 dark:text-emerald-300",
-    tile: "bg-emerald-500/10 ring-emerald-500/15",
-    active: "from-emerald-500/14 via-emerald-500/7 to-transparent",
-    marker: "bg-emerald-500",
-  },
-  amber: {
-    icon: "text-amber-600 dark:text-amber-300",
-    tile: "bg-amber-500/10 ring-amber-500/15",
-    active: "from-amber-500/14 via-amber-500/7 to-transparent",
-    marker: "bg-amber-500",
-  },
-  violet: {
-    icon: "text-violet-600 dark:text-violet-300",
-    tile: "bg-violet-500/10 ring-violet-500/15",
-    active: "from-violet-500/14 via-violet-500/7 to-transparent",
-    marker: "bg-violet-500",
-  },
-  fuchsia: {
-    icon: "text-fuchsia-600 dark:text-fuchsia-300",
-    tile: "bg-fuchsia-500/10 ring-fuchsia-500/15",
-    active: "from-fuchsia-500/14 via-fuchsia-500/7 to-transparent",
-    marker: "bg-fuchsia-500",
-  },
-  rose: {
-    icon: "text-rose-600 dark:text-rose-300",
-    tile: "bg-rose-500/10 ring-rose-500/15",
-    active: "from-rose-500/14 via-rose-500/7 to-transparent",
-    marker: "bg-rose-500",
-  },
-  orange: {
-    icon: "text-orange-600 dark:text-orange-300",
-    tile: "bg-orange-500/10 ring-orange-500/15",
-    active: "from-orange-500/14 via-orange-500/7 to-transparent",
-    marker: "bg-orange-500",
-  },
-};
-
 const PRIMARY: Item[] = [
-  { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "pop", tone: "indigo" },
-  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift", tone: "sky" },
-  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin", tone: "cyan" },
-  { href: "/documents", label: "Docs", icon: TbFiles, motion: "tilt", tone: "violet" },
-  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "nudge", tone: "emerald" },
-  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "pop", tone: "amber" },
-  { href: "/design", label: "Design", icon: TbPalette, motion: "lift", tone: "fuchsia" },
-  { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake", tone: "rose" },
-  { href: "/affiliates", label: "Affiliates", icon: FiShare2, motion: "pop", tone: "orange" },
+  { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "pop" },
+  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
+  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
+  { href: "/documents", label: "Docs", icon: TbFiles, motion: "tilt" },
+  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "nudge" },
+  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "pop" },
+  { href: "/design", label: "Design", icon: TbPalette, motion: "lift" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "shake" },
+  { href: "/affiliates", label: "Affiliates", icon: FiShare2, motion: "pop" },
 ];
 
 function NavRow({
@@ -160,15 +88,14 @@ function NavRow({
               aria-hidden
               className={cn(
                 "absolute -left-1 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full",
-                TONE[item.tone].marker,
+                "bg-accent",
               )}
             />
           ) : null}
           <span
             className={cn(
               "grid size-7 place-items-center rounded-lg ring-1 transition-transform group-hover:scale-[1.04]",
-              TONE[item.tone].tile,
-              TONE[item.tone].icon,
+              "bg-sunk/80 ring-line text-ink-3",
             )}
           >
             <Ico icon={item.icon} motion={item.motion} size={16} />
@@ -195,15 +122,14 @@ function NavRow({
           <span
             aria-hidden
             className={cn(
-              "absolute inset-0 bg-gradient-to-r",
-              TONE[item.tone].active,
+              "absolute inset-0 bg-gradient-to-r from-accent-soft/85 via-violet-500/8 to-transparent",
             )}
           />
           <span
             aria-hidden
             className={cn(
               "absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full",
-              TONE[item.tone].marker,
+              "bg-accent",
             )}
           />
         </>
@@ -211,8 +137,7 @@ function NavRow({
       <span
         className={cn(
           "relative z-[1] grid size-8 shrink-0 place-items-center rounded-xl ring-1 transition-all group-hover:scale-[1.04]",
-          TONE[item.tone].tile,
-          TONE[item.tone].icon,
+          "bg-sunk/80 ring-line text-ink-3 group-hover:text-ink",
         )}
       >
         <Ico icon={item.icon} motion={item.motion} size={16} />
