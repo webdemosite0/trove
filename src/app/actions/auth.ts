@@ -85,6 +85,7 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
     identity: await requestIdentity(email),
     limit: 8,
     windowMs: 60 * 60 * 1000,
+    failClosed: true,
   });
   if (!signupLimit.allowed) {
     return { error: "Too many signup attempts. Please try again later." };
@@ -154,6 +155,7 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
     identity: await requestIdentity(email),
     limit: 25,
     windowMs: 10 * 60 * 1000,
+    failClosed: true,
   });
   if (!loginLimit.allowed) {
     return { error: "Too many login attempts. Please wait a few minutes and try again." };
@@ -205,6 +207,7 @@ export async function requestPasswordReset(
     identity: await requestIdentity(email),
     limit: 5,
     windowMs: 60 * 60 * 1000,
+    failClosed: true,
   });
   if (!limit.allowed) return { notice };
 
