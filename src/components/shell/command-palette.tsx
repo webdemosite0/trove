@@ -1,11 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
-import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbSearch, TbPresentation, TbPalette, TbUsers, TbMessageCircle, TbLayoutDashboard, TbBell, TbPlugConnected, TbSettings, TbCreditCard } from "@/components/ui/icons";
-import Link from "next/link";
-import type { Recent } from "@/lib/recents";
+import {
+  TbMessageCircle,
+  TbRobot,
+  TbCode,
+  TbFileText,
+  TbTable,
+  TbSearch,
+  TbPresentation,
+  TbPalette,
+  TbUsers,
+  TbLayoutDashboard,
+  TbBell,
+  TbPlugConnected,
+  TbCreditCard,
+  TbSettings,
+} from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 interface Command {
@@ -20,7 +33,6 @@ interface Command {
 /** Every destination is a route that exists — nothing here 404s. */
 const COMMANDS: Command[] = [
   { id: "new", label: "Chat", hint: "Start something", icon: TbMessageCircle, href: "/chat", keys: "⌘K" },
-  { id: "website", label: "Sites", hint: "Plan, then build", icon: TbWorld, href: "/websites", keys: "⌘1" },
   { id: "agent", label: "Agents", hint: "A specialist with a brief", icon: TbRobot, href: "/agents", keys: "⌘2" },
   { id: "code", label: "Code", hint: "Complete and runnable", icon: TbCode, href: "/code", keys: "⌘3" },
   { id: "doc", label: "Docs", hint: "Exports to Word", icon: TbFileText, href: "/documents", keys: "⌘4" },
@@ -45,97 +57,67 @@ function score(cmd: Command, q: string): number {
 
   let i = 0;
   for (const ch of needle) {
-    i = hay.indexOf(ch, i);
-    if (i === -1) return 0;
-    i++;
+    const at = hay.indexOf(ch, i);
+    if (at < 0) return 0;
+    i = at + 1;
   }
-  return 1;
+  return 40 - (i - needle.length);
 }
 
-/** The four openers shown as buttons before anything is typed. */
-const QUICK = ["new", "agent", "website", "doc"] as const;
-
-export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
+export function CommandPalette({ recents = [] }: { recents?: { id: string; title: string; href?: string }[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
-  const input = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const results = useMemo(
-    () =>
-      COMMANDS.map((c) => ({ c, s: score(c, q) }))
-        .filter((x) => x.s > 0)
-        .sort((a, b) => b.s - a.s)
-        .map((x) => x.c),
-    [q],
-  );
+  const results = useMemo(() => {
+    const ranked = COMMANDS.map((c) => ({ c, s: score(c, q) }))
+      .filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .map((x) => x.c);
+    return ranked;
+  }, [q]);
 
-  const close = useCallback(() => {
-    setOpen(false);
-    setQ("");
-    setActive(0);
-  }, []);
-
-  const go = useCallback(
-    (cmd: Command | undefined) => {
-      if (!cmd) return;
-      close();
-      router.push(cmd.href);
-    },
-    [close, router],
-  );
-
-  // Cmd/Ctrl+K opens; Escape closes. Bound to the window so it works from
-  // anywhere, but never while the user is mid-word in a field.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((o) => !o);
-        return;
+        setOpen((v) => !v);
       }
-      if (e.key === "Escape" && open) {
-        e.preventDefault();
-        close();
-      }
+      if (e.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, close]);
+  }, []);
 
   useEffect(() => {
-    if (open) input.current?.focus();
+    if (!open) return;
+    setQ("");
+    setActive(0);
+    const t = window.setTimeout(() => inputRef.current?.focus(), 20);
+    return () => window.clearTimeout(t);
   }, [open]);
 
-  // Keep the highlighted row in view while arrowing through a long list.
-  useEffect(() => {
-    listRef.current
-      ?.querySelector(`[data-i="${active}"]`)
-      ?.scrollIntoView({ block: "nearest" });
-  }, [active]);
+  function go(href: string) {
+    setOpen(false);
+    router.push(href);
+  }
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[12vh]">
+    <div className="fixed inset-0 z-[80] flex items-start justify-center px-4 pt-[12vh]">
       <button
-        aria-label="Close"
-        onClick={close}
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        type="button"
+        aria-label="Close command palette"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+        onClick={() => setOpen(false)}
       />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Command palette"
-        className="nx-stage relative w-full max-w-[560px] overflow-hidden rounded-[var(--r-panel)] border border-line bg-raised shadow-[var(--sh-3)]"
-      >
-        <div className="flex items-center gap-2.5 border-b border-line px-4">
-          <TbSearch size={17} className="shrink-0 text-ink-4" />
+      <div className="relative w-full max-w-[560px] overflow-hidden rounded-2xl border border-line bg-raised shadow-2xl">
+        <div className="flex items-center gap-2 border-b border-line px-4">
           <input
-            ref={input}
+            ref={inputRef}
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
@@ -144,126 +126,54 @@ export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
                 e.preventDefault();
-                setActive((i) => Math.min(results.length - 1, i + 1));
+                setActive((i) => Math.min(i + 1, Math.max(0, results.length - 1)));
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 setActive((i) => Math.max(0, i - 1));
               } else if (e.key === "Enter") {
                 e.preventDefault();
-                go(results[active]);
+                const hit = results[active];
+                if (hit) go(hit.href);
               }
             }}
-            placeholder="Search Trove…"
-            className="w-full bg-transparent py-3.5 text-[14.5px] text-ink outline-none placeholder:text-ink-4"
+            placeholder="Jump to…"
+            className="h-12 w-full bg-transparent text-[14.5px] text-ink outline-none placeholder:text-ink-4"
           />
-          <kbd className="shrink-0 rounded-[var(--r-tight)] border border-line px-1.5 py-0.5 text-[10.5px] text-ink-4">
-            ESC
-          </kbd>
+          <kbd className="rounded border border-line bg-sunk px-1.5 py-0.5 text-[10.5px] text-ink-4">esc</kbd>
         </div>
-
-        {/* Before anything is typed, the palette is a launcher: the four
-            things most people open, then what they were last doing. Once
-            there is a query it collapses to one ranked list, because two
-            columns of results is a harder thing to arrow through than one. */}
-        {!q ? (
-          <div className="border-b border-line p-3">
-            <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4">
-              Quick actions
-            </p>
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-              {QUICK.map((id) => {
-                const c = COMMANDS.find((x) => x.id === id);
-                if (!c) return null;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => go(c)}
-                    className="group flex flex-col items-start gap-1.5 rounded-[var(--r-control)] border border-line bg-canvas px-2.5 py-2 text-left transition-colors hover:border-line-strong hover:bg-hover"
-                  >
-                    <c.icon size={16} className="text-accent" />
-                    <span className="w-full truncate text-[12px] text-ink">
-                      {c.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {!q && recents.length ? (
-          <div className="border-b border-line p-3">
-            <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4">
-              Jump back in
-            </p>
-            <ul>
-              {recents.slice(0, 4).map((r) => (
-                <li key={r.id}>
-                  <Link
-                    href={r.href || "/dashboard"}
-                    onClick={close}
-                    className="flex items-center gap-2.5 rounded-[var(--r-control)] px-2 py-1.5 transition-colors hover:bg-hover"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink-2">
-                      {r.title}
-                    </span>
-                    <span className="shrink-0 text-[11px] capitalize text-ink-4">
-                      {r.kind}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        <div ref={listRef} className="max-h-[46vh] overflow-y-auto p-1.5">
-          {!q ? (
-            <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4">
-              Go to
-            </p>
-          ) : null}
+        <ul className="max-h-[50vh] overflow-y-auto p-2">
           {results.length === 0 ? (
-            <p className="px-3 py-6 text-center text-[13px] text-ink-4">
-              Nothing matches “{q}”.
-            </p>
+            <li className="px-3 py-6 text-center text-[13px] text-ink-4">No matches</li>
           ) : (
-            results.map((c, i) => (
-              <button
-                key={c.id}
-                data-i={i}
-                onMouseEnter={() => setActive(i)}
-                onClick={() => go(c)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-[var(--r-control)] px-3 py-2.5 text-left transition-colors",
-                  i === active ? "bg-hover" : "hover:bg-hover/60",
-                )}
-              >
-                <c.icon
-                  size={17}
-                  className="shrink-0 text-ink"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13.5px] text-ink">{c.label}</span>
-                  <span className="block truncate text-[11.5px] text-ink-4">{c.hint}</span>
-                </span>
-                {c.keys ? (
-                  <kbd className="shrink-0 rounded-[var(--r-tight)] bg-sunk px-1.5 py-0.5 text-[10.5px] tabular-nums text-ink-4">
-                    {c.keys}
-                  </kbd>
-                ) : null}
-              </button>
-            ))
+            results.map((cmd, i) => {
+              const Icon = cmd.icon;
+              return (
+                <li key={cmd.id}>
+                  <button
+                    type="button"
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => go(cmd.href)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition",
+                      i === active ? "bg-hover text-ink" : "text-ink-2",
+                    )}
+                  >
+                    <Icon size={17} className="shrink-0 text-ink-4" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13.5px] font-medium">{cmd.label}</span>
+                      <span className="block text-[12px] text-ink-4">{cmd.hint}</span>
+                    </span>
+                    {cmd.keys ? (
+                      <kbd className="rounded border border-line bg-sunk px-1.5 py-0.5 text-[10.5px] text-ink-4">
+                        {cmd.keys}
+                      </kbd>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })
           )}
-        </div>
-
-        <p className="flex items-center gap-1.5 border-t border-line bg-sunk px-4 py-2 text-[11.5px] text-ink-4">
-          <kbd className="rounded-[var(--r-tight)] border border-line px-1 py-px text-[10px]">
-            ⌘K
-          </kbd>
-          opens this from anywhere.
-          <span className="ml-auto hidden sm:inline">↑↓ to move · ↵ to open</span>
-        </p>
+        </ul>
       </div>
     </div>
   );
