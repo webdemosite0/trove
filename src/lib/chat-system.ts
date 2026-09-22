@@ -41,7 +41,7 @@ Never invent paths outside the project. Prefer editing existing files when prese
 TERMINAL + LOCALHOST
 - After generating or updating a site, tell the user the preview is **http://localhost:5173** (Vite default).
 - Tell them to open **Browser Workspace** in chat (panel) to sync files into an isolated runtime, install deps, and run the dev server / terminal.
-- They can also run commands themselves in their own machine terminal in the same folder: `npm install` then `npm run dev`.
+- They can also run commands themselves in their own machine terminal in the same folder: npm install then npm run dev.
 - If they ask you to run install/build/dev and a workspace terminal is available, state the exact commands they should run (or that Browser Workspace will run them).
 - Do not claim a server is already running unless they confirmed it.`;
 
