@@ -20,6 +20,7 @@ import {
   type LocalProjectFile,
   type LocalProjectWorkspace,
 } from "@/lib/local-project";
+import { BrowserWorkspace } from "@/components/chat/browser-workspace";
 
 export function HomeChat({
   restored = null,
@@ -99,6 +100,23 @@ export function HomeChat({
     leading: projectControl,
   };
 
+  const activeProject = projects.find((project) => project.id === projectId) ?? null;
+  const browserWorkspace = projectId || localProject ? (
+    <BrowserWorkspace
+      projectId={projectId}
+      projectName={activeProject?.name || null}
+      localProject={
+        localProject
+          ? {
+              name: localProject.name,
+              scope: localProject.scope,
+              files: localProject.files,
+            }
+          : null
+      }
+    />
+  ) : null;
+
   if (turns.length === 0) {
     return (
       <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
@@ -131,6 +149,10 @@ export function HomeChat({
                 disabled={busy}
               />
             </div>
+
+            {browserWorkspace ? (
+              <div className="nx-rise mt-4 text-left">{browserWorkspace}</div>
+            ) : null}
 
             <StarterCards className="mt-6" onPick={setDraft} />
 
@@ -168,6 +190,7 @@ export function HomeChat({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-7 lg:px-8">
         <div className="mx-auto max-w-[760px] space-y-7">
+          {browserWorkspace}
           {turns.map((t, i) => (
             <Message
               key={t.id}
