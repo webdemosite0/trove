@@ -99,6 +99,109 @@ export function localFolderSupported() {
   );
 }
 
+function projectSlug(name: string) {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  return slug || "trove-project";
+}
+
+async function writeTextFile(
+  directory: LocalDirectoryHandle,
+  path: string,
+  content: string,
+) {
+  const parts = path.split("/").filter(Boolean);
+  const fileName = parts.pop();
+  if (!fileName) return;
+
+  let dir = directory;
+  for (const part of parts) {
+    dir = await dir.getDirectoryHandle(part, { create: true });
+  }
+
+  const file = await dir.getFileHandle(fileName, { create: true });
+  const writable = await file.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+export async function createLocalProject(
+  name: string,
+): Promise<LocalProjectWorkspace> {
+  const picker = (window as unknown as {
+    showDirectoryPicker?: () => Promise<LocalDirectoryHandle>;
+  }).showDirectoryPicker;
+
+  if (!picker) {
+    throw new Error("Creating local projects requires Chrome or Edge on desktop.");
+  }
+
+  const parent = await picker();
+  const slug = projectSlug(name);
+  const handle = await parent.getDirectoryHandle(slug, { create: true });
+  const safeTitle = name.replace(/[<>]/g, "");
+  const safeHeading = name.replace(/[`$\\]/g, "");
+
+  const starter: LocalProjectFile[] = [
+    {
+      path: "package.json",
+      content: JSON.stringify(
+        {
+          name: slug,
+          private: true,
+          version: "0.0.0",
+          type: "module",
+          scripts: { dev: "vite", build: "vite build", preview: "vite preview" },
+          dependencies: {
+            "@vitejs/plugin-react": "^4.3.4",
+            vite: "^6.0.11",
+            typescript: "^5.7.2",
+            react: "^19.0.0",
+            "react-dom": "^19.0.0",
+          },
+          devDependencies: {},
+        },
+        null,
+        2,
+      ) + "\\n",
+    },
+    {
+      path: "index.html",
+      content:
+        "<!doctype html>\\n<html lang=\"en\">\\n  <head>\\n    <meta charset=\"UTF-8\" />\\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\\n    <title>" +
+        safeTitle +
+        "</title>\\n  </head>\\n  <body>\\n    <div id=\"root\"></div>\\n    <script type=\"module\" src=\"/src/main.tsx\"></script>\\n  </body>\\n</html>\\n",
+    },
+    {
+      path: "src/main.tsx",
+      content:
+        "import React from \"react\";\\nimport { createRoot } from \"react-dom/client\";\\nimport App from \"./App\";\\nimport \"./styles.css\";\\n\\ncreateRoot(document.getElementById(\"root\")!).render(\\n  <React.StrictMode>\\n    <App />\\n  </React.StrictMode>,\\n);\\n",
+    },
+    {
+      path: "src/App.tsx",
+      content:
+        "export default function App() {\\n  return (\\n    <main className=\"app\">\\n      <section className=\"card\">\\n        <span className=\"eyebrow\">Trove Browser Project</span>\\n        <h1>" +
+        safeHeading +
+        "</h1>\\n        <p>Describe what you want in Trove chat. The AI can edit these local files and verify the project in its isolated browser workspace.</p>\\n      </section>\\n    </main>\\n  );\\n}\\n",
+    },
+    {
+      path: "src/styles.css",
+      content:
+        ":root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #17171a; background: #f5f3ff; }\\n* { box-sizing: border-box; }\\nbody { margin: 0; }\\n.app { min-height: 100vh; display: grid; place-items: center; padding: 32px; background: radial-gradient(circle at top left,#eadcff,transparent 42%),radial-gradient(circle at bottom right,#d9efff,transparent 38%),#f8f7ff; }\\n.card { width: min(680px,100%); padding: 48px; border: 1px solid #ddd6fe; border-radius: 28px; background: rgba(255,255,255,.82); box-shadow: 0 28px 80px rgba(76,29,149,.12); backdrop-filter: blur(18px); }\\n.eyebrow { color: #7c3aed; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }\\nh1 { margin: 14px 0 12px; font-size: clamp(40px,8vw,72px); letter-spacing: -.05em; }\\np { margin: 0; max-width: 54ch; color: #5b5568; font-size: 17px; line-height: 1.65; }\\n",
+    },
+  ];
+
+  for (const file of starter) {
+    await writeTextFile(handle, file.path, file.content);
+  }
+
+  return { name, files: starter, handle };
+}
+
 export async function pickLocalProject(): Promise<LocalProjectWorkspace> {
   const picker = (window as unknown as {
     showDirectoryPicker?: () => Promise<LocalDirectoryHandle>;
