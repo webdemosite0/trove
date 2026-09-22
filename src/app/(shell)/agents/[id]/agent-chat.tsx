@@ -42,15 +42,55 @@ export function AgentChat({
   const [error, setError] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const nextId = useRef(restored?.messages.length ?? 0);
+  const stickToBottom = useRef(true);
+  const scrollRaf = useRef(0);
 
   useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    const onScroll = () => {
+      const el = bottom.current;
+      if (!el) return;
+      let node: HTMLElement | null = el.parentElement;
+      while (node && node !== document.body) {
+        const style = getComputedStyle(node);
+        if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+          stickToBottom.current = node.scrollHeight - node.scrollTop - node.clientHeight < 120;
+          return;
+        }
+        node = node.parentElement;
+      }
+      const doc = document.documentElement;
+      stickToBottom.current =
+        doc.scrollHeight - window.scrollY - window.innerHeight < 120;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => window.removeEventListener("scroll", onScroll, true);
+  }, []);
+
+  useEffect(() => {
+    if (!stickToBottom.current) return;
+    const el = bottom.current;
+    if (!el) return;
+    cancelAnimationFrame(scrollRaf.current);
+    scrollRaf.current = requestAnimationFrame(() => {
+      let node: HTMLElement | null = el.parentElement;
+      while (node && node !== document.body) {
+        const style = getComputedStyle(node);
+        if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+          node.scrollTop = node.scrollHeight;
+          return;
+        }
+        node = node.parentElement;
+      }
+      el.scrollIntoView({ block: "end", behavior: "auto" });
+    });
   }, [turns, busy]);
 
   const send = useCallback(
     async (raw: string, attachments?: Attachment[], base?: Turn[]) => {
       const text = raw.trim() || (attachments?.length ? "See the attached files." : "");
       if (!text || busy) return;
+
+      stickToBottom.current = true;
 
       const history = [...(base ?? turns), { id: nextId.current++, role: "user" as const, text }];
       setTurns(history);
@@ -60,7 +100,6 @@ export function AgentChat({
       const replyId = nextId.current++;
       setTurns((t) => [...t, { id: replyId, role: "model", text: "" }]);
 
-      // Image / UI-UX visual requests go through the image API.
       if (isImagePrompt(text) && !(attachments && attachments.length)) {
         try {
           const caption = imageCaptionFromPrompt(text);
@@ -188,7 +227,7 @@ export function AgentChat({
         </div>
       </header>
 
-      <div className="flex-1 px-5 pb-8 pt-7 lg:px-8">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-7 lg:px-8">
         <div className="mx-auto max-w-[820px] space-y-7">
           {turns.length === 0 ? (
             <div className="py-8 text-center">
@@ -203,7 +242,6 @@ export function AgentChat({
                 className="mx-auto mt-9 max-w-[520px] text-left"
                 label={`Earlier with ${agent.name.split(" ")[0]}`}
                 items={recents}
-                manage
               />
             </div>
           ) : (
