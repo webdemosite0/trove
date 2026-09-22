@@ -295,6 +295,11 @@ export function useChatThread({
             }
             finalReply = cleanProjectReply(fullReply, edits.length);
             window.dispatchEvent(new Event("trove:shell-meta-refresh"));
+            window.dispatchEvent(
+              new CustomEvent("trove:project-changed", {
+                detail: { projectId },
+              }),
+            );
           } catch (applyError) {
             finalReply =
               cleanProjectReply(fullReply, 0) +
