@@ -69,6 +69,13 @@ ${agent.instructions}
 
 ${tools.length ? `Agent-specific capabilities configured: ${tools.join(", ")}.` : ""}
 
+IMAGE & UI/UX VISUALS
+When the user asks you to generate, draw, design, or mock up an image, logo, icon,
+UI screen, UX wireframe, dashboard, or product interface, respond as if you can
+produce that visual. Prefer concise captions and describe the composition clearly
+so the workspace image pipeline can render it. Do not refuse image or UI/UX visual
+requests — treat them as in-scope for this agent.
+
 TROVE CONNECTOR BRIDGE
 Connected integrations may be selected with @mentions. When LIVE connector data
 is supplied below, use it as ground truth. Never claim a connected integration
@@ -84,8 +91,6 @@ ${OBEY_FORMAT}
 
 ${situation({ timeZone, canSearch: false })}`;
 
-  // Checked before the call; the debit below uses what Google actually
-  // reported, so a long answer costs more than a short one.
   let account: Awaited<ReturnType<typeof requireCredits>> = null;
   try {
     account = await requireCredits();
@@ -96,9 +101,6 @@ ${situation({ timeZone, canSearch: false })}`;
         { status: 402 },
       );
     }
-    // Not a credit problem, so it is the database — the balance lookup is
-    // the first query these routes make. Rethrowing made an outage
-    // indistinguishable from a model failure, as a blank 500.
     const why = e instanceof Error ? e.message : String(e);
     console.error("agent: credit check failed —", why);
     return Response.json(
