@@ -8,6 +8,7 @@ import {
   TbTable,
   TbPresentation,
   TbMessageCircle,
+  HiOutlineCube,
 } from "@/components/ui/icons";
 import { currentUser } from "@/lib/auth";
 import { one, num } from "@/lib/db";
@@ -50,6 +51,7 @@ const START = [
 const MORE = [
   { label: "Spreadsheet", href: "/spreadsheets", Icon: TbTable },
   { label: "Presentation", href: "/slides", Icon: TbPresentation },
+  { label: "Design", href: "/design", Icon: HiOutlineCube },
   { label: "Chat", href: "/chat", Icon: TbMessageCircle },
 ];
 
@@ -135,27 +137,32 @@ export default async function MePage() {
           </span>
         </Link>
 
-        <div className="mx-auto mt-10 grid max-w-[560px] grid-cols-3 gap-3">
-          {stats.map((s) => (
-            <Link
-              key={s.label}
-              href={s.href}
-              className="rounded-[14px] border border-line bg-raised/80 px-3 py-3.5 text-center transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_10px_28px_-16px_rgba(15,23,42,0.2)]"
-            >
-              <p
-                className="text-[22px] font-semibold tracking-tight tabular-nums"
-                style={{ color: s.accent }}
+        <section className="mx-auto mt-10 max-w-[560px]">
+          <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">
+            Your workspace
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
+            {stats.map((s) => (
+              <Link
+                key={s.label}
+                href={s.href}
+                className="rounded-[14px] border border-line bg-raised/80 px-3 py-3.5 text-center transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_10px_28px_-16px_rgba(15,23,42,0.2)]"
               >
-                {s.value}
-              </p>
-              <p className="mt-0.5 text-[12px] font-medium text-ink-4">{s.label}</p>
-            </Link>
-          ))}
-        </div>
+                <p
+                  className="text-[22px] font-semibold tracking-tight tabular-nums"
+                  style={{ color: s.accent }}
+                >
+                  {s.value}
+                </p>
+                <p className="mt-0.5 text-[12px] font-medium text-ink-4">{s.label}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-        <div className="mt-14">
+        <section className="mt-14">
           <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">
-            Start with something
+            Create
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {START.map((a) => {
@@ -181,23 +188,28 @@ export default async function MePage() {
               );
             })}
           </div>
-        </div>
+        </section>
 
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
-          {MORE.map((m) => {
-            const Icon = m.Icon;
-            return (
-              <Link
-                key={m.label}
-                href={m.href}
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-line-strong hover:text-ink"
-              >
-                <Icon size={14} className="text-ink" />
-                {m.label}
-              </Link>
-            );
-          })}
-        </div>
+        <section className="mt-8">
+          <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">
+            More tools
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {MORE.map((m) => {
+              const Icon = m.Icon;
+              return (
+                <Link
+                  key={m.label}
+                  href={m.href}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] text-ink-2 transition hover:border-line-strong hover:text-ink"
+                >
+                  <Icon size={14} className="text-ink" />
+                  {m.label}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </div>
   );
