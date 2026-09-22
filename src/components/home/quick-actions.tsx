@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { IconType } from "@/components/ui/icons";
-import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbSearch } from "@/components/ui/icons";
+import { TbRobot, TbCode, TbFileText, TbTable, TbSearch } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 interface Action {
@@ -15,17 +15,10 @@ interface Action {
   key: string;
 }
 
-/**
- * Shortcuts into the tools, grouped by intent rather than listed flat.
- *
- * These are not filters — each one goes somewhere — so they are links with a
- * keyboard shortcut rather than pills. Every href is a route that exists.
- */
 const GROUPS: { label: string; actions: Action[] }[] = [
   {
     label: "Build",
     actions: [
-      { href: "/websites", label: "Sites", icon: TbWorld, key: "1" },
       { href: "/agents", label: "Agents", icon: TbRobot, key: "2" },
       { href: "/code", label: "Code", icon: TbCode, key: "3" },
     ],
@@ -38,8 +31,6 @@ const GROUPS: { label: string; actions: Action[] }[] = [
     ],
   },
   {
-    // Named Explore rather than Research so the group has room for
-    // more than one kind of looking-things-up later.
     label: "Explore",
     actions: [{ href: "/research", label: "Research", icon: TbSearch, key: "6" }],
   },
@@ -75,7 +66,6 @@ export function QuickActions({ className }: { className?: string }) {
                 key={a.href}
                 href={a.href}
                 className={cn(
-                  // A fixed height, so every action lines up whatever the label.
                   "group flex h-[50px] items-center gap-2 rounded-[var(--r-panel)] border border-line bg-canvas",
                   "px-3.5 text-[13.5px] text-ink-2",
                   "transition-[transform,border-color,background-color] duration-[var(--t-hover)]",

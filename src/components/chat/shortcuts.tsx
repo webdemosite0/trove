@@ -10,7 +10,6 @@ const ITEMS: {
   icon: typeof TbWorld;
   motion: Motion;
 }[] = [
-  { href: "/websites", label: "Sites", icon: TbWorld, motion: "spin" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "tilt" },
   { href: "/team", label: "Team", icon: TbUsers, motion: "tilt" },
   { href: "/code", label: "Code", icon: TbCode, motion: "type" },
@@ -29,7 +28,6 @@ export function Shortcuts() {
           className="chip nx-in group !py-1.5"
           style={{ animationDelay: `${120 + n * 45}ms`, animationFillMode: "backwards" }}
         >
-          {/* Quiet by default, brand purple on hover — one accent, not six. */}
           <Ico
             icon={i.icon}
             motion={i.motion}
