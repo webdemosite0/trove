@@ -1,3 +1,4 @@
+/** Chat thread hook — stream replies, apply project file edits. */
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
