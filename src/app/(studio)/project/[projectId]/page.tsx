@@ -1,10 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default async function ProjectPage({
-  params,
-}: {
-  params: Promise<{ projectId: string }>;
-}) {
-  const { projectId } = await params;
-  redirect(`/project/${encodeURIComponent(projectId)}/chat`);
+/** AI web builder is temporarily disabled. */
+export default function DisabledWebBuilderPage() {
+  redirect("/dashboard");
 }
