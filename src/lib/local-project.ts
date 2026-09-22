@@ -80,7 +80,7 @@ function isSafeProjectFile(path: string) {
   const base = lower.split("/").pop() || "";
   if (
     base === ".env" ||
-    base.startsWith(".env.") && base !== ".env.example" ||
+    (base.startsWith(".env.") && base !== ".env.example") ||
     /\.(?:pem|key|p12|pfx|keystore)$/i.test(base) ||
     /(?:secret|credentials?)\.json$/i.test(base)
   ) {
