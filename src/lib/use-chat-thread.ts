@@ -55,17 +55,17 @@ function cleanProjectReply(text: string, changed: number) {
     if (body) parts.push(body);
   }
   if (changed) {
-    parts.push(`Saved ${changed} file${changed === 1 ? "" : "s"} to your project.`);
+    parts.push("Saved " + changed + " file" + (changed === 1 ? "" : "s") + " to your project.");
   }
-  if (run) parts.push(`Terminal: \`${run}\`);
-  if (localhost) parts.push(`Preview: ${localhost}`);
+  if (run) parts.push("Terminal: " + run);
+  if (localhost) parts.push("Preview: " + localhost);
   else if (changed) {
     parts.push(
-      "Preview: open Browser Workspace, or run `npm install && npm run dev` → http://localhost:5173",
+      "Preview: open Browser Workspace, or run npm install && npm run dev → http://localhost:5173",
     );
   }
   if (parts.length) return parts.join("\n\n");
-  return changed ? `Updated ${changed} project file${changed === 1 ? "" : "s"}.` : text;
+  return changed ? "Updated " + changed + " project file" + (changed === 1 ? "" : "s") + "." : text;
 }
 
 function distanceFromBottom(anchor: HTMLElement | null): number {
@@ -191,10 +191,10 @@ export function useChatThread({
         });
         const data = await res.json().catch(() => null);
         if (!res.ok) {
-          throw new Error(data?.error ?? `Image request failed (${res.status}).`);
+          throw new Error(data?.error ?? "Image request failed (" + res.status + ").");
         }
         const url = data?.url as string;
-        finishReply(replyId, `![${caption}](${url})`);
+        finishReply(replyId, "![" + caption + "](" + url + ")");
       } catch (e) {
         setTurns((t) => t.filter((x) => x.id !== replyId));
         setError(e instanceof Error ? e.message : "Image generation failed.");
@@ -250,7 +250,7 @@ export function useChatThread({
         });
         if (!res.ok || !res.body) {
           const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? `Request failed (${res.status}).`);
+          throw new Error(data?.error ?? "Request failed (" + res.status + ").");
         }
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -300,7 +300,7 @@ export function useChatThread({
         } else if (projectId && edits.length) {
           try {
             const apply = await fetch(
-              `/api/projects/${encodeURIComponent(projectId)}/apply`,
+              "/api/projects/" + encodeURIComponent(projectId) + "/apply",
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
