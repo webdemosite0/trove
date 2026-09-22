@@ -31,6 +31,7 @@ interface LocalDirectoryHandle {
 
 export interface LocalProjectWorkspace {
   name: string;
+  scope: string;
   files: LocalProjectFile[];
   handle: LocalDirectoryHandle;
 }
@@ -199,7 +200,12 @@ export async function createLocalProject(
     await writeTextFile(handle, file.path, file.content);
   }
 
-  return { name, files: starter, handle };
+  return {
+    name,
+    scope: crypto.randomUUID(),
+    files: starter,
+    handle,
+  };
 }
 
 export async function pickLocalProject(): Promise<LocalProjectWorkspace> {
@@ -241,7 +247,12 @@ export async function pickLocalProject(): Promise<LocalProjectWorkspace> {
   }
 
   await walk(handle);
-  return { name: handle.name || "Local project", files, handle };
+  return {
+    name: handle.name || "Local project",
+    scope: crypto.randomUUID(),
+    files,
+    handle,
+  };
 }
 
 function safePath(path: string) {
