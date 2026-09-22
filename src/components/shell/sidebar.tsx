@@ -15,7 +15,6 @@ import {
   FiCreditCard,
   FiHome,
   FiMessageSquare,
-  FiGlobe,
   FiFileText,
   FiGrid,
   FiLayout,
@@ -43,7 +42,6 @@ interface Item {
 const PRIMARY: Item[] = [
   { href: "/dashboard", label: "Home", icon: FiHome, motion: "pop" },
   { href: "/chat", label: "Chat", icon: FiMessageSquare, motion: "lift" },
-  { href: "/websites", label: "Sites", icon: FiGlobe, motion: "spin" },
   { href: "/documents", label: "Docs", icon: FiFileText, motion: "tilt" },
   { href: "/spreadsheets", label: "Sheets", icon: FiGrid, motion: "nudge" },
   { href: "/slides", label: "Decks", icon: FiLayout, motion: "pop" },
@@ -91,9 +89,7 @@ function NavRow({
       aria-current={active ? "page" : undefined}
       className={cn(
         "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition-colors",
-        active
-          ? "bg-hover text-ink"
-          : "text-ink-3 hover:bg-hover hover:text-ink",
+        active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
       )}
     >
       <Ico icon={item.icon} motion={item.motion} size={16} className="shrink-0" />
