@@ -1,0 +1,17 @@
+/* Bold, dark icons app-wide */
+.ico {
+  color: var(--color-ink) !important;
+}
+.ico svg {
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: inherit;
+}
+
+/* Sidebar rail: full-ink icons (not muted grey) */
+.rail-item .ico,
+.rail-item-active.rail-item .ico,
+.rail-item:hover .ico {
+  color: var(--color-ink) !important;
+}
