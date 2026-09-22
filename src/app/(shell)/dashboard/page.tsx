@@ -1,9 +1,7 @@
 import Link from "next/link";
 import {
   FiZap,
-  FiGlobe,
   FiArrowRight,
-  TbWorld,
   TbRobot,
   TbSearch,
   TbFileText,
@@ -26,13 +24,6 @@ async function count(sql: string, id: string) {
 }
 
 const START = [
-  {
-    label: "Build a website",
-    desc: "A complete, responsive site from one description.",
-    href: "/websites",
-    Icon: TbWorld,
-    tint: "bg-sky-50 border-sky-100 hover:border-sky-300/60 dark:bg-sky-500/10 dark:border-sky-500/20",
-  },
   {
     label: "Create an AI agent",
     desc: "A specialist with its own brief and memory.",
@@ -60,7 +51,6 @@ const MORE = [
   { label: "Spreadsheet", href: "/spreadsheets", Icon: TbTable },
   { label: "Presentation", href: "/slides", Icon: TbPresentation },
   { label: "Chat", href: "/chat", Icon: TbMessageCircle },
-  { label: "Sites", href: "/websites", Icon: FiGlobe },
 ];
 
 export default async function MePage() {
@@ -83,15 +73,13 @@ export default async function MePage() {
     );
   }
 
-  const [agents, sites, integrations] = await Promise.all([
+  const [agents, integrations] = await Promise.all([
     count(`SELECT COUNT(*) AS n FROM agents WHERE user_id = ?`, user.id),
-    count(`SELECT COUNT(*) AS n FROM sites WHERE user_id = ?`, user.id),
     count(`SELECT COUNT(*) AS n FROM integrations WHERE user_id = ?`, user.id),
   ]);
 
   const stats = [
     { label: "Agents", value: agents, href: "/agents", accent: "#6366f1" },
-    { label: "Sites", value: sites, href: "/websites", accent: "#0ea5e9" },
     { label: "Connectors", value: integrations, href: "/integrations", accent: "#10b981" },
   ];
 
