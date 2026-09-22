@@ -4,15 +4,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSaved } from "@/lib/use-saved";
 import type { Attachment } from "@/lib/attachments";
 import type { ModeId } from "@/lib/modes";
+import { localTimeZone } from "@/lib/context";
 import type { LocalProjectFile } from "@/lib/local-project";
 
-export type ChatTurn = {
+export interface Turn {
   id: number;
   role: "user" | "model";
   text: string;
-  attachments?: Attachment[];
-  failed?: boolean;
-};
+  files?: Attachment[];
+}
+
+/** Detect "generate / draw / create an image…" style prompts. */
+function isImagePrompt(text: string): boolean {
+  return (
+    /\b(generate|create|draw|make|paint|render|imagine)\b[\s\S]{0,40}\b(image|picture|photo|illustration|artwork|logo|icon)\b/i.test(
+      text,
+    ) || /\b(txt2img|text to image|image of)\b/i.test(text)
+  );
+}
 
 function parseProjectEdits(text: string) {
   const files: { path: string; content: string }[] = [];
@@ -73,6 +82,10 @@ function distanceFromBottom(anchor: HTMLElement | null): number {
   return doc.scrollHeight - window.scrollY - window.innerHeight;
 }
 
+/**
+ * Conversation hook: transcript, request, stream, save.
+ * Server routes only (no client Puter login prompts).
+ */
 export function useChatThread({
   restored,
   mode,
@@ -86,56 +99,137 @@ export function useChatThread({
   localProject?: { name: string; files: LocalProjectFile[] } | null;
   onApplyLocalFiles?: (files: LocalProjectFile[]) => Promise<void>;
 }) {
-  const [turns, setTurns] = useState<ChatTurn[]>(() =>
-    (restored?.messages ?? []).map((m, i) => ({
-      id: i + 1,
-      role: m.role,
-      text: m.text,
-    })),
+  const { save, reset } = useSaved("chat", restored?.id ?? null);
+
+  const [turns, setTurns] = useState<Turn[]>(() =>
+    (restored?.messages ?? []).map((m, i) => ({ id: i, role: m.role, text: m.text })),
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const bottom = useRef<HTMLDivElement>(null);
-  const idRef = useRef(turns.length + 1);
-  const abort = useRef<AbortController | null>(null);
-  const { save } = useSaved();
 
-  useEffect(() => {
-    return () => abort.current?.abort();
+  const bottom = useRef<HTMLDivElement>(null);
+  const nextId = useRef(restored?.messages.length ?? 0);
+  const abortRef = useRef<AbortController | null>(null);
+  const stickToBottom = useRef(true);
+  const scrollRaf = useRef(0);
+  const lastScrollLen = useRef(0);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (!stickToBottom.current) return;
+    const el = bottom.current;
+    if (!el) return;
+    cancelAnimationFrame(scrollRaf.current);
+    scrollRaf.current = requestAnimationFrame(() => {
+      let node: HTMLElement | null = el.parentElement;
+      while (node && node !== document.body) {
+        const style = getComputedStyle(node);
+        if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+          if (behavior === "smooth") {
+            node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
+          } else {
+            node.scrollTop = node.scrollHeight;
+          }
+          return;
+        }
+        node = node.parentElement;
+      }
+      el.scrollIntoView({ block: "end", behavior });
+    });
   }, []);
 
-  const send = useCallback(
-    async (text: string, attachments?: Attachment[]) => {
-      const trimmed = text.trim();
-      if ((!trimmed && !(attachments && attachments.length)) || busy) return;
+  useEffect(() => {
+    const onScroll = () => {
+      stickToBottom.current = distanceFromBottom(bottom.current) < 140;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => window.removeEventListener("scroll", onScroll, true);
+  }, []);
 
-      const userId = idRef.current++;
-      const replyId = idRef.current++;
-      setTurns((t) => [
-        ...t,
-        { id: userId, role: "user", text: trimmed, attachments },
-        { id: replyId, role: "model", text: "" },
-      ]);
+  useEffect(() => {
+    const len = turns.reduce((n, t) => n + t.text.length, 0) + turns.length;
+    if (len === lastScrollLen.current) return;
+    lastScrollLen.current = len;
+    scrollToBottom(busy ? "auto" : "smooth");
+  }, [turns, busy, scrollToBottom]);
+
+  useEffect(() => () => cancelAnimationFrame(scrollRaf.current), []);
+
+  const finishReply = useCallback(
+    (replyId: number, text: string) => {
+      setTurns((t) => {
+        const next = t.map((x) => (x.id === replyId ? { ...x, text } : x));
+        void save(
+          next.map(({ role, text: body }) => ({ role, text: body })),
+          next[0]?.text,
+        );
+        return next;
+      });
+    },
+    [save],
+  );
+
+  const runImage = useCallback(
+    async (_history: Turn[], prompt: string) => {
       setBusy(true);
       setError(null);
+      const replyId = nextId.current++;
+      setTurns((t) => [...t, { id: replyId, role: "model", text: "" }]);
 
-      abort.current?.abort();
-      const controller = new AbortController();
-      abort.current = controller;
+      const caption =
+        prompt
+          .replace(
+            /^(generate|create|draw|make|paint|render|imagine)\s+(an?\s+)?(image|picture|photo|illustration)\s+(of\s+)?/i,
+            "",
+          )
+          .trim() || "Image";
 
       try {
-        const history = turns
-          .filter((x) => x.text)
-          .map((x) => ({ role: x.role, text: x.text }));
+        const res = await fetch("/api/image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error ?? `Image request failed (${res.status}).`);
+        }
+        const url = data?.url as string;
+        finishReply(replyId, `![${caption}](${url})`);
+      } catch (e) {
+        setTurns((t) => t.filter((x) => x.id !== replyId));
+        setError(e instanceof Error ? e.message : "Image generation failed.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [finishReply],
+  );
 
+  const run = useCallback(
+    async (history: Turn[], files?: Attachment[]) => {
+      const lastUser = [...history].reverse().find((t) => t.role === "user");
+      if (lastUser && isImagePrompt(lastUser.text) && !(files && files.length)) {
+        await runImage(history, lastUser.text);
+        return;
+      }
+
+      abortRef.current?.abort();
+      const ac = new AbortController();
+      abortRef.current = ac;
+
+      setBusy(true);
+      setError(null);
+      const replyId = nextId.current++;
+      setTurns((t) => [...t, { id: replyId, role: "model", text: "" }]);
+
+      try {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: trimmed,
-            history,
+            messages: history.map(({ role, text }) => ({ role, text })),
             mode,
-            attachments,
+            model: "auto",
             projectId,
             localProject: localProject
               ? {
@@ -143,13 +237,20 @@ export function useChatThread({
                   files: localProject.files,
                 }
               : null,
+            timeZone: localTimeZone(),
+            attachments: files?.map(({ name, mimeType, size, data, kind }) => ({
+              name,
+              mimeType,
+              size,
+              data,
+              kind,
+            })),
           }),
-          signal: controller.signal,
+          signal: ac.signal,
         });
-
         if (!res.ok || !res.body) {
           const data = await res.json().catch(() => null);
-          throw new Error(data?.error || `Request failed (${res.status}).`);
+          throw new Error(data?.error ?? `Request failed (${res.status}).`);
         }
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -225,42 +326,57 @@ export function useChatThread({
           }
         }
 
-        setTurns((t) =>
-          t.map((x) => (x.id === replyId ? { ...x, text: finalReply } : x)),
-        );
-        void save();
+        setTurns((t) => {
+          const next = t.map((x) =>
+            x.id === replyId ? { ...x, text: finalReply } : x,
+          );
+          void save(
+            next.map(({ role, text }) => ({ role, text })),
+            next[0]?.text,
+          );
+          return next;
+        });
       } catch (e) {
-        if ((e as Error).name === "AbortError") return;
-        const msg = e instanceof Error ? e.message : "Something went wrong.";
-        setError(msg);
-        setTurns((t) =>
-          t.map((x) =>
-            x.id === replyId ? { ...x, text: x.text || msg, failed: true } : x,
-          ),
-        );
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setTurns((t) => t.filter((x) => x.id !== replyId));
+        setError(e instanceof Error ? e.message : "Something went wrong.");
       } finally {
         setBusy(false);
       }
     },
-    [save, mode, projectId, localProject, onApplyLocalFiles, busy, turns],
+    [save, mode, projectId, localProject, onApplyLocalFiles, runImage],
+  );
+
+  const send = useCallback(
+    (text: string, files?: Attachment[]) => {
+      stickToBottom.current = true;
+      const history = [
+        ...turns,
+        { id: nextId.current++, role: "user" as const, text, files },
+      ];
+      setTurns(history);
+      void run(history, files);
+    },
+    [turns, run],
   );
 
   const retry = useCallback(() => {
-    const lastUser = [...turns].reverse().find((t) => t.role === "user");
-    if (lastUser) void send(lastUser.text, lastUser.attachments);
-  }, [send, turns]);
+    stickToBottom.current = true;
+    void run(turns);
+  }, [turns, run]);
 
   const regenerate = useCallback(() => {
-    const lastUser = [...turns].reverse().find((t) => t.role === "user");
-    if (lastUser) void send(lastUser.text, lastUser.attachments);
-  }, [send, turns]);
+    stickToBottom.current = true;
+    void run(turns.slice(0, -1));
+  }, [turns, run]);
 
   const clear = useCallback(() => {
-    abort.current?.abort();
+    abortRef.current?.abort();
     setTurns([]);
     setError(null);
-    setBusy(false);
-  }, []);
+    stickToBottom.current = true;
+    reset();
+  }, [reset]);
 
-  return { turns, busy, error, send, retry, regenerate, clear, bottom };
+  return { turns, busy, error, setError, send, retry, regenerate, clear, bottom, reset };
 }
