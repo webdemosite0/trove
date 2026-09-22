@@ -21,6 +21,7 @@ import {
   type LocalProjectFile,
   type LocalProjectWorkspace,
 } from "@/lib/local-project";
+import { BrowserWorkspace } from "@/components/chat/browser-workspace";
 
 const TOOLS: { href: string; label: string; icon: IconType }[] = [
   { href: "/websites", label: "Websites", icon: TbWorld },
@@ -115,6 +116,24 @@ export function MobileChat({
     leading: projectControl,
   };
 
+  const activeProject = projects.find((project) => project.id === projectId) ?? null;
+  const browserWorkspace = projectId || localProject ? (
+    <BrowserWorkspace
+      projectId={projectId}
+      projectName={activeProject?.name || null}
+      localProject={
+        localProject
+          ? {
+              name: localProject.name,
+              scope: localProject.scope,
+              files: localProject.files,
+            }
+          : null
+      }
+      compact
+    />
+  ) : null;
+
   if (turns.length === 0) {
     return (
       <div className="flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain px-4 pb-6">
@@ -134,6 +153,10 @@ export function MobileChat({
             initialValue={draft}
           />
         </div>
+
+        {browserWorkspace ? (
+          <div className="mt-3">{browserWorkspace}</div>
+        ) : null}
 
         {error ? <Problem message={error} onRetry={retry} /> : null}
 
@@ -195,6 +218,7 @@ export function MobileChat({
       </div>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-3">
+        {browserWorkspace}
         {turns.map((t, i) => (
           <Message
             key={t.id}
