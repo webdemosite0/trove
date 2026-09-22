@@ -60,7 +60,7 @@ export function MobileShell({
   children: React.ReactNode;
   balance?: Balance | null;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -82,13 +82,6 @@ export function MobileShell({
           Trove
         </Link>
         <span className="flex-1" />
-        {balance != null ? (
-          <span className="rounded-full border border-line bg-sunk px-2.5 py-0.5 text-[11.5px] tabular-nums text-ink-3">
-            {typeof balance === "object" && balance && "credits" in balance
-              ? String((balance as { credits?: number }).credits ?? "")
-              : String(balance)}
-          </span>
-        ) : null}
       </header>
 
       <div className="min-h-0 flex-1">{children}</div>
