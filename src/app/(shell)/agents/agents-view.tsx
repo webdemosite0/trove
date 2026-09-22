@@ -50,7 +50,7 @@ export function AgentsView({
 
   if (!signedIn) {
     return (
-      <div className="nx-in mx-auto flex min-h-screen max-w-[520px] flex-col items-center justify-center px-5 text-center">
+      <div className="nx-in mx-auto flex min-h-0 max-w-[520px] flex-1 flex-col items-center justify-center px-5 py-16 text-center">
         <Bot size={72} state="idle" />
         <h1 className="mt-6 text-[22px] font-semibold text-ink">Agents</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-3">
@@ -68,20 +68,12 @@ export function AgentsView({
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[1080px] px-5 py-8 lg:px-8">
-      {/* "Agents" — the same word as the nav item and the page title. It read
-          "Agent Builder" here, which is a third name for one place.
-
-          The subtitle says what the page is for rather than how many rows are
-          on it: "No agents yet." is a state, and the empty state below already
-          says it properly and offers the way out of it. */}
+    <div className="mx-auto min-h-0 max-w-[1080px] px-5 py-8 lg:px-8">
       <PageHeader
         className="mb-7"
         title="Agents"
         subtitle="Specialists with their own brief and instructions, ready to be given work."
         action={
-          // Only when there is a list to add to. With none, this button sat
-          // directly above an empty state offering the identical button.
           agents.length > 0 ? (
             <button
               onClick={() => setCreating(true)}
@@ -115,8 +107,6 @@ export function AgentsView({
               className="nx-in group relative flex flex-col rounded-[var(--r-panel)] border border-line bg-rail p-5 transition-all duration-[var(--t-hover)] hover:-translate-y-0.5 hover:border-line-strong"
               style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
             >
-              {/* Deleting an agent cannot be undone, and the button sits
-                  under the cursor on hover. It asks first. */}
               <button
                 type="button"
                 onClick={() => setDeletingId(a.id)}
@@ -128,10 +118,6 @@ export function AgentsView({
 
               <Bot size={48} accent={a.accent} />
               <h3 className="mt-3.5 text-[15px] font-semibold text-ink">{a.name}</h3>
-              {/* The agent's colour identifies it on the avatar and the dot,
-                  but never sets text. It is chosen from a palette picked for
-                  looking distinct against each other, not for carrying 4.5:1
-                  as body copy — the default blue measured 3.4:1 here. */}
               <p className="flex items-center gap-1.5 text-[12.5px] text-ink-3">
                 <span
                   aria-hidden
@@ -198,7 +184,6 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     if (!state.ok) return;
-    // The list lives in a server component — pull the fresh data before closing.
     router.refresh();
     onClose();
   }, [state.ok, onClose, router]);
@@ -278,4 +263,3 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
     </Modal>
   );
 }
-
