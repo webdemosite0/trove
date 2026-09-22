@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import {
+  createLocalProject,
   localFolderSupported,
   pickLocalProject,
   type LocalProjectWorkspace,
@@ -76,6 +77,34 @@ export function ProjectPicker({
       }
     } finally {
       setOpeningLocal(false);
+    }
+  }
+
+  async function createLocal() {
+    const projectName = name.trim();
+    if (projectName.length < 2 || pending) return;
+
+    if (!localFolderSupported()) {
+      setError("Creating local projects requires Chrome or Edge on desktop.");
+      return;
+    }
+
+    setPending(true);
+    setError("");
+    try {
+      const workspace = await createLocalProject(projectName);
+      onChange(null);
+      onLocalFolder?.(workspace);
+      setName("");
+      setCreating(false);
+      setOpen(false);
+    } catch (e) {
+      const abort = e instanceof DOMException && e.name === "AbortError";
+      if (!abort) {
+        setError(e instanceof Error ? e.message : "Could not create local project.");
+      }
+    } finally {
+      setPending(false);
     }
   }
 
@@ -246,14 +275,22 @@ export function ProjectPicker({
                     className="h-9 w-full rounded-lg border border-line-strong bg-raised px-3 text-[12.5px] text-ink outline-none focus:border-accent"
                   />
                   {error ? <p className="mt-1.5 text-[10.5px] text-critical">{error}</p> : null}
-                  <div className="mt-2 flex gap-1.5">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     <button
                       type="button"
                       onClick={() => void create()}
                       disabled={pending || name.trim().length < 2}
                       className="btn-grad rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-50"
                     >
-                      {pending ? "Creating…" : "Create project"}
+                      {pending ? "Creating…" : "Create in Trove"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void createLocal()}
+                      disabled={pending || name.trim().length < 2}
+                      className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 py-1.5 text-[11.5px] font-semibold text-violet-700 transition hover:bg-violet-500/15 disabled:opacity-50 dark:text-violet-300"
+                    >
+                      Create on device
                     </button>
                     <button
                       type="button"
