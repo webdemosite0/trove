@@ -1,1 +1,3 @@
-PLACEHOLDER_WILL_FAIL
+"use client";
+
+export { DesignView } from "./design-workspace";
