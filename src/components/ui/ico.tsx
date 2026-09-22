@@ -39,8 +39,8 @@ export type Motion =
 /**
  * Grok-smooth lucide glyph with the existing motion classes.
  *
- * Stroke is 1.5 with round caps — the same weight Grok uses — so every
- * page reads as one icon family instead of Feather + Tabler mixed.
+ * Stroke is 2.25 with round caps — bold, dark glyphs that read clearly
+ * at small sizes across the shell and studio.
  */
 export function Ico({
   icon: Icon,
@@ -73,7 +73,7 @@ export function Ico({
       style={style}
       title={title}
     >
-      <Icon size={size} strokeWidth={1.5} absoluteStrokeWidth={false} />
+      <Icon size={size} strokeWidth={2.25} absoluteStrokeWidth={false} />
     </span>
   );
 }
