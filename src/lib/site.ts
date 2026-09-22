@@ -16,11 +16,13 @@ function resolveSiteUrl(): string {
   }
 
   const auto =
+    process.env.URL?.trim() ||
+    process.env.DEPLOY_PRIME_URL?.trim() ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
     process.env.VERCEL_URL?.trim();
   if (auto) {
     try {
-      return new URL(`https://${auto.replace(/^https?:\/\//i, "")}`).origin;
+      return new URL(/^https?:\/\//i.test(auto) ? auto : `https://${auto}`).origin;
     } catch {
       /* fall through */
     }
