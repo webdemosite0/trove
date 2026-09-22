@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { TbSearch, TbBell, FiMenu } from "@/components/ui/icons";
+import { TbSearch, TbBell, FiMenu, FiDownload } from "@/components/ui/icons";
 import { useNav } from "@/components/shell/nav-state";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
@@ -52,6 +52,22 @@ export function TopBar({
       </button>
 
       <span className="flex-1" />
+
+      <Link
+        href="/settings/download"
+        aria-label="Download Trove"
+        title="Download Trove"
+        className={cn(
+          "tap-44 group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line",
+          "bg-raised px-2.5 text-[12.5px] font-medium text-ink-2 transition-colors",
+          "hover:border-accent/40 hover:bg-accent/[0.06] hover:text-ink",
+          "sm:px-3",
+        )}
+      >
+        <Ico icon={FiDownload} motion="nudge" size={15} className="text-ink-3 group-hover:text-accent" />
+        <span className="hidden sm:inline">Download</span>
+        <span className="hidden font-semibold text-ink md:inline">Trove</span>
+      </Link>
 
       <Link
         href="/reminders"
