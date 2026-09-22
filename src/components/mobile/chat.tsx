@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import type { IconType } from "@/components/ui/icons";
-import { TbWorld, TbRobot, TbFileText, TbTable, TbPresentation, TbPalette, TbCode, TbSearch } from "@/components/ui/icons";
+import { TbRobot, TbFileText, TbTable, TbPresentation, TbPalette, TbCode, TbSearch } from "@/components/ui/icons";
 import { Message } from "@/components/chat/message";
 import { MobileComposer } from "@/components/mobile/composer";
 import { Wordmark } from "@/components/brand/logo";
@@ -24,14 +24,13 @@ import {
 import { BrowserWorkspace } from "@/components/chat/browser-workspace";
 
 const TOOLS: { href: string; label: string; icon: IconType }[] = [
-  { href: "/websites", label: "Websites", icon: TbWorld },
   { href: "/agents", label: "Agents", icon: TbRobot },
   { href: "/documents", label: "Docs", icon: TbFileText },
   { href: "/spreadsheets", label: "Sheets", icon: TbTable },
   { href: "/slides", label: "Slides", icon: TbPresentation },
   { href: "/code", label: "Code", icon: TbCode },
   { href: "/design", label: "Design", icon: TbPalette },
-  { href: "/research", label: "Deep Research", icon: TbSearch },
+  { href: "/research", label: "Research", icon: TbSearch },
 ];
 
 export function MobileChat({
@@ -136,10 +135,10 @@ export function MobileChat({
 
   if (turns.length === 0) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain px-4 pb-6">
-        <div className="nx-rise flex flex-col items-center pb-7 pt-10">
+      <div className="mobile-chat flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain px-4 pb-4">
+        <div className="nx-rise flex flex-col items-center pb-6 pt-8">
           <Wordmark size={44} sweep={false} />
-          <p className="mt-3 text-center text-[13.5px] text-ink-3">
+          <p className="mt-3 max-w-[22ch] text-center text-[14px] leading-snug text-ink-3">
             Hi {name} — describe it and Trove builds it.
           </p>
         </div>
@@ -166,7 +165,7 @@ export function MobileChat({
               <Link
                 key={t.href}
                 href={t.href}
-                className="press flex h-[42px] shrink-0 items-center gap-2 rounded-full border border-line bg-raised px-4 text-[13.5px] text-ink-2 transition-colors active:bg-hover"
+                className="press flex h-[44px] shrink-0 items-center gap-2 rounded-full border border-line bg-raised px-4 text-[13.5px] text-ink-2 transition-colors active:bg-hover"
               >
                 <t.icon size={16} className="shrink-0 text-ink" />
                 {t.label}
@@ -203,7 +202,7 @@ export function MobileChat({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="mobile-chat flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-4 py-2">
         <span className="min-w-0 truncate text-[13px] text-ink-4">
           {turns[0]?.text.slice(0, 48)}
@@ -232,11 +231,11 @@ export function MobileChat({
         <div ref={bottom} />
       </div>
 
-      <div className="shrink-0 bg-canvas px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+      <div className="mobile-composer-dock shrink-0 border-t border-line/60 bg-canvas/95 px-3 pt-2 backdrop-blur-md">
         <MobileComposer
           onSend={send}
           disabled={busy}
-          placeholder="Reply…"
+          placeholder="Message Trove…"
           {...composerProps}
         />
       </div>
