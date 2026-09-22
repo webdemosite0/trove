@@ -7,5 +7,9 @@ export const metadata = { title: "Agents" };
 export default async function AgentsPage() {
   const user = await currentUser();
   const agents = await listAgents();
-  return <AgentsView agents={agents} signedIn={Boolean(user)} />;
+  return (
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
+      <AgentsView agents={agents} signedIn={Boolean(user)} />
+    </div>
+  );
 }

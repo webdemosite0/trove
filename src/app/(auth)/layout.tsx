@@ -2,8 +2,8 @@ import Link from "next/link";
 import { BrandLockup } from "@/components/brand/logo";
 
 /**
- * Centered auth shell inspired by modern SaaS signup (soft canvas, floating
- * product frames, single focused card). Login and signup share this chrome.
+ * Centered auth shell — soft canvas, single focused card.
+ * Decorative floating frames removed (they rendered as stray diagonal lines).
  */
 export default function AuthLayout({
   children,
@@ -33,62 +33,6 @@ export default function AuthLayout({
         aria-hidden
         className="pointer-events-none absolute -right-20 bottom-1/4 h-[380px] w-[380px] rounded-full bg-indigo-300/20 blur-3xl"
       />
-
-      {/* Floating product mockups — left */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-[-8%] top-[12%] hidden w-[280px] rotate-[-8deg] lg:block xl:left-[4%] xl:w-[320px]"
-      >
-        <div className="rounded-2xl border border-line bg-raised/90 p-3 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.28)] backdrop-blur">
-          <div className="mb-2 flex items-center gap-1.5 px-1">
-            <span className="size-2 rounded-full bg-red-400/80" />
-            <span className="size-2 rounded-full bg-amber-400/80" />
-            <span className="size-2 rounded-full bg-emerald-400/80" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {["#f0abfc", "#93c5fd", "#86efac", "#fcd34d"].map((c, i) => (
-              <div
-                key={i}
-                className="aspect-[4/3] rounded-xl"
-                style={{
-                  background: `linear-gradient(145deg, ${c}, white 120%)`,
-                }}
-              />
-            ))}
-          </div>
-          <div className="mt-2.5 h-2 w-2/3 rounded-full bg-line-strong" />
-          <div className="mt-1.5 h-2 w-1/2 rounded-full bg-sunk" />
-        </div>
-      </div>
-
-      {/* Floating product mockups — right */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-[-6%] bottom-[10%] hidden w-[260px] rotate-[7deg] lg:block xl:right-[5%] xl:w-[300px]"
-      >
-        <div className="rounded-2xl border border-line bg-raised/90 p-3 shadow-[0_30px_80px_-20px_rgba(15,23,42,0.25)] backdrop-blur">
-          <div className="mb-2 h-24 rounded-xl bg-gradient-to-br from-sky-100 via-indigo-50 to-violet-100" />
-          <div className="space-y-1.5 px-0.5">
-            <div className="h-2 w-3/4 rounded-full bg-line-strong" />
-            <div className="h-2 w-1/2 rounded-full bg-sunk" />
-            <div className="mt-2 h-8 w-full rounded-lg bg-sky-200/70" />
-          </div>
-        </div>
-      </div>
-
-      {/* Small floating chips */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-[18%] top-[18%] hidden size-12 items-center justify-center rounded-2xl border border-line bg-raised shadow-lg lg:flex"
-      >
-        <span className="text-lg">✦</span>
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-[20%] top-[22%] hidden size-11 items-center justify-center rounded-2xl border border-line bg-raised shadow-lg lg:flex"
-      >
-        <span className="text-base">◇</span>
-      </div>
 
       {/* Center card */}
       <div className="relative z-10 w-full max-w-[440px]">
