@@ -88,8 +88,8 @@ export function Composer({
 
   function grow(el: HTMLTextAreaElement) {
     el.style.height = "0px";
-    const min = compact ? 40 : 84;
-    const next = Math.min(Math.max(el.scrollHeight, min), compact ? 148 : 220);
+    const min = compact ? 36 : 52;
+    const next = Math.min(Math.max(el.scrollHeight, min), compact ? 120 : 160);
     el.style.height = `${next}px`;
   }
 
@@ -157,7 +157,7 @@ export function Composer({
     setFiles([]);
     setError(null);
     if (ref.current) {
-      ref.current.style.height = compact ? "40px" : "84px";
+      ref.current.style.height = compact ? "36px" : "52px";
     }
   }
 
@@ -184,7 +184,7 @@ export function Composer({
         "composer relative border bg-rail",
         compact
           ? "rounded-[var(--r-panel)]"
-          : "rounded-[24px] shadow-[var(--sh-2)]",
+          : "rounded-[18px] shadow-[var(--sh-1)]",
       )}
     >
       {mentionOpen ? (
@@ -311,15 +311,15 @@ export function Composer({
         className={cn(
           "block w-full resize-none overflow-y-auto bg-transparent text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed",
           compact
-            ? "min-h-[40px] max-h-[148px] px-3.5 pb-1.5 pt-3 text-[16px] leading-[1.45] sm:text-[13.5px]"
-            : "min-h-[84px] max-h-[220px] px-5 pb-3 pt-5 text-[16px] leading-[1.6]",
+            ? "min-h-[36px] max-h-[120px] px-3 pb-1 pt-2.5 text-[15px] leading-[1.4] sm:text-[13.5px]"
+            : "min-h-[52px] max-h-[160px] px-4 pb-2 pt-3.5 text-[15px] leading-[1.5]",
         )}
       />
 
       <div
         className={cn(
           "relative z-10 flex items-center",
-          compact ? "gap-1.5 px-2 pb-2" : "gap-2 border-t border-line/70 px-3.5 py-3",
+          compact ? "gap-1 px-2 pb-1.5" : "gap-1.5 border-t border-line/60 px-3 py-2",
         )}
       >
         {allowAttachments ? (
@@ -382,7 +382,7 @@ export function Composer({
           className={cn(
             "group grid shrink-0 place-items-center rounded-full",
             "transition-[transform,box-shadow,opacity] duration-[var(--t-tap)] ease-[var(--ease-ui)]",
-            compact ? "size-8" : "size-12",
+            compact ? "size-8" : "size-9",
             ready
               ? "btn-grad hover:shadow-[0_6px_20px_-6px_var(--btn-glow)] active:scale-[0.94]"
               : "bg-raised text-ink-4 opacity-60",
