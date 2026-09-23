@@ -4,22 +4,10 @@ export const metadata = { title: "Skills" };
 
 const SKILLS = [
   {
-    id: "web-builder",
-    name: "Web builder",
-    blurb: "Plan and generate multi-page sites with live Preview.",
-    href: "/websites",
-  },
-  {
-    id: "deploy-github",
-    name: "Deploy to GitHub",
-    blurb: "Create a repo and push built files when GitHub is connected.",
-    href: "/integrations",
-  },
-  {
-    id: "deploy-vercel",
-    name: "Deploy to Vercel",
-    blurb: "Ship static previews when Vercel is connected.",
-    href: "/integrations",
+    id: "docs",
+    name: "Documents",
+    blurb: "Write and refine full documents, then export Word or Markdown.",
+    href: "/documents",
   },
   {
     id: "sheets",
@@ -28,27 +16,33 @@ const SKILLS = [
     href: "/spreadsheets",
   },
   {
+    id: "slides",
+    name: "Decks",
+    blurb: "Generate presentation slides from a brief.",
+    href: "/slides",
+  },
+  {
+    id: "design",
+    name: "Design",
+    blurb: "Screen and UI layouts you can iterate on in chat.",
+    href: "/design",
+  },
+  {
     id: "research",
     name: "Research",
     blurb: "Search and synthesize with sources.",
     href: "/research",
   },
   {
-    id: "code",
-    name: "Code",
-    blurb: "Write and explain production-ready code.",
-    href: "/code",
-  },
-  {
-    id: "sandbox",
-    name: "Sandbox terminal",
-    blurb: "Run npm / node in an isolated cloud box (E2B).",
-    href: "/websites",
+    id: "agents",
+    name: "Agents",
+    blurb: "Specialists that carry multi-step work with a brief.",
+    href: "/agents",
   },
   {
     id: "connectors",
     name: "Connectors",
-    blurb: "Type @ in chat to attach GitHub, Vercel, and more.",
+    blurb: "Type @ in chat to attach tools when Integrations are ready.",
     href: "/integrations",
   },
 ];
@@ -60,8 +54,8 @@ export default function SkillsPage() {
         <div>
           <h1 className="text-[26px] font-semibold tracking-tight text-ink">Skills</h1>
           <p className="mt-1.5 max-w-[52ch] text-[14px] leading-relaxed text-ink-3">
-            Capabilities Trove can use while you chat or build. Connect apps under Integrations so
-            skills can act on your accounts.
+            Capabilities Trove can use while you chat. Connect apps under Integrations when they
+            become available.
           </p>
         </div>
         <Link
