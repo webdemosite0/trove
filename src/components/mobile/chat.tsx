@@ -65,7 +65,7 @@ export function MobileChat({
   const applyLocalFiles = React.useCallback(
     async (changes: LocalProjectFile[]) => {
       if (!localProject) return;
-      await writeLocalProjectFiles(localProject.handle, changes);
+      await writeLocalProjectFiles(localProject.handle, changes, localProject.scope);
       setLocalProject((current) => {
         if (!current) return current;
         const merged = new Map(current.files.map((file) => [file.path, file]));
