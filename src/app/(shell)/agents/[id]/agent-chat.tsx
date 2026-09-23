@@ -195,20 +195,20 @@ export function AgentChat({
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 flex-col overflow-hidden bg-canvas">
       <header className="shrink-0 border-b border-line bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
-        <div className="mx-auto flex h-14 max-w-[820px] items-center gap-3">
+        <div className="mx-auto flex h-12 max-w-[820px] items-center gap-2.5">
           <Link
             href="/agents"
             aria-label="Back to agents"
-            className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink"
+            className="grid h-8 w-8 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink"
           >
             <Ico icon={FiArrowLeft} motion="nudge" size={17} />
           </Link>
 
-          <Bot size={36} accent={agent.accent} state={busy ? "working" : "idle"} />
+          <Bot size={32} accent={agent.accent} state={busy ? "working" : "idle"} />
 
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[15px] font-semibold text-ink">{agent.name}</h1>
-            <p className="truncate text-[12.5px]" style={{ color: agent.accent }}>
+            <h1 className="truncate text-[14px] font-semibold text-ink">{agent.name}</h1>
+            <p className="truncate text-[12px]" style={{ color: agent.accent }}>
               {busy ? "Working…" : agent.role}
             </p>
           </div>
@@ -230,8 +230,8 @@ export function AgentChat({
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-5 lg:px-8">
-        <div className="mx-auto max-w-[820px] space-y-7">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-4 lg:px-8">
+        <div className="mx-auto max-w-[820px] space-y-6">
           {turns.length === 0 ? (
             <div className="py-8 text-center">
               <Bot size={64} accent={agent.accent} />
@@ -264,11 +264,12 @@ export function AgentChat({
         </div>
       </div>
 
-      <div className="relative z-10 shrink-0 overflow-hidden border-t border-line/60 bg-canvas/95 px-5 pb-5 pt-3 backdrop-blur-md lg:px-8">
+      <div className="relative z-20 shrink-0 overflow-hidden border-t border-line/50 bg-canvas/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:px-8">
         <div className="mx-auto max-w-[820px]">
           <Composer
             onSend={send}
             disabled={busy}
+            compact
             placeholder={busy ? "Working…" : `Message ${agent.name}…`}
           />
         </div>
