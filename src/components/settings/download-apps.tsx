@@ -7,19 +7,31 @@ import {
   FiCheck,
   FiDownload,
   FiExternalLink,
+  FiFolder,
   FiMonitor,
   FiSmartphone,
 } from "@/components/ui/icons";
 import { Panel } from "@/components/settings/panel";
 import { cn } from "@/lib/utils";
 
-type PlatformId = "windows" | "macos" | "android" | "ios";
+type PlatformId = "windows" | "macos" | "linux" | "android" | "ios";
 type InstallChoice = { outcome: "accepted" | "dismissed"; platform: string };
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<InstallChoice>;
 }
+
+type NativeDownloads = {
+  available?: boolean;
+  tag?: string;
+  releaseUrl?: string;
+  downloads?: {
+    windows?: string | null;
+    macos?: string | null;
+    linux?: string | null;
+  };
+};
 
 type Platform = {
   id: PlatformId;
@@ -29,40 +41,61 @@ type Platform = {
   Icon: ComponentType<{ size?: number | string; className?: string }>;
   requirements: string;
   steps: string[];
+  nativeExtension?: ".exe" | ".dmg" | ".AppImage";
 };
 
 const PLATFORMS: Platform[] = [
   {
     id: "windows",
     name: "Windows",
-    eyebrow: "Desktop app",
-    description: "Pin Trove to Start or the taskbar and launch it in its own app window.",
+    eyebrow: "Native desktop",
+    description:
+      "Download the Trove installer with native local-project folder access.",
     Icon: FiMonitor,
-    requirements: "Windows 10/11 · Edge or Chrome",
+    requirements: "Windows 10/11 · x64",
+    nativeExtension: ".exe",
     steps: [
-      "Open Trove in Microsoft Edge or Google Chrome.",
-      "Choose the Install app icon in the address bar, or open the browser menu and choose Apps → Install Trove.",
-      "Confirm Install. Trove will then open like a normal desktop app.",
+      "Download the Trove .exe installer.",
+      "Open the installer and choose where Trove should be installed.",
+      "Launch Trove, sign in, then use Project → Open local folder for native project access.",
     ],
   },
   {
     id: "macos",
     name: "macOS",
-    eyebrow: "Desktop app",
-    description: "Keep Trove in the Dock and run it without browser tabs around your workspace.",
+    eyebrow: "Native desktop",
+    description:
+      "A native Trove app with local project access and a dedicated workspace window.",
     Icon: SiApple,
-    requirements: "macOS · Safari, Edge, or Chrome",
+    requirements: "macOS · Apple Silicon + Intel",
+    nativeExtension: ".dmg",
     steps: [
-      "Open Trove in Safari, Edge, or Chrome.",
-      "In Safari choose File → Add to Dock. In Chrome or Edge choose the Install app action in the address bar.",
-      "Confirm the install and launch Trove from the Dock or Applications.",
+      "Download the Trove .dmg.",
+      "Open it and move Trove into Applications.",
+      "Launch Trove and choose a local project from the chat Project menu.",
+    ],
+  },
+  {
+    id: "linux",
+    name: "Linux",
+    eyebrow: "Native desktop",
+    description:
+      "Run Trove as an AppImage with the same native project bridge.",
+    Icon: FiMonitor,
+    requirements: "Linux · x64",
+    nativeExtension: ".AppImage",
+    steps: [
+      "Download the Trove AppImage.",
+      "Mark it executable if your desktop does not do that automatically.",
+      "Launch Trove and open a local project from chat.",
     ],
   },
   {
     id: "android",
     name: "Android",
-    eyebrow: "Mobile app",
-    description: "Install Trove from Chrome and launch it full-screen from your home screen.",
+    eyebrow: "Installable web app",
+    description:
+      "Install Trove from Chrome and launch it full-screen from your home screen.",
     Icon: SiAndroid,
     requirements: "Android · Chrome recommended",
     steps: [
@@ -74,7 +107,7 @@ const PLATFORMS: Platform[] = [
   {
     id: "ios",
     name: "iPhone & iPad",
-    eyebrow: "Mobile app",
+    eyebrow: "Installable web app",
     description: "Add Trove to your iPhone or iPad Home Screen from Safari.",
     Icon: SiApple,
     requirements: "iOS / iPadOS · Safari",
@@ -95,6 +128,15 @@ function detectPlatform(): PlatformId | null {
   if (/android/.test(ua)) return "android";
   if (/win/.test(platform) || /windows/.test(ua)) return "windows";
   if (/mac/.test(platform) || /macintosh|mac os x/.test(ua)) return "macos";
+  if (/linux/.test(platform) || /linux/.test(ua)) return "linux";
+  return null;
+}
+
+function nativeUrl(native: NativeDownloads | null, platform: PlatformId) {
+  if (!native?.downloads) return null;
+  if (platform === "windows") return native.downloads.windows ?? null;
+  if (platform === "macos") return native.downloads.macos ?? null;
+  if (platform === "linux") return native.downloads.linux ?? null;
   return null;
 }
 
@@ -103,6 +145,7 @@ export function DownloadApps() {
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [selected, setSelected] = useState<PlatformId | null>(null);
   const [installed, setInstalled] = useState(false);
+  const [native, setNative] = useState<NativeDownloads | null>(null);
 
   useEffect(() => {
     setCurrent(detectPlatform());
@@ -110,6 +153,11 @@ export function DownloadApps() {
     if ("serviceWorker" in navigator) {
       void navigator.serviceWorker.register("/sw.js").catch(() => null);
     }
+
+    void fetch("/api/downloads/native", { cache: "no-store" })
+      .then(async (res) => (res.ok ? ((await res.json()) as NativeDownloads) : null))
+      .then(setNative)
+      .catch(() => setNative(null));
 
     const onPrompt = (event: Event) => {
       event.preventDefault();
@@ -136,10 +184,16 @@ export function DownloadApps() {
   async function install(platform: Platform) {
     setSelected(platform.id);
 
+    const direct = nativeUrl(native, platform.id);
+    if (direct) {
+      window.location.assign(direct);
+      return;
+    }
+
     if (
       prompt &&
       platform.id === current &&
-      platform.id !== "ios"
+      (platform.id === "android" || platform.id === "windows" || platform.id === "macos")
     ) {
       await prompt.prompt();
       const choice = await prompt.userChoice.catch(() => null);
@@ -150,6 +204,8 @@ export function DownloadApps() {
     }
   }
 
+  const recommendedNative = recommended ? nativeUrl(native, recommended.id) : null;
+
   return (
     <div className="space-y-5 pb-8">
       <section className="relative overflow-hidden rounded-[26px] border border-line-strong bg-raised p-5 shadow-[var(--elev)] sm:p-6">
@@ -158,7 +214,7 @@ export function DownloadApps() {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(circle at 0% 0%, color-mix(in oklab, var(--color-accent) 17%, transparent), transparent 42%), radial-gradient(circle at 100% 0%, color-mix(in oklab, var(--color-violet) 13%, transparent), transparent 38%)",
+              "radial-gradient(circle at 0% 0%, color-mix(in oklab, var(--color-violet) 22%, transparent), transparent 42%), radial-gradient(circle at 100% 0%, color-mix(in oklab, #38bdf8 18%, transparent), transparent 38%)",
           }}
         />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -167,11 +223,10 @@ export function DownloadApps() {
               Download Trove
             </span>
             <h2 className="mt-3 text-[24px] font-semibold tracking-[-0.03em] text-ink sm:text-[28px]">
-              Trove, without the browser chrome.
+              Native projects on your computer.
             </h2>
             <p className="mt-2 text-[13.5px] leading-relaxed text-ink-3 sm:text-[14px]">
-              Install the Trove web app on desktop or mobile. It opens in its own window,
-              stays signed in, and gives you faster access to your workspace.
+              Desktop Trove can open local code folders, write AI file edits inside the selected project, and run approved build/test/lint tasks with native confirmation.
             </p>
           </div>
 
@@ -182,7 +237,11 @@ export function DownloadApps() {
               className="btn-grad inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
             >
               {installed ? <FiCheck size={16} /> : <FiDownload size={16} />}
-              {installed ? "Installed" : `Download for ${recommended.name}`}
+              {recommendedNative
+                ? `Download ${recommended.nativeExtension ?? "app"}`
+                : installed
+                  ? "Installed"
+                  : `Install for ${recommended.name}`}
             </button>
           ) : null}
         </div>
@@ -190,13 +249,18 @@ export function DownloadApps() {
 
       <Panel
         title="Choose your platform"
-        description="Trove installs from the browser today, so there is no separate .exe, .dmg, or .apk to keep updated."
+        description={
+          native?.available
+            ? `Native desktop release ${native.tag || ""} is available. Mobile currently installs as a web app.`
+            : "Native desktop installers are being built. Browser installation remains available while the release finishes."
+        }
         className="border-line-strong bg-raised shadow-[var(--elev)]"
       >
         <div className="grid gap-3 sm:grid-cols-2">
           {PLATFORMS.map((platform) => {
             const active = selected === platform.id;
             const isCurrent = current === platform.id;
+            const direct = nativeUrl(native, platform.id);
 
             return (
               <button
@@ -235,23 +299,43 @@ export function DownloadApps() {
                 <span className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
                   <span className="text-[11px] text-ink-4">{platform.requirements}</span>
                   <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-accent">
-                    {platform.id === "ios" || !isCurrent || !prompt ? "Install steps" : "Install now"}
-                    <FiExternalLink size={12} />
+                    {direct
+                      ? `Download ${platform.nativeExtension}`
+                      : platform.nativeExtension
+                        ? "Native build pending"
+                        : "Install steps"}
+                    {direct ? <FiDownload size={12} /> : <FiExternalLink size={12} />}
                   </span>
                 </span>
               </button>
             );
           })}
         </div>
+
+        {native?.releaseUrl ? (
+          <a
+            href={native.releaseUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium text-accent hover:underline"
+          >
+            View desktop release
+            <FiExternalLink size={12} />
+          </a>
+        ) : null}
       </Panel>
 
       {selected ? (
         <Panel
           title={`Install on ${PLATFORMS.find((platform) => platform.id === selected)?.name ?? "your device"}`}
           description={
-            selected === "ios"
-              ? "iOS does not allow a website to trigger installation directly, so Safari’s Add to Home Screen flow is required."
-              : "If your browser does not show an automatic install prompt, use these steps."
+            nativeUrl(native, selected)
+              ? "Download the native build above. The first unsigned preview build may show an operating-system security warning until code signing is configured."
+              : selected === "ios"
+                ? "iOS requires Safari’s Add to Home Screen flow until a signed App Store build is configured."
+                : selected === "android"
+                  ? "Android currently uses the installable web app while the signed APK/Play Store build is prepared."
+                  : "The native release is still building; use the browser install flow in the meantime."
           }
           className="border-line-strong bg-raised shadow-[var(--elev)]"
         >
@@ -272,24 +356,24 @@ export function DownloadApps() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex items-start gap-3 rounded-2xl border border-line bg-canvas/70 p-4">
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-            <FiMonitor size={16} />
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300">
+            <FiFolder size={16} />
           </span>
           <div>
-            <p className="text-[12.5px] font-semibold text-ink">Desktop-like experience</p>
+            <p className="text-[12.5px] font-semibold text-ink">Native local projects</p>
             <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
-              Launch Trove from Start, the Dock, or your app launcher in a dedicated window.
+              The downloaded desktop app lets Trove work inside folders you explicitly choose without exposing arbitrary filesystem paths to the web page.
             </p>
           </div>
         </div>
         <div className="flex items-start gap-3 rounded-2xl border border-line bg-canvas/70 p-4">
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-300">
             <FiSmartphone size={16} />
           </span>
           <div>
-            <p className="text-[12.5px] font-semibold text-ink">Home-screen access</p>
+            <p className="text-[12.5px] font-semibold text-ink">Mobile install</p>
             <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
-              Keep Trove one tap away on Android, iPhone, and iPad.
+              Android and iPhone/iPad remain installable today; signed native mobile packages require store/signing credentials.
             </p>
           </div>
         </div>
