@@ -68,9 +68,27 @@ jobs:
           path: release
           merge-multiple: true
 
+      - name: Collect installers
+        shell: bash
+        run: |
+          mkdir -p upload
+          find release -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" \) -print -exec cp "{}" upload/ \;
+          echo "Installer files:"
+          ls -lah upload
+          count="$(find upload -maxdepth 1 -type f | wc -l)"
+          if [ "$count" -lt 3 ]; then
+            echo "Expected Windows, macOS, and Linux installers; found $count."
+            exit 1
+          fi
+
       - name: Publish desktop release
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           tag="desktop-${GITHUB_RUN_ID}"
-          gh release create "$tag" release/*             --repo "${GITHUB_REPOSITORY}"             --title "Trove Desktop ${GITHUB_RUN_NUMBER}"             --notes "Native Trove desktop build for Windows, macOS, and Linux. Unsigned preview builds may show an operating-system warning until code-signing certificates are configured."             --latest
+          gh release create "$tag" upload/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Trove Desktop ${GITHUB_RUN_NUMBER}" \
+            --notes "Native Trove desktop build for Windows, macOS, and Linux. Unsigned preview builds may show an operating-system warning until code-signing certificates are configured." \
+            --latest
