@@ -269,7 +269,6 @@ export function AgentChat({
           <Composer
             onSend={send}
             disabled={busy}
-            compact
             placeholder={busy ? "Working…" : `Message ${agent.name}…`}
           />
         </div>
