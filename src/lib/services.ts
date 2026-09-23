@@ -58,9 +58,10 @@ export const SERVICES: Service[] = [
 
   // Communication
   { id: "slack", name: "Slack", category: "Communication", blurb: "Post updates and read channel context.", oauth: true },
+  { id: "whatsapp", name: "WhatsApp", category: "Communication", blurb: "Customer conversations, alerts, and messaging workflows." },
+  { id: "telegram", name: "Telegram", category: "Communication", blurb: "Bot API for alerts and commands." },
   { id: "discord", name: "Discord", category: "Communication", blurb: "Bot messages and server events." },
   { id: "microsoft-teams", name: "Microsoft Teams", category: "Communication", blurb: "Channel messages and meeting notes.", oauth: true },
-  { id: "telegram", name: "Telegram", category: "Communication", blurb: "Bot API for alerts and commands." },
   { id: "twilio", name: "Twilio", category: "Communication", blurb: "SMS and voice notifications." },
   { id: "zoom", name: "Zoom", category: "Communication", blurb: "Create meetings and pull recordings.", oauth: true },
 
@@ -122,6 +123,9 @@ export const SERVICES: Service[] = [
   { id: "attio", name: "Attio", category: "CRM & Sales", blurb: "Relationship data model.", oauth: true },
 
   // Marketing
+  { id: "linkedin", name: "LinkedIn", category: "Marketing", blurb: "Company content, audience context, and publishing workflows.", oauth: true },
+  { id: "meta", name: "Meta", category: "Marketing", blurb: "Facebook and Instagram business workflows.", oauth: true },
+  { id: "twitter", name: "X / Twitter", category: "Marketing", blurb: "Posts, mentions, and social monitoring.", oauth: true },
   { id: "mailchimp", name: "Mailchimp", category: "Marketing", blurb: "Campaigns and audiences.", oauth: true },
   { id: "sendgrid", name: "SendGrid", category: "Marketing", blurb: "Transactional email delivery." },
   { id: "resend", name: "Resend", category: "Marketing", blurb: "Developer-first email API." },
@@ -148,6 +152,7 @@ export const SERVICES: Service[] = [
   { id: "canva", name: "Canva", category: "Design", blurb: "Brand assets and templates.", oauth: true },
 
   // Automation
+  { id: "chatgpt", name: "ChatGPT", category: "Automation", blurb: "Bring external AI workflows and prompts into Trove." },
   { id: "zapier", name: "Zapier", category: "Automation", blurb: "Trigger thousands of downstream apps.", oauth: true },
   { id: "make", name: "Make", category: "Automation", blurb: "Visual automation scenarios.", oauth: true },
   { id: "n8n", name: "n8n", category: "Automation", blurb: "Self-hosted workflow automation." },
