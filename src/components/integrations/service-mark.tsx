@@ -1,6 +1,28 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import {
+  SiDiscord,
+  SiLinkedin,
+  SiMeta,
+  SiOpenai,
+  SiTelegram,
+  SiWhatsapp,
+  SiX,
+} from "react-icons/si";
+import type { IconType } from "react-icons";
+
+const REAL_BRAND_ICONS: Record<string, { icon: IconType; color: string; bg: string }> = {
+  discord: { icon: SiDiscord, color: "#5865F2", bg: "#ffffff" },
+  telegram: { icon: SiTelegram, color: "#26A5E4", bg: "#ffffff" },
+  meta: { icon: SiMeta, color: "#0866FF", bg: "#ffffff" },
+  twitter: { icon: SiX, color: "#111111", bg: "#ffffff" },
+  x: { icon: SiX, color: "#111111", bg: "#ffffff" },
+  whatsapp: { icon: SiWhatsapp, color: "#25D366", bg: "#ffffff" },
+  linkedin: { icon: SiLinkedin, color: "#0A66C2", bg: "#ffffff" },
+  chatgpt: { icon: SiOpenai, color: "#111111", bg: "#ffffff" },
+  openai: { icon: SiOpenai, color: "#111111", bg: "#ffffff" },
+};
 
 /** Brand SVG marks — never fall back to letter initials. */
 function Logo({ id, size }: { id: string; size: number }) {
@@ -394,17 +416,19 @@ export function ServiceMark({
   className?: string;
 }) {
   const key = id.toLowerCase().replace(/^@/, "").trim();
-  const hasLogo = KNOWN_LOGOS.has(key);
-  const bg = hasLogo ? FILL_BG[key] ?? "#f4f4f5" : "#f4f4f5";
-  const ink = INK_ON_DARK.has(key) ? "#fafafa" : undefined;
-  const iconSize = Math.round(size * 0.62);
+  const realBrand = REAL_BRAND_ICONS[key];
+  const hasLogo = Boolean(realBrand) || KNOWN_LOGOS.has(key);
+  const bg = realBrand?.bg ?? (hasLogo ? FILL_BG[key] ?? "#f4f4f5" : "#f4f4f5");
+  const ink = realBrand?.color ?? (INK_ON_DARK.has(key) ? "#fafafa" : undefined);
+  const iconSize = Math.round(size * 0.80);
+  const RealIcon = realBrand?.icon;
 
   return (
     <span
       aria-hidden
       title={name ?? id}
       className={cn(
-        "inline-grid shrink-0 place-items-center overflow-hidden rounded-[8px]",
+        "inline-grid shrink-0 place-items-center overflow-hidden rounded-[10px]",
         className,
       )}
       style={{
@@ -414,7 +438,13 @@ export function ServiceMark({
         color: ink ?? "var(--color-ink, #18181b)",
       }}
     >
-      {hasLogo ? <Logo id={key} size={iconSize} /> : <GenericMark size={iconSize} />}
+      {RealIcon ? (
+        <RealIcon size={iconSize} aria-hidden />
+      ) : hasLogo ? (
+        <Logo id={key} size={iconSize} />
+      ) : (
+        <GenericMark size={iconSize} />
+      )}
     </span>
   );
 }
