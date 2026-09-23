@@ -13,6 +13,7 @@ type Release = {
   prerelease?: boolean;
   published_at?: string;
   assets?: ReleaseAsset[];
+  assets_url?: string;
 };
 
 function assetUrl(assets: ReleaseAsset[], pattern: RegExp) {
@@ -50,8 +51,7 @@ export async function GET() {
     const release = releases.find(
       (item) =>
         !item.draft &&
-        String(item.tag_name || "").startsWith("desktop-") &&
-        Array.isArray(item.assets),
+        String(item.tag_name || "").startsWith("desktop-"),
     );
 
     if (!release) {
@@ -61,7 +61,22 @@ export async function GET() {
       );
     }
 
-    const assets = release.assets ?? [];
+    let assets = Array.isArray(release.assets) ? release.assets : [];
+
+    // GitHub's releases collection can omit freshly uploaded / large assets
+    // even though the release-specific assets endpoint already has them.
+    if (!assets.length && release.assets_url) {
+      const assetRes = await fetch(release.assets_url, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "Trove-Download-Resolver",
+        },
+        next: { revalidate: 300 },
+      });
+      if (assetRes.ok) {
+        assets = (await assetRes.json()) as ReleaseAsset[];
+      }
+    }
     const downloads = {
       windows: assetUrl(assets, /\.exe$/i),
       macos: assetUrl(assets, /\.dmg$/i),
