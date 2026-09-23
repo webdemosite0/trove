@@ -137,8 +137,8 @@ export function PluginDetailView({
 
         <div className="mt-10 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
-            <div className="grid size-[72px] place-items-center rounded-[22px] bg-raised shadow-[var(--elev)] ring-1 ring-line">
-              <ServiceMark id={service.id} name={service.name} size={44} />
+            <div className="grid size-[92px] place-items-center rounded-[22px] bg-raised shadow-[var(--elev)] ring-1 ring-line">
+              <ServiceMark id={service.id} name={service.name} size={68} />
             </div>
             <div>
               <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-ink">
