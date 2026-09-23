@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiArrowLeft } from "@/components/ui/icons";
 import { Sidebar } from "@/components/shell/sidebar";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { TopBar } from "@/components/shell/top-bar";
@@ -78,19 +76,8 @@ export function AppChrome({
       <>
         <CommandPalette recents={shellMeta.recents} />
         <div className="relative min-h-screen bg-canvas">
-        <AuthReferralAnnouncement />
-        <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur-xl">
-          <div className="mx-auto flex h-14 max-w-[1100px] items-center gap-3 px-4 sm:px-6">
-            <Link
-              href="/chat"
-              className="inline-flex items-center gap-2 rounded-xl px-2.5 py-2 text-[14px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
-            >
-              <FiArrowLeft size={18} />
-              Back
-            </Link>
-          </div>
-        </header>
-        <div className="app-page-in min-w-0">{children}</div>
+          <AuthReferralAnnouncement />
+          <div className="app-page-in min-w-0">{children}</div>
         </div>
       </>
     );
