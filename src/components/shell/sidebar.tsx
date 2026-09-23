@@ -47,56 +47,56 @@ const PRIMARY: Item[] = [
     label: "Home",
     icon: TbLayoutDashboard,
     motion: "panel",
-    tone: "text-sky-500 bg-sky-500/10",
-    activeTone: "text-sky-600 dark:text-sky-300 bg-sky-500/15",
+    tone: "text-ink",
+    activeTone: "text-ink bg-sunk",
   },
   {
     href: "/chat",
     label: "Chat",
     icon: TbMessageCircle,
     motion: "sparkle",
-    tone: "text-violet-500 bg-violet-500/10",
-    activeTone: "text-violet-600 dark:text-violet-300 bg-violet-500/15",
+    tone: "text-ink",
+    activeTone: "text-ink bg-sunk",
   },
   {
     href: "/documents",
     label: "Docs",
     icon: TbFiles,
     motion: "stack",
-    tone: "text-blue-500 bg-blue-500/10",
-    activeTone: "text-blue-600 dark:text-blue-300 bg-blue-500/15",
+    tone: "text-ink",
+    activeTone: "text-ink bg-sunk",
   },
   {
     href: "/spreadsheets",
     label: "Sheets",
     icon: TbTable,
     motion: "scan",
-    tone: "text-emerald-500 bg-emerald-500/10",
-    activeTone: "text-emerald-600 dark:text-emerald-300 bg-emerald-500/15",
+    tone: "text-ink",
+    activeTone: "text-ink bg-sunk",
   },
   {
     href: "/slides",
     label: "Decks",
     icon: TbPresentation,
     motion: "launch",
-    tone: "text-amber-500 bg-amber-500/10",
-    activeTone: "text-amber-600 dark:text-amber-300 bg-amber-500/15",
+    tone: "text-ink",
+    activeTone: "text-ink bg-sunk",
   },
   {
     href: "/design",
     label: "Design",
     icon: TbPalette,
-    motion: "hue",
-    tone: "text-fuchsia-500 bg-fuchsia-500/10",
-    activeTone: "text-fuchsia-600 dark:text-fuchsia-300 bg-fuchsia-500/15",
+    motion: "pop",
+    tone: "text-ink",
+    activeTone: "text-ink bg-sunk",
   },
   {
     href: "/agents",
     label: "Agents",
     icon: TbRobot,
     motion: "ring",
-    tone: "text-cyan-500 bg-cyan-500/10",
-    activeTone: "text-cyan-600 dark:text-cyan-300 bg-cyan-500/15",
+    tone: "text-ink",
+    activeTone: "text-ink bg-sunk",
   },
 ];
 
@@ -138,6 +138,7 @@ function NavRow({
               motion={item.motion}
               size={16}
               active={active}
+              className="text-ink"
             />
           </span>
         </Link>
@@ -168,6 +169,7 @@ function NavRow({
           motion={item.motion}
           size={16}
           active={active}
+          className="text-ink"
         />
       </span>
       <span className="truncate">{item.label}</span>
@@ -181,11 +183,11 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
   return (
@@ -193,17 +195,15 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
         className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover"
       >
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
-          {user.name.slice(0, 1).toUpperCase()}
+          {(user.name || "U").slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1 text-left">
           <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
           <span className="block truncate text-[11px] capitalize text-ink-3">
-            {user.plan} plan
+            {user.plan || "free"}
           </span>
         </span>
         <FiChevronRight
@@ -211,15 +211,10 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
           className={cn("shrink-0 text-ink-3 transition-transform", open && "rotate-90")}
         />
       </button>
-
       {open ? (
-        <div
-          role="menu"
-          className="absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-xl border border-line bg-raised shadow-lg"
-        >
+        <div className="absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-xl border border-line bg-raised shadow-lg">
           <Link
             href="/settings"
-            role="menuitem"
             onClick={() => {
               setOpen(false);
               onNavigate?.();
@@ -231,7 +226,6 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
           </Link>
           <Link
             href="/plans"
-            role="menuitem"
             onClick={() => {
               setOpen(false);
               onNavigate?.();
@@ -239,15 +233,15 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
             className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink transition-colors hover:bg-hover"
           >
             <FiCreditCard size={15} className="text-ink" />
-            Plan & billing
+            Plans
           </Link>
           <form action={logOut} className="border-t border-line">
             <button
-              role="menuitem"
+              type="submit"
               className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-hover"
             >
               <FiLogOut size={15} className="text-ink" />
-              Log out
+              Sign out
             </button>
           </form>
         </div>
@@ -256,292 +250,190 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
   );
 }
 
-function ReferralPromoSurface({
-  mode,
-}: {
-  mode: "light" | "dark";
-}) {
-  const dark = mode === "dark";
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-[15px] px-3 py-3 backdrop-blur-sm",
-        dark
-          ? "bg-[#0f1017] text-white ring-1 ring-white/10"
-          : "bg-white text-slate-950 ring-1 ring-black/[0.04]",
-      )}
-    >
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -right-4 -top-4 size-16 rounded-full blur-2xl",
-          dark ? "opacity-55" : "opacity-25",
-        )}
-        style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
-      />
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -bottom-6 -left-5 size-14 rounded-full blur-2xl",
-          dark ? "opacity-35" : "opacity-15",
-        )}
-        style={{ background: "linear-gradient(135deg,#a78bfa,#fbbf24)" }}
-      />
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0",
-          dark
-            ? "bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-sky-500/[0.10]"
-            : "bg-gradient-to-br from-fuchsia-50/70 via-transparent to-sky-50/70",
-        )}
-      />
-      <div className="relative">
-        <p className={cn("text-[10px] font-bold uppercase tracking-[0.14em]", dark ? "text-fuchsia-300" : "text-fuchsia-600")}>
-          Refer & earn
-        </p>
-        <p className={cn("mt-1 text-[13px] font-semibold leading-snug", dark ? "text-white" : "text-slate-950")}>
-          Share Trove · get credits
-        </p>
-        <p className={cn("mt-0.5 text-[11px]", dark ? "text-zinc-400" : "text-slate-600")}>
-          100 qualified paid → $200
-        </p>
-        <span className={cn("mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold", dark ? "text-sky-300" : "text-blue-600")}>
-          Open affiliates
-          <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
+function ReferralCard() {
   return (
     <Link
       href="/affiliates"
-      onClick={onNavigate}
-      className="group relative block overflow-hidden rounded-2xl p-[1px] transition hover:scale-[1.02]"
-      style={{
-        background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
-      }}
+      className={cn(
+        "group relative block overflow-hidden rounded-2xl p-3",
+        "bg-gradient-to-br from-violet-500/15 via-fuchsia-500/10 to-sky-500/15",
+        "ring-1 ring-violet-400/20 transition hover:ring-violet-400/40",
+      )}
     >
-      <div className="block dark:hidden">
-        <ReferralPromoSurface mode="light" />
-      </div>
-      <div className="hidden dark:block">
-        <ReferralPromoSurface mode="dark" />
+      <div
+        className={cn(
+          "pointer-events-none absolute -right-6 -top-6 size-20 rounded-full",
+          "bg-gradient-to-br from-violet-500/30 to-fuchsia-500/20 blur-2xl",
+        )}
+      />
+      <p className={cn("relative text-[12px] font-semibold tracking-wide text-ink")}>
+        Refer & earn
+      </p>
+      <p className="relative mt-0.5 text-[11px] leading-snug text-ink-3">
+        Share Trove — get credits for paid referrals
+      </p>
+      <div className="relative mt-2">
+        <span className="inline-flex items-center rounded-full bg-ink px-2.5 py-1 text-[11px] font-medium text-canvas">
+          Open affiliates
+        </span>
       </div>
     </Link>
   );
 }
 
-function RailBody({
+function SidebarBody({
   user,
-  onCollapse,
+  compact,
   onNavigate,
 }: {
-  user: User | null;
-  balance?: Balance | null;
-  onCollapse?: () => void;
+  user: User;
+  compact?: boolean;
   onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
+  const { setCollapsed } = useNav();
 
   return (
     <>
-      <div className="flex shrink-0 items-center gap-2 px-3 pb-2 pt-3">
-        <Link href="/chat" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2">
-          <TroveOrb size={28} />
-          <Wordmark size={18} />
-        </Link>
-        {onCollapse ? (
+      <div className="flex items-center gap-2 px-3 pt-3">
+        {compact ? (
           <button
             type="button"
-            onClick={onCollapse}
-            title="Toggle sidebar  ⌘B"
+            aria-label="Expand sidebar"
+            onClick={() => setCollapsed(false)}
             className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
           >
             <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
           </button>
-        ) : null}
+        ) : (
+          <>
+            <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-2 px-1">
+              <TroveOrb size={22} />
+              <Wordmark size={18} />
+            </Link>
+            <button
+              type="button"
+              aria-label="Collapse sidebar"
+              onClick={() => setCollapsed(true)}
+              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+            >
+              <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
+            </button>
+          </>
+        )}
       </div>
 
-      <div className="px-2.5 pb-2">
+      <div className="px-3 pt-3">
         <Link
           href="/chat"
           onClick={onNavigate}
-          className="btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white"
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-[13px] font-medium text-ink",
+            "transition hover:bg-hover",
+            compact && "px-0",
+          )}
         >
-          <Ico icon={FiPlus} motion="grow" size={15} />
-          New chat
+          <Ico icon={FiPlus} motion="grow" size={15} className="text-ink" />
+          {!compact ? "New chat" : null}
         </Link>
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2 scrollbar-none">
-        {PRIMARY.map((it) => (
-          <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
+      <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+        {PRIMARY.map((item) => (
+          <NavRow
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            onNavigate={onNavigate}
+            compact={compact}
+          />
         ))}
       </nav>
 
-      <div className="shrink-0 space-y-2 border-t border-line p-2.5">
-        <ReferralPromo onNavigate={onNavigate} />
-
-        {user ? (
+      {!compact ? (
+        <div className="space-y-2 border-t border-line px-3 py-3">
+          <ReferralCard />
           <UserMenu user={user} onNavigate={onNavigate} />
-        ) : (
-          <Link
-            href="/login"
-            onClick={onNavigate}
-            className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13.5px] text-ink transition-colors hover:bg-hover"
-          >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-raised text-ink">
-              <Ico icon={FiUser} motion="tilt" size={14} className="text-ink" />
-            </span>
-            Log in
-          </Link>
-        )}
-
-        <div className="flex items-center gap-1 pt-1">
-          <Tooltip label="Settings" side="top">
+        </div>
+      ) : (
+        <div className="space-y-1 border-t border-line px-2 py-3">
+          <Tooltip label="Account" side="right">
             <Link
               href="/settings"
               onClick={onNavigate}
-              aria-label="Settings"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+              className="grid h-9 w-9 place-items-center rounded-xl text-ink hover:bg-hover"
             >
-              <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
+              <Ico icon={FiUser} motion="tilt" size={14} className="text-ink" />
             </Link>
           </Tooltip>
-          <Tooltip label="Plan" side="top">
+          <Tooltip label="Plans" side="right">
             <Link
               href="/plans"
               onClick={onNavigate}
-              aria-label="Plan"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+              className="grid h-9 w-9 place-items-center rounded-xl text-ink hover:bg-hover"
             >
               <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
             </Link>
           </Tooltip>
-          <Tooltip label="Help" side="top">
-            <Link
-              href="/settings/support"
-              onClick={onNavigate}
-              aria-label="Help & support"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-            >
-              <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
-            </Link>
-          </Tooltip>
-          <span className="flex-1" />
-          <ThemeToggle />
         </div>
-      </div>
+      )}
+
+      {!compact ? (
+        <div className="flex items-center justify-between border-t border-line px-3 py-2">
+          <ThemeToggle />
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+          >
+            <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
+          </Link>
+        </div>
+      ) : null}
     </>
   );
 }
 
-export function Sidebar({
-  user,
-  balance,
-}: {
-  user: User | null;
-  balance: Balance | null;
-  isAdmin?: boolean;
-}) {
-  const { open, setOpen, collapsed, setCollapsed } = useNav();
+export function Sidebar({ user }: { user: User; balance?: Balance | null }) {
+  const { open, setOpen, collapsed } = useNav();
   const pathname = usePathname();
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        setCollapsed(!collapsed);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [collapsed, setCollapsed]);
+    setOpen(false);
+  }, [pathname, setOpen]);
 
   return (
     <>
       <aside
         className={cn(
           "nx-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail text-ink transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:flex",
-          collapsed ? "w-[64px]" : "w-[240px]",
+          collapsed ? "w-[68px]" : "w-[240px]",
         )}
       >
-        {collapsed ? (
-          <div className="flex h-full min-h-0 flex-col items-center overflow-hidden px-1.5 py-3">
-            <div className="flex w-full flex-col items-center">
-              <button
-                type="button"
-                onClick={() => setCollapsed(false)}
-                title="Toggle sidebar  ⌘B"
-                className="mb-1 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-              >
-                <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
-              </button>
-              <Link
-                href="/chat"
-                title="New chat"
-                aria-label="New chat"
-                className="btn-grad mb-1 grid h-9 w-9 place-items-center rounded-full text-white"
-              >
-                <Ico icon={FiPlus} motion="grow" size={16} />
-              </Link>
-            </div>
-
-            <div className="mt-1 flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto overflow-x-hidden scrollbar-none">
-              {PRIMARY.map((i) => (
-                <NavRow key={i.href} item={i} pathname={pathname} compact />
-              ))}
-            </div>
-
-            <div className="mt-1 shrink-0 pt-1">
-              <Link
-                href="/affiliates"
-                title="Refer & earn"
-                className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-[11px] font-bold text-white shadow-md"
-              >
-                $
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full min-h-0 flex-col overflow-hidden">
-            <RailBody user={user} balance={balance} onCollapse={() => setCollapsed(true)} />
-          </div>
-        )}
+        <SidebarBody user={user} compact={collapsed} />
       </aside>
 
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
+            type="button"
             aria-label="Close menu"
+            className="absolute inset-0 bg-black/40"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
           />
           <div className="nx-sidebar absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-line bg-rail text-ink shadow-xl">
             <button
+              type="button"
+              aria-label="Close"
               onClick={() => setOpen(false)}
-              aria-label="Close menu"
               className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
             >
               <FiX size={17} className="text-ink" />
             </button>
-            <div className="flex h-full min-h-0 flex-col overflow-hidden">
-              <RailBody user={user} balance={balance} onNavigate={() => setOpen(false)} />
-            </div>
+            <SidebarBody user={user} onNavigate={() => setOpen(false)} />
           </div>
         </div>
       ) : null}
-
-      <div
-        className={cn(
-          "nx-no-print hidden shrink-0 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:block",
-          collapsed ? "w-[64px]" : "w-[240px]",
-        )}
-      />
     </>
   );
 }
