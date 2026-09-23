@@ -15,7 +15,7 @@ import type { Recent } from "@/lib/recents";
 export function AppChrome({
   user,
   balance,
-  isAdmin,
+  isAdmin: _isAdmin,
   children,
 }: {
   user: User;
@@ -99,7 +99,7 @@ export function AppChrome({
   return (
     <div className="flex min-h-screen">
       <CommandPalette recents={shellMeta.recents} />
-      <Sidebar user={user} balance={shellMeta.balance} isAdmin={isAdmin} />
+      <Sidebar user={user} balance={shellMeta.balance} />
       <main className="relative flex min-w-0 flex-1 flex-col">
         <AuthReferralAnnouncement />
         <TopBar
