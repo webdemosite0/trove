@@ -130,7 +130,7 @@ export function AgentChat({
             agentId: agent.id,
             messages: history.map(({ role, text: body }) => ({ role, text: body })),
             timeZone: localTimeZone(),
-            attachments: attachments?.map(strip),
+            attachments: strip(attachments),
           }),
         });
         if (!res.ok || !res.body) {
