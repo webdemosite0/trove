@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { FiDownload, FiExternalLink, FiX, FiCopy, FiCheck } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
+import { cn } from "@/lib/utils";
 
 /**
- * Generated / markdown image in chat — gallery style, copy as image not text.
+ * Generated / markdown image in chat — premium reveal, stable lightbox.
  */
 export function ChatImage({
   src,
@@ -16,8 +17,15 @@ export function ChatImage({
 }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    setLoaded(false);
+    setFailed(false);
+  }, [src]);
 
   useEffect(() => {
     if (!open) return;
@@ -64,7 +72,6 @@ export function ChatImage({
     URL.revokeObjectURL(url);
   };
 
-  /** Prefer image/png on clipboard so paste is not broken markdown text. */
   const copyImage = async () => {
     try {
       const blob = await asBlob();
@@ -92,22 +99,41 @@ export function ChatImage({
   return (
     <>
       <figure
-        className="group relative my-2 max-w-[min(100%,420px)] select-none overflow-hidden rounded-2xl border border-line bg-sunk shadow-[0_8px_30px_-18px_rgba(0,0,0,0.55)]"
+        className="group relative my-2 max-w-[min(100%,400px)] select-none overflow-hidden rounded-2xl border border-line bg-sunk shadow-[0_8px_30px_-18px_rgba(0,0,0,0.45)]"
         onCopy={(e) => {
-          // Stop browser from copying alt/markdown as uneven text.
           e.preventDefault();
           void copyImage();
         }}
       >
+        {!loaded && !failed ? (
+          <div
+            className="absolute inset-0 min-h-[160px] animate-pulse bg-gradient-to-br from-sunk via-raised to-sunk"
+            aria-hidden
+          />
+        ) : null}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt || "Image"}
           draggable={false}
-          className="max-h-[380px] w-full cursor-zoom-in object-contain bg-canvas transition-opacity hover:opacity-95"
           loading="lazy"
-          onClick={() => setOpen(true)}
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            setFailed(true);
+            setLoaded(true);
+          }}
+          onClick={() => loaded && !failed && setOpen(true)}
+          className={cn(
+            "max-h-[320px] w-full cursor-zoom-in bg-canvas object-contain transition duration-500 ease-out",
+            loaded && !failed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0",
+          )}
         />
+        {failed ? (
+          <div className="flex h-28 items-center justify-center text-[13px] text-ink-4">
+            Image unavailable
+          </div>
+        ) : null}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-3 pb-2.5 pt-8 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
           <div className="pointer-events-auto flex justify-end gap-1.5">
             <button
@@ -143,7 +169,7 @@ export function ChatImage({
 
       {open ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/88 p-4 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
           aria-label="Image viewer"
@@ -157,7 +183,7 @@ export function ChatImage({
             <img
               src={src}
               alt={alt || "Image"}
-              className="max-h-[85vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
+              className="max-h-[85vh] w-auto max-w-full rounded-xl object-contain shadow-2xl"
               draggable={false}
             />
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
