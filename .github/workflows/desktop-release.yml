@@ -1,0 +1,76 @@
+name: Desktop release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "desktop/**"
+      - ".github/workflows/desktop-release.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: "--win --x64"
+            artifact: "windows"
+            pattern: "desktop/dist/*.exe"
+          - os: macos-latest
+            args: "--mac --universal"
+            artifact: "macos"
+            pattern: "desktop/dist/*.dmg"
+          - os: ubuntu-latest
+            args: "--linux --x64"
+            artifact: "linux"
+            pattern: "desktop/dist/*.AppImage"
+
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Build installer
+        working-directory: desktop
+        run: npm run dist -- ${{ matrix.args }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trove-${{ matrix.artifact }}
+          path: ${{ matrix.pattern }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Publish desktop release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="desktop-${GITHUB_RUN_ID}"
+          gh release create "$tag" release/*             --repo "${GITHUB_REPOSITORY}"             --title "Trove Desktop ${GITHUB_RUN_NUMBER}"             --notes "Native Trove desktop build for Windows, macOS, and Linux. Unsigned preview builds may show an operating-system warning until code-signing certificates are configured."             --latest
