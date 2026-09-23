@@ -4,14 +4,13 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { IconType } from "@/components/ui/icons";
-import { TbRobot, TbCode, TbFileText, TbTable, TbSearch } from "@/components/ui/icons";
+import { TbRobot, TbFileText, TbTable, TbSearch } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 interface Action {
   href: string;
   label: string;
   icon: IconType;
-  /** The digit pressed with Cmd/Ctrl. */
   key: string;
 }
 
@@ -20,7 +19,6 @@ const GROUPS: { label: string; actions: Action[] }[] = [
     label: "Build",
     actions: [
       { href: "/agents", label: "Agents", icon: TbRobot, key: "2" },
-      { href: "/code", label: "Code", icon: TbCode, key: "3" },
     ],
   },
   {
