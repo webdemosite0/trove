@@ -21,6 +21,7 @@ import {
   type LocalProjectWorkspace,
 } from "@/lib/local-project";
 import { BrowserWorkspace } from "@/components/chat/browser-workspace";
+import { ConnectToolsCard } from "@/components/chat/connect-tools-card";
 
 export function HomeChat({
   restored = null,
@@ -148,6 +149,13 @@ export function HomeChat({
                 autoFocus
                 disabled={busy}
               />
+            </div>
+
+            <div
+              className="nx-rise mt-4"
+              style={{ animationDelay: "150ms", animationFillMode: "backwards" }}
+            >
+              <ConnectToolsCard />
             </div>
 
             {browserWorkspace ? (
