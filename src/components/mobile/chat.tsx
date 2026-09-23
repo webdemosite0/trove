@@ -20,13 +20,6 @@ import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
 import { StarterCards } from "@/components/home/starter-cards";
 
-export type ChatProjectOption = {
-  id: string;
-  name: string;
-  instructions?: string;
-  updatedAt?: number;
-};
-
 const TOOLS: { href: string; label: string; icon: IconType }[] = [
   { href: "/agents", label: "Agents", icon: TbRobot },
   { href: "/documents", label: "Docs", icon: TbFileText },
@@ -41,8 +34,6 @@ export function MobileChat({
   name = "there",
   activity = [],
   draft: initialDraft = "",
-  projects: initialProjects = [],
-  initialProjectId = null,
 }: {
   restored?: {
     id: string;
@@ -52,21 +43,13 @@ export function MobileChat({
   name?: string;
   activity?: Recent[];
   draft?: string;
-  projects?: ChatProjectOption[];
-  initialProjectId?: string | null;
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = React.useState(initialDraft);
-  const projectId =
-    initialProjectId && initialProjects.some((p) => p.id === initialProjectId)
-      ? initialProjectId
-      : null;
-  const activeProject = initialProjects.find((p) => p.id === projectId) ?? null;
 
   const { turns, busy, error, send, retry, clear, bottom } = useChatThread({
     restored,
     mode,
-    projectId,
   });
 
   const composerProps = {
@@ -80,9 +63,7 @@ export function MobileChat({
         <div className="nx-rise flex flex-col items-center pb-6 pt-8">
           <Wordmark size={44} sweep={false} />
           <p className="mt-3 max-w-[22ch] text-center text-[14px] leading-snug text-ink-3">
-            {activeProject
-              ? `Hi ${name} — chat in ${activeProject.name}`
-              : `Hi ${name} — describe it and Trove helps.`}
+            Hi {name} — describe it and Trove helps.
           </p>
         </div>
 
@@ -144,7 +125,6 @@ export function MobileChat({
     <div className="mobile-chat flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-4 py-2">
         <span className="min-w-0 truncate text-[13px] text-ink-4">
-          {activeProject ? activeProject.name + " · " : ""}
           {turns[0]?.text.slice(0, 48)}
         </span>
         <button
