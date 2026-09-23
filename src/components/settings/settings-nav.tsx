@@ -43,7 +43,7 @@ const BILLING: Section[] = [
 ];
 
 const WORKSPACE: Section[] = [
-  { href: "/team", label: "Team", icon: FiUsers, away: true },
+  { href: "/team", label: "Team workspace", icon: FiUsers, away: true },
   { href: "/integrations", label: "Apps", icon: FiGrid, away: true },
   { href: "/projects", label: "Projects", icon: FiGrid, away: true },
 ];
