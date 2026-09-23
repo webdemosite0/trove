@@ -18,13 +18,8 @@ export default async function PricingPage({
   const usage = user ? await usageByKind(user.id) : [];
   const subscription = user ? await subscriptionFor(user.id) : null;
 
-  const teamEnabled = process.env.TROVE_TEAM_WORKSPACES_ENABLED?.trim() === "1";
   const canBuy: Record<string, { month: boolean; year: boolean }> = {};
   for (const p of PLANS) {
-    if (p.id === "team" && !teamEnabled) {
-      canBuy[p.id] = { month: false, year: false };
-      continue;
-    }
     canBuy[p.id] =
       p.price > 0
         ? {
