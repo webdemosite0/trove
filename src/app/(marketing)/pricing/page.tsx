@@ -10,13 +10,10 @@ import { cn } from "@/lib/utils";
 const freePlan = PLANS.find((plan) => plan.id === "free")!;
 const proPlan = PLANS.find((plan) => plan.id === "pro")!;
 const teamPlan = PLANS.find((plan) => plan.id === "team")!;
-const teamWorkspacesEnabled = process.env.TROVE_TEAM_WORKSPACES_ENABLED?.trim() === "1";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: teamWorkspacesEnabled
-    ? `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month, a 5-hour burst window, and every tool included. Pro is $${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team is $${teamPlan.price} for ${teamPlan.monthly.toLocaleString()}.`
-    : `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month and every tool included. Pro is $${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team workspaces are coming soon.`,
+  description: `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month, a 5-hour burst window, and every tool included. Pro is ${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team is ${teamPlan.price} for ${teamPlan.monthly.toLocaleString()}.`,
   alternates: { canonical: "/pricing" },
   openGraph: {
     type: "website",
@@ -47,7 +44,7 @@ export default function PricingPage() {
       <div className="mt-12 grid gap-4 lg:grid-cols-3">
         {PLANS.map((plan) => {
           const featured = plan.id === "pro";
-          const available = plan.id !== "team" || teamWorkspacesEnabled;
+          const available = true;
           return (
             <section
               key={plan.id}
@@ -61,10 +58,6 @@ export default function PricingPage() {
               {featured ? (
                 <span className="absolute -top-2.5 left-6 rounded-full bg-violet-600 px-2.5 py-0.5 text-[11px] font-medium text-white">
                   Most popular
-                </span>
-              ) : !available ? (
-                <span className="absolute -top-2.5 left-6 rounded-full border border-line-strong bg-rail px-2.5 py-0.5 text-[11px] font-medium text-ink-3">
-                  Coming soon
                 </span>
               ) : null}
               <h2 className="text-[15px] font-semibold text-ink">{plan.name}</h2>
