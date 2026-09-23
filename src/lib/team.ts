@@ -52,6 +52,7 @@ export interface TeamState {
     expiresAt: number;
   }>;
   projects: TeamProject[];
+  ownedProjects: TeamProject[];
   canCreateTeam: boolean;
   canManageMembers: boolean;
   canInvite: boolean;
@@ -136,6 +137,22 @@ async function invitesFor(teamId: string): Promise<TeamInvite[]> {
   }));
 }
 
+async function ownedProjectsFor(userId: string): Promise<TeamProject[]> {
+  const rows = await all(
+    "SELECT p.id, p.name, p.status, p.updated_at, p.user_id, u.name AS owner_name FROM builder_projects p JOIN users u ON u.id = p.user_id WHERE p.user_id = ? ORDER BY p.updated_at DESC LIMIT 60",
+    [userId],
+  ).catch(() => []);
+
+  return rows.map((row) => ({
+    id: str(row.id),
+    name: str(row.name) || "Untitled",
+    status: str(row.status) || "draft",
+    updatedAt: num(row.updated_at),
+    ownerName: str(row.owner_name) || "Member",
+    ownerUserId: str(row.user_id),
+  }));
+}
+
 async function sharedProjectsFor(teamId: string): Promise<TeamProject[]> {
   const rows = await all(
     "SELECT p.id, p.name, p.status, p.updated_at, p.user_id, u.name AS owner_name FROM team_projects tp JOIN builder_projects p ON p.id = tp.project_id JOIN users u ON u.id = p.user_id WHERE tp.team_id = ? ORDER BY p.updated_at DESC",
@@ -163,16 +180,18 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
       invites: [],
       pendingInvites,
       projects: [],
+      ownedProjects: [],
       canCreateTeam: user.plan === "team",
       canManageMembers: false,
       canInvite: false,
     };
   }
 
-  const [members, invites, projects] = await Promise.all([
+  const [members, invites, projects, ownedProjects] = await Promise.all([
     membersFor(team.id),
     invitesFor(team.id),
     sharedProjectsFor(team.id),
+    ownedProjectsFor(user.id),
   ]);
 
   return {
@@ -181,6 +200,7 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
     invites: team.role === "owner" || team.role === "admin" ? invites : [],
     pendingInvites,
     projects,
+    ownedProjects,
     canCreateTeam: false,
     canManageMembers: team.role === "owner" || team.role === "admin",
     canInvite: team.role === "owner" || team.role === "admin",
