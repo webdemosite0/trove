@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
-/** Code tool removed — send traffic to chat. */
-export default function CodePage() {
+export const metadata = { title: "Chat" };
+
+export default function CodeGone() {
   redirect("/chat");
 }
