@@ -1,35 +1,20 @@
-import { TeamView } from "./team-view";
-import { listRecents } from "@/lib/recents";
-import { loadConversation } from "@/lib/conversations";
+import { currentUser } from "@/lib/auth";
+import { teamStateForUser } from "@/lib/team";
+import { TeamWorkspaceView } from "@/components/team/team-workspace-view";
 
-export const metadata = { title: "Team" };
+export const metadata = { title: "Team workspace" };
 
-export default async function SwarmPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ c?: string }>;
-}) {
-  const { c } = await searchParams;
-  const [recents, saved] = await Promise.all([
-    listRecents("team", 5),
-    c ? loadConversation(c) : Promise.resolve(null),
-  ]);
+export default async function TeamPage() {
+  const user = await currentUser();
+  if (!user) return null;
+
+  const state = await teamStateForUser(user);
 
   return (
-    <TeamView
-      recents={recents}
-      restored={
-        saved
-          ? {
-              id: saved.id,
-              task: saved.messages.find((m) => m.role === "user")?.text ?? saved.title,
-              // Each specialist's answer was stored as its own message, in the
-              // order they ran, so a reopened run reads exactly as it did live.
-              results: saved.messages.filter((m) => m.role === "model").map((m) => m.text),
-            }
-          : null
-      }
-      key={saved?.id ?? "new"}
+    <TeamWorkspaceView
+      initial={state}
+      currentUserId={user.id}
+      currentPlan={user.plan}
     />
   );
 }
