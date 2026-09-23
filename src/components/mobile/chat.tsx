@@ -3,7 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import type { IconType } from "@/components/ui/icons";
-import { TbRobot, TbFileText, TbTable, TbPresentation, TbPalette, TbCode, TbSearch } from "@/components/ui/icons";
+import {
+  TbRobot,
+  TbFileText,
+  TbTable,
+  TbPresentation,
+  TbPalette,
+  TbSearch,
+} from "@/components/ui/icons";
 import { Message } from "@/components/chat/message";
 import { MobileComposer } from "@/components/mobile/composer";
 import { Wordmark } from "@/components/brand/logo";
@@ -12,23 +19,19 @@ import { useChatThread } from "@/hooks/use-chat-thread";
 import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
 import { StarterCards } from "@/components/home/starter-cards";
-import {
-  ProjectPicker,
-  type ChatProjectOption,
-} from "@/components/chat/project-picker";
-import {
-  writeLocalProjectFiles,
-  type LocalProjectFile,
-  type LocalProjectWorkspace,
-} from "@/lib/local-project";
-import { BrowserWorkspace } from "@/components/chat/browser-workspace";
+
+export type ChatProjectOption = {
+  id: string;
+  name: string;
+  instructions?: string;
+  updatedAt?: number;
+};
 
 const TOOLS: { href: string; label: string; icon: IconType }[] = [
   { href: "/agents", label: "Agents", icon: TbRobot },
   { href: "/documents", label: "Docs", icon: TbFileText },
   { href: "/spreadsheets", label: "Sheets", icon: TbTable },
   { href: "/slides", label: "Slides", icon: TbPresentation },
-  { href: "/code", label: "Code", icon: TbCode },
   { href: "/design", label: "Design", icon: TbPalette },
   { href: "/research", label: "Research", icon: TbSearch },
 ];
@@ -54,84 +57,22 @@ export function MobileChat({
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = React.useState(initialDraft);
-  const [projects, setProjects] = React.useState<ChatProjectOption[]>(initialProjects);
-  const [projectId, setProjectId] = React.useState<string | null>(
-    initialProjectId && initialProjects.some((project) => project.id === initialProjectId)
+  const projectId =
+    initialProjectId && initialProjects.some((p) => p.id === initialProjectId)
       ? initialProjectId
-      : null,
-  );
-  const [localProject, setLocalProject] = React.useState<LocalProjectWorkspace | null>(null);
-
-  const applyLocalFiles = React.useCallback(
-    async (changes: LocalProjectFile[]) => {
-      if (!localProject) return;
-      await writeLocalProjectFiles(localProject.handle, changes, localProject.scope);
-      setLocalProject((current) => {
-        if (!current) return current;
-        const merged = new Map(current.files.map((file) => [file.path, file]));
-        for (const file of changes) merged.set(file.path, file);
-        return { ...current, files: [...merged.values()] };
-      });
-    },
-    [localProject],
-  );
+      : null;
+  const activeProject = initialProjects.find((p) => p.id === projectId) ?? null;
 
   const { turns, busy, error, send, retry, clear, bottom } = useChatThread({
     restored,
     mode,
     projectId,
-    localProject: localProject
-      ? { name: localProject.name, files: localProject.files }
-      : null,
-    onApplyLocalFiles: applyLocalFiles,
   });
-
-  const projectControl = (
-    <ProjectPicker
-      projects={projects}
-      value={projectId}
-      onChange={(id) => {
-        setProjectId(id);
-        if (id) setLocalProject(null);
-      }}
-      onCreated={(project) => {
-        setLocalProject(null);
-        setProjects((items) => [project, ...items.filter((item) => item.id !== project.id)]);
-      }}
-      localName={localProject?.name || ""}
-      onLocalFolder={(workspace) => {
-        setProjectId(null);
-        setLocalProject(workspace);
-      }}
-      onClearLocal={() => setLocalProject(null)}
-      disabled={busy}
-      compact
-    />
-  );
 
   const composerProps = {
     mode,
     onModeChange: setMode,
-    leading: projectControl,
   };
-
-  const activeProject = projects.find((project) => project.id === projectId) ?? null;
-  const browserWorkspace = projectId || localProject ? (
-    <BrowserWorkspace
-      projectId={projectId}
-      projectName={activeProject?.name || null}
-      localProject={
-        localProject
-          ? {
-              name: localProject.name,
-              scope: localProject.scope,
-              files: localProject.files,
-            }
-          : null
-      }
-      compact
-    />
-  ) : null;
 
   if (turns.length === 0) {
     return (
@@ -139,7 +80,9 @@ export function MobileChat({
         <div className="nx-rise flex flex-col items-center pb-6 pt-8">
           <Wordmark size={44} sweep={false} />
           <p className="mt-3 max-w-[22ch] text-center text-[14px] leading-snug text-ink-3">
-            Hi {name} — describe it and Trove builds it.
+            {activeProject
+              ? `Hi ${name} — chat in ${activeProject.name}`
+              : `Hi ${name} — describe it and Trove helps.`}
           </p>
         </div>
 
@@ -152,10 +95,6 @@ export function MobileChat({
             initialValue={draft}
           />
         </div>
-
-        {browserWorkspace ? (
-          <div className="mt-3">{browserWorkspace}</div>
-        ) : null}
 
         {error ? <Problem message={error} onRetry={retry} /> : null}
 
@@ -205,6 +144,7 @@ export function MobileChat({
     <div className="mobile-chat flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-4 py-2">
         <span className="min-w-0 truncate text-[13px] text-ink-4">
+          {activeProject ? activeProject.name + " · " : ""}
           {turns[0]?.text.slice(0, 48)}
         </span>
         <button
@@ -217,7 +157,6 @@ export function MobileChat({
       </div>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-3">
-        {browserWorkspace}
         {turns.map((t, i) => (
           <Message
             key={t.id}
