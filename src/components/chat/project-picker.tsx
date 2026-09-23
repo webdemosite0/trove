@@ -61,7 +61,7 @@ export function ProjectPicker({
 
   async function openLocal() {
     if (!localFolderSupported() || openingLocal) {
-      setError("Local folders require Chrome or Edge on desktop.");
+      setError("Local folders require Trove Desktop, Chrome, or Edge.");
       return;
     }
     setOpeningLocal(true);
@@ -85,7 +85,7 @@ export function ProjectPicker({
     if (projectName.length < 2 || pending) return;
 
     if (!localFolderSupported()) {
-      setError("Creating local projects requires Chrome or Edge on desktop.");
+      setError("Creating local projects requires Trove Desktop, Chrome, or Edge.");
       return;
     }
 
@@ -246,7 +246,7 @@ export function ProjectPicker({
                     {openingLocal ? "Opening folder…" : localActive ? localName : "Open local folder"}
                   </span>
                   <span className="block text-[10.5px] text-ink-4">
-                    Chrome / Edge · reads code, skips secrets and build folders
+                    Trove Desktop / Chrome / Edge · reads code, skips secrets and build folders
                   </span>
                 </span>
                 {localActive ? <FiCheck size={13} className="text-accent" /> : null}
