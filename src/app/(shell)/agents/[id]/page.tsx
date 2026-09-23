@@ -8,6 +8,16 @@ import type { AgentRow } from "@/app/actions/agents";
 
 export const metadata = { title: "Agent" };
 
+function convoIdFromHref(href: string): string | null {
+  try {
+    const u = new URL(href, "https://trove.local");
+    const c = u.searchParams.get("c");
+    return c?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function AgentPage({
   params,
   searchParams,
@@ -20,7 +30,6 @@ export default async function AgentPage({
   const user = await currentUser();
   if (!user) notFound();
 
-  // Scoped by user_id: an agent id from somewhere else must not be readable.
   const row = await one(
     `SELECT * FROM agents WHERE id = ? AND user_id = ?`,
     [id, user.id],
@@ -37,15 +46,23 @@ export default async function AgentPage({
     created_at: num(row.created_at),
   };
 
-  const [recents, saved] = await Promise.all([
-    listRecents("agent"),
-    c ? loadConversation(c) : Promise.resolve(null),
-  ]);
+  const recents = await listRecents("agent", 40);
+  const forAgent = recents.filter(
+    (r) =>
+      r.href.includes(`/agents/${id}`) ||
+      r.title.startsWith(`${agent.name}:`),
+  );
+
+  let saved = c ? await loadConversation(c) : null;
+  if (!saved && forAgent[0]) {
+    const cid = convoIdFromHref(forAgent[0].href);
+    if (cid) saved = await loadConversation(cid);
+  }
 
   return (
     <AgentChat
       agent={agent}
-      recents={recents.filter((r) => r.title.startsWith(`${agent.name}:`))}
+      recents={forAgent}
       restored={saved ? { id: saved.id, messages: saved.messages } : null}
       key={saved?.id ?? "new"}
     />
