@@ -3,6 +3,7 @@ import "server-only";
 import { all, one, run, uid } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import type { BuildPlan, ProjectFile } from "@/lib/builder";
+import { projectTeamAccess } from "@/lib/team";
 
 export type ProjectChatMessage = {
   id: string;
@@ -191,7 +192,7 @@ export async function saveProject(opts: {
       `SELECT id FROM builder_projects WHERE id = ? AND user_id = ?`,
       [id, user.id],
     ).catch(() => null);
-    if (!owned) id = null;
+    if (!owned && !(await projectTeamAccess(user.id, id))) id = null;
   }
 
   if (id) {
@@ -204,7 +205,7 @@ export async function saveProject(opts: {
          completed_steps_json = ?,
          messages_json = COALESCE(?, messages_json),
          updated_at = ?
-       WHERE id = ? AND user_id = ?`,
+       WHERE id = ?`,
       [
         name,
         prompt,
@@ -218,7 +219,6 @@ export async function saveProject(opts: {
         messagesJson,
         now,
         id,
-        user.id,
       ],
     );
     await syncRecentSite(user.id, id, name, now);
@@ -258,10 +258,17 @@ export async function loadProject(id: string): Promise<SavedProject | null> {
 
   await ensureProjectColumns();
 
-  const row = await one(
+  let row = await one(
     `SELECT * FROM builder_projects WHERE id = ? AND user_id = ?`,
     [id, user.id],
   ).catch(() => null);
+
+  if (!row && (await projectTeamAccess(user.id, id))) {
+    row = await one(
+      `SELECT * FROM builder_projects WHERE id = ?`,
+      [id],
+    ).catch(() => null);
+  }
 
   if (!row) return null;
 
@@ -290,9 +297,20 @@ export async function listUserProjects(limit = 24): Promise<
   await ensureProjectColumns();
 
   const rows = await all(
-    `SELECT id, name, prompt, status, updated_at FROM builder_projects
-     WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?`,
-    [user.id, limit],
+    `SELECT p.id, p.name, p.prompt, p.status, p.updated_at
+       FROM builder_projects p
+      WHERE p.user_id = ?
+         OR EXISTS (
+           SELECT 1
+             FROM team_projects tp
+             JOIN team_members tm
+               ON tm.team_id = tp.team_id
+              AND tm.user_id = ?
+            WHERE tp.project_id = p.id
+         )
+      ORDER BY p.updated_at DESC
+      LIMIT ?`,
+    [user.id, user.id, limit],
   ).catch(() => []);
 
   return (rows || []).map((r) => ({
