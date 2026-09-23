@@ -12,7 +12,6 @@ import {
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import type { ChatModelId } from "@/lib/chat-models";
 import { loadProject } from "@/lib/projects";
-import { getChatProject } from "@/lib/chat-projects";
 import { buildChatConnectorContext } from "@/lib/chat-connectors";
 import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -213,8 +212,6 @@ async function handle(req: NextRequest) {
   }
 
   const project = projectId ? await loadProject(projectId).catch(() => null) : null;
-  const chatProject =
-    projectId && !project ? await getChatProject(projectId).catch(() => null) : null;
 
   after(async () => {
     await Promise.all([
@@ -226,7 +223,7 @@ async function handle(req: NextRequest) {
           model,
           mode: typeof mode === "string" ? mode.slice(0, 40) : "auto",
           hasAttachments: attachments.length > 0,
-          projectId: project?.id || chatProject?.id || "",
+          projectId: project?.id || "",
           localProject: localProject?.name || "",
         },
       }),
@@ -240,17 +237,8 @@ async function handle(req: NextRequest) {
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const connectorContext = await buildChatConnectorContext(lastUser);
-  const chatProjectContext = chatProject?.instructions
-    ? [
-        `CHAT PROJECT — ${chatProject.name}`,
-        "Custom instructions for this project (follow them for every reply in this project):",
-        chatProject.instructions,
-      ].join("\n")
-    : "";
   const projectContext =
-    localProjectSystemContext(localProject) ||
-    projectSystemContext(project) ||
-    chatProjectContext;
+    localProjectSystemContext(localProject) || projectSystemContext(project);
 
   const simple =
     isSimpleTurn(turns) &&
