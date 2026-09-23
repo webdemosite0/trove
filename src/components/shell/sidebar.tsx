@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
@@ -31,6 +31,7 @@ import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
 import { Tooltip } from "@/components/ui/tooltip";
+import { SidebarProjects } from "@/components/shell/sidebar-projects";
 
 interface Item {
   href: string;
@@ -189,11 +190,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
   );
 }
 
-function ReferralPromoSurface({
-  mode,
-}: {
-  mode: "light" | "dark";
-}) {
+function ReferralPromoSurface({ mode }: { mode: "light" | "dark" }) {
   const dark = mode === "dark";
   return (
     <div
@@ -312,7 +309,14 @@ function RailBody({
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2 scrollbar-none">
         {PRIMARY.map((it) => (
-          <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
+          <div key={it.href}>
+            <NavRow item={it} pathname={pathname} onNavigate={onNavigate} />
+            {it.href === "/chat" ? (
+              <Suspense fallback={null}>
+                <SidebarProjects onNavigate={onNavigate} />
+              </Suspense>
+            ) : null}
+          </div>
         ))}
       </nav>
 
