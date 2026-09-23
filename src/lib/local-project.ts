@@ -33,7 +33,45 @@ export interface LocalProjectWorkspace {
   name: string;
   scope: string;
   files: LocalProjectFile[];
-  handle: LocalDirectoryHandle;
+  handle: LocalDirectoryHandle | null;
+  native?: boolean;
+}
+
+interface TroveDesktopBridge {
+  kind: "electron";
+  platform: string;
+  version(): Promise<string>;
+  openProject(): Promise<
+    | { name: string; scope: string; files: LocalProjectFile[]; native?: boolean }
+    | null
+  >;
+  createProject(
+    name: string,
+  ): Promise<
+    | { name: string; scope: string; files: LocalProjectFile[]; native?: boolean }
+    | null
+  >;
+  writeFiles(
+    scope: string,
+    files: LocalProjectFile[],
+  ): Promise<{ written?: string[] }>;
+  runTask(
+    scope: string,
+    task: "install" | "build" | "test" | "lint" | "typecheck",
+  ): Promise<{
+    cancelled?: boolean;
+    code?: number;
+    stdout?: string;
+    stderr?: string;
+  }>;
+}
+
+function desktopBridge(): TroveDesktopBridge | null {
+  if (typeof window === "undefined") return null;
+  return (
+    (window as unknown as { troveDesktop?: TroveDesktopBridge }).troveDesktop ??
+    null
+  );
 }
 
 const SKIP_DIRS = new Set([
@@ -94,10 +132,16 @@ function isSafeProjectFile(path: string) {
 }
 
 export function localFolderSupported() {
-  return (
-    typeof window !== "undefined" &&
-    typeof (window as unknown as { showDirectoryPicker?: unknown }).showDirectoryPicker === "function"
+  return Boolean(
+    desktopBridge() ||
+      (typeof window !== "undefined" &&
+        typeof (window as unknown as { showDirectoryPicker?: unknown })
+          .showDirectoryPicker === "function"),
   );
+}
+
+export function nativeProjectSupported() {
+  return Boolean(desktopBridge());
 }
 
 function projectSlug(name: string) {
@@ -133,12 +177,25 @@ async function writeTextFile(
 export async function createLocalProject(
   name: string,
 ): Promise<LocalProjectWorkspace> {
+  const native = desktopBridge();
+  if (native) {
+    const workspace = await native.createProject(name);
+    if (!workspace) throw new DOMException("Cancelled", "AbortError");
+    return {
+      name: workspace.name,
+      scope: workspace.scope,
+      files: workspace.files,
+      handle: null,
+      native: true,
+    };
+  }
+
   const picker = (window as unknown as {
     showDirectoryPicker?: () => Promise<LocalDirectoryHandle>;
   }).showDirectoryPicker;
 
   if (!picker) {
-    throw new Error("Creating local projects requires Chrome or Edge on desktop.");
+    throw new Error("Creating local projects requires Trove Desktop, Chrome, or Edge.");
   }
 
   const parent = await picker();
@@ -209,12 +266,25 @@ export async function createLocalProject(
 }
 
 export async function pickLocalProject(): Promise<LocalProjectWorkspace> {
+  const native = desktopBridge();
+  if (native) {
+    const workspace = await native.openProject();
+    if (!workspace) throw new DOMException("Cancelled", "AbortError");
+    return {
+      name: workspace.name,
+      scope: workspace.scope,
+      files: workspace.files,
+      handle: null,
+      native: true,
+    };
+  }
+
   const picker = (window as unknown as {
     showDirectoryPicker?: () => Promise<LocalDirectoryHandle>;
   }).showDirectoryPicker;
 
   if (!picker) {
-    throw new Error("Local folders require Chrome or Edge on desktop.");
+    throw new Error("Local folders require Trove Desktop, Chrome, or Edge.");
   }
 
   const handle = await picker();
@@ -270,9 +340,19 @@ function safePath(path: string) {
 }
 
 export async function writeLocalProjectFiles(
-  handle: LocalDirectoryHandle,
+  handle: LocalDirectoryHandle | null,
   files: LocalProjectFile[],
+  scope?: string,
 ) {
+  const native = desktopBridge();
+  if (native && scope) {
+    await native.writeFiles(scope, files);
+    return;
+  }
+  if (!handle) {
+    throw new Error("This local project is no longer available. Open it again.");
+  }
+
   for (const file of files) {
     const path = safePath(file.path);
     if (!path || !isSafeProjectFile(path)) continue;
@@ -291,4 +371,16 @@ export async function writeLocalProjectFiles(
     await writable.write(file.content);
     await writable.close();
   }
+}
+
+
+export async function runLocalProjectTask(
+  scope: string,
+  task: "install" | "build" | "test" | "lint" | "typecheck",
+) {
+  const native = desktopBridge();
+  if (!native) {
+    throw new Error("Local task execution requires the Trove Desktop app.");
+  }
+  return native.runTask(scope, task);
 }
