@@ -3,9 +3,13 @@
 import { cn } from "@/lib/utils";
 import {
   SiDiscord,
+  SiFigma,
+  SiGithub,
+  SiGmail,
   SiLinkedin,
   SiMeta,
   SiOpenai,
+  SiSlack,
   SiTelegram,
   SiWhatsapp,
   SiX,
@@ -13,6 +17,10 @@ import {
 import type { IconType } from "react-icons";
 
 const REAL_BRAND_ICONS: Record<string, { icon: IconType; color: string; bg: string }> = {
+  gmail: { icon: SiGmail, color: "#EA4335", bg: "#ffffff" },
+  slack: { icon: SiSlack, color: "#4A154B", bg: "#ffffff" },
+  github: { icon: SiGithub, color: "#181717", bg: "#ffffff" },
+  figma: { icon: SiFigma, color: "#F24E1E", bg: "#ffffff" },
   discord: { icon: SiDiscord, color: "#5865F2", bg: "#ffffff" },
   telegram: { icon: SiTelegram, color: "#26A5E4", bg: "#ffffff" },
   meta: { icon: SiMeta, color: "#0866FF", bg: "#ffffff" },
