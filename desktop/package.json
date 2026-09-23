@@ -1,0 +1,60 @@
+{
+  "name": "trove-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native Trove desktop shell with local project access",
+  "main": "main.cjs",
+  "scripts": {
+    "icon": "node scripts/make-icon.cjs",
+    "dist": "npm run icon && electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.20",
+    "sharp": "^0.34.4"
+  },
+  "build": {
+    "appId": "site.troveai.desktop",
+    "productName": "Trove",
+    "asar": true,
+    "compression": "maximum",
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "Trove-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Trove"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "artifactName": "Trove-${version}-macOS-${arch}.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build/icon.png",
+      "category": "Office",
+      "artifactName": "Trove-${version}-Linux-${arch}.${ext}"
+    }
+  }
+}
