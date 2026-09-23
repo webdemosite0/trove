@@ -4,7 +4,7 @@ import { listAllRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
-import { listUserProjects } from "@/lib/projects";
+import { listChatProjects } from "@/lib/chat-projects";
 
 export const metadata = { title: "Chat" };
 
@@ -19,7 +19,7 @@ export default async function HomePage({
     currentUser(),
     listAllRecents(12),
     isMobile(),
-    listUserProjects(40),
+    listChatProjects(40),
   ]);
 
   const props = {
@@ -33,7 +33,7 @@ export default async function HomePage({
     draft: typeof q === "string" ? q.slice(0, 2000) : "",
   };
 
-  const key = saved?.id ?? "new";
+  const key = saved?.id ?? (typeof p === "string" ? `p-${p}` : "new");
 
   return mobile ? (
     <MobileChat key={key} {...props} />
