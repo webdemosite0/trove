@@ -18,15 +18,22 @@ export interface ConnectedService {
 
 const POPULAR_IDS = [
   "gmail",
+  "slack",
   "github",
+  "whatsapp",
+  "linkedin",
+  "telegram",
+  "discord",
+  "figma",
+  "meta",
+  "twitter",
+  "chatgpt",
   "google-drive",
   "google-calendar",
   "notion",
-  "slack",
   "outlook",
   "vercel",
   "linear",
-  "discord",
 ];
 
 export function IntegrationsView({
@@ -179,9 +186,9 @@ export function IntegrationsView({
                   key={s.id}
                   href={`/integrations/${s.id}`}
                   title={s.name}
-                  className="group relative grid size-[52px] place-items-center rounded-2xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:scale-105 hover:ring-line-strong"
+                  className="group relative grid size-[68px] place-items-center rounded-2xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:scale-105 hover:ring-line-strong"
                 >
-                  <ServiceMark id={s.id} name={s.name} size={30} />
+                  <ServiceMark id={s.id} name={s.name} size={52} />
                 </Link>
               ))}
             </div>
@@ -195,12 +202,12 @@ export function IntegrationsView({
               const on = byId.has(s.id);
               return (
                 <li key={s.id}>
-                  <div className="group flex items-center gap-3.5 rounded-2xl px-2.5 py-3 transition hover:bg-hover/70">
+                  <div className="group flex items-center gap-4 rounded-2xl px-3 py-3.5 transition hover:bg-hover/70">
                     <Link
                       href={`/integrations/${s.id}`}
-                      className="grid size-[48px] shrink-0 place-items-center rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line"
+                      className="grid size-[62px] shrink-0 place-items-center rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line"
                     >
-                      <ServiceMark id={s.id} name={s.name} size={28} />
+                      <ServiceMark id={s.id} name={s.name} size={46} />
                     </Link>
                     <Link href={`/integrations/${s.id}`} className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-medium text-ink">{s.name}</p>
