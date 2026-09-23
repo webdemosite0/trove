@@ -246,6 +246,47 @@ PRAGMA journal_mode = WAL;
       updated_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS builder_brand_profiles_by_user ON builder_brand_profiles (user_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS teams (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS teams_by_owner ON teams (owner_user_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS team_members (
+      team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role TEXT NOT NULL DEFAULT 'member',
+      joined_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (team_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS team_members_by_user ON team_members (user_id, joined_at DESC);
+
+    CREATE TABLE IF NOT EXISTS team_invites (
+      id TEXT PRIMARY KEY,
+      team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      email TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'member',
+      created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      accepted_at INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS team_invites_by_email ON team_invites (email, accepted_at, expires_at);
+    CREATE INDEX IF NOT EXISTS team_invites_by_team ON team_invites (team_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS team_projects (
+      team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE,
+      added_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (team_id, project_id)
+    );
+    CREATE INDEX IF NOT EXISTS team_projects_by_project ON team_projects (project_id, team_id);
 `;
 
 export const MIGRATIONS: string[] = [
@@ -279,6 +320,15 @@ export const MIGRATIONS: string[] = [
   `UPDATE users SET onboarding_done = 1 WHERE onboarding_done = 0 AND created_at < ${Date.now() - 60_000}`,
   `CREATE INDEX IF NOT EXISTS recents_by_user_created ON recents (user_id, created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS credit_spends_by_user_created ON credit_spends (user_id, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS teams (id TEXT PRIMARY KEY, name TEXT NOT NULL, owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS teams_by_owner ON teams (owner_user_id, updated_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS team_members (team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, role TEXT NOT NULL DEFAULT 'member', joined_at INTEGER NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (team_id, user_id))`,
+  `CREATE INDEX IF NOT EXISTS team_members_by_user ON team_members (user_id, joined_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS team_invites (id TEXT PRIMARY KEY, team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE, email TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member', created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, accepted_at INTEGER)`,
+  `CREATE INDEX IF NOT EXISTS team_invites_by_email ON team_invites (email, accepted_at, expires_at)`,
+  `CREATE INDEX IF NOT EXISTS team_invites_by_team ON team_invites (team_id, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS team_projects (team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, added_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at INTEGER NOT NULL, PRIMARY KEY (team_id, project_id))`,
+  `CREATE INDEX IF NOT EXISTS team_projects_by_project ON team_projects (project_id, team_id)`,
 ];
 
 export const REPAIRS = `
