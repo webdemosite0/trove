@@ -46,9 +46,9 @@ export function hrefFor(kind: RecentKind, id: string, path?: unknown): string {
     slides: "/slides",
     design: "/design",
     research: "/research",
-    code: "/code",
     team: "/team",
-    site: "/websites",
+    code: "/chat",
+    site: "/chat",
     agent: "/agents",
   };
   const base = safePath(path) ?? known[kind] ?? "/chat";
@@ -102,7 +102,7 @@ export async function saveConversation({
       args: [convoId],
     });
   } else {
-    convoId = uid("conv");
+    convoId = uid("c");
     writes.push({
       sql: `INSERT INTO conversations (id, user_id, kind, title, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)`,
@@ -112,13 +112,13 @@ export async function saveConversation({
 
   messages.forEach((m, i) => {
     writes.push({
-      sql: `INSERT INTO messages (id, conversation_id, role, text, seq, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [uid("msg"), convoId as string, m.role, m.text, i, now],
+      sql: `INSERT INTO messages (id, conversation_id, role, text, created_at)
+            VALUES (?, ?, ?, ?, ?)`,
+      args: [uid("m"), convoId as string, m.role, m.text, now + i],
     });
   });
 
-  const href = hrefFor(kind, convoId, path);
+  const href = hrefFor(kind, convoId as string, path);
   writes.push({
     sql: `DELETE FROM recents WHERE user_id = ? AND kind = ? AND href = ?`,
     args: [user.id, kind, href],
@@ -130,24 +130,24 @@ export async function saveConversation({
   });
 
   await batch(writes);
-
   return convoId;
 }
 
 export async function loadConversation(id: string): Promise<Conversation | null> {
   const user = await currentUser();
-  if (!user || !id) return null;
+  if (!user) return null;
 
   const head = await one(
     `SELECT id, kind, title, updated_at FROM conversations
       WHERE id = ? AND user_id = ?`,
     [id, user.id],
   );
-
   if (!head) return null;
 
   const rows = await all(
-    `SELECT role, text FROM messages WHERE conversation_id = ? ORDER BY seq ASC`,
+    `SELECT role, text FROM messages
+      WHERE conversation_id = ?
+      ORDER BY created_at ASC`,
     [id],
   );
 
@@ -155,10 +155,10 @@ export async function loadConversation(id: string): Promise<Conversation | null>
     id: str(head.id),
     kind: str(head.kind) as RecentKind,
     title: str(head.title),
-    updatedAt: num(head.updated_at),
     messages: rows.map((r) => ({
-      role: str(r.role) === "user" ? "user" : "model",
+      role: str(r.role) as "user" | "model",
       text: str(r.text),
     })),
+    updatedAt: num(head.updated_at),
   };
 }
