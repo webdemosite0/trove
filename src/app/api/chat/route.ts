@@ -12,6 +12,7 @@ import {
 import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import type { ChatModelId } from "@/lib/chat-models";
 import { loadProject } from "@/lib/projects";
+import { getChatProject } from "@/lib/chat-projects";
 import { buildChatConnectorContext } from "@/lib/chat-connectors";
 import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -52,7 +53,6 @@ function projectSystemContext(project: Awaited<ReturnType<typeof loadProject>>) 
     project.files.length > blocks.length
       ? "Some project files were omitted from context for size. Ask for a specific file if needed."
       : "",
-    "Stack rule: websites/UI must be React + Vite. Write full files with <<<FILE:path>>>…<<<END>>>. After changes, point to Browser Workspace terminal and http://localhost:5173 (or npm run dev on the user's machine).",
   ].filter(Boolean).join("\n\n");
 }
 
@@ -79,10 +79,8 @@ function localProjectSystemContext(
     `LOCAL PROJECT WORKSPACE — ${localProject.name}`,
     `Readable files supplied from the user's selected device folder: ${localProject.files.length}.`,
     "The user explicitly selected this folder on their device. Treat these files as the live project.",
-    "Stack rule: websites and UI work in this folder MUST be React + Vite (JS/JSX or TS/TSX). Prefer editing existing React files; if the folder is empty, scaffold package.json, index.html, vite.config.js, src/main.jsx, src/App.jsx, src/styles.css.",
-    blocks.length ? blocks.join("\n\n") : "No readable text/code files were supplied yet — scaffold a React + Vite app if they ask for a website.",
-    "Write changes with <<<FILE:path>>> complete contents <<<END>>> so Trove saves them into this local folder.",
-    "After a site is generated or updated, tell the user: open Browser Workspace for isolated terminal + preview, or run `npm install && npm run dev` in their own terminal. Localhost: http://localhost:5173",
+    blocks.length ? blocks.join("\n\n") : "No readable text/code files were supplied yet.",
+    "Write changes with <<<FILE:path>>> complete contents <<<END>>> when the product supports saving.",
   ].join("\n\n");
 }
 
@@ -215,6 +213,8 @@ async function handle(req: NextRequest) {
   }
 
   const project = projectId ? await loadProject(projectId).catch(() => null) : null;
+  const chatProject =
+    projectId && !project ? await getChatProject(projectId).catch(() => null) : null;
 
   after(async () => {
     await Promise.all([
@@ -226,7 +226,7 @@ async function handle(req: NextRequest) {
           model,
           mode: typeof mode === "string" ? mode.slice(0, 40) : "auto",
           hasAttachments: attachments.length > 0,
-          projectId: project?.id || "",
+          projectId: project?.id || chatProject?.id || "",
           localProject: localProject?.name || "",
         },
       }),
@@ -240,8 +240,17 @@ async function handle(req: NextRequest) {
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const connectorContext = await buildChatConnectorContext(lastUser);
+  const chatProjectContext = chatProject?.instructions
+    ? [
+        `CHAT PROJECT — ${chatProject.name}`,
+        "Custom instructions for this project (follow them for every reply in this project):",
+        chatProject.instructions,
+      ].join("\n")
+    : "";
   const projectContext =
-    localProjectSystemContext(localProject) || projectSystemContext(project);
+    localProjectSystemContext(localProject) ||
+    projectSystemContext(project) ||
+    chatProjectContext;
 
   const simple =
     isSimpleTurn(turns) &&
