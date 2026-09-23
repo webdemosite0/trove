@@ -6,19 +6,17 @@ import {
   SiFigma,
   SiGithub,
   SiGmail,
-  SiLinkedin,
   SiMeta,
-  SiOpenai,
-  SiSlack,
   SiTelegram,
   SiWhatsapp,
   SiX,
 } from "react-icons/si";
 import type { IconType } from "react-icons";
+import { FaLinkedinIn } from "react-icons/fa6";
+import { TbBrandOpenai } from "react-icons/tb";
 
 const REAL_BRAND_ICONS: Record<string, { icon: IconType; color: string; bg: string }> = {
   gmail: { icon: SiGmail, color: "#EA4335", bg: "#ffffff" },
-  slack: { icon: SiSlack, color: "#4A154B", bg: "#ffffff" },
   github: { icon: SiGithub, color: "#181717", bg: "#ffffff" },
   figma: { icon: SiFigma, color: "#F24E1E", bg: "#ffffff" },
   discord: { icon: SiDiscord, color: "#5865F2", bg: "#ffffff" },
@@ -27,9 +25,9 @@ const REAL_BRAND_ICONS: Record<string, { icon: IconType; color: string; bg: stri
   twitter: { icon: SiX, color: "#111111", bg: "#ffffff" },
   x: { icon: SiX, color: "#111111", bg: "#ffffff" },
   whatsapp: { icon: SiWhatsapp, color: "#25D366", bg: "#ffffff" },
-  linkedin: { icon: SiLinkedin, color: "#0A66C2", bg: "#ffffff" },
-  chatgpt: { icon: SiOpenai, color: "#111111", bg: "#ffffff" },
-  openai: { icon: SiOpenai, color: "#111111", bg: "#ffffff" },
+  linkedin: { icon: FaLinkedinIn, color: "#0A66C2", bg: "#ffffff" },
+  chatgpt: { icon: TbBrandOpenai, color: "#111111", bg: "#ffffff" },
+  openai: { icon: TbBrandOpenai, color: "#111111", bg: "#ffffff" },
 };
 
 /** Brand SVG marks — never fall back to letter initials. */
