@@ -3,14 +3,21 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
-import { FiAlertCircle, FiCheck, FiLoader } from "@/components/ui/icons";
+import {
+  FiAlertCircle,
+  FiArrowRight,
+  FiCheck,
+  FiLoader,
+  FiLock,
+  FiShield,
+} from "@/components/ui/icons";
 import { logIn, signUp, type AuthState } from "@/app/actions/auth";
 import { Ico } from "@/components/ui/ico";
 import { PasswordField } from "@/components/auth/password-field";
 import { INVITEE_SIGNUP_CREDITS, REF_COOKIE } from "@/lib/affiliates-public";
 
 const fieldClass =
-  "h-12 w-full rounded-xl border border-line bg-sunk px-3.5 text-[14px] text-ink outline-none transition placeholder:text-ink-4 hover:border-line-strong focus:border-accent focus:ring-4 focus:ring-accent/10";
+  "h-12 w-full rounded-[14px] border border-line-strong bg-canvas/70 px-3.5 text-[14px] text-ink outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-4 hover:border-accent/35 hover:bg-raised focus:border-accent focus:bg-raised focus:ring-4 focus:ring-accent/10";
 
 const OAUTH_ERRORS: Record<string, string> = {
   "google-unconfigured":
@@ -89,15 +96,21 @@ export function AuthCard({
   const error = state.error ?? urlError;
 
   return (
-    <div className="w-full text-center">
-      <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-ink sm:text-[24px]">
-        {isLogin ? "Sign in to Trove" : "Sign up to Trove"}
-      </h1>
-      <p className="mt-2 text-[13.5px] leading-5 text-ink-3">
-        {isLogin
-          ? "Welcome back — enter your details to continue"
-          : "Please enter your email to create your workspace"}
-      </p>
+    <div className="w-full">
+      <div className="text-center">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/15 bg-accent-soft px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.13em] text-accent">
+          {isLogin ? <FiLock size={10} /> : <FiShield size={10} />}
+          {isLogin ? "Secure workspace access" : "Create your workspace"}
+        </span>
+        <h1 className="mt-4 text-[26px] font-semibold tracking-[-0.045em] text-ink sm:text-[29px]">
+          {isLogin ? "Welcome back" : "Start building with Trove"}
+        </h1>
+        <p className="mx-auto mt-2 max-w-[36ch] text-[13.5px] leading-5 text-ink-3">
+          {isLogin
+            ? "Sign in to continue to your projects, business context, and connected tools."
+            : "Create one workspace for your AI projects, business context, and connected tools."}
+        </p>
+      </div>
 
       {justVerified || passwordReset ? (
         <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-emerald-300/40 bg-emerald-500/10 dark:border-emerald-400/20 px-3.5 py-3 text-left">
@@ -121,7 +134,7 @@ export function AuthCard({
         </div>
       ) : null}
 
-      <form action={action} className="mt-7 space-y-3.5 text-left">
+      <form action={action} className="mt-7 space-y-4 text-left">
         {next ? <input type="hidden" name="next" value={next} /> : null}
         {!isLogin && refCode ? <input type="hidden" name="ref" value={refCode} /> : null}
         {isLogin ? (
@@ -148,7 +161,7 @@ export function AuthCard({
             className={fieldClass}
             name="email"
             type="email"
-            placeholder="Enter email"
+            placeholder="you@company.com"
             autoComplete="email"
             required
           />
@@ -158,8 +171,11 @@ export function AuthCard({
           <span className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-ink-2">
             <span>Password</span>
             {isLogin ? (
-              <Link href="/forgot-password" className="font-medium text-sky-600 transition hover:text-sky-700">
-                Forgot?
+              <Link
+                href="/forgot-password"
+                className="font-medium text-accent transition hover:opacity-80"
+              >
+                Forgot password?
               </Link>
             ) : null}
           </span>
@@ -172,14 +188,14 @@ export function AuthCard({
         </label>
 
         {isLogin ? (
-          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-3">
+          <label className="flex cursor-pointer items-center gap-2.5 text-[12.5px] text-ink-3">
             <input
               type="checkbox"
               checked={keepSignedIn}
               onChange={(e) => setKeepSignedIn(e.target.checked)}
-              className="size-3.5 rounded border-line-strong text-sky-600 focus:ring-sky-500/20"
+              className="size-4 rounded border-line-strong bg-sunk text-accent focus:ring-accent/20"
             />
-            Keep me signed in
+            Keep me signed in on this device
           </label>
         ) : null}
 
@@ -193,7 +209,7 @@ export function AuthCard({
         <button
           type="submit"
           disabled={pending}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-sky-300 text-[14.5px] font-semibold text-sky-950 transition hover:bg-sky-400 disabled:opacity-60"
+          className="btn-grad group flex h-12 w-full items-center justify-center gap-2 rounded-[14px] text-[14px] font-semibold text-white shadow-[0_10px_28px_-12px_var(--btn-glow)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:translate-y-0 disabled:opacity-60"
         >
           {pending ? (
             <>
@@ -201,9 +217,21 @@ export function AuthCard({
               {isLogin ? "Signing in…" : "Creating account…"}
             </>
           ) : isLogin ? (
-            "Sign in"
+            <>
+              Continue to Trove
+              <FiArrowRight
+                size={15}
+                className="transition-transform group-hover:translate-x-0.5"
+              />
+            </>
           ) : (
-            "Create account"
+            <>
+              Create workspace
+              <FiArrowRight
+                size={15}
+                className="transition-transform group-hover:translate-x-0.5"
+              />
+            </>
           )}
         </button>
       </form>
@@ -212,17 +240,17 @@ export function AuthCard({
         <>
           <div className="my-6 flex items-center gap-3">
             <span className="h-px flex-1 bg-line" />
-            <span className="text-[12px] text-ink-4">
-              Or {isLogin ? "sign in" : "sign up"} with
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+              Or continue with
             </span>
             <span className="h-px flex-1 bg-line" />
           </div>
 
-          <div className="space-y-2.5">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {googleEnabled ? (
               <a
                 href="/api/auth/google"
-                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-raised text-[13.5px] font-medium text-ink-2 transition hover:bg-hover"
+                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-[13px] border border-line-strong bg-canvas/65 text-[12.5px] font-semibold text-ink-2 transition hover:-translate-y-0.5 hover:border-accent/25 hover:bg-hover"
               >
                 <FcGoogle size={18} />
                 {isLogin ? "Sign in with Google" : "Sign up with Google"}
@@ -231,7 +259,7 @@ export function AuthCard({
             {microsoftEnabled ? (
               <a
                 href="/api/auth/microsoft"
-                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-raised text-[13.5px] font-medium text-ink-2 transition hover:bg-hover"
+                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-[13px] border border-line-strong bg-canvas/65 text-[12.5px] font-semibold text-ink-2 transition hover:-translate-y-0.5 hover:border-accent/25 hover:bg-hover"
               >
                 <MicrosoftIcon />
                 {isLogin ? "Sign in with Microsoft" : "Sign up with Microsoft"}
@@ -239,7 +267,7 @@ export function AuthCard({
             ) : (
               <span
                 title="Add Microsoft env vars on Vercel to enable"
-                className="flex h-11 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white text-[13.5px] font-medium text-ink-4"
+                className="flex h-11 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-[13px] border border-line bg-sunk text-[12.5px] font-medium text-ink-4"
               >
                 <MicrosoftIcon />
                 Microsoft
@@ -249,13 +277,18 @@ export function AuthCard({
         </>
       ) : null}
 
-      <p className="mt-7 text-[13px] text-ink-3">
+      <div className="mt-6 flex items-center justify-center gap-1.5 text-[10.5px] text-ink-4">
+        <FiShield size={11} />
+        Passwords are hashed and sessions are protected.
+      </div>
+
+      <p className="mt-5 text-center text-[13px] text-ink-3">
         {isLogin ? (
           <>
             New to Trove?{" "}
             <Link
               href={refCode ? `/signup?ref=${encodeURIComponent(refCode)}` : "/signup"}
-              className="font-semibold text-sky-600 hover:text-sky-700"
+              className="font-semibold text-accent transition hover:opacity-80"
             >
               Create account
             </Link>
@@ -263,7 +296,7 @@ export function AuthCard({
         ) : (
           <>
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-sky-600 hover:text-sky-700">
+            <Link href="/login" className="font-semibold text-accent transition hover:opacity-80">
               Login
             </Link>
           </>
