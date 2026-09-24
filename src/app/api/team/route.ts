@@ -30,6 +30,8 @@ function messageFor(error: unknown) {
     TEAM_NAME_REQUIRED: "Give the team a name.",
     TEAM_NAME_CONFIRMATION: "Type the exact workspace name to confirm deletion.",
     INVALID_OWNER: "Choose another current member as the new owner.",
+    NEW_OWNER_TEAM_PLAN_REQUIRED:
+      "The new owner must have their own active Team plan before ownership can be transferred.",
     FORBIDDEN: "You do not have permission to do that.",
     OWNER_ONLY: "Only the team owner can change that.",
     OWNER_ROLE_FIXED: "The owner role cannot be changed.",
