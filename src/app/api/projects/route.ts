@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server";
 import { currentUser } from "@/lib/auth";
-import { listUserProjects, saveProject } from "@/lib/projects";
+import {
+  deleteProject,
+  listUserProjects,
+  loadProject,
+  saveProject,
+} from "@/lib/projects";
 import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
     name,
     prompt: String(body?.prompt || "").trim().slice(0, 4000),
     target: "react",
-    status: "draft",
+    status: String(body?.status || "draft").slice(0, 40) || "draft",
     files: [],
     previewHtml: null,
   });
@@ -58,8 +63,61 @@ export async function POST(req: NextRequest) {
       id: saved.id,
       name,
       prompt: String(body?.prompt || "").trim().slice(0, 4000),
-      status: "draft",
+      status: String(body?.status || "draft").slice(0, 40) || "draft",
       updatedAt: Date.now(),
     },
   });
+}
+
+export async function PATCH(req: NextRequest) {
+  const user = await currentUser();
+  if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
+
+  const body = await req.json().catch(() => null);
+  const id = String(body?.id || "").trim();
+  if (!id) return Response.json({ error: "Missing project id." }, { status: 400 });
+
+  const existing = await loadProject(id);
+  if (!existing) return Response.json({ error: "Project not found." }, { status: 404 });
+
+  const name = String(body?.name ?? existing.name).trim().slice(0, 120);
+  const prompt = String(body?.prompt ?? existing.prompt).trim().slice(0, 4000);
+  const status = String(body?.status ?? existing.status).trim().slice(0, 40) || "draft";
+  if (name.length < 2) {
+    return Response.json({ error: "Give the project a name." }, { status: 400 });
+  }
+
+  const saved = await saveProject({
+    id,
+    name,
+    prompt,
+    target: existing.target || "react",
+    status,
+    files: existing.files || [],
+    previewHtml: existing.previewHtml,
+    buildPlan: existing.buildPlan,
+    completedStepIds: existing.completedStepIds,
+    messages: existing.messages,
+  });
+
+  if (!saved) {
+    return Response.json({ error: "Could not update project." }, { status: 500 });
+  }
+
+  return Response.json({
+    project: { id, name, prompt, status, updatedAt: Date.now() },
+  });
+}
+
+export async function DELETE(req: NextRequest) {
+  const user = await currentUser();
+  if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
+
+  const body = await req.json().catch(() => null);
+  const id = String(body?.id || "").trim();
+  if (!id) return Response.json({ error: "Missing project id." }, { status: 400 });
+
+  const ok = await deleteProject(id);
+  if (!ok) return Response.json({ error: "Could not delete project." }, { status: 404 });
+  return Response.json({ ok: true });
 }
