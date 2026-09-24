@@ -8,7 +8,6 @@ import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const freePlan = PLANS.find((plan) => plan.id === "free")!;
-const proPlan = PLANS.find((plan) => plan.id === "pro")!;
 const teamPlan = PLANS.find((plan) => plan.id === "team")!;
 
 export const metadata: Metadata = {
