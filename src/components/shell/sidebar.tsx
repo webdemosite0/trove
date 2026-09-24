@@ -13,6 +13,7 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
+  FiUsers,
   TbLayoutDashboard,
   TbMessageCircle,
   TbFiles,
@@ -37,6 +38,7 @@ interface Item {
   label: string;
   icon: IconType;
   motion: Motion;
+  teamOnly?: boolean;
 }
 
 const PRIMARY: Item[] = [
@@ -47,6 +49,7 @@ const PRIMARY: Item[] = [
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
+  { href: "/team", label: "Team", icon: FiUsers, motion: "stack", teamOnly: true },
 ];
 
 function NavRow({
@@ -136,7 +139,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
         <span className="min-w-0 flex-1 text-left">
           <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
           <span className="block truncate text-[11px] capitalize text-ink-3">
-            {user.plan} plan
+            {user.effectivePlan || user.plan} plan
           </span>
         </span>
         <FiChevronRight
@@ -307,7 +310,13 @@ function RailBody({
       </div>
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2 scrollbar-none">
-        {PRIMARY.map((it) => (
+        {PRIMARY.filter(
+          (it) =>
+            !it.teamOnly ||
+            Boolean(user?.teamPlanActive) ||
+            user?.effectivePlan === "team" ||
+            user?.plan === "team",
+        ).map((it) => (
           <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
         ))}
       </nav>
@@ -421,7 +430,13 @@ export function Sidebar({
             </div>
 
             <div className="mt-1 flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto overflow-x-hidden scrollbar-none">
-              {PRIMARY.map((i) => (
+              {PRIMARY.filter(
+                (i) =>
+                  !i.teamOnly ||
+                  Boolean(user?.teamPlanActive) ||
+                  user?.effectivePlan === "team" ||
+                  user?.plan === "team",
+              ).map((i) => (
                 <NavRow key={i.href} item={i} pathname={pathname} compact />
               ))}
             </div>
