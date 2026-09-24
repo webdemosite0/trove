@@ -501,7 +501,6 @@ export async function transferTeamOwnership(memberUserId: string) {
         args: [memberUserId, now, team.id],
       },
     ],
-    "write",
   );
   return { ok: true };
 }
