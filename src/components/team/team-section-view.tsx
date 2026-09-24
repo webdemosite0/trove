@@ -143,7 +143,9 @@ export function TeamSectionView({
                     {member.name}
                     {member.userId === currentUserId ? " · You" : ""}
                   </span>
-                  <span className="block truncate text-[11px] text-ink-4">{member.email}</span>
+                  <span className="block truncate text-[11px] text-ink-4">
+                    {member.email} · {member.plan === "team" ? "Team plan" : member.plan === "pro" ? "Pro plan" : "Free plan"}
+                  </span>
                 </span>
 
                 {canRole ? (
@@ -325,7 +327,8 @@ export function TeamSectionView({
   }
 
   const transferOptions = state.members.filter(
-    (member) => member.userId !== state.team?.ownerUserId,
+    (member) =>
+      member.userId !== state.team?.ownerUserId && member.plan === "team",
   );
 
   return (
@@ -387,6 +390,15 @@ export function TeamSectionView({
                 Transfer
               </button>
             </div>
+          </div>
+        ) : null}
+
+        {state.team.role === "owner" && !transferOptions.length && state.members.length > 1 ? (
+          <div className="mt-6 border-t border-line pt-5">
+            <p className="text-[12px] font-semibold text-ink-2">Transfer ownership</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-4">
+              Ownership can only move to a member with an active Team plan. This prevents the shared workspace and credit pool from being paused during transfer.
+            </p>
           </div>
         ) : null}
 
