@@ -1,6 +1,6 @@
 import "server-only";
 
-import { one, str } from "@/lib/db";
+import { one, run, str } from "@/lib/db";
 
 export type AccountType = "business" | "individual" | "student";
 
@@ -75,6 +75,5 @@ export async function setAccountTypeForUser(
     accountType,
     accountTypeUpdatedAt: Date.now(),
   });
-  const { run } = await import("@/lib/db");
   await run("UPDATE users SET onboarding_meta = ? WHERE id = ?", [next, userId]);
 }
