@@ -321,3 +321,17 @@ export async function listUserProjects(limit = 24): Promise<
     updatedAt: Number(r.updated_at) || 0,
   }));
 }
+
+export async function deleteProject(id: string): Promise<boolean> {
+  const user = await currentUser();
+  if (!user || !id) return false;
+  await ensureProjectColumns();
+  const owned = await one(
+    `SELECT id FROM builder_projects WHERE id = ? AND user_id = ?`,
+    [id, user.id],
+  ).catch(() => null);
+  if (!owned) return false;
+  await run(`DELETE FROM team_projects WHERE project_id = ?`, [id]).catch(() => null);
+  await run(`DELETE FROM builder_projects WHERE id = ? AND user_id = ?`, [id, user.id]);
+  return true;
+}
