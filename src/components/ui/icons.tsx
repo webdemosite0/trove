@@ -10,6 +10,7 @@ import {
   Bell,
   BellOff,
   Bot,
+  BookOpen,
   Box,
   Briefcase,
   Calendar,
@@ -128,6 +129,7 @@ export const FiArrowRight = /*#__PURE__*/ grok(ArrowRight);
 export const FiArrowUp = /*#__PURE__*/ grok(ArrowUp);
 export const FiBell = /*#__PURE__*/ grok(Bell);
 export const FiBellOff = /*#__PURE__*/ grok(BellOff);
+export const FiBookOpen = /*#__PURE__*/ grok(BookOpen);
 export const FiBriefcase = /*#__PURE__*/ grok(Briefcase);
 export const FiCalendar = /*#__PURE__*/ grok(Calendar);
 export const FiCheck = /*#__PURE__*/ grok(Check);
