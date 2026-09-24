@@ -123,6 +123,7 @@ export async function completeOnboarding(
   meta?: {
     goal?: string;
     role?: string;
+    accountType?: string;
     firstIdea?: string;
     plan?: string;
     paymentMethod?: string;
@@ -135,6 +136,7 @@ export async function completeOnboarding(
   const payload = JSON.stringify({
     goal: meta?.goal || "",
     role: meta?.role || "",
+    accountType: meta?.accountType || "",
     firstIdea: meta?.firstIdea || "",
     preferredPlan: meta?.plan || "free",
     paymentMethod: meta?.paymentMethod || "",
