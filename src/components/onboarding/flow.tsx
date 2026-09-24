@@ -660,13 +660,16 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                       : accountType === "individual"
                         ? "pro"
                         : "free");
-                  const on = recommended;
+                  const businessOnly = p.id === "team";
+                  const locked = businessOnly && accountType !== "business";
+                  const on = recommended && !locked;
                   return (
                     <div
                       key={p.id}
                       className={cn(
                         "ob-card w-full rounded-2xl border bg-raised p-4 text-left transition",
                         on && "border-accent ring-2 ring-[var(--focus-ring)]",
+                        locked && "border-line opacity-70",
                       )}
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
@@ -674,9 +677,14 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                         <span>
                           <span className="flex flex-wrap items-center gap-2">
                             <span className="text-[15px] font-semibold text-ink">{p.name}</span>
-                            {recommended ? (
+                            {recommended && !locked ? (
                               <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
                                 Recommended
+                              </span>
+                            ) : null}
+                            {businessOnly ? (
+                              <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                                Business only
                               </span>
                             ) : null}
                           </span>
@@ -698,6 +706,11 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                           </li>
                         ))}
                       </ul>
+                      {locked ? (
+                        <p className="mt-3 rounded-xl border border-sky-400/20 bg-sky-500/[0.07] px-3 py-2 text-[11.5px] leading-relaxed text-ink-3">
+                          Team can only be purchased by Business accounts. You can still join a business Team later if someone invites you.
+                        </p>
+                      ) : null}
                     </div>
                   );
                 })}
