@@ -3,6 +3,7 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypt
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { one, run, uid, num, str } from "@/lib/db";
+import { effectiveAdminPlan } from "@/lib/admin";
 
 const COOKIE = "nx_session";
 const SESSION_DAYS = 30;
@@ -42,19 +43,23 @@ export function verifyPassword(password: string, stored: string) {
 }
 
 function rowToUser(row: Record<string, unknown>): User {
+  const email = str(row.email);
+  const storedPlan = str(row.plan) || "free";
+  const adminPlan = effectiveAdminPlan(email, storedPlan);
+  const teamPlanActive = num(row.team_plan_active) === 1;
+
   return {
     id: str(row.id),
-    email: str(row.email),
+    email,
     name: str(row.name),
-    plan: str(row.plan),
+    plan: adminPlan,
     emailVerified: num(row.email_verified) === 1,
     provider: str(row.provider) || "password",
     onboardingDone: num(row.onboarding_done) === 1,
     instructions: str(row.instructions),
     teamMember: num(row.team_member) === 1,
-    teamPlanActive: num(row.team_plan_active) === 1,
-    effectivePlan:
-      num(row.team_plan_active) === 1 ? "team" : str(row.plan) || "free",
+    teamPlanActive: teamPlanActive || adminPlan === "team",
+    effectivePlan: teamPlanActive || adminPlan === "team" ? "team" : storedPlan,
   };
 }
 
@@ -80,18 +85,19 @@ export async function createUser(
     );
   });
 
+  const effectivePlan = effectiveAdminPlan(email, "free");
   return {
     id,
     email: email.toLowerCase(),
     name,
-    plan: "free",
+    plan: effectivePlan,
     emailVerified: Boolean(verified),
     provider,
     onboardingDone: false,
     instructions: "",
     teamMember: false,
-    teamPlanActive: false,
-    effectivePlan: "free",
+    teamPlanActive: effectivePlan === "team",
+    effectivePlan,
   };
 }
 
