@@ -33,8 +33,18 @@ export async function finishOnboarding(payload: OnboardingPayload) {
     await updateUserProfile(user.id, { name });
   }
 
-  const wanted = planById(payload.plan || "free");
-  // Only free activates immediately. Pro/Team need payment confirmation (PK: bank/JazzCash).
+  const accountType =
+    payload.accountType === "business" ||
+    payload.accountType === "student" ||
+    payload.accountType === "individual"
+      ? payload.accountType
+      : "individual";
+  let wanted = planById(payload.plan || "free");
+  if (wanted.id === "team" && accountType !== "business") {
+    wanted = planById(accountType === "student" ? "free" : "pro");
+  }
+
+  // Only free activates immediately. Pro/Team need payment confirmation.
   if (wanted.id === "free") {
     await setPlan(user.id, "free");
   }
@@ -42,7 +52,7 @@ export async function finishOnboarding(payload: OnboardingPayload) {
   await completeOnboarding(user.id, {
     goal: payload.goal || "explore",
     role: (payload.role || "").slice(0, 80),
-    accountType: payload.accountType || "individual",
+    accountType,
     firstIdea: (payload.firstIdea || "").slice(0, 500),
     plan: wanted.id,
     paymentMethod: (payload.paymentMethod || "").slice(0, 40),
