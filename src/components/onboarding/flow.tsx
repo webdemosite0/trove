@@ -151,7 +151,9 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
 
   function go(n: number) {
     let target = n;
-    if (accountType !== "business") {
+    const wantsBusinessContext =
+      accountType === "business" || businessName.trim().length >= 2;
+    if (!wantsBusinessContext) {
       if (step === 2 && n === 3) target = 4;
       if (step === 4 && n === 3) target = 2;
     }
@@ -186,12 +188,12 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
   useEffect(() => {
     if (
       step === 3 &&
-      accountType === "business" &&
+      (accountType === "business" || businessName.trim().length >= 2) &&
       analysisState === "idle"
     ) {
       void analyzeBusiness();
     }
-  }, [step, accountType, analysisState, analyzeBusiness]);
+  }, [step, accountType, businessName, analysisState, analyzeBusiness]);
 
   useEffect(() => {
     if (analysisState !== "loading") return;
@@ -719,7 +721,11 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               />
               <ul className="ob-rise-d3 mt-6 space-y-2 text-[13px] text-ink-3">
                 {[
-                  analysisState === "success" ? `AI personalized for ${businessName}` : "Business context saved",
+                  analysisState === "success"
+                    ? `AI personalized for ${businessName}`
+                    : accountType === "business"
+                      ? "Business setup saved"
+                      : "Workspace preferences saved",
                   "Free credits every month",
                   "Download real files anytime",
                   "Publish to *.troveai.site",
