@@ -24,6 +24,8 @@ function messageFor(error: unknown) {
   const messages: Record<string, string> = {
     UNAUTHENTICATED: "Sign in to manage a team.",
     TEAM_PLAN_REQUIRED: "A Team plan is required to create a workspace.",
+    TEAM_BUSINESS_ONLY:
+      "Team is a business plan. Set up your Business profile first, then upgrade to Team.",
     TEAM_MEMBERS_ONLY: "Only joined team members can use this workspace.",
     TEAM_PLAN_INACTIVE: "This Team workspace is paused because its owner no longer has an active Team plan.",
     ALREADY_IN_TEAM: "This account is already in a team.",
@@ -32,6 +34,8 @@ function messageFor(error: unknown) {
     INVALID_OWNER: "Choose another current member as the new owner.",
     NEW_OWNER_TEAM_PLAN_REQUIRED:
       "The new owner must have their own active Team plan before ownership can be transferred.",
+    NEW_OWNER_BUSINESS_REQUIRED:
+      "The new owner must be a Business account before ownership can be transferred.",
     FORBIDDEN: "You do not have permission to do that.",
     OWNER_ONLY: "Only the team owner can change that.",
     OWNER_ROLE_FIXED: "The owner role cannot be changed.",
