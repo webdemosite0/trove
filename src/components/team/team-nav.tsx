@@ -15,17 +15,22 @@ const ITEMS = [
   { href: "/team", label: "Overview", icon: FiUsers },
   { href: "/team/members", label: "Members", icon: FiUsers },
   { href: "/team/projects", label: "Projects", icon: FiFolder },
-  { href: "/team/invites", label: "Invitations", icon: FiMail },
+  { href: "/team/invites", label: "Invitations", icon: FiMail, adminOnly: true },
   { href: "/team/business", label: "Business", icon: FiBriefcase },
-  { href: "/team/settings", label: "Settings", icon: FiSettings },
+  { href: "/team/settings", label: "Settings", icon: FiSettings, adminOnly: true },
 ];
 
-export function TeamNav() {
+export function TeamNav({
+  role,
+}: {
+  role?: "owner" | "admin" | "member" | null;
+}) {
   const pathname = usePathname();
+  const canAdmin = role === "owner" || role === "admin";
 
   return (
     <nav className="flex gap-1 overflow-x-auto rounded-2xl border border-line bg-raised/85 p-1 shadow-[var(--sh-1)] scrollbar-none">
-      {ITEMS.map((item) => {
+      {ITEMS.filter((item) => !item.adminOnly || canAdmin).map((item) => {
         const active =
           pathname === item.href ||
           (item.href !== "/team" && pathname.startsWith(item.href + "/"));
