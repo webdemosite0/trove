@@ -147,6 +147,7 @@ export const FiCreditCard = /*#__PURE__*/ grok(CreditCard);
 export const FiDatabase = /*#__PURE__*/ grok(Database);
 export const FiDownload = /*#__PURE__*/ grok(Download);
 export const FiEdit2 = /*#__PURE__*/ grok(Pencil);
+export const FiEdit3 = FiEdit2;
 export const FiExternalLink = /*#__PURE__*/ grok(ExternalLink);
 export const FiEye = /*#__PURE__*/ grok(Eye);
 export const FiEyeOff = /*#__PURE__*/ grok(EyeOff);
