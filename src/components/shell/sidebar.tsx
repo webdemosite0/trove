@@ -21,6 +21,7 @@ import {
   TbPresentation,
   TbPalette,
   TbRobot,
+  TbFolder,
   TbHelpCircle,
 } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
@@ -44,6 +45,7 @@ interface Item {
 const PRIMARY: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
+  { href: "/projects", label: "Projects", icon: TbFolder, motion: "stack" },
   { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
