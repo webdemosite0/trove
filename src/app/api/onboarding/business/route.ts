@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { generateText } from "@/lib/ai";
 import { getInstructions, setInstructions } from "@/lib/user-prefs";
 import { updateBusinessProfile } from "@/lib/business-profile";
+import { setAccountTypeForUser } from "@/lib/account-type";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,6 +110,8 @@ export async function POST(req: NextRequest) {
     const businessName = String(form.get("businessName") || "").trim().slice(0, 120);
     const businessUrl = String(form.get("businessUrl") || "").trim().slice(0, 500);
     const profile = form.get("profile");
+    const promoteBusinessAccount =
+      String(form.get("promoteBusinessAccount") || "") === "1";
 
     if (businessName.length < 2) {
       return NextResponse.json({ error: "Add your business name first." }, { status: 400 });
@@ -187,6 +190,10 @@ Return ONLY valid JSON with keys: summary, industry, audience, voice, instructio
       voice: String(analysis.voice || "").slice(0, 220),
       instructions,
     });
+
+    if (promoteBusinessAccount) {
+      await setAccountTypeForUser(user.id, "business");
+    }
 
     return NextResponse.json({
       ok: true,
