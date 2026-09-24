@@ -161,16 +161,29 @@ export function TeamWorkspaceView({
                 </div>
               </div>
             ) : state.pendingInvites.length === 0 ? (
-              <div className="rounded-2xl border border-line-strong bg-sunk/70 p-5">
-                <p className="text-[14px] font-semibold text-ink">Team membership required</p>
+              <div className={cn(
+                "rounded-2xl border p-5",
+                state.businessEligible
+                  ? "border-line-strong bg-sunk/70"
+                  : "border-sky-400/20 bg-gradient-to-br from-sky-500/[0.08] via-violet-500/[0.06] to-fuchsia-500/[0.08]",
+              )}>
+                <p className="text-[14px] font-semibold text-ink">
+                  {state.businessEligible ? "Team membership required" : "Team is a business plan"}
+                </p>
                 <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-3">
-                  You are not a joined Team member yet. A Team-plan owner can invite you, or you can upgrade to Team and create a workspace.
+                  {state.businessEligible
+                    ? "You are not a joined Team member yet. A business Team owner can invite you, or you can upgrade to Team and create a workspace."
+                    : "Your account is currently set up as an individual or student. You can join a business Team by invitation, but buying and owning Team requires a Business profile."}
                 </p>
                 <Link
-                  href="/plans"
+                  href={state.businessEligible ? "/plans" : "/settings/business"}
                   className="btn-grad mt-4 inline-flex h-10 items-center rounded-xl px-4 text-[12.5px] font-semibold text-white"
                 >
-                  {currentPlan === "team" ? "Open plans" : "Upgrade to Team"}
+                  {state.businessEligible
+                    ? currentPlan === "team"
+                      ? "Open plans"
+                      : "Upgrade to Team"
+                    : "Set up Business profile"}
                 </Link>
               </div>
             ) : null}
