@@ -37,16 +37,16 @@ const ACCOUNT_TYPES = [
     Icon: FiBriefcase,
   },
   {
-    id: "individual" as const,
-    title: "Individual",
-    blurb: "Solo professional, creator, developer, founder, or freelancer.",
-    Icon: FiUser,
-  },
-  {
     id: "student" as const,
     title: "Student",
     blurb: "Learning, coursework, research, projects, and early ideas.",
     Icon: FiBookOpen,
+  },
+  {
+    id: "individual" as const,
+    title: "Individual",
+    blurb: "Solo professional, creator, developer, founder, or freelancer.",
+    Icon: FiUser,
   },
 ];
 
@@ -323,10 +323,10 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                 How will you use Trove?
               </p>
               <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
-                Are you a business, an individual, or a student?
+                Who are you?
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
-                This changes the setup, examples, and plan recommendation — not what you are allowed to build.
+                A business, a student, or an individual? Trove uses this to personalize setup and recommend the right plan.
               </p>
               <div className="mt-7 grid gap-3">
                 {ACCOUNT_TYPES.map((item, index) => {
