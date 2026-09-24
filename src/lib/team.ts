@@ -4,6 +4,11 @@ import { all, batch, one, run, uid, num, str } from "@/lib/db";
 import { currentUser, type User } from "@/lib/auth";
 import { sendMail } from "@/lib/mail";
 import { site } from "@/lib/site";
+import {
+  accountProfileForUser,
+  canOwnTeamPlan,
+  type AccountType,
+} from "@/lib/account-type";
 
 export type TeamRole = "owner" | "admin" | "member";
 
@@ -60,6 +65,8 @@ export interface TeamState {
   canInvite: boolean;
   teamPlanActive: boolean;
   canManageWorkspace: boolean;
+  accountType: AccountType;
+  businessEligible: boolean;
 }
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -176,8 +183,11 @@ async function sharedProjectsFor(teamId: string): Promise<TeamProject[]> {
 }
 
 export async function teamStateForUser(user: User): Promise<TeamState> {
-  const team = await teamForUser(user.id);
-  const pendingInvites = await pendingInvitesFor(user.email);
+  const [team, pendingInvites, profile] = await Promise.all([
+    teamForUser(user.id),
+    pendingInvitesFor(user.email),
+    accountProfileForUser(user.id),
+  ]);
 
   if (!team) {
     return {
@@ -187,11 +197,13 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
       pendingInvites,
       projects: [],
       ownedProjects: [],
-      canCreateTeam: user.plan === "team",
+      canCreateTeam: user.plan === "team" && profile.businessEligible,
       canManageMembers: false,
       canInvite: false,
       teamPlanActive: false,
       canManageWorkspace: false,
+      accountType: profile.accountType,
+      businessEligible: profile.businessEligible,
     };
   }
 
@@ -217,6 +229,8 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
     canInvite: canAdmin,
     teamPlanActive,
     canManageWorkspace: canAdmin,
+    accountType: profile.accountType,
+    businessEligible: profile.businessEligible,
   };
 }
 
@@ -236,6 +250,7 @@ export async function createTeam(name: string) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
   if (user.plan !== "team") throw new Error("TEAM_PLAN_REQUIRED");
+  if (!(await canOwnTeamPlan(user.id))) throw new Error("TEAM_BUSINESS_ONLY");
   if (await teamForUser(user.id)) throw new Error("ALREADY_IN_TEAM");
 
   const clean = name.trim().replace(/\s+/g, " ").slice(0, 100);
@@ -296,7 +311,10 @@ export async function inviteTeamMember(
     ],
   );
 
-  const link = site.url + "/team";
+  const link =
+    site.url +
+    "/team?invite=" +
+    encodeURIComponent(inviteId);
   void sendMail({
     to: clean,
     subject: user.name + " invited you to " + team.name + " on Trove",
@@ -495,6 +513,9 @@ export async function transferTeamOwnership(memberUserId: string) {
   ).catch(() => null);
   if (!target) throw new Error("MEMBER_NOT_FOUND");
   if (str(target.plan) !== "team") throw new Error("NEW_OWNER_TEAM_PLAN_REQUIRED");
+  if (!(await canOwnTeamPlan(memberUserId))) {
+    throw new Error("NEW_OWNER_BUSINESS_REQUIRED");
+  }
 
   const now = Date.now();
   await batch(
