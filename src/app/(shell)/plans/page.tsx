@@ -38,7 +38,7 @@ export default async function PricingPage({
       plans={PLANS}
       balance={balance}
       usage={usage}
-      currentPlan={user?.plan ?? null}
+      currentPlan={user?.effectivePlan ?? user?.plan ?? null}
       signedIn={Boolean(user)}
       stripeReady={paymentsReady}
       purchasable={canBuy}
