@@ -62,6 +62,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
     const form = new FormData();
     form.set("businessName", name.trim());
     form.set("businessUrl", url.trim());
+    form.set("promoteBusinessAccount", "1");
     if (file) form.set("profile", file);
 
     try {
@@ -109,7 +110,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
                 Business profile
               </h2>
               <p className="mt-1 max-w-[58ch] text-[13px] leading-relaxed text-ink-3">
-                Trove reads your business profile and automatically maintains a protected business context inside Custom Instructions. Your existing personal instructions stay untouched.
+                Trove reads your business profile and automatically maintains a protected business context inside Custom Instructions. Saving here also marks this account as a Business account, which unlocks eligibility to own the Team plan. Your existing personal instructions stay untouched.
               </p>
             </div>
           </div>
