@@ -1,6 +1,6 @@
 import "server-only";
 
-import { all, one, run, uid, num, str } from "@/lib/db";
+import { all, batch, one, run, uid, num, str } from "@/lib/db";
 import { currentUser, type User } from "@/lib/auth";
 import { sendMail } from "@/lib/mail";
 import { site } from "@/lib/site";
@@ -11,6 +11,7 @@ export interface TeamSummary {
   id: string;
   name: string;
   ownerUserId: string;
+  ownerPlan: string;
   role: TeamRole;
   createdAt: number;
 }
@@ -56,6 +57,8 @@ export interface TeamState {
   canCreateTeam: boolean;
   canManageMembers: boolean;
   canInvite: boolean;
+  teamPlanActive: boolean;
+  canManageWorkspace: boolean;
 }
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -66,7 +69,7 @@ function cleanRole(value: unknown): TeamRole {
 
 export async function teamForUser(userId: string): Promise<TeamSummary | null> {
   const row = await one(
-    "SELECT t.id, t.name, t.owner_user_id, t.created_at, tm.role FROM team_members tm JOIN teams t ON t.id = tm.team_id WHERE tm.user_id = ? ORDER BY tm.joined_at DESC LIMIT 1",
+    "SELECT t.id, t.name, t.owner_user_id, t.created_at, tm.role, owner.plan AS owner_plan FROM team_members tm JOIN teams t ON t.id = tm.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE tm.user_id = ? ORDER BY tm.joined_at DESC LIMIT 1",
     [userId],
   ).catch(() => null);
 
@@ -75,6 +78,7 @@ export async function teamForUser(userId: string): Promise<TeamSummary | null> {
     id: str(row.id),
     name: str(row.name),
     ownerUserId: str(row.owner_user_id),
+    ownerPlan: str(row.owner_plan) || "free",
     role: cleanRole(row.role),
     createdAt: num(row.created_at),
   };
@@ -85,7 +89,7 @@ export async function projectTeamAccess(
   projectId: string,
 ): Promise<{ teamId: string; role: TeamRole } | null> {
   const row = await one(
-    "SELECT tp.team_id, tm.role FROM team_projects tp JOIN team_members tm ON tm.team_id = tp.team_id AND tm.user_id = ? WHERE tp.project_id = ? LIMIT 1",
+    "SELECT tp.team_id, tm.role FROM team_projects tp JOIN team_members tm ON tm.team_id = tp.team_id AND tm.user_id = ? JOIN teams t ON t.id = tp.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE tp.project_id = ? AND owner.plan = 'team' LIMIT 1",
     [userId, projectId],
   ).catch(() => null);
   if (!row) return null;
@@ -184,6 +188,8 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
       canCreateTeam: user.plan === "team",
       canManageMembers: false,
       canInvite: false,
+      teamPlanActive: false,
+      canManageWorkspace: false,
     };
   }
 
@@ -194,22 +200,33 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
     ownedProjectsFor(user.id),
   ]);
 
+  const teamPlanActive = team.ownerPlan === "team";
+  const canAdmin = teamPlanActive && (team.role === "owner" || team.role === "admin");
+
   return {
     team,
     members,
-    invites: team.role === "owner" || team.role === "admin" ? invites : [],
+    invites: canAdmin ? invites : [],
     pendingInvites,
-    projects,
+    projects: teamPlanActive ? projects : [],
     ownedProjects,
     canCreateTeam: false,
-    canManageMembers: team.role === "owner" || team.role === "admin",
-    canInvite: team.role === "owner" || team.role === "admin",
+    canManageMembers: canAdmin,
+    canInvite: canAdmin,
+    teamPlanActive,
+    canManageWorkspace: canAdmin,
   };
 }
 
 async function requireMembership(user: User) {
   const team = await teamForUser(user.id);
   if (!team) throw new Error("TEAM_MEMBERS_ONLY");
+  return team;
+}
+
+async function requireActiveMembership(user: User) {
+  const team = await requireMembership(user);
+  if (team.ownerPlan !== "team") throw new Error("TEAM_PLAN_INACTIVE");
   return team;
 }
 
@@ -241,7 +258,7 @@ export async function inviteTeamMember(
 ) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
-  const team = await requireMembership(user);
+  const team = await requireActiveMembership(user);
   if (team.role !== "owner" && team.role !== "admin") throw new Error("FORBIDDEN");
 
   const clean = email.trim().toLowerCase().slice(0, 254);
@@ -309,6 +326,12 @@ export async function acceptTeamInvite(inviteId: string) {
   if (invite.accepted_at != null) throw new Error("INVITE_USED");
   if (num(invite.expires_at) <= Date.now()) throw new Error("INVITE_EXPIRED");
 
+  const active = await one(
+    "SELECT owner.plan FROM teams t JOIN users owner ON owner.id = t.owner_user_id WHERE t.id = ?",
+    [str(invite.team_id)],
+  ).catch(() => null);
+  if (!active || str(active.plan) !== "team") throw new Error("TEAM_PLAN_INACTIVE");
+
   const now = Date.now();
   await run(
     "INSERT INTO team_members (team_id, user_id, role, joined_at, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -333,7 +356,7 @@ export async function updateTeamMemberRole(
 ) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
-  const team = await requireMembership(user);
+  const team = await requireActiveMembership(user);
   if (team.role !== "owner") throw new Error("OWNER_ONLY");
   if (memberUserId === team.ownerUserId) throw new Error("OWNER_ROLE_FIXED");
 
@@ -347,7 +370,7 @@ export async function updateTeamMemberRole(
 export async function removeTeamMember(memberUserId: string) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
-  const team = await requireMembership(user);
+  const team = await requireActiveMembership(user);
   if (memberUserId === team.ownerUserId) throw new Error("OWNER_CANNOT_BE_REMOVED");
 
   const target = await one(
@@ -382,7 +405,7 @@ export async function leaveTeam() {
 export async function shareProjectWithTeam(projectId: string) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
-  const team = await requireMembership(user);
+  const team = await requireActiveMembership(user);
 
   const owned = await one(
     "SELECT id FROM builder_projects WHERE id = ? AND user_id = ?",
@@ -400,7 +423,7 @@ export async function shareProjectWithTeam(projectId: string) {
 export async function unshareProjectFromTeam(projectId: string) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
-  const team = await requireMembership(user);
+  const team = await requireActiveMembership(user);
 
   const row = await one(
     "SELECT p.user_id FROM team_projects tp JOIN builder_projects p ON p.id = tp.project_id WHERE tp.team_id = ? AND tp.project_id = ?",
@@ -423,13 +446,74 @@ export async function unshareProjectFromTeam(projectId: string) {
 export async function revokeTeamInvite(inviteId: string) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
-  const team = await requireMembership(user);
+  const team = await requireActiveMembership(user);
   if (team.role !== "owner" && team.role !== "admin") throw new Error("FORBIDDEN");
 
   await run(
     "DELETE FROM team_invites WHERE id = ? AND team_id = ? AND accepted_at IS NULL",
     [inviteId, team.id],
   );
+  return { ok: true };
+}
+
+export async function renameTeam(name: string) {
+  const user = await currentUser();
+  if (!user) throw new Error("UNAUTHENTICATED");
+  const team = await requireActiveMembership(user);
+  if (team.role !== "owner" && team.role !== "admin") throw new Error("FORBIDDEN");
+
+  const clean = name.trim().replace(/\s+/g, " ").slice(0, 100);
+  if (clean.length < 2) throw new Error("TEAM_NAME_REQUIRED");
+
+  await run(
+    "UPDATE teams SET name = ?, updated_at = ? WHERE id = ?",
+    [clean, Date.now(), team.id],
+  );
+  return { ok: true };
+}
+
+export async function transferTeamOwnership(memberUserId: string) {
+  const user = await currentUser();
+  if (!user) throw new Error("UNAUTHENTICATED");
+  const team = await requireActiveMembership(user);
+  if (team.role !== "owner") throw new Error("OWNER_ONLY");
+  if (!memberUserId || memberUserId === user.id) throw new Error("INVALID_OWNER");
+
+  const target = await one(
+    "SELECT role FROM team_members WHERE team_id = ? AND user_id = ?",
+    [team.id, memberUserId],
+  ).catch(() => null);
+  if (!target) throw new Error("MEMBER_NOT_FOUND");
+
+  const now = Date.now();
+  await batch(
+    [
+      {
+        sql: "UPDATE team_members SET role = 'admin' WHERE team_id = ? AND user_id = ?",
+        args: [team.id, user.id],
+      },
+      {
+        sql: "UPDATE team_members SET role = 'owner' WHERE team_id = ? AND user_id = ?",
+        args: [team.id, memberUserId],
+      },
+      {
+        sql: "UPDATE teams SET owner_user_id = ?, updated_at = ? WHERE id = ?",
+        args: [memberUserId, now, team.id],
+      },
+    ],
+    "write",
+  );
+  return { ok: true };
+}
+
+export async function deleteTeam(confirmName: string) {
+  const user = await currentUser();
+  if (!user) throw new Error("UNAUTHENTICATED");
+  const team = await requireMembership(user);
+  if (team.role !== "owner") throw new Error("OWNER_ONLY");
+  if (confirmName.trim() !== team.name) throw new Error("TEAM_NAME_CONFIRMATION");
+
+  await run("DELETE FROM teams WHERE id = ?", [team.id]);
   return { ok: true };
 }
 
