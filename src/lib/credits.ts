@@ -74,7 +74,7 @@ export const PLANS: Plan[] = [
     features: [
       "200 credits a month (~200k tokens)",
       "40 credits per 5-hour window",
-      "Every tool: chat, docs, sheets, code, research",
+      "Every solo tool: chat, docs, sheets, code, research",
       "Agents, reminders and integrations",
     ],
   },
