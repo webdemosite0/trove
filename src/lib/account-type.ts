@@ -1,6 +1,7 @@
 import "server-only";
 
 import { one, run, str } from "@/lib/db";
+import { isAdminEmail } from "@/lib/admin";
 
 export type AccountType = "business" | "individual" | "student";
 
@@ -25,7 +26,7 @@ export async function accountProfileForUser(
   userId: string,
 ): Promise<AccountProfile> {
   const row = await one(
-    "SELECT plan, onboarding_meta FROM users WHERE id = ?",
+    "SELECT email, plan, onboarding_meta FROM users WHERE id = ?",
     [userId],
   ).catch(() => null);
 
@@ -51,7 +52,9 @@ export async function accountProfileForUser(
   // explicit Student/Individual classification. Team ownership is reserved for
   // explicit Business accounts. Existing Team owners stay eligible.
   const businessEligible =
-    accountType === "business" || str(row?.plan) === "team";
+    isAdminEmail(str(row?.email)) ||
+    accountType === "business" ||
+    str(row?.plan) === "team";
 
   return { accountType, businessEligible, businessName };
 }
