@@ -1,8 +1,15 @@
-import { redirect } from "next/navigation";
+import { ProjectsView } from "./projects-view";
+import { listUserProjects } from "@/lib/projects";
+import { currentUser } from "@/lib/auth";
 
 export const metadata = { title: "Projects" };
 
-/** All-work library retired — send users to the home dashboard. */
-export default function ProjectsPage() {
-  redirect("/dashboard");
+export default async function ProjectsPage() {
+  const user = await currentUser();
+  const projects = user ? await listUserProjects(40) : [];
+  return (
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
+      <ProjectsView projects={projects} signedIn={Boolean(user)} />
+    </div>
+  );
 }
