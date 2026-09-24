@@ -20,6 +20,7 @@ export interface TeamMember {
   userId: string;
   name: string;
   email: string;
+  plan: string;
   role: TeamRole;
   joinedAt: number;
 }
@@ -113,7 +114,7 @@ async function pendingInvitesFor(email: string) {
 
 async function membersFor(teamId: string): Promise<TeamMember[]> {
   const rows = await all(
-    "SELECT tm.user_id, tm.role, tm.joined_at, u.name, u.email FROM team_members tm JOIN users u ON u.id = tm.user_id WHERE tm.team_id = ? ORDER BY CASE tm.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END, tm.joined_at ASC",
+    "SELECT tm.user_id, tm.role, tm.joined_at, u.name, u.email, u.plan FROM team_members tm JOIN users u ON u.id = tm.user_id WHERE tm.team_id = ? ORDER BY CASE tm.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END, tm.joined_at ASC",
     [teamId],
   ).catch(() => []);
 
@@ -121,6 +122,7 @@ async function membersFor(teamId: string): Promise<TeamMember[]> {
     userId: str(row.user_id),
     name: str(row.name),
     email: str(row.email),
+    plan: str(row.plan) || "free",
     role: cleanRole(row.role),
     joinedAt: num(row.joined_at),
   }));
@@ -480,10 +482,11 @@ export async function transferTeamOwnership(memberUserId: string) {
   if (!memberUserId || memberUserId === user.id) throw new Error("INVALID_OWNER");
 
   const target = await one(
-    "SELECT role FROM team_members WHERE team_id = ? AND user_id = ?",
+    "SELECT tm.role, u.plan FROM team_members tm JOIN users u ON u.id = tm.user_id WHERE tm.team_id = ? AND tm.user_id = ?",
     [team.id, memberUserId],
   ).catch(() => null);
   if (!target) throw new Error("MEMBER_NOT_FOUND");
+  if (str(target.plan) !== "team") throw new Error("NEW_OWNER_TEAM_PLAN_REQUIRED");
 
   const now = Date.now();
   await batch(
