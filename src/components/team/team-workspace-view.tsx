@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  FiArrowRight,
   FiCheck,
   FiFolder,
   FiLogOut,
@@ -271,6 +272,67 @@ export function TeamWorkspaceView({
         </div>
       </header>
 
+      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            label: "Members",
+            value: state.members.length,
+            note: "Active workspace access",
+            tone: "from-violet-500/16 to-fuchsia-500/8",
+          },
+          {
+            label: "Shared projects",
+            value: state.projects.length,
+            note: "Available to joined members",
+            tone: "from-sky-500/16 to-cyan-500/8",
+          },
+          {
+            label: "Pending invites",
+            value: state.invites.length,
+            note: state.canInvite ? "Waiting for acceptance" : "Visible to workspace admins",
+            tone: "from-amber-500/16 to-orange-500/8",
+          },
+          {
+            label: "Your projects",
+            value: state.ownedProjects.length,
+            note: "Can be shared with the team",
+            tone: "from-emerald-500/16 to-teal-500/8",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className={cn(
+              "relative overflow-hidden rounded-[20px] border border-line-strong bg-gradient-to-br p-4 shadow-[var(--sh-1)]",
+              item.tone,
+            )}
+          >
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.13em] text-ink-4">
+              {item.label}
+            </p>
+            <p className="mt-2 text-[27px] font-semibold tracking-[-0.04em] text-ink">
+              {item.value}
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-4">{item.note}</p>
+          </div>
+        ))}
+      </section>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-raised/75 px-3.5 py-3">
+        <span className="inline-flex items-center gap-2 text-[12px] font-medium text-ink-3">
+          <FiShield size={13} className="text-positive" />
+          Private, membership-enforced workspace
+        </span>
+        <span className="hidden h-4 w-px bg-line sm:block" />
+        <Link href="/chat" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-accent hover:underline">
+          Work with Trove
+          <FiArrowRight size={12} />
+        </Link>
+        <Link href="/projects" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-accent hover:underline">
+          Open projects
+          <FiArrowRight size={12} />
+        </Link>
+      </div>
+
       {error ? (
         <div className="mt-4 rounded-xl border border-critical/30 bg-critical-soft px-4 py-3 text-[12.5px] text-critical">
           {error}
@@ -278,13 +340,16 @@ export function TeamWorkspaceView({
       ) : null}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+        <section id="members" className="scroll-mt-24 rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-violet-500 dark:text-violet-300">
                 Members
               </p>
-              <h2 className="mt-1 text-[17px] font-semibold text-ink">People with workspace access</h2>
+              <h2 className="mt-1 text-[17px] font-semibold text-ink">People & permissions</h2>
+              <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
+                Roles control administration. Membership controls project and workspace access.
+              </p>
             </div>
             <FiUsers size={20} className="text-ink-4" />
           </div>
@@ -420,13 +485,13 @@ export function TeamWorkspaceView({
           ) : null}
         </section>
 
-        <section className="rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+        <section id="shared-projects" className="scroll-mt-24 rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-sky-600 dark:text-sky-300">
                 Shared projects
               </p>
-              <h2 className="mt-1 text-[17px] font-semibold text-ink">Build together</h2>
+              <h2 className="mt-1 text-[17px] font-semibold text-ink">Shared project portfolio</h2>
               <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
                 A shared project is editable only by joined members.
               </p>
