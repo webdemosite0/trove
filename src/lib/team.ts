@@ -243,13 +243,17 @@ export async function createTeam(name: string) {
 
   const now = Date.now();
   const id = uid("team");
-  await run(
-    "INSERT INTO teams (id, name, owner_user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-    [id, clean, user.id, now, now],
-  );
-  await run(
-    "INSERT INTO team_members (team_id, user_id, role, joined_at, created_at) VALUES (?, ?, 'owner', ?, ?)",
-    [id, user.id, now, now],
+  await batch(
+    [
+      {
+        sql: "INSERT INTO teams (id, name, owner_user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        args: [id, clean, user.id, now, now],
+      },
+      {
+        sql: "INSERT INTO team_members (team_id, user_id, role, joined_at, created_at) VALUES (?, ?, 'owner', ?, ?)",
+        args: [id, user.id, now, now],
+      },
+    ],
   );
   return { id };
 }
@@ -335,19 +339,23 @@ export async function acceptTeamInvite(inviteId: string) {
   if (!active || str(active.plan) !== "team") throw new Error("TEAM_PLAN_INACTIVE");
 
   const now = Date.now();
-  await run(
-    "INSERT INTO team_members (team_id, user_id, role, joined_at, created_at) VALUES (?, ?, ?, ?, ?)",
+  await batch(
     [
-      str(invite.team_id),
-      user.id,
-      cleanRole(invite.role) === "admin" ? "admin" : "member",
-      now,
-      now,
+      {
+        sql: "INSERT INTO team_members (team_id, user_id, role, joined_at, created_at) VALUES (?, ?, ?, ?, ?)",
+        args: [
+          str(invite.team_id),
+          user.id,
+          cleanRole(invite.role) === "admin" ? "admin" : "member",
+          now,
+          now,
+        ],
+      },
+      {
+        sql: "UPDATE team_invites SET accepted_at = ? WHERE id = ? AND accepted_at IS NULL",
+        args: [now, inviteId],
+      },
     ],
-  );
-  await run(
-    "UPDATE team_invites SET accepted_at = ? WHERE id = ? AND accepted_at IS NULL",
-    [now, inviteId],
   );
   return { ok: true };
 }
