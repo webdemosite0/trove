@@ -3,12 +3,15 @@ import { consumeRateLimit } from "@/lib/rate-limit";
 import {
   acceptTeamInvite,
   createTeam,
+  deleteTeam,
   inviteTeamMember,
   leaveTeam,
   removeTeamMember,
+  renameTeam,
   revokeTeamInvite,
   shareProjectWithTeam,
   teamStateForUser,
+  transferTeamOwnership,
   unshareProjectFromTeam,
   updateTeamMemberRole,
 } from "@/lib/team";
@@ -22,8 +25,11 @@ function messageFor(error: unknown) {
     UNAUTHENTICATED: "Sign in to manage a team.",
     TEAM_PLAN_REQUIRED: "A Team plan is required to create a workspace.",
     TEAM_MEMBERS_ONLY: "Only joined team members can use this workspace.",
+    TEAM_PLAN_INACTIVE: "This Team workspace is paused because its owner no longer has an active Team plan.",
     ALREADY_IN_TEAM: "This account is already in a team.",
     TEAM_NAME_REQUIRED: "Give the team a name.",
+    TEAM_NAME_CONFIRMATION: "Type the exact workspace name to confirm deletion.",
+    INVALID_OWNER: "Choose another current member as the new owner.",
     FORBIDDEN: "You do not have permission to do that.",
     OWNER_ONLY: "Only the team owner can change that.",
     OWNER_ROLE_FIXED: "The owner role cannot be changed.",
@@ -103,6 +109,12 @@ export async function POST(req: Request) {
       await unshareProjectFromTeam(String(body?.projectId || ""));
     } else if (action === "revoke-invite") {
       await revokeTeamInvite(String(body?.inviteId || ""));
+    } else if (action === "rename") {
+      await renameTeam(String(body?.name || ""));
+    } else if (action === "transfer-owner") {
+      await transferTeamOwnership(String(body?.memberUserId || ""));
+    } else if (action === "delete-team") {
+      await deleteTeam(String(body?.confirmName || ""));
     } else {
       return Response.json({ error: "Unknown team action." }, { status: 400 });
     }
