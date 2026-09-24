@@ -113,7 +113,15 @@ function NavRow({
   );
 }
 
-function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void }) {
+function UserMenu({
+  user,
+  isAdmin = false,
+  onNavigate,
+}: {
+  user: User;
+  isAdmin?: boolean;
+  onNavigate?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -155,6 +163,20 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
           role="menu"
           className="absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-xl border border-line bg-raised shadow-lg"
         >
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-violet-600 transition-colors hover:bg-hover dark:text-violet-300"
+            >
+              <FiUsers size={15} />
+              Admin
+            </Link>
+          ) : null}
           <Link
             href="/settings"
             role="menuitem"
@@ -271,11 +293,13 @@ function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
 
 function RailBody({
   user,
+  isAdmin,
   onCollapse,
   onNavigate,
 }: {
   user: User | null;
   balance?: Balance | null;
+  isAdmin?: boolean;
   onCollapse?: () => void;
   onNavigate?: () => void;
 }) {
@@ -328,7 +352,7 @@ function RailBody({
         <ReferralPromo onNavigate={onNavigate} />
 
         {user ? (
-          <UserMenu user={user} onNavigate={onNavigate} />
+          <UserMenu user={user} isAdmin={isAdmin} onNavigate={onNavigate} />
         ) : (
           <Link
             href="/login"
@@ -384,6 +408,7 @@ function RailBody({
 export function Sidebar({
   user,
   balance,
+  isAdmin = false,
 }: {
   user: User | null;
   balance: Balance | null;
@@ -457,7 +482,7 @@ export function Sidebar({
           </div>
         ) : (
           <div className="flex h-full min-h-0 flex-col overflow-hidden">
-            <RailBody user={user} balance={balance} onCollapse={() => setCollapsed(true)} />
+            <RailBody user={user} balance={balance} isAdmin={isAdmin} onCollapse={() => setCollapsed(true)} />
           </div>
         )}
       </aside>
@@ -478,7 +503,7 @@ export function Sidebar({
               <FiX size={17} className="text-ink" />
             </button>
             <div className="flex h-full min-h-0 flex-col overflow-hidden">
-              <RailBody user={user} balance={balance} onNavigate={() => setOpen(false)} />
+              <RailBody user={user} balance={balance} isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
             </div>
           </div>
         </div>
