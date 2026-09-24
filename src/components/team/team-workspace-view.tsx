@@ -182,6 +182,33 @@ export function TeamWorkspaceView({
     );
   }
 
+  if (!state.teamPlanActive) {
+    return (
+      <div className="rounded-[24px] border border-line-strong bg-raised p-6 shadow-[var(--elev)]">
+        <span className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-accent">
+          <FiShield size={18} />
+        </span>
+        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.13em] text-accent">
+          Team workspace paused
+        </p>
+        <h2 className="mt-1 text-[21px] font-semibold text-ink">{state.team.name}</h2>
+        <p className="mt-2 max-w-[60ch] text-[13px] leading-relaxed text-ink-3">
+          {state.team.role === "owner"
+            ? "Your workspace, memberships, and project links are still stored. Reactivate the Team plan to restore member access, shared projects, invitations, and shared Team credits."
+            : "The workspace owner no longer has an active Team plan. Team collaboration and shared Team credits are paused until the owner reactivates it."}
+        </p>
+        {state.team.role === "owner" ? (
+          <Link
+            href="/plans"
+            className="btn-grad mt-5 inline-flex h-10 items-center rounded-xl px-4 text-[12.5px] font-semibold text-white"
+          >
+            Reactivate Team
+          </Link>
+        ) : null}
+      </div>
+    );
+  }
+
   const isOwner = state.team.role === "owner";
   const canAdmin = state.team.role === "owner" || state.team.role === "admin";
 
