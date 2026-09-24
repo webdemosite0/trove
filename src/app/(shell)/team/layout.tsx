@@ -1,6 +1,8 @@
 import { TeamNav } from "@/components/team/team-nav";
 import { currentUser } from "@/lib/auth";
 import { teamForUser } from "@/lib/team";
+import { currentUser } from "@/lib/auth";
+import { teamForUser } from "@/lib/team";
 
 export default async function TeamAreaLayout({
   children,
