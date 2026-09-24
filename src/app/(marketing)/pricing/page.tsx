@@ -34,9 +34,9 @@ export default function PricingPage() {
           Start solo. Upgrade when work becomes daily or collaborative.
         </h1>
         <p className="mt-5 text-[17px] leading-relaxed text-ink-2">
-          Free and Pro include the core creation tools. Team adds the business
-          workspace: members, admin roles, invitations, shared projects, shared
-          company context, and a shared Team credit pool.
+          Free and Pro are for solo accounts. Team is a business-only plan that adds
+          the private company workspace: members, admin roles, invitations, shared
+          projects, shared company context, and one shared Team credit pool.
         </p>
       </header>
 
@@ -54,11 +54,18 @@ export default function PricingPage() {
                   : "border-line bg-rail",
               )}
             >
-              {featured ? (
-                <span className="absolute -top-2.5 left-6 rounded-full bg-violet-600 px-2.5 py-0.5 text-[11px] font-medium text-white">
-                  Most popular
-                </span>
-              ) : null}
+              <div className="absolute -top-2.5 left-6 flex gap-2">
+                {featured ? (
+                  <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-[11px] font-medium text-white">
+                    Most popular
+                  </span>
+                ) : null}
+                {plan.id === "team" ? (
+                  <span className="rounded-full border border-sky-300/50 bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-300">
+                    Business only
+                  </span>
+                ) : null}
+              </div>
               <h2 className="text-[15px] font-semibold text-ink">{plan.name}</h2>
 
               <p className="mt-3 flex items-baseline gap-1.5">
@@ -112,7 +119,11 @@ export default function PricingPage() {
                       : "border border-line-strong text-ink-2 hover:bg-hover hover:text-ink",
                   )}
                 >
-                  {plan.price === 0 ? "Start free" : `Choose ${plan.name}`}
+                  {plan.price === 0
+                    ? "Start free"
+                    : plan.id === "team"
+                      ? "Start as a business"
+                      : `Choose ${plan.name}`}
                   <FiArrowRight size={15} />
                 </Link>
               ) : (
