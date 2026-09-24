@@ -11,6 +11,8 @@ import {
   HiOutlineCube,
 } from "@/components/ui/icons";
 import { currentUser } from "@/lib/auth";
+import { teamStateForUser } from "@/lib/team";
+import { TeamHome } from "@/components/team/team-home";
 import { one, num } from "@/lib/db";
 
 export const metadata = { title: "Home" };
@@ -72,6 +74,19 @@ export default async function MePage() {
           Log in
         </Link>
       </div>
+    );
+  }
+
+  const teamExperience =
+    user.teamMember || user.teamPlanActive || user.effectivePlan === "team" || user.plan === "team";
+
+  if (teamExperience) {
+    const state = await teamStateForUser(user);
+    return (
+      <TeamHome
+        firstName={user.name?.split(" ")[0] || "there"}
+        state={state}
+      />
     );
   }
 
