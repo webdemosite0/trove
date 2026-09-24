@@ -13,7 +13,7 @@ const teamPlan = PLANS.find((plan) => plan.id === "team")!;
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month, a 5-hour burst window, and every tool included. Pro is ${proPlan.price} for ${proPlan.monthly.toLocaleString()} credits. Team is ${teamPlan.price} for ${teamPlan.monthly.toLocaleString()}.`,
+  description: `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month and all solo tools. Pro adds capacity. Team is ${teamPlan.price}/month and adds the shared Team workspace, roles, invites, shared projects, company context, and a shared credit pool.`,
   alternates: { canonical: "/pricing" },
   openGraph: {
     type: "website",
