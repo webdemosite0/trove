@@ -227,6 +227,42 @@ export async function rateWindowFor(
   };
 }
 
+async function resolveCreditPool(
+  userId: string,
+  fallbackPlanId?: string,
+): Promise<{ userId: string; planId: string }> {
+  const row = await one(
+    `SELECT
+       u.plan AS user_plan,
+       t.owner_user_id,
+       owner.plan AS owner_plan
+     FROM users u
+     LEFT JOIN team_members tm ON tm.user_id = u.id
+     LEFT JOIN teams t ON t.id = tm.team_id
+     LEFT JOIN users owner ON owner.id = t.owner_user_id
+     WHERE u.id = ?
+     ORDER BY tm.joined_at DESC
+     LIMIT 1`,
+    [userId],
+  ).catch(() => null);
+
+  if (
+    row &&
+    str(row.owner_user_id) &&
+    str(row.owner_plan) === "team"
+  ) {
+    return {
+      userId: str(row.owner_user_id),
+      planId: "team",
+    };
+  }
+
+  return {
+    userId,
+    planId: fallbackPlanId || str(row?.user_plan) || "free",
+  };
+}
+
 export async function balanceFor(
   userId: string,
   planId: string,
@@ -255,6 +291,10 @@ export async function balanceFor(
       unlimited: true,
     };
   }
+
+  const pool = await resolveCreditPool(userId, planId);
+  userId = pool.userId;
+  planId = pool.planId;
 
   const plan = planById(planId);
   const now = Date.now();
@@ -342,10 +382,19 @@ export async function spend(
 ): Promise<void> {
   try {
     const credits = creditsForTokens(tokens);
+    const pool = await resolveCreditPool(userId);
     await run(
       `INSERT INTO credit_spends (id, user_id, kind, tokens, credits, period, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [uid("spend"), userId, kind, Math.max(0, tokens), credits, currentPeriod(), Date.now()],
+      [
+        uid("spend"),
+        pool.userId,
+        kind,
+        Math.max(0, tokens),
+        credits,
+        currentPeriod(),
+        Date.now(),
+      ],
     );
   } catch (e) {
     console.error("credits: could not record spend", e);
@@ -413,6 +462,8 @@ export interface UsageRow {
 
 /** Per-tool breakdown for the current month, biggest consumer first. */
 export async function usageByKind(userId: string): Promise<UsageRow[]> {
+  const pool = await resolveCreditPool(userId);
+  userId = pool.userId;
   const rows = await all(
     `SELECT kind,
             COALESCE(SUM(credits), 0) AS credits,
@@ -439,6 +490,8 @@ export interface DayRow {
 }
 
 export async function usageByDay(userId: string, days = 14): Promise<DayRow[]> {
+  const pool = await resolveCreditPool(userId);
+  userId = pool.userId;
   const since = Date.now() - (days - 1) * 86_400_000;
 
   const rows = await all(
