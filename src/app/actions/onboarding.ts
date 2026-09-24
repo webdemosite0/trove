@@ -8,6 +8,7 @@ export type OnboardingPayload = {
   name?: string;
   goal?: "website" | "documents" | "spreadsheets" | "agents" | "code" | "explore";
   role?: string;
+  accountType?: "business" | "individual" | "student";
   firstIdea?: string;
   /** free | pro | team — paid plans stay on free until payment is confirmed */
   plan?: string;
@@ -41,6 +42,7 @@ export async function finishOnboarding(payload: OnboardingPayload) {
   await completeOnboarding(user.id, {
     goal: payload.goal || "explore",
     role: (payload.role || "").slice(0, 80),
+    accountType: payload.accountType || "individual",
     firstIdea: (payload.firstIdea || "").slice(0, 500),
     plan: wanted.id,
     paymentMethod: (payload.paymentMethod || "").slice(0, 40),
