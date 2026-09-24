@@ -11,6 +11,9 @@ export interface User {
   emailVerified: boolean;
   provider: string;
   onboardingDone: boolean;
+  teamMember?: boolean;
+  teamPlanActive?: boolean;
+  effectivePlan?: string;
 }
 
 export interface Plan {
