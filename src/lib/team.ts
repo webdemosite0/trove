@@ -98,7 +98,7 @@ export async function projectTeamAccess(
 
 async function pendingInvitesFor(email: string) {
   const rows = await all(
-    "SELECT i.id, i.team_id, i.role, i.expires_at, t.name AS team_name FROM team_invites i JOIN teams t ON t.id = i.team_id WHERE lower(i.email) = lower(?) AND i.accepted_at IS NULL AND i.expires_at > ? ORDER BY i.created_at DESC",
+    "SELECT i.id, i.team_id, i.role, i.expires_at, t.name AS team_name FROM team_invites i JOIN teams t ON t.id = i.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE lower(i.email) = lower(?) AND i.accepted_at IS NULL AND i.expires_at > ? AND owner.plan = 'team' ORDER BY i.created_at DESC",
     [email, Date.now()],
   ).catch(() => []);
 
