@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: "/pricing",
     title: `Pricing · ${site.name}`,
     description:
-      "Free to start with monthly credits, a Codex-style 5-hour window, and every tool. Pro and Team add capacity, not features.",
+      "Free to start. Pro adds higher daily capacity. Team adds a private business workspace with members, roles, shared projects, company context, and shared credits.",
   },
 };
 
@@ -29,15 +29,15 @@ export default function PricingPage() {
     <div className="mx-auto max-w-[1040px] px-5 pb-24 pt-16 lg:px-8 lg:pt-24">
       <header className="max-w-[640px]">
         <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">
-          Capacity, not feature gates
+          Plans for solo work and teams
         </p>
         <h1 className="mt-3 text-[clamp(2rem,1.2rem+2.4vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
-          Pay for capacity, not for features.
+          Start solo. Upgrade when work becomes daily or collaborative.
         </h1>
         <p className="mt-5 text-[17px] leading-relaxed text-ink-2">
-          Every plan has every tool. You get a monthly budget and a rolling
-          5-hour burst window — so one intense session cannot empty the whole
-          month at once.
+          Free and Pro include the core creation tools. Team adds the business
+          workspace: members, admin roles, invitations, shared projects, shared
+          company context, and a shared Team credit pool.
         </p>
       </header>
 
@@ -157,7 +157,7 @@ export default function PricingPage() {
 
       <section className="mt-14 max-w-[720px]">
         <h2 className="text-[22px] font-semibold tracking-[-0.015em] text-ink">
-          What you get on every plan
+          Core tools included
         </h2>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {FEATURES.map((f) => {
