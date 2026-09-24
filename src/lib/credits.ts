@@ -103,10 +103,13 @@ export const PLANS: Plan[] = [
     priceYearly: 1_100,
     blurb: "Shared capacity for a group building together.",
     features: [
-      "20,000 credits a month (~20M tokens)",
-      "2,000 credits per 5-hour window",
+      "20,000 shared credits a month (~20M tokens)",
+      "2,000 shared credits per 5-hour window",
       "Everything in Pro",
-      "Shared agents across the workspace",
+      "Private business workspace",
+      "Member invitations with owner/admin/member roles",
+      "Shared projects and company context",
+      "One shared Team credit pool for joined members",
     ],
   },
 ];
