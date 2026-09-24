@@ -306,7 +306,10 @@ export async function listUserProjects(limit = 24): Promise<
              JOIN team_members tm
                ON tm.team_id = tp.team_id
               AND tm.user_id = ?
+             JOIN teams t ON t.id = tp.team_id
+             JOIN users owner ON owner.id = t.owner_user_id
             WHERE tp.project_id = p.id
+              AND owner.plan = 'team'
          )
       ORDER BY p.updated_at DESC
       LIMIT ?`,
