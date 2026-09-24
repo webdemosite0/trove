@@ -17,7 +17,7 @@ const ITEMS = [
   { href: "/team/projects", label: "Projects", icon: FiFolder },
   { href: "/team/invites", label: "Invitations", icon: FiMail, adminOnly: true },
   { href: "/team/business", label: "Business", icon: FiBriefcase },
-  { href: "/team/settings", label: "Settings", icon: FiSettings, adminOnly: true },
+  { href: "/team/settings", label: "Settings", icon: FiSettings },
 ];
 
 export function TeamNav({
