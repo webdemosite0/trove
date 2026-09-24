@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  FiCopy,
   FiFolder,
   FiLogOut,
   FiMail,
@@ -35,6 +36,7 @@ export function TeamSectionView({
   const [name, setName] = useState(initial.team?.name || "");
   const [transferUserId, setTransferUserId] = useState("");
   const [confirmName, setConfirmName] = useState("");
+  const [copiedInvite, setCopiedInvite] = useState("");
 
   async function act(action: string, payload: Record<string, unknown> = {}) {
     if (busy) return;
@@ -59,6 +61,18 @@ export function TeamSectionView({
       setError(e instanceof Error ? e.message : "Team action failed.");
     } finally {
       setBusy("");
+    }
+  }
+
+  async function copyInviteLink(inviteId: string) {
+    try {
+      const url = new URL("/team", window.location.origin);
+      url.searchParams.set("invite", inviteId);
+      await navigator.clipboard.writeText(url.toString());
+      setCopiedInvite(inviteId);
+      window.setTimeout(() => setCopiedInvite(""), 1800);
+    } catch {
+      setError("Could not copy the invitation link.");
     }
   }
 
@@ -220,6 +234,29 @@ export function TeamSectionView({
                         {invite.role} · expires {new Date(invite.expiresAt).toLocaleDateString()}
                       </span>
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => void copyInviteLink(invite.id)}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-raised px-2.5 text-[10.5px] font-medium text-ink-3 transition hover:border-violet-400/30 hover:bg-violet-500/10 hover:text-ink"
+                      title="Copy invitation link"
+                    >
+                      <FiCopy size={12} />
+                      {copiedInvite === invite.id ? "Copied" : "Copy"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void act("invite", {
+                          email: invite.email,
+                          role: invite.role,
+                        })
+                      }
+                      disabled={Boolean(busy)}
+                      className="h-9 rounded-xl border border-line bg-raised px-2.5 text-[10.5px] font-medium text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40"
+                      title="Send a fresh invitation email"
+                    >
+                      Resend
+                    </button>
                     <button
                       type="button"
                       onClick={() => void act("revoke-invite", { inviteId: invite.id })}
