@@ -315,6 +315,7 @@ function RailBody({
         {PRIMARY.filter(
           (it) =>
             !it.teamOnly ||
+            Boolean(user?.teamMember) ||
             Boolean(user?.teamPlanActive) ||
             user?.effectivePlan === "team" ||
             user?.plan === "team",
@@ -435,6 +436,7 @@ export function Sidebar({
               {PRIMARY.filter(
                 (i) =>
                   !i.teamOnly ||
+                  Boolean(user?.teamMember) ||
                   Boolean(user?.teamPlanActive) ||
                   user?.effectivePlan === "team" ||
                   user?.plan === "team",
