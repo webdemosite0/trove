@@ -1,10 +1,15 @@
 import { TeamNav } from "@/components/team/team-nav";
+import { currentUser } from "@/lib/auth";
+import { teamForUser } from "@/lib/team";
 
-export default function TeamAreaLayout({
+export default async function TeamAreaLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await currentUser();
+  const team = user ? await teamForUser(user.id) : null;
+
   return (
     <div className="mx-auto w-full max-w-[1080px] px-5 py-7 lg:px-8">
       <div className="mb-5">
@@ -18,7 +23,7 @@ export default function TeamAreaLayout({
           Members, shared projects, invitations, company context, and workspace administration.
         </p>
       </div>
-      <TeamNav />
+      <TeamNav role={team?.role ?? null} />
       <div className="mt-5">{children}</div>
     </div>
   );
