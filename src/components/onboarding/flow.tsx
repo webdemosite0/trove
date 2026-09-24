@@ -14,6 +14,9 @@ import {
   FiLayers,
   FiSearch,
   FiCheck,
+  FiBriefcase,
+  FiUser,
+  FiBookOpen,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +27,27 @@ const GOALS = [
   { id: "agents" as const, title: "AI agents", blurb: "Specialists that run multi-step work", Icon: FiLayers },
   { id: "code" as const, title: "Code", blurb: "Apps and scripts you can download", Icon: FiCode },
   { id: "explore" as const, title: "Just exploring", blurb: "Open the workspace and look around", Icon: FiSearch },
+];
+
+const ACCOUNT_TYPES = [
+  {
+    id: "business" as const,
+    title: "Business",
+    blurb: "Company, startup, agency, or team using Trove for shared work.",
+    Icon: FiBriefcase,
+  },
+  {
+    id: "individual" as const,
+    title: "Individual",
+    blurb: "Solo professional, creator, developer, founder, or freelancer.",
+    Icon: FiUser,
+  },
+  {
+    id: "student" as const,
+    title: "Student",
+    blurb: "Learning, coursework, research, projects, and early ideas.",
+    Icon: FiBookOpen,
+  },
 ];
 
 const ROLES = ["Founder", "Designer", "Developer", "Marketer", "Student", "Agency", "Other"];
@@ -49,7 +73,7 @@ const PLAN_OPTIONS = [
     window: "500 / 5-hour window",
     blurb: "Daily work without watching the meter.",
     features: ["Everything in Free", "Priority model fallback", "Higher burst limit"],
-    available: false,
+    available: true,
   },
   {
     id: "team",
@@ -59,8 +83,14 @@ const PLAN_OPTIONS = [
     monthly: "20,000 credits / mo",
     window: "2,000 / 5-hour window",
     blurb: "Shared capacity for a small crew.",
-    features: ["Everything in Pro", "Shared agents", "Room for the whole team"],
-    available: false,
+    features: [
+      "Everything in Pro",
+      "Private Team workspace",
+      "Member invites + admin roles",
+      "Shared projects + company context",
+      "One shared Team credit pool",
+    ],
+    available: true,
   },
 ] as const;
 
@@ -73,7 +103,7 @@ const ANALYSIS_STEPS = [
   "Writing your AI instructions",
 ];
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 const MAX_PROFILE_BYTES = 3 * 1024 * 1024;
 
 type Analysis = {
@@ -100,6 +130,9 @@ function validBusinessUrl(value: string) {
 export function OnboardingFlow({ name, email }: { name: string; email: string }) {
   const [step, setStep] = useState(0);
   const [displayName, setDisplayName] = useState(name || "");
+  const [accountType, setAccountType] = useState<
+    "business" | "individual" | "student" | null
+  >(null);
   const [businessName, setBusinessName] = useState("");
   const [businessUrl, setBusinessUrl] = useState("");
   const [profileFile, setProfileFile] = useState<File | null>(null);
@@ -117,8 +150,13 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
 
   function go(n: number) {
-    setDir(n > step ? "fwd" : "back");
-    setStep(n);
+    let target = n;
+    if (accountType !== "business") {
+      if (step === 2 && n === 3) target = 4;
+      if (step === 4 && n === 3) target = 2;
+    }
+    setDir(target > step ? "fwd" : "back");
+    setStep(target);
   }
 
   const analyzeBusiness = useCallback(async () => {
@@ -146,8 +184,14 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
   }, [businessName, businessUrl, profileFile]);
 
   useEffect(() => {
-    if (step === 2 && analysisState === "idle") void analyzeBusiness();
-  }, [step, analysisState, analyzeBusiness]);
+    if (
+      step === 3 &&
+      accountType === "business" &&
+      analysisState === "idle"
+    ) {
+      void analyzeBusiness();
+    }
+  }, [step, accountType, analysisState, analyzeBusiness]);
 
   useEffect(() => {
     if (analysisState !== "loading") return;
@@ -159,12 +203,30 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
 
   const canNext = useMemo(() => {
     if (step === 0) return displayName.trim().length >= 2;
-    if (step === 1) return businessName.trim().length >= 2 && validBusinessUrl(businessUrl) && !profileError;
-    if (step === 2) return analysisState === "success" || analysisState === "error";
-    if (step === 3) return Boolean(goal);
-    if (step === 4) return Boolean(role);
+    if (step === 1) return Boolean(accountType);
+    if (step === 2) {
+      if (accountType !== "business") return true;
+      return (
+        businessName.trim().length >= 2 &&
+        validBusinessUrl(businessUrl) &&
+        !profileError
+      );
+    }
+    if (step === 3) return analysisState === "success" || analysisState === "error";
+    if (step === 4) return Boolean(goal);
+    if (step === 5) return Boolean(role);
     return true;
-  }, [step, displayName, businessName, businessUrl, profileError, analysisState, goal, role]);
+  }, [
+    step,
+    displayName,
+    accountType,
+    businessName,
+    businessUrl,
+    profileError,
+    analysisState,
+    goal,
+    role,
+  ]);
 
   function chooseProfile(file: File | null) {
     setProfileError("");
@@ -189,7 +251,13 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
         goal: goal || "explore",
         role: role || "",
         firstIdea: idea.trim(),
-        plan: "free",
+        plan:
+          accountType === "business"
+            ? "team"
+            : accountType === "individual"
+              ? "pro"
+              : "free",
+        accountType: accountType || "individual",
         businessName: businessName.trim(),
         businessUrl: analysis?.businessUrl || businessUrl.trim(),
         businessProfileName: profileFile?.name || "",
@@ -249,12 +317,93 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
 
           {step === 1 && (
             <>
-              <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Your business</p>
+              <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+                How will you use Trove?
+              </p>
               <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
-                Let Trove learn your business.
+                Are you a business, an individual, or a student?
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
-                We’ll use your site and profile to create business-specific AI instructions automatically.
+                This changes the setup, examples, and plan recommendation — not what you are allowed to build.
+              </p>
+              <div className="mt-7 grid gap-3">
+                {ACCOUNT_TYPES.map((item, index) => {
+                  const Icon = item.Icon;
+                  const on = accountType === item.id;
+                  const recommendation =
+                    item.id === "business"
+                      ? "Team recommended"
+                      : item.id === "individual"
+                        ? "Pro recommended"
+                        : "Free recommended";
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setAccountType(item.id);
+                        if (item.id !== "business") {
+                          setAnalysisState("idle");
+                          setAnalysis(null);
+                        }
+                      }}
+                      className={cn(
+                        "ob-card flex items-center gap-4 rounded-2xl border bg-raised p-4 text-left shadow-[var(--elev)] transition",
+                        on
+                          ? "scale-[1.01] border-accent ring-2 ring-[var(--focus-ring)]"
+                          : "border-line hover:-translate-y-0.5 hover:border-line-strong",
+                      )}
+                      style={{ animationDelay: String(index * 45) + "ms" }}
+                    >
+                      <span
+                        className={cn(
+                          "grid size-11 shrink-0 place-items-center rounded-2xl",
+                          on
+                            ? "bg-gradient-to-br from-violet-500 to-sky-500 text-white"
+                            : "bg-sunk text-ink-2",
+                        )}
+                      >
+                        <Icon size={19} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="text-[14.5px] font-semibold text-ink">
+                            {item.title}
+                          </span>
+                          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold text-accent">
+                            {recommendation}
+                          </span>
+                        </span>
+                        <span className="mt-1 block text-[12.5px] leading-relaxed text-ink-3">
+                          {item.blurb}
+                        </span>
+                      </span>
+                      {on ? (
+                        <span className="grid size-6 place-items-center rounded-full bg-accent text-white">
+                          <FiCheck size={13} />
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+                {accountType === "business" ? "Your business" : "Business context · optional"}
+              </p>
+              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+                {accountType === "business"
+                  ? "Let Trove learn your business."
+                  : "Do you also work with a business?"}
+              </h1>
+              <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
+                {accountType === "business"
+                  ? "We’ll use your site and profile to create business-specific AI instructions automatically."
+                  : "Optional. Add a company if you want Trove to learn its website, audience, and brand voice — or continue without one."}
               </p>
 
               <div className="ob-rise-d2 mt-7 space-y-4">
@@ -335,7 +484,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
             </>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Business intelligence</p>
               <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
@@ -417,7 +566,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
             </>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Your first focus</p>
               <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
@@ -456,7 +605,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
             </>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">About you</p>
               <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
@@ -487,22 +636,35 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
             </>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Your plan</p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">Start on Free</h1>
-              <p className="ob-rise-d1 mt-2 text-[15px] text-ink-3">Everyone starts on Free. You can upgrade when you need more capacity.</p>
+              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+                {accountType === "business"
+                  ? "Team fits this setup best."
+                  : accountType === "individual"
+                    ? "Pro fits daily solo work."
+                    : "Free is a strong place to start."}
+              </h1>
+              <p className="ob-rise-d1 mt-2 text-[15px] text-ink-3">
+                This is a recommendation only. Paid plans activate only after you explicitly complete checkout.
+              </p>
               <div className="mt-6 space-y-2.5">
                 {PLAN_OPTIONS.map((p, i) => {
-                  const on = p.id === "free";
-                  const locked = !p.available;
+                  const recommended =
+                    p.id ===
+                    (accountType === "business"
+                      ? "team"
+                      : accountType === "individual"
+                        ? "pro"
+                        : "free");
+                  const on = recommended;
                   return (
                     <div
                       key={p.id}
                       className={cn(
                         "ob-card w-full rounded-2xl border bg-raised p-4 text-left transition",
                         on && "border-accent ring-2 ring-[var(--focus-ring)]",
-                        locked && "opacity-55",
                       )}
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
@@ -510,11 +672,11 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                         <span>
                           <span className="flex flex-wrap items-center gap-2">
                             <span className="text-[15px] font-semibold text-ink">{p.name}</span>
-                            {on ? (
-                              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">Active</span>
-                            ) : (
-                              <span className="rounded-full bg-sunk px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-4">Coming soon</span>
-                            )}
+                            {recommended ? (
+                              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
+                                Recommended
+                              </span>
+                            ) : null}
                           </span>
                           <span className="mt-0.5 block text-[12.5px] text-ink-3">{p.blurb}</span>
                         </span>
@@ -541,7 +703,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
             </>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Almost there</p>
               <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
@@ -577,7 +739,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
             <button
               type="button"
               onClick={() => go(step - 1)}
-              disabled={analysisState === "loading" && step === 2}
+              disabled={analysisState === "loading" && step === 3}
               className="h-12 rounded-full border border-line-strong bg-raised px-5 text-[14px] font-medium text-ink-2 transition hover:bg-hover disabled:opacity-40"
             >
               Back
@@ -589,11 +751,15 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {step < TOTAL_STEPS - 1 ? (
             <button
               type="button"
-              disabled={!canNext || (step === 2 && analysisState === "loading")}
+              disabled={!canNext || (step === 3 && analysisState === "loading")}
               onClick={() => go(step + 1)}
               className="btn-grad inline-flex h-12 items-center gap-2 rounded-full px-6 text-[14.5px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {step === 1 ? "Analyze business" : step === 2 && analysisState === "loading" ? "Learning…" : "Continue"}
+              {step === 2 && accountType === "business"
+                ? "Analyze business"
+                : step === 3 && analysisState === "loading"
+                  ? "Learning…"
+                  : "Continue"}
               <FiArrowRight size={16} />
             </button>
           ) : (
