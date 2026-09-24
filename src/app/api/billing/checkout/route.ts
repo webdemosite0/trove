@@ -13,6 +13,7 @@ import { site } from "@/lib/site";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { opsAlert } from "@/lib/ops-alert";
 import { ANALYTICS_EVENTS, trackEvent } from "@/lib/analytics";
+import { accountProfileForUser } from "@/lib/account-type";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +53,20 @@ export async function POST(req: Request) {
   const plan = planById(planId);
   if (plan.id !== planId || plan.price <= 0) {
     return NextResponse.json({ error: "That is not a paid plan." }, { status: 400 });
+  }
+
+  if (plan.id === "team") {
+    const profile = await accountProfileForUser(user.id);
+    if (!profile.businessEligible) {
+      return NextResponse.json(
+        {
+          error:
+            "Team is for businesses. Set up your Business profile first, then choose Team.",
+          code: "TEAM_BUSINESS_ONLY",
+        },
+        { status: 403 },
+      );
+    }
   }
 
   await trackEvent({
