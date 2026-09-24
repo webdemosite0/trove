@@ -6,13 +6,34 @@ import "server-only";
  * ADMIN_EMAILS=you@gmail.com,other@gmail.com
  * or a single ADMIN_EMAIL=you@gmail.com
  */
+const BUILT_IN_ADMIN_EMAILS = new Set([
+  "kallokalia233@gmail.com",
+]);
+
+export function adminEmails(): string[] {
+  const raw = [process.env.ADMIN_EMAILS, process.env.ADMIN_EMAIL]
+    .filter(Boolean)
+    .join(",");
+  const configured = raw
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return Array.from(new Set([...BUILT_IN_ADMIN_EMAILS, ...configured]));
+}
+
 export function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
-  const list = raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  if (list.length === 0) return false;
-  return list.includes(email.trim().toLowerCase());
+  return adminEmails().includes(email.trim().toLowerCase());
+}
+
+/**
+ * Admins receive the highest product entitlement in memory without mutating
+ * their stored billing subscription.
+ */
+export function effectiveAdminPlan(
+  email: string | null | undefined,
+  storedPlan: string | null | undefined,
+) {
+  return isAdminEmail(email) ? "team" : storedPlan || "free";
 }
