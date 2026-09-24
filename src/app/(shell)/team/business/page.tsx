@@ -2,7 +2,7 @@ import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { getBusinessProfile } from "@/lib/business-profile";
 import { teamStateForUser } from "@/lib/team";
-import { FiBriefcase, FiEdit3, FiShield } from "@/components/ui/icons";
+import { FiBriefcase, FiEdit2, FiShield } from "@/components/ui/icons";
 
 export const metadata = { title: "Team business" };
 
@@ -61,7 +61,7 @@ export default async function TeamBusinessPage() {
               href="/settings/business"
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line-strong px-3 text-[11.5px] font-medium text-ink-2 hover:bg-hover"
             >
-              <FiEdit3 size={12} />
+              <FiEdit2 size={12} />
               Edit
             </Link>
           ) : null}
