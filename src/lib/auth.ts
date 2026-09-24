@@ -133,17 +133,37 @@ export async function completeOnboarding(
     businessAnalysis?: string;
   },
 ) {
+  const existingRow = await one(
+    "SELECT onboarding_meta FROM users WHERE id = ?",
+    [userId],
+  ).catch(() => null);
+
+  let existing: Record<string, unknown> = {};
+  try {
+    const parsed = JSON.parse(str(existingRow?.onboarding_meta) || "{}");
+    if (parsed && typeof parsed === "object") {
+      existing = parsed as Record<string, unknown>;
+    }
+  } catch {
+    existing = {};
+  }
+
   const payload = JSON.stringify({
+    ...existing,
     goal: meta?.goal || "",
     role: meta?.role || "",
     accountType: meta?.accountType || "",
     firstIdea: meta?.firstIdea || "",
     preferredPlan: meta?.plan || "free",
     paymentMethod: meta?.paymentMethod || "",
-    businessName: meta?.businessName || "",
-    businessUrl: meta?.businessUrl || "",
-    businessProfileName: meta?.businessProfileName || "",
-    businessAnalysis: meta?.businessAnalysis || "",
+    businessName:
+      meta?.businessName || String(existing.businessName || ""),
+    businessUrl:
+      meta?.businessUrl || String(existing.businessUrl || ""),
+    businessProfileName:
+      meta?.businessProfileName || String(existing.businessProfileName || ""),
+    businessAnalysis:
+      meta?.businessAnalysis || String(existing.businessAnalysis || ""),
     at: Date.now(),
   });
   try {
