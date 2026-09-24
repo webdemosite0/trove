@@ -3,6 +3,10 @@ import "server-only";
 import { one, all, run, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
+import {
+  mergeInstructionLayers,
+  splitBusinessInstructions,
+} from "@/lib/user-prefs";
 
 /**
  * Credits are a thin, honest wrapper over model token usage.
@@ -230,12 +234,13 @@ export async function rateWindowFor(
 async function resolveCreditPool(
   userId: string,
   fallbackPlanId?: string,
-): Promise<{ userId: string; planId: string }> {
+): Promise<{ userId: string; planId: string; ownerInstructions: string }> {
   const row = await one(
     `SELECT
        u.plan AS user_plan,
        t.owner_user_id,
-       owner.plan AS owner_plan
+       owner.plan AS owner_plan,
+       owner.instructions AS owner_instructions
      FROM users u
      LEFT JOIN team_members tm ON tm.user_id = u.id
      LEFT JOIN teams t ON t.id = tm.team_id
@@ -254,12 +259,14 @@ async function resolveCreditPool(
     return {
       userId: str(row.owner_user_id),
       planId: "team",
+      ownerInstructions: str(row.owner_instructions),
     };
   }
 
   return {
     userId,
     planId: fallbackPlanId || str(row?.user_plan) || "free",
+    ownerInstructions: "",
   };
 }
 
@@ -441,16 +448,27 @@ export async function requireCredits(): Promise<{
   const user = await currentUser();
   if (!user) return null;
 
-  const balance = await balanceFor(user.id, user.plan, { email: user.email });
+  const [balance, pool] = await Promise.all([
+    balanceFor(user.id, user.plan, { email: user.email }),
+    resolveCreditPool(user.id, user.plan),
+  ]);
+
+  const instructions =
+    pool.userId !== user.id && pool.ownerInstructions
+      ? mergeInstructionLayers(
+          splitBusinessInstructions(user.instructions).manual,
+          splitBusinessInstructions(pool.ownerInstructions).business,
+        )
+      : user.instructions;
 
   if (balance.unlimited) {
-    return { userId: user.id, balance, instructions: user.instructions };
+    return { userId: user.id, balance, instructions };
   }
 
   if (balance.remaining <= 0) throw new OutOfCredits(balance);
   if (balance.window.exhausted) throw new RateWindowExceeded(balance);
 
-  return { userId: user.id, balance, instructions: user.instructions };
+  return { userId: user.id, balance, instructions };
 }
 
 export interface UsageRow {
