@@ -6,6 +6,7 @@ import { subscriptionFor } from "@/lib/billing";
 import { planById } from "@/lib/credits";
 import { lemonConfigured, lemonPurchasable } from "@/lib/lemon";
 import { purchasable as stripePurchasable, stripeConfigured } from "@/lib/stripe";
+import { accountProfileForUser } from "@/lib/account-type";
 
 function canBuy(planId: string, interval: "month" | "year"): boolean {
   return lemonPurchasable(planId, interval) || stripePurchasable(planId, interval);
@@ -48,12 +49,16 @@ export async function billingState() {
     };
   }
 
-  const sub = await subscriptionFor(user.id);
+  const [sub, accountProfile] = await Promise.all([
+    subscriptionFor(user.id),
+    accountProfileForUser(user.id),
+  ]);
   const canBuyMap: Record<string, { month: boolean; year: boolean }> = {};
   for (const p of [planById("pro"), planById("team")]) {
+    const allowed = p.id !== "team" || accountProfile.businessEligible;
     canBuyMap[p.id] = {
-      month: canBuy(p.id, "month"),
-      year: canBuy(p.id, "year"),
+      month: allowed && canBuy(p.id, "month"),
+      year: allowed && canBuy(p.id, "year"),
     };
   }
 
@@ -67,5 +72,7 @@ export async function billingState() {
     paymentsReady: lemonReady || stripeReady,
     purchasable: canBuyMap,
     subscription: sub,
+    accountType: accountProfile.accountType,
+    teamEligible: accountProfile.businessEligible,
   };
 }
