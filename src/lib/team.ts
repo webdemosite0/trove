@@ -4,6 +4,7 @@ import { all, batch, one, run, uid, num, str } from "@/lib/db";
 import { currentUser, type User } from "@/lib/auth";
 import { sendMail } from "@/lib/mail";
 import { site } from "@/lib/site";
+import { isAdminEmail } from "@/lib/admin";
 import {
   accountProfileForUser,
   canOwnTeamPlan,
@@ -77,7 +78,7 @@ function cleanRole(value: unknown): TeamRole {
 
 export async function teamForUser(userId: string): Promise<TeamSummary | null> {
   const row = await one(
-    "SELECT t.id, t.name, t.owner_user_id, t.created_at, tm.role, owner.plan AS owner_plan FROM team_members tm JOIN teams t ON t.id = tm.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE tm.user_id = ? ORDER BY tm.joined_at DESC LIMIT 1",
+    "SELECT t.id, t.name, t.owner_user_id, t.created_at, tm.role, owner.plan AS owner_plan, owner.email AS owner_email FROM team_members tm JOIN teams t ON t.id = tm.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE tm.user_id = ? ORDER BY tm.joined_at DESC LIMIT 1",
     [userId],
   ).catch(() => null);
 
@@ -86,7 +87,9 @@ export async function teamForUser(userId: string): Promise<TeamSummary | null> {
     id: str(row.id),
     name: str(row.name),
     ownerUserId: str(row.owner_user_id),
-    ownerPlan: str(row.owner_plan) || "free",
+    ownerPlan: isAdminEmail(str(row.owner_email))
+      ? "team"
+      : str(row.owner_plan) || "free",
     role: cleanRole(row.role),
     createdAt: num(row.created_at),
   };
@@ -97,20 +100,28 @@ export async function projectTeamAccess(
   projectId: string,
 ): Promise<{ teamId: string; role: TeamRole } | null> {
   const row = await one(
-    "SELECT tp.team_id, tm.role FROM team_projects tp JOIN team_members tm ON tm.team_id = tp.team_id AND tm.user_id = ? JOIN teams t ON t.id = tp.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE tp.project_id = ? AND owner.plan = 'team' LIMIT 1",
+    "SELECT tp.team_id, tm.role, owner.plan AS owner_plan, owner.email AS owner_email FROM team_projects tp JOIN team_members tm ON tm.team_id = tp.team_id AND tm.user_id = ? JOIN teams t ON t.id = tp.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE tp.project_id = ? LIMIT 1",
     [userId, projectId],
   ).catch(() => null);
   if (!row) return null;
+  const active =
+    str(row.owner_plan) === "team" || isAdminEmail(str(row.owner_email));
+  if (!active) return null;
   return { teamId: str(row.team_id), role: cleanRole(row.role) };
 }
 
 async function pendingInvitesFor(email: string) {
   const rows = await all(
-    "SELECT i.id, i.team_id, i.role, i.expires_at, t.name AS team_name FROM team_invites i JOIN teams t ON t.id = i.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE lower(i.email) = lower(?) AND i.accepted_at IS NULL AND i.expires_at > ? AND owner.plan = 'team' ORDER BY i.created_at DESC",
+    "SELECT i.id, i.team_id, i.role, i.expires_at, t.name AS team_name, owner.plan AS owner_plan, owner.email AS owner_email FROM team_invites i JOIN teams t ON t.id = i.team_id JOIN users owner ON owner.id = t.owner_user_id WHERE lower(i.email) = lower(?) AND i.accepted_at IS NULL AND i.expires_at > ? ORDER BY i.created_at DESC",
     [email, Date.now()],
   ).catch(() => []);
 
-  return rows.map((row) => ({
+  return rows
+    .filter(
+      (row) =>
+        str(row.owner_plan) === "team" || isAdminEmail(str(row.owner_email)),
+    )
+    .map((row) => ({
     id: str(row.id),
     teamId: str(row.team_id),
     teamName: str(row.team_name),
@@ -183,6 +194,7 @@ async function sharedProjectsFor(teamId: string): Promise<TeamProject[]> {
 }
 
 export async function teamStateForUser(user: User): Promise<TeamState> {
+  const admin = isAdminEmail(user.email);
   const [team, pendingInvites, profile] = await Promise.all([
     teamForUser(user.id),
     pendingInvitesFor(user.email),
@@ -197,13 +209,15 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
       pendingInvites,
       projects: [],
       ownedProjects: [],
-      canCreateTeam: user.plan === "team" && profile.businessEligible,
+      canCreateTeam:
+        (user.plan === "team" || admin) &&
+        (profile.businessEligible || admin),
       canManageMembers: false,
       canInvite: false,
       teamPlanActive: false,
       canManageWorkspace: false,
       accountType: profile.accountType,
-      businessEligible: profile.businessEligible,
+      businessEligible: profile.businessEligible || admin,
     };
   }
 
@@ -230,7 +244,7 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
     teamPlanActive,
     canManageWorkspace: canAdmin,
     accountType: profile.accountType,
-    businessEligible: profile.businessEligible,
+    businessEligible: profile.businessEligible || admin,
   };
 }
 
@@ -249,8 +263,11 @@ async function requireActiveMembership(user: User) {
 export async function createTeam(name: string) {
   const user = await currentUser();
   if (!user) throw new Error("UNAUTHENTICATED");
-  if (user.plan !== "team") throw new Error("TEAM_PLAN_REQUIRED");
-  if (!(await canOwnTeamPlan(user.id))) throw new Error("TEAM_BUSINESS_ONLY");
+  const admin = isAdminEmail(user.email);
+  if (user.plan !== "team" && !admin) throw new Error("TEAM_PLAN_REQUIRED");
+  if (!admin && !(await canOwnTeamPlan(user.id))) {
+    throw new Error("TEAM_BUSINESS_ONLY");
+  }
   if (await teamForUser(user.id)) throw new Error("ALREADY_IN_TEAM");
 
   const clean = name.trim().replace(/\s+/g, " ").slice(0, 100);
@@ -351,10 +368,15 @@ export async function acceptTeamInvite(inviteId: string) {
   if (num(invite.expires_at) <= Date.now()) throw new Error("INVITE_EXPIRED");
 
   const active = await one(
-    "SELECT owner.plan FROM teams t JOIN users owner ON owner.id = t.owner_user_id WHERE t.id = ?",
+    "SELECT owner.plan, owner.email FROM teams t JOIN users owner ON owner.id = t.owner_user_id WHERE t.id = ?",
     [str(invite.team_id)],
   ).catch(() => null);
-  if (!active || str(active.plan) !== "team") throw new Error("TEAM_PLAN_INACTIVE");
+  if (
+    !active ||
+    (str(active.plan) !== "team" && !isAdminEmail(str(active.email)))
+  ) {
+    throw new Error("TEAM_PLAN_INACTIVE");
+  }
 
   const now = Date.now();
   await batch(
@@ -508,12 +530,15 @@ export async function transferTeamOwnership(memberUserId: string) {
   if (!memberUserId || memberUserId === user.id) throw new Error("INVALID_OWNER");
 
   const target = await one(
-    "SELECT tm.role, u.plan FROM team_members tm JOIN users u ON u.id = tm.user_id WHERE tm.team_id = ? AND tm.user_id = ?",
+    "SELECT tm.role, u.plan, u.email FROM team_members tm JOIN users u ON u.id = tm.user_id WHERE tm.team_id = ? AND tm.user_id = ?",
     [team.id, memberUserId],
   ).catch(() => null);
   if (!target) throw new Error("MEMBER_NOT_FOUND");
-  if (str(target.plan) !== "team") throw new Error("NEW_OWNER_TEAM_PLAN_REQUIRED");
-  if (!(await canOwnTeamPlan(memberUserId))) {
+  const targetAdmin = isAdminEmail(str(target.email));
+  if (str(target.plan) !== "team" && !targetAdmin) {
+    throw new Error("NEW_OWNER_TEAM_PLAN_REQUIRED");
+  }
+  if (!targetAdmin && !(await canOwnTeamPlan(memberUserId))) {
     throw new Error("NEW_OWNER_BUSINESS_REQUIRED");
   }
 
