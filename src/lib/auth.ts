@@ -21,6 +21,9 @@ export interface User {
   provider: string;
   onboardingDone: boolean;
   instructions: string;
+  teamMember: boolean;
+  teamPlanActive: boolean;
+  effectivePlan: string;
 }
 
 export function hashPassword(password: string) {
@@ -48,6 +51,10 @@ function rowToUser(row: Record<string, unknown>): User {
     provider: str(row.provider) || "password",
     onboardingDone: num(row.onboarding_done) === 1,
     instructions: str(row.instructions),
+    teamMember: num(row.team_member) === 1,
+    teamPlanActive: num(row.team_plan_active) === 1,
+    effectivePlan:
+      num(row.team_plan_active) === 1 ? "team" : str(row.plan) || "free",
   };
 }
 
@@ -82,6 +89,9 @@ export async function createUser(
     provider,
     onboardingDone: false,
     instructions: "",
+    teamMember: false,
+    teamPlanActive: false,
+    effectivePlan: "free",
   };
 }
 
@@ -250,7 +260,27 @@ async function readCurrentUser(): Promise<User | null> {
   if (!token) return null;
 
   const row = await one(
-    `SELECT u.id, u.email, u.name, u.plan, u.email_verified, u.provider, u.onboarding_done, u.instructions, s.expires_at
+    `SELECT
+         u.id,
+         u.email,
+         u.name,
+         u.plan,
+         u.email_verified,
+         u.provider,
+         u.onboarding_done,
+         u.instructions,
+         s.expires_at,
+         CASE WHEN EXISTS (
+           SELECT 1
+             FROM team_members tm
+             JOIN teams t ON t.id = tm.team_id
+             JOIN users owner ON owner.id = t.owner_user_id
+            WHERE tm.user_id = u.id
+              AND owner.plan = 'team'
+         ) THEN 1 ELSE 0 END AS team_plan_active,
+         CASE WHEN EXISTS (
+           SELECT 1 FROM team_members tm WHERE tm.user_id = u.id
+         ) THEN 1 ELSE 0 END AS team_member
        FROM sessions s
        JOIN users u ON u.id = s.user_id
       WHERE s.token IN (?, ?)`,
