@@ -58,6 +58,10 @@ export function PlansView({
   purchasable,
   subscription,
   checkout,
+  accountType,
+  teamEligible,
+  teamMember,
+  teamPlanActive,
 }: {
   plans: Plan[];
   balance: Balance | null;
@@ -68,6 +72,10 @@ export function PlansView({
   purchasable: Record<string, { month: boolean; year: boolean }>;
   subscription: Subscription | null;
   checkout: "done" | "cancelled" | null;
+  accountType: "business" | "individual" | "student" | null;
+  teamEligible: boolean;
+  teamMember: boolean;
+  teamPlanActive: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -146,6 +154,18 @@ export function PlansView({
 
   const status = subscription?.status ? STATUS_LABEL[subscription.status] : null;
   const hasBilling = Boolean(subscription?.customerId);
+  const recommendedPlan =
+    accountType === "business"
+      ? "team"
+      : accountType === "student"
+        ? "free"
+        : "pro";
+  const recommendationText =
+    accountType === "business"
+      ? "Team is recommended for your business setup: shared workspace, members, roles, projects, company context, and one credit pool."
+      : accountType === "student"
+        ? "Free is recommended for students starting with coursework, research, and projects."
+        : "Pro is recommended for individual daily work without team administration.";
 
   return (
     <div className="relative mx-auto min-h-screen max-w-[1100px] px-5 py-10 lg:px-8">
@@ -217,6 +237,29 @@ export function PlansView({
 
       {error ? <FailureNote className="mb-6" error={error} /> : null}
 
+      {signedIn && accountType ? (
+        <section className="mb-5 overflow-hidden rounded-[20px] border border-violet-400/20 bg-gradient-to-r from-violet-500/[0.10] via-fuchsia-500/[0.07] to-sky-500/[0.10] p-4 shadow-[var(--sh-1)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10.5px] font-bold uppercase tracking-[0.13em] text-violet-600 dark:text-violet-300">
+                Recommended for {accountType === "business" ? "your business" : accountType === "student" ? "students" : "individual work"}
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+                {recommendationText}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-violet-400/20 bg-raised/80 px-3 py-1.5 text-[11px] font-semibold capitalize text-ink">
+              {recommendedPlan} recommended
+            </span>
+          </div>
+          {teamMember && teamPlanActive && accountType !== "business" ? (
+            <p className="mt-3 border-t border-line/70 pt-3 text-[11.5px] text-ink-4">
+              Your own account is {accountType}, but you currently receive Team access through a business workspace you joined.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
       {balance ? (
         <section className="panel nx-in mb-5 p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -249,6 +292,9 @@ export function PlansView({
           const active = currentPlan === t.id;
           const paid = t.price > 0;
           const featured = t.id === "pro";
+          const recommended = t.id === recommendedPlan;
+          const businessOnlyLocked =
+            t.id === "team" && signedIn && !teamEligible && !active;
           const buyable = paid ? Boolean(purchasable[t.id]?.[interval]) : true;
           const amount = priceForInterval(t, interval);
           const savePct = yearlyDiscountPercent(t);
@@ -266,6 +312,8 @@ export function PlansView({
                   ? "border-accent/45 bg-accent-soft shadow-[0_20px_60px_-30px_var(--color-accent)]"
                   : "border-line bg-rail hover:border-line-strong",
                 active && !featured && "border-positive/40",
+                recommended && !featured && "border-violet-400/35 shadow-[0_18px_55px_-34px_var(--color-violet)]",
+                businessOnlyLocked && "opacity-[0.92]",
               )}
               style={{ animationDelay: `${i * 70}ms`, animationFillMode: "backwards" }}
             >
@@ -277,7 +325,17 @@ export function PlansView({
                 ) : null}
                 {active ? (
                   <span className="rounded-full border border-positive/40 bg-rail px-2.5 py-0.5 text-[11px] font-medium text-positive">
-                    Your plan
+                    {teamMember && t.id === "team" && !hasBilling ? "Included by Team" : "Your plan"}
+                  </span>
+                ) : null}
+                {recommended && !active ? (
+                  <span className="rounded-full border border-violet-400/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-medium text-violet-600 dark:text-violet-300">
+                    Recommended
+                  </span>
+                ) : null}
+                {t.id === "team" ? (
+                  <span className="rounded-full border border-sky-400/25 bg-sky-500/10 px-2.5 py-0.5 text-[11px] font-medium text-sky-700 dark:text-sky-300">
+                    Business only
                   </span>
                 ) : null}
               </div>
@@ -309,21 +367,31 @@ export function PlansView({
                 {t.monthly.toLocaleString()} credits a month
               </p>
 
-              <PlanButton
-                active={active}
-                paid={paid}
-                buyable={buyable}
-                stripeReady={stripeReady}
-                signedIn={signedIn}
-                busy={busyId === t.id}
-                pending={pending}
-                name={t.name}
-                featured={featured}
-                hasBilling={hasBilling}
-                onSubscribe={() => subscribe(t.id)}
-                onDowngrade={downgrade}
-                onManage={manage}
-              />
+              {businessOnlyLocked ? (
+                <Link
+                  href="/settings/business"
+                  className="mt-5 flex h-10 items-center justify-center gap-2 rounded-[var(--r-control)] border border-violet-400/30 bg-violet-500/10 px-3 text-[12.5px] font-semibold text-violet-700 transition hover:bg-violet-500/15 dark:text-violet-300"
+                >
+                  Set up Business profile
+                  <FiArrowRight size={14} />
+                </Link>
+              ) : (
+                <PlanButton
+                  active={active}
+                  paid={paid}
+                  buyable={buyable}
+                  stripeReady={stripeReady}
+                  signedIn={signedIn}
+                  busy={busyId === t.id}
+                  pending={pending}
+                  name={t.name}
+                  featured={featured}
+                  hasBilling={hasBilling}
+                  onSubscribe={() => subscribe(t.id)}
+                  onDowngrade={downgrade}
+                  onManage={manage}
+                />
+              )}
 
               <ul className="mt-6 space-y-2.5 border-t border-line pt-5">
                 {t.features.map((f) => (
