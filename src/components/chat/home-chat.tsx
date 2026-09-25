@@ -118,6 +118,8 @@ export function HomeChat({
               role={t.role}
               text={t.text}
               files={t.files}
+              generatingImage={t.generatingImage}
+              imageCaption={t.imageCaption}
               pending={busy && i === turns.length - 1 && t.role === "model"}
               onRegenerate={
                 !busy && i === turns.length - 1 && t.role === "model"
