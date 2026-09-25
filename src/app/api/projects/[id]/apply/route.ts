@@ -3,6 +3,7 @@ import { safeProjectPath, type ProjectFile } from "@/lib/builder";
 import { loadProject, saveProject } from "@/lib/projects";
 import { currentUser } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { normalizeGeneratedProjectContent } from "@/lib/project-file-normalize";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,7 +46,10 @@ export async function POST(
   for (const file of incoming) {
     const path = safeProjectPath(String(file?.path || ""));
     if (!path) continue;
-    const content = String(file?.content ?? "");
+    const content = normalizeGeneratedProjectContent(
+      path,
+      String(file?.content ?? ""),
+    );
     if (content.length > 500_000) {
       return Response.json({ error: `${path} is too large to apply.` }, { status: 413 });
     }
