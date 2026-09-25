@@ -103,6 +103,7 @@ export function MobileShell({
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [liveBalance, setLiveBalance] = React.useState<Balance | null>(balance);
+  const isTeam = pathname === "/team" || pathname.startsWith("/team/");
 
   React.useEffect(() => setOpen(false), [pathname]);
 
@@ -139,7 +140,6 @@ export function MobileShell({
   }, [pathname]);
 
   const isChat = pathname === "/chat" || pathname.startsWith("/chat/");
-  const isTeam = pathname === "/team" || pathname.startsWith("/team/");
   const title = isChat ? "Trove" : activeItem?.label || "Trove";
   const credits =
     liveBalance && typeof liveBalance.remaining === "number"
