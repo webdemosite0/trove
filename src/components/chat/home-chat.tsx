@@ -205,6 +205,7 @@ export function HomeChat({
                           name: localProject.name,
                           scope: localProject.scope,
                           files: localProject.files,
+                          native: localProject.native,
                         }
                       : null
                   }
@@ -262,6 +263,7 @@ export function HomeChat({
                       name: localProject.name,
                       scope: localProject.scope,
                       files: localProject.files,
+                      native: localProject.native,
                     }
                   : null
               }
