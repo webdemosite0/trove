@@ -58,6 +58,22 @@ function groundingMayBeTheProblem(message: string): boolean {
 const GROUNDING_COOLDOWN_MS = 10 * 60_000;
 let groundingRefusedAt = 0;
 
+const PROVIDER_FAILURE_COOLDOWN_MS = 2 * 60_000;
+const providerCooldownUntil = new Map<string, number>();
+
+function providerCoolingDown(id: string) {
+  return (providerCooldownUntil.get(id) ?? 0) > Date.now();
+}
+
+function noteProviderFailure(id: string) {
+  providerCooldownUntil.set(id, Date.now() + PROVIDER_FAILURE_COOLDOWN_MS);
+}
+
+function noteProviderSuccess(id: string) {
+  providerCooldownUntil.delete(id);
+}
+
+
 function groundingAvailable(): boolean {
   return Date.now() - groundingRefusedAt > GROUNDING_COOLDOWN_MS;
 }
@@ -87,11 +103,21 @@ function orderedCompat(): CompatProvider[] {
 }
 
 function primaryGpt(): CompatProvider | null {
-  return orderedCompat().find((p) => p.id === "explabs") ?? null;
+  return (
+    orderedCompat().find(
+      (p) => p.id === "explabs" && !providerCoolingDown(p.id),
+    ) ?? null
+  );
 }
 
 function secondaryCompat(): CompatProvider[] {
-  return orderedCompat().filter((p) => p.id !== "explabs");
+  const active = orderedCompat().filter(
+    (p) => p.id !== "explabs" && !providerCoolingDown(p.id),
+  );
+  const cooled = orderedCompat().filter(
+    (p) => p.id !== "explabs" && providerCoolingDown(p.id),
+  );
+  return [...active, ...cooled];
 }
 
 async function tryCompatGenerate(
@@ -108,7 +134,7 @@ async function tryCompatGenerate(
   for (const provider of providers) {
     try {
       console.warn(`ai: trying ${describe(provider)}`);
-      return await compatGenerate({
+      const result = await compatGenerate({
         provider,
         turns: opts.turns,
         system: opts.system,
@@ -116,8 +142,11 @@ async function tryCompatGenerate(
         maxOutputTokens: opts.maxOutputTokens,
         onUsage: opts.onUsage,
       });
+      noteProviderSuccess(provider.id);
+      return result;
     } catch (e) {
       const reason = errText(e);
+      noteProviderFailure(provider.id);
       attempts.push({ label: describe(provider), reason });
       console.warn(`ai: ${describe(provider)} failed —`, reason);
       if (!shouldFallOver(reason)) throw e;
@@ -152,7 +181,7 @@ export async function generateText(
   if (gpt && !opts.extraParts?.length) {
     try {
       console.warn(`ai: primary ${describe(gpt)}`);
-      return await compatGenerate({
+      const result = await compatGenerate({
         provider: gpt,
         turns: opts.turns,
         system: opts.system,
@@ -160,8 +189,11 @@ export async function generateText(
         maxOutputTokens,
         onUsage: opts.onUsage,
       });
+      noteProviderSuccess(gpt.id);
+      return result;
     } catch (e) {
       const reason = errText(e);
+      noteProviderFailure(gpt.id);
       attempts.push({ label: describe(gpt), reason });
       console.warn(`ai: ${describe(gpt)} failed —`, reason);
       if (!shouldFallOver(reason)) throw e;
@@ -233,7 +265,7 @@ export async function streamText(
   if (selectedCompat) {
     try {
       console.warn(`ai: user selected ${describe(selectedCompat)}`);
-      return await compatStream({
+      const result = await compatStream({
         provider: selectedCompat,
         turns: opts.turns,
         system: opts.systemWithoutSearch ?? opts.system,
@@ -241,8 +273,11 @@ export async function streamText(
         maxOutputTokens,
         onUsage: opts.onUsage,
       });
+      noteProviderSuccess(selectedCompat.id);
+      return result;
     } catch (e) {
       const reason = errText(e);
+      noteProviderFailure(selectedCompat.id);
       attempts.push({ label: describe(selectedCompat), reason });
       console.warn(`ai: selected ${describe(selectedCompat)} failed —`, reason);
       if (!shouldFallOver(reason)) throw e;
@@ -255,7 +290,7 @@ export async function streamText(
   if (preferred === "auto" && gpt && !tryGrounding) {
     try {
       console.warn(`ai: stream primary ${describe(gpt)}`);
-      return await compatStream({
+      const result = await compatStream({
         provider: gpt,
         turns: opts.turns,
         system: opts.system,
@@ -263,8 +298,11 @@ export async function streamText(
         maxOutputTokens,
         onUsage: opts.onUsage,
       });
+      noteProviderSuccess(gpt.id);
+      return result;
     } catch (e) {
       const reason = errText(e);
+      noteProviderFailure(gpt.id);
       attempts.push({ label: describe(gpt), reason });
       console.warn(`ai: ${describe(gpt)} stream failed —`, reason);
       if (!shouldFallOver(reason)) throw e;
@@ -322,16 +360,20 @@ export async function streamText(
     }
 
     // After Gemini fails, always walk every remaining compat provider.
-    const remaining = orderedCompat().filter((p) => {
+    const remainingBase = orderedCompat().filter((p) => {
       if (selectedCompat && p.id === selectedCompat.id) return false;
       if (preferred === "auto" && gpt && p.id === gpt.id) return false;
       return true;
     });
+    const remaining = [
+      ...remainingBase.filter((p) => !providerCoolingDown(p.id)),
+      ...remainingBase.filter((p) => providerCoolingDown(p.id)),
+    ];
 
     for (const provider of remaining) {
       try {
         console.warn(`ai: stream via ${describe(provider)}`);
-        return await compatStream({
+        const result = await compatStream({
           provider,
           turns: opts.turns,
           system: opts.systemWithoutSearch ?? opts.system,
@@ -339,8 +381,11 @@ export async function streamText(
           maxOutputTokens,
           onUsage: opts.onUsage,
         });
+        noteProviderSuccess(provider.id);
+        return result;
       } catch (e) {
         const reason = errText(e);
+        noteProviderFailure(provider.id);
         attempts.push({ label: describe(provider), reason });
         console.warn(`ai: ${describe(provider)} stream failed —`, reason);
         if (!shouldFallOver(reason)) throw e;
