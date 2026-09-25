@@ -12,6 +12,10 @@ import {
   type ProjectVerification,
 } from "@/lib/project-agent-runtime";
 import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
+import {
+  inferFencedProjectEdit,
+  normalizeGeneratedProjectContent,
+} from "@/lib/project-file-normalize";
 
 export interface Turn {
   id: number;
@@ -75,11 +79,25 @@ function parseProjectEdits(text: string) {
   const files: { path: string; content: string }[] = [];
   const re = /<<<FILE:\s*(.+?)\s*>>>\s*\n([\s\S]*?)<<<END>>>/g;
   let match: RegExpExecArray | null;
+
   while ((match = re.exec(text))) {
     const path = match[1].trim().replace(/^\/+/, "");
     if (!path || path.includes("..")) continue;
-    files.push({ path, content: match[2].replace(/\s+$/, "") + "\n" });
+    files.push({
+      path,
+      content: normalizeGeneratedProjectContent(path, match[2]),
+    });
   }
+
+  // Models occasionally ignore the project-file protocol and answer with one
+  // normal Markdown code block ("save this as index.html"). Recover that
+  // common case so a valid project never becomes a page that literally shows
+  // ```html.
+  if (!files.length) {
+    const fallback = inferFencedProjectEdit(text);
+    if (fallback && !fallback.path.includes("..")) files.push(fallback);
+  }
+
   return files;
 }
 
@@ -104,7 +122,7 @@ function cleanProjectReply(text: string, changed: number) {
   if (run) parts.push("Terminal: " + run);
   if (localhost) parts.push("Preview: " + localhost);
   else if (changed) {
-    parts.push("Preview: open Browser Workspace, or run npm install && npm run dev → http://localhost:5173");
+    parts.push("Preview: Browser Workspace has the runnable project. Real localhost is available only in Trove Desktop.");
   }
   if (parts.length) return parts.join("\n\n");
   return changed ? "Updated " + changed + " project file" + (changed === 1 ? "" : "s") + "." : text;
@@ -429,11 +447,7 @@ export function useChatThread({
               "\n\n" +
               verificationSummary(verification);
 
-            window.dispatchEvent(
-              new CustomEvent("trove:project-changed", {
-                detail: { local: true, name: localProject.name },
-              }),
-            );
+            // verifyProjectWorkspace already synced these files into the runtime.
           } catch (applyError) {
             finalReply =
               cleanProjectReply(fullReply, 0) +
@@ -501,11 +515,7 @@ export function useChatThread({
             window.dispatchEvent(
               new Event("trove:shell-meta-refresh"),
             );
-            window.dispatchEvent(
-              new CustomEvent("trove:project-changed", {
-                detail: { projectId },
-              }),
-            );
+            // verifyProjectWorkspace already synced these files into the runtime.
           } catch (applyError) {
             finalReply =
               cleanProjectReply(fullReply, 0) +
