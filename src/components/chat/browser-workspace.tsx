@@ -15,7 +15,11 @@ import {
   FiZap,
 } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
-import type { LocalProjectFile } from "@/lib/local-project";
+import {
+  runLocalProjectTask,
+  startLocalDevServer,
+  type LocalProjectFile,
+} from "@/lib/local-project";
 
 type WorkspaceStatus = "idle" | "syncing" | "ready" | "error";
 type WorkspaceTab = "preview" | "files" | "console";
@@ -29,6 +33,7 @@ type LocalRuntimeProject = {
   name: string;
   scope: string;
   files: LocalProjectFile[];
+  native?: boolean;
 };
 
 export function BrowserWorkspace({
@@ -89,35 +94,66 @@ export function BrowserWorkspace({
     append(`workspace: syncing ${name}…`);
 
     try {
-      const res = await fetch("/api/browser-workspace/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          localProject
-            ? {
-                localScope: localProject.scope,
-                files: localProject.files,
-              }
-            : { projectId },
-        ),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error(data?.error || "Could not start Browser Workspace.");
-      }
-      if (!mounted.current || generation !== syncGeneration.current) return;
+      if (localProject?.native) {
+        append("workspace: starting local dev server on your device…");
+        const data = await startLocalDevServer(localProject.scope);
+        if (!mounted.current || generation !== syncGeneration.current) return;
 
-      setUrl(String(data?.url || ""));
-      setFiles(Array.isArray(data?.files) ? data.files : []);
-      setTerminalEnabled(Boolean(data?.terminalEnabled));
-      setStatus("ready");
-      append(
-        data?.reused
-          ? "workspace: reconnected to existing runtime"
-          : "workspace: isolated runtime ready",
-      );
-      if (data?.packageChanged) {
-        append("workspace: dependencies installed or updated");
+        if (!data.running || !data.url) {
+          throw new Error(
+            data.stderr || "Local dev automation was not started.",
+          );
+        }
+
+        setUrl(data.url);
+        setFiles(
+          localProject.files.map((file) => ({
+            path: file.path,
+            bytes: new Blob([file.content]).size,
+          })),
+        );
+        setTerminalEnabled(false);
+        setStatus("ready");
+        append(
+          data.reused
+            ? "workspace: local dev server already running"
+            : "workspace: local dev server started automatically",
+        );
+        if (data.installed) append("workspace: dependencies installed");
+        if (data.command) append("$ " + data.command);
+        if (data.stdout) append(data.stdout);
+        if (data.stderr) append(data.stderr);
+      } else {
+        const res = await fetch("/api/browser-workspace/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            localProject
+              ? {
+                  localScope: localProject.scope,
+                  files: localProject.files,
+                }
+              : { projectId },
+          ),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || "Could not start Browser Workspace.");
+        }
+        if (!mounted.current || generation !== syncGeneration.current) return;
+
+        setUrl(String(data?.url || ""));
+        setFiles(Array.isArray(data?.files) ? data.files : []);
+        setTerminalEnabled(Boolean(data?.terminalEnabled));
+        setStatus("ready");
+        append(
+          data?.reused
+            ? "workspace: reconnected to existing runtime"
+            : "workspace: isolated runtime ready",
+        );
+        if (data?.packageChanged) {
+          append("workspace: dependencies installed or updated");
+        }
       }
     } catch (cause) {
       if (!mounted.current || generation !== syncGeneration.current) return;
@@ -142,25 +178,45 @@ export function BrowserWorkspace({
       append(`$ ${opts.action ? `[${opts.action}]` : opts.command}`);
 
       try {
-        const res = await fetch("/api/browser-workspace/exec", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            projectId: projectId || undefined,
-            localScope: localProject?.scope || undefined,
-            ...opts,
-          }),
-        });
-        const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || "Workspace command failed.");
+        if (localProject?.native) {
+          if (!opts.action) {
+            throw new Error(
+              "Custom shell commands are not exposed to the web UI for local folders.",
+            );
+          }
+          const data = await runLocalProjectTask(localProject.scope, opts.action);
+          if (data?.stdout) append(String(data.stdout));
+          if (data?.stderr) append(String(data.stderr));
+          if (data?.cancelled) {
+            append("– local task cancelled");
+          } else {
+            append(
+              Number(data?.code || 0) === 0
+                ? "✓ command finished successfully"
+                : `✗ command exited with code ${Number(data?.code || 1)}`,
+            );
+          }
+        } else {
+          const res = await fetch("/api/browser-workspace/exec", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              projectId: projectId || undefined,
+              localScope: localProject?.scope || undefined,
+              ...opts,
+            }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error(data?.error || "Workspace command failed.");
 
-        if (data?.stdout) append(String(data.stdout));
-        if (data?.stderr) append(String(data.stderr));
-        append(
-          Number(data?.exitCode || 0) === 0
-            ? "✓ command finished successfully"
-            : `✗ command exited with code ${Number(data?.exitCode || 1)}`,
-        );
+          if (data?.stdout) append(String(data.stdout));
+          if (data?.stderr) append(String(data.stderr));
+          append(
+            Number(data?.exitCode || 0) === 0
+              ? "✓ command finished successfully"
+              : `✗ command exited with code ${Number(data?.exitCode || 1)}`,
+          );
+        }
       } catch (cause) {
         append(
           `✗ ${cause instanceof Error ? cause.message : "Workspace command failed."}`,
@@ -182,6 +238,24 @@ export function BrowserWorkspace({
     try {
       for (const action of ["typecheck", "lint", "test", "build"] as const) {
         append(`$ [${action}]`);
+
+        if (localProject?.native) {
+          const data = await runLocalProjectTask(localProject.scope, action);
+          if (data?.cancelled) {
+            append(`– ${action} cancelled`);
+            continue;
+          }
+          if (data?.stdout) append(String(data.stdout));
+          if (data?.stderr) append(String(data.stderr));
+          if (Number(data?.code || 0) !== 0) {
+            throw new Error(
+              `${action} exited with code ${Number(data?.code || 1)}.`,
+            );
+          }
+          append(`✓ ${action} passed`);
+          continue;
+        }
+
         const res = await fetch("/api/browser-workspace/exec", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -249,7 +323,9 @@ export function BrowserWorkspace({
     status === "syncing"
       ? "Starting runtime…"
       : status === "ready"
-        ? "Browser workspace ready"
+        ? localProject?.native
+          ? "Local dev server running"
+          : "Browser workspace ready"
         : status === "error"
           ? "Workspace needs attention"
           : "Browser workspace";
@@ -299,7 +375,7 @@ export function BrowserWorkspace({
         {status === "ready" ? (
           <span className="hidden items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.1em] text-emerald-600 sm:inline-flex dark:text-emerald-300">
             <FiCheck size={10} />
-            Live
+            {localProject?.native ? "Local" : "Live"}
           </span>
         ) : null}
 
