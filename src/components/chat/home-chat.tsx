@@ -47,10 +47,7 @@ export function HomeChat({
   const [activity, setActivity] = useState<Recent[]>(initialActivity);
   const [projects, setProjects] = useState<ChatProjectOption[]>(initialProjects);
   const [projectId, setProjectId] = useState<string | null>(
-    initialProjectId &&
-      initialProjects.some((project) => project.id === initialProjectId)
-      ? initialProjectId
-      : null,
+    initialProjectId || null,
   );
   const [localProject, setLocalProject] =
     useState<LocalProjectWorkspace | null>(null);
