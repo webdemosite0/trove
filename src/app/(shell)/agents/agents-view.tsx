@@ -108,7 +108,7 @@ export function AgentsView({
                 type="button"
                 onClick={() => setDeletingId(a.id)}
                 aria-label={`Delete ${a.name}`}
-                className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-[var(--r-chip)] text-ink-4 opacity-0 transition-opacity hover:bg-hover hover:text-critical group-hover:opacity-100"
+                className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-[var(--r-chip)] text-ink-4 opacity-100 transition-opacity active:bg-hover active:text-critical sm:h-7 sm:w-7 sm:opacity-0 sm:hover:bg-hover sm:hover:text-critical sm:group-hover:opacity-100"
               >
                 <Ico icon={FiTrash2} motion="shake" size={13} />
               </button>
