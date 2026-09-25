@@ -170,7 +170,14 @@ export function ProjectPicker({
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-[150] cursor-default bg-transparent"
           />
-          <div className="absolute bottom-[calc(100%+8px)] left-0 z-[160] w-[min(330px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-line-strong bg-raised/98 shadow-[0_22px_70px_rgba(0,0,0,.2)] backdrop-blur-xl">
+          <div
+            className={cn(
+              "z-[160] overflow-hidden border border-line-strong bg-raised/98 shadow-[0_22px_70px_rgba(0,0,0,.2)] backdrop-blur-xl",
+              compact
+                ? "fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] max-h-[72dvh] rounded-[24px]"
+                : "absolute bottom-[calc(100%+8px)] left-0 w-[min(330px,calc(100vw-24px))] rounded-2xl",
+            )}
+          >
             <div className="border-b border-line px-3.5 py-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-violet-500 dark:text-violet-300">
                 Project workspace
@@ -180,7 +187,7 @@ export function ProjectPicker({
               </p>
             </div>
 
-            <div className="max-h-[260px] overflow-y-auto p-1.5">
+            <div className={cn("overflow-y-auto p-1.5", compact ? "max-h-[42dvh]" : "max-h-[260px]")}>
               <button
                 type="button"
                 onClick={() => {
