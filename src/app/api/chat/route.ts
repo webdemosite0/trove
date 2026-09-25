@@ -79,7 +79,7 @@ function localProjectSystemContext(
     `Readable files supplied from the user's selected device folder: ${localProject.files.length}.`,
     "The user explicitly selected this folder on their device. Treat these files as the live project.",
     blocks.length ? blocks.join("\n\n") : "No readable text/code files were supplied yet.",
-    "Write changes with <<<FILE:path>>> complete contents <<<END>>> when the product supports saving.",
+    "When the user asks for code changes, emit <<<FILE:path>>> complete contents <<<END>>> blocks. Trove will save those blocks back to the selected device project after generation.",
   ].join("\n\n");
 }
 
