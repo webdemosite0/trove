@@ -116,7 +116,11 @@ export function HomeChat({
       mode,
       projectId,
       localProject: localProject
-        ? { name: localProject.name, files: localProject.files }
+        ? {
+            name: localProject.name,
+            scope: localProject.scope,
+            files: localProject.files,
+          }
         : null,
       onApplyLocalFiles: applyLocalFiles,
     });
