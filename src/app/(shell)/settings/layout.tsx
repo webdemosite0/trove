@@ -10,8 +10,8 @@ export default function SettingsLayout({
       <SettingsSidebar />
 
       <main className="min-w-0 flex-1">
-        <div className="nx-in mx-auto w-full max-w-[1040px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-          <div className="relative mb-7 overflow-hidden rounded-[26px] border border-line-strong bg-raised/82 px-5 py-5 shadow-[var(--sh-1)] sm:px-6">
+        <div className="nx-in mx-auto w-full max-w-[1040px] px-4 pb-8 pt-4 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <div className="relative mb-7 hidden overflow-hidden rounded-[26px] border border-line-strong bg-raised/82 px-5 py-5 shadow-[var(--sh-1)] sm:px-6 lg:block">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0"
