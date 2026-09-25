@@ -11,6 +11,7 @@ import {
   syncE2BProject,
 } from "@/lib/e2b-runtime";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
+import { normalizeGeneratedProjectContent } from "@/lib/project-file-normalize";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,17 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
+
+  // Older AI turns could accidentally persist complete files wrapped in
+  // Markdown fences. Repair that representation for the runtime so the
+  // preview executes HTML/JS instead of rendering literal ```html text.
+  files = files.map((file) => ({
+    ...file,
+    content: normalizeGeneratedProjectContent(
+      String(file.path || ""),
+      String(file.content || ""),
+    ),
+  }));
 
   fileManifest = files.slice(0, 250).map((file) => ({
     path: String(file.path || "").replace(/^\/+/, "").slice(0, 240),
