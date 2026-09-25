@@ -10,6 +10,7 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
+const net = require("net");
 const { spawn } = require("child_process");
 
 const APP_URL = process.env.TROVE_APP_URL || "https://troveai.site";
@@ -19,6 +20,8 @@ const MAX_TOTAL_BYTES = 4_000_000;
 const MAX_FILE_BYTES = 350_000;
 const MAX_WRITE_BYTES = 700_000;
 const scopes = new Map();
+const devServers = new Map();
+const approvedDevScopes = new Set();
 
 const SKIP_DIRS = new Set([
   ".git",
@@ -317,6 +320,380 @@ function runProcess(command, args, cwd, timeoutMs = 300_000) {
   });
 }
 
+
+function packageManagerFor(root, pkg) {
+  const declared = String((pkg && pkg.packageManager) || "").split("@")[0].trim();
+  if (["npm", "pnpm", "yarn", "bun"].includes(declared)) return declared;
+  if (fs.existsSync(path.join(root, "pnpm-lock.yaml"))) return "pnpm";
+  if (fs.existsSync(path.join(root, "yarn.lock"))) return "yarn";
+  if (
+    fs.existsSync(path.join(root, "bun.lockb")) ||
+    fs.existsSync(path.join(root, "bun.lock"))
+  ) {
+    return "bun";
+  }
+  return "npm";
+}
+
+function packageCommand(manager) {
+  if (process.platform !== "win32") return manager;
+  return manager === "bun" ? "bun.exe" : manager + ".cmd";
+}
+
+async function dependencyFingerprint(root) {
+  const names = [
+    "package.json",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lock",
+    "bun.lockb",
+  ];
+  const hash = crypto.createHash("sha256");
+  for (const name of names) {
+    const value = await fsp.readFile(path.join(root, name)).catch(() => null);
+    if (!value) continue;
+    hash.update(name);
+    hash.update(value);
+  }
+  return hash.digest("hex");
+}
+
+function findFreePort(start) {
+  return new Promise((resolve, reject) => {
+    const tryPort = (port) => {
+      const server = net.createServer();
+      server.unref();
+      server.once("error", () => {
+        if (port >= start + 100) {
+          reject(new Error("Could not find a free localhost port."));
+          return;
+        }
+        tryPort(port + 1);
+      });
+      server.listen(port, "127.0.0.1", () => {
+        server.close(() => resolve(port));
+      });
+    };
+    tryPort(start);
+  });
+}
+
+function portReachable(port) {
+  return new Promise((resolve) => {
+    const socket = net.createConnection(
+      { host: "127.0.0.1", port, timeout: 500 },
+      () => {
+        socket.destroy();
+        resolve(true);
+      },
+    );
+    const fail = () => {
+      socket.destroy();
+      resolve(false);
+    };
+    socket.once("error", fail);
+    socket.once("timeout", fail);
+  });
+}
+
+function devPublicState(state) {
+  if (!state) return null;
+  return {
+    url: state.url || "",
+    port: Number(state.port || 0),
+    reused: Boolean(state.reused),
+    installed: Boolean(state.installed),
+    command: state.command || "",
+    stdout: state.stdout || "",
+    stderr: state.stderr || "",
+    running: Boolean(state.running),
+  };
+}
+
+async function stopDevServer(scope) {
+  const key = String(scope || "");
+  const state = devServers.get(key);
+  if (!state) return { stopped: false };
+
+  state.running = false;
+  if (state.child && state.child.pid) {
+    try {
+      if (process.platform === "win32") {
+        const killer = spawn(
+          "taskkill",
+          ["/pid", String(state.child.pid), "/T", "/F"],
+          { windowsHide: true, shell: false },
+        );
+        await new Promise((resolve) => killer.once("close", resolve));
+      } else {
+        process.kill(-state.child.pid, "SIGTERM");
+      }
+    } catch {
+      try {
+        state.child.kill();
+      } catch {
+        // The process already exited.
+      }
+    }
+  }
+
+  devServers.delete(key);
+  return { stopped: true };
+}
+
+async function approveDevAutomation(window, scope, root) {
+  if (approvedDevScopes.has(scope)) return true;
+
+  const approval = await dialog.showMessageBox(window, {
+    type: "question",
+    buttons: ["Allow & start", "Cancel"],
+    defaultId: 0,
+    cancelId: 1,
+    title: "Start this project automatically?",
+    message:
+      "Allow Trove to run the dev environment for " +
+      path.basename(root) +
+      "?",
+    detail:
+      "For this open-folder session, Trove may install package dependencies when needed and start or restart the project dev script after AI edits. Project scripts execute code from this folder.",
+  });
+
+  if (approval.response !== 0) return false;
+  approvedDevScopes.add(scope);
+  return true;
+}
+
+async function installProjectDependencies(root, manager) {
+  const executable = packageCommand(manager);
+  const args =
+    manager === "npm"
+      ? ["install", "--no-audit", "--no-fund"]
+      : manager === "pnpm"
+        ? ["install", "--no-frozen-lockfile"]
+        : ["install"];
+  return runProcess(executable, args, root, 300_000);
+}
+
+function devSpec(manager, scriptName, scriptBody, port) {
+  const lower = String(scriptBody || "").toLowerCase();
+  let extra = [];
+
+  if (/\bvite\b/.test(lower)) {
+    extra = ["--host", "127.0.0.1", "--port", String(port), "--strictPort"];
+  } else if (/\bnext(?:\.js)?\b/.test(lower)) {
+    extra = ["--hostname", "127.0.0.1", "--port", String(port)];
+  } else if (/\bastro\b/.test(lower)) {
+    extra = ["--host", "127.0.0.1", "--port", String(port)];
+  }
+
+  if (manager === "npm" || manager === "pnpm") {
+    return {
+      command: packageCommand(manager),
+      args: ["run", scriptName].concat(extra.length ? ["--"].concat(extra) : []),
+    };
+  }
+  if (manager === "yarn") {
+    return { command: packageCommand(manager), args: [scriptName].concat(extra) };
+  }
+  return {
+    command: packageCommand(manager),
+    args: ["run", scriptName].concat(extra.length ? ["--"].concat(extra) : []),
+  };
+}
+
+async function waitForDevReady(state, preferredPort, timeoutMs) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (!state.running) {
+      throw new Error(
+        (state.stderr || state.stdout || "The dev server exited before it became ready.")
+          .trim()
+          .slice(-4000),
+      );
+    }
+
+    const combined = String(state.stdout || "") + "\n" + String(state.stderr || "");
+    const matches = Array.from(
+      combined.matchAll(
+        /https?:\/\/(?:localhost|127\.0\.0\.1):(\d{2,5})(?:\/[^\s]*)?/gi,
+      ),
+    );
+    const discovered = matches.length
+      ? Number(matches[matches.length - 1][1])
+      : preferredPort;
+
+    if (discovered && (await portReachable(discovered))) {
+      return discovered;
+    }
+    if (preferredPort && discovered !== preferredPort) {
+      if (await portReachable(preferredPort)) return preferredPort;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  throw new Error(
+    "Dev server did not become ready within " +
+      Math.round(timeoutMs / 1000) +
+      " seconds." +
+      (state.stderr ? "\n" + state.stderr.slice(-3000) : ""),
+  );
+}
+
+async function startDevServer(window, scope) {
+  const key = String(scope || "");
+  const root = scopeRoot(key);
+  const packageRaw = await fsp
+    .readFile(path.join(root, "package.json"), "utf8")
+    .catch(() => "");
+
+  if (!packageRaw) {
+    throw new Error(
+      "This folder has no package.json yet. Ask Trove to create a runnable app first.",
+    );
+  }
+
+  let pkg;
+  try {
+    pkg = JSON.parse(packageRaw);
+  } catch {
+    throw new Error("package.json is not valid JSON.");
+  }
+
+  const scripts = pkg && typeof pkg.scripts === "object" ? pkg.scripts : {};
+  const scriptName =
+    typeof scripts.dev === "string"
+      ? "dev"
+      : typeof scripts.start === "string"
+        ? "start"
+        : "";
+
+  if (!scriptName) {
+    throw new Error(
+      'This project has no "dev" or "start" script. Ask Trove to add one.',
+    );
+  }
+
+  const approved = await approveDevAutomation(window, key, root);
+  if (!approved) {
+    return {
+      url: "",
+      port: 0,
+      reused: false,
+      installed: false,
+      command: "",
+      stdout: "",
+      stderr: "Local dev automation was not approved.",
+      running: false,
+    };
+  }
+
+  const fingerprint = await dependencyFingerprint(root);
+  const existing = devServers.get(key);
+  if (
+    existing &&
+    existing.running &&
+    existing.dependencyFingerprint === fingerprint
+  ) {
+    existing.reused = true;
+    return devPublicState(existing);
+  }
+  if (existing) await stopDevServer(key);
+
+  const manager = packageManagerFor(root, pkg);
+  const nodeModules = await fsp
+    .stat(path.join(root, "node_modules"))
+    .then((stat) => stat.isDirectory())
+    .catch(() => false);
+
+  let installed = false;
+  let installOutput = "";
+  if (!nodeModules) {
+    const install = await installProjectDependencies(root, manager);
+    installOutput =
+      (String(install.stdout || "") + "\n" + String(install.stderr || "")).trim();
+    if (Number(install.code || 0) !== 0) {
+      throw new Error(
+        "Dependency install failed.\n" + installOutput.slice(-4000),
+      );
+    }
+    installed = true;
+  }
+
+  const scriptBody = String(scripts[scriptName] || "");
+  const preferred =
+    /\bvite\b/i.test(scriptBody)
+      ? 5173
+      : /\bastro\b/i.test(scriptBody)
+        ? 4321
+        : 3000;
+  const port = await findFreePort(preferred);
+  const spec = devSpec(manager, scriptName, scriptBody, port);
+
+  const child = spawn(spec.command, spec.args, {
+    cwd: root,
+    shell: false,
+    windowsHide: true,
+    detached: process.platform !== "win32",
+    env: {
+      ...process.env,
+      CI: "",
+      BROWSER: "none",
+      HOST: "127.0.0.1",
+      PORT: String(port),
+      FORCE_COLOR: "0",
+    },
+  });
+
+  const state = {
+    child,
+    running: true,
+    url: "",
+    port,
+    reused: false,
+    installed,
+    command: [spec.command].concat(spec.args).join(" "),
+    stdout: installOutput ? "Dependency install:\n" + installOutput + "\n" : "",
+    stderr: "",
+    dependencyFingerprint: fingerprint,
+  };
+  devServers.set(key, state);
+
+  child.stdout.on("data", (chunk) => {
+    state.stdout = (state.stdout + chunk.toString()).slice(-120_000);
+  });
+  child.stderr.on("data", (chunk) => {
+    state.stderr = (state.stderr + chunk.toString()).slice(-120_000);
+  });
+  child.once("error", (error) => {
+    state.stderr = (state.stderr + "\n" + error.message).slice(-120_000);
+    state.running = false;
+  });
+  child.once("close", (code) => {
+    state.running = false;
+    if (Number(code || 0) !== 0) {
+      state.stderr = (
+        state.stderr +
+        "\nDev process exited with code " +
+        Number(code || 0) +
+        "."
+      ).slice(-120_000);
+    }
+  });
+
+  try {
+    const readyPort = await waitForDevReady(state, port, 45_000);
+    state.port = readyPort;
+    state.url = "http://127.0.0.1:" + readyPort;
+    return devPublicState(state);
+  } catch (error) {
+    await stopDevServer(key);
+    throw error;
+  }
+}
+
 async function runTask(window, root, task) {
   const allowed = new Set(["install", "build", "test", "lint", "typecheck"]);
   if (!allowed.has(task)) throw new Error("That local task is not allowed.");
@@ -429,9 +806,32 @@ app.whenReady().then(() => {
     return runTask(win, scopeRoot(scope), task);
   });
 
+  ipcMain.handle("trove:project:start-dev", async (event, scope) => {
+    assertTrusted(event);
+    return startDevServer(win, scope);
+  });
+
+  ipcMain.handle("trove:project:stop-dev", async (event, scope) => {
+    assertTrusted(event);
+    scopeRoot(scope);
+    return stopDevServer(scope);
+  });
+
+  ipcMain.handle("trove:project:dev-status", async (event, scope) => {
+    assertTrusted(event);
+    scopeRoot(scope);
+    return devPublicState(devServers.get(String(scope || "")));
+  });
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on("before-quit", () => {
+  for (const scope of [...devServers.keys()]) {
+    void stopDevServer(scope);
+  }
 });
 
 app.on("window-all-closed", () => {
