@@ -178,7 +178,14 @@ export function MobileShell({
         </button>
       </header>
 
-      <main className="mobile-shell-main min-h-0 flex-1 overflow-hidden">{children}</main>
+      <main
+        className={cn(
+          "mobile-shell-main min-h-0 flex-1",
+          isChat ? "overflow-hidden" : "overflow-y-auto overscroll-contain",
+        )}
+      >
+        {children}
+      </main>
 
       <Drawer open={open} onClose={() => setOpen(false)}>
         <div className="nx-mobile-drawer flex h-full flex-col bg-rail">
