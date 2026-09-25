@@ -3,9 +3,7 @@
 import Link from "next/link";
 import {
   FiArrowLeft,
-  FiGrid,
   FiSettings,
-  FiUsers,
 } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
@@ -34,55 +32,7 @@ export function SettingsSidebar() {
           </Link>
         </div>
 
-        <div className="px-4 pb-2 pt-5">
-          <div className="relative overflow-hidden rounded-[22px] border border-violet-400/20 bg-gradient-to-br from-violet-500/14 via-fuchsia-500/[0.08] to-sky-500/12 px-4 py-4 shadow-[var(--sh-1)]">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-8 -top-8 size-28 rounded-full bg-fuchsia-400/18 blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-10 -left-8 size-28 rounded-full bg-sky-400/12 blur-3xl"
-            />
-            <div className="relative">
-              <div className="flex items-start gap-3">
-                <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-raised/80 text-violet-600 shadow-[var(--sh-1)] ring-1 ring-violet-400/20 dark:text-violet-300">
-                  <FiSettings size={17} />
-                </span>
-                <div>
-                  <p className="text-[10.5px] font-bold uppercase tracking-[0.15em] text-violet-600 dark:text-violet-300">
-                    Trove control center
-                  </p>
-                  <p className="mt-1 text-[14px] font-semibold tracking-[-0.02em] text-ink">
-                    Settings
-                  </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-ink-4">
-                    Account, company context, AI behavior, billing, and workspace controls.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link
-                  href="/team"
-                  className="flex items-center gap-2 rounded-xl border border-line bg-raised/70 px-2.5 py-2 text-[10.5px] font-medium text-ink-3 transition hover:border-line-strong hover:bg-hover hover:text-ink"
-                >
-                  <FiUsers size={12} className="text-violet-500 dark:text-violet-300" />
-                  Team
-                </Link>
-                <Link
-                  href="/integrations"
-                  className="flex items-center gap-2 rounded-xl border border-line bg-raised/70 px-2.5 py-2 text-[10.5px] font-medium text-ink-3 transition hover:border-line-strong hover:bg-hover hover:text-ink"
-                >
-                  <FiGrid size={12} className="text-sky-500 dark:text-sky-300" />
-                  Apps
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-3 scrollbar-none">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-5 scrollbar-none">
           <SettingsNav />
         </div>
 

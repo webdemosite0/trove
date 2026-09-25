@@ -21,10 +21,7 @@ export default function SettingsLayout({
               }}
             />
             <div className="relative">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">
-                Control center
-              </p>
-              <h1 className="mt-1.5 text-[clamp(1.55rem,1.2rem+1vw,2rem)] font-semibold tracking-[-0.03em] text-ink">
+              <h1 className="text-[clamp(1.55rem,1.2rem+1vw,2rem)] font-semibold tracking-[-0.03em] text-ink">
                 Settings
               </h1>
               <p className="mt-1.5 max-w-[58ch] text-[13.5px] leading-relaxed text-ink-3">
