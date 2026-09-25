@@ -389,9 +389,9 @@ export function Composer({
           )}
         >
           {disabled ? (
-            <Ico icon={FiLoader} motion="spin" size={compact ? 14 : 16} live />
+            <Ico icon={FiLoader} motion="spin" size={compact ? 14 : 16} live className={ready ? "text-white" : undefined} />
           ) : (
-            <Ico icon={FiArrowUp} motion="launch" size={compact ? 15 : 19} />
+            <Ico icon={FiArrowUp} motion="launch" size={compact ? 15 : 19} className={ready ? "text-white" : undefined} />
           )}
         </button>
       </div>
