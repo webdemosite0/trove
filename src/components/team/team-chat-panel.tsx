@@ -292,6 +292,7 @@ export function TeamChatPanel({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dockOpen, setDockOpen] = useState(variant === "full");
   const [unread, setUnread] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const mobileScroller = useRef<HTMLDivElement>(null);
@@ -382,7 +383,19 @@ export function TeamChatPanel({
   );
 
   useEffect(() => {
-    if (!initialState) void load(false);
+    if (variant === "dock") {
+      try {
+        setDockOpen(localStorage.getItem("trove:team-chat-open") === "1");
+      } catch {
+        setDockOpen(false);
+      }
+    }
+
+    if (initialState) return;
+    // Team chat is secondary to the main AI chat. Give first paint/input a
+    // head start instead of competing with it for network + database time.
+    const timer = window.setTimeout(() => void load(false), 500);
+    return () => window.clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -392,7 +405,9 @@ export function TeamChatPanel({
 
   useEffect(() => {
     if (!available) return;
-    const timer = window.setInterval(() => void load(true), 3000);
+    if (variant === "dock" && !dockOpen && !mobileOpen) return;
+
+    const timer = window.setInterval(() => void load(true), 10_000);
     const onVisible = () => {
       if (document.visibilityState === "visible") void load(true);
     };
@@ -401,7 +416,7 @@ export function TeamChatPanel({
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [available, load]);
+  }, [available, dockOpen, load, mobileOpen, variant]);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -493,30 +508,65 @@ export function TeamChatPanel({
 
   return (
     <>
-      <aside className={cn(
-        "hidden h-[calc(100dvh-3.5rem)] w-[340px] shrink-0 border-l border-line bg-raised/78 xl:block 2xl:w-[370px]",
-        className,
-      )}>
-        <ChatSurface
-          compact
-          team={state.team}
-          currentUserId={state.currentUserId}
-          messages={state.messages}
-          text={text}
-          setText={setText}
-          sending={sending}
-          error={error}
-          send={send}
-          scroller={scroller}
-          onScroll={onScroll}
-        />
-      </aside>
+      {dockOpen ? (
+        <aside
+          className={cn(
+            "hidden h-full min-h-0 w-[340px] shrink-0 border-l border-line bg-raised/78 xl:block 2xl:w-[370px]",
+            className,
+          )}
+        >
+          <ChatSurface
+            compact
+            team={state.team}
+            currentUserId={state.currentUserId}
+            messages={state.messages}
+            text={text}
+            setText={setText}
+            sending={sending}
+            error={error}
+            send={send}
+            scroller={scroller}
+            onScroll={onScroll}
+            close={() => {
+              setDockOpen(false);
+              try {
+                localStorage.setItem("trove:team-chat-open", "0");
+              } catch {}
+            }}
+          />
+        </aside>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setDockOpen(true);
+            setUnread(0);
+            try {
+              localStorage.setItem("trove:team-chat-open", "1");
+            } catch {}
+            void load(true);
+          }}
+          className="fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-2xl border border-violet-400/20 bg-raised/95 px-3.5 py-2.5 text-[12px] font-semibold text-ink shadow-[var(--elev)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-violet-400/40 xl:flex"
+          aria-label="Open Team chat"
+        >
+          <span className="grid size-7 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 via-fuchsia-500/15 to-sky-500/15 text-violet-500 dark:text-violet-300">
+            <FiUsers size={14} />
+          </span>
+          Team chat
+          {unread ? (
+            <span className="grid min-w-5 place-items-center rounded-full bg-critical px-1 text-[9px] font-bold leading-5 text-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          ) : null}
+        </button>
+      )}
 
       <button
         type="button"
         onClick={() => {
           setMobileOpen(true);
           setUnread(0);
+          void load(true);
         }}
         className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-40 grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
         aria-label="Open Team chat"
