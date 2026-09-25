@@ -330,6 +330,25 @@ export async function batch(
   );
 }
 
+/**
+ * Executes a mixed read/write batch in one libSQL request and returns rows for
+ * each statement. This is useful on latency-sensitive paths where two
+ * sequential Turso calls cost much more than the SQL itself.
+ */
+export async function batchRows(
+  statements: { sql: string; args?: Args }[],
+): Promise<Row[][]> {
+  if (!statements.length) return [];
+  const c = await connect();
+  const results = await c.batch(
+    statements.map((s) => ({ sql: s.sql, args: s.args ?? [] })),
+    "write",
+  );
+  return results.map((result) =>
+    result.rows.map((row) => plain(row)),
+  );
+}
+
 export function uid(prefix: string) {
   return `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
 }
