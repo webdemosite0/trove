@@ -1,10 +1,8 @@
 import { HomeChat } from "@/components/chat/home-chat";
 import { MobileChat } from "@/components/mobile/chat";
-import { listAllRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
-import { listUserProjects } from "@/lib/projects";
 import { TeamChatPanel } from "@/components/team/team-chat-panel";
 
 export const metadata = { title: "Chat" };
@@ -16,17 +14,15 @@ export default async function HomePage({
 }) {
   const { c, q } = await searchParams;
   const userPromise = currentUser();
-  const [saved, user, activity, mobile, projects] = await Promise.all([
+  const [saved, user, mobile] = await Promise.all([
     c ? loadConversation(c) : Promise.resolve(null),
     userPromise,
-    listAllRecents(12),
     isMobile(),
-    listUserProjects(40),
   ]);
 
   const props = {
     name: user?.name?.split(" ")[0] ?? "there",
-    activity,
+    activity: [],
     restored: saved
       ? { id: saved.id, title: saved.title, messages: saved.messages }
       : null,
@@ -39,7 +35,7 @@ export default async function HomePage({
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         {mobile ? (
-          <MobileChat key={key} {...props} projects={projects} />
+          <MobileChat key={key} {...props} projects={[]} />
         ) : (
           <HomeChat key={key} {...props} />
         )}
