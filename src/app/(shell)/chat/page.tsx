@@ -5,6 +5,7 @@ import { loadConversation } from "@/lib/conversations";
 import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
 import { listUserProjects } from "@/lib/projects";
+import { TeamChatPanel } from "@/components/team/team-chat-panel";
 
 export const metadata = { title: "Chat" };
 
@@ -33,9 +34,16 @@ export default async function HomePage({
 
   const key = saved?.id ?? "new";
 
-  return mobile ? (
-    <MobileChat key={key} {...props} projects={projects} />
-  ) : (
-    <HomeChat key={key} {...props} />
+  return (
+    <div className="flex min-h-0 w-full">
+      <div className="min-w-0 flex-1">
+        {mobile ? (
+          <MobileChat key={key} {...props} projects={projects} />
+        ) : (
+          <HomeChat key={key} {...props} />
+        )}
+      </div>
+      <TeamChatPanel variant="dock" />
+    </div>
   );
 }
