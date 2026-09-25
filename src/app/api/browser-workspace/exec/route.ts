@@ -16,10 +16,14 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const ACTIONS = {
-  build: "npm run build --if-present",
-  lint: "npm run lint --if-present",
+  build:
+    "if node -e \"const p=require('./package.json');process.exit(p.scripts&&p.scripts.build?0:1)\" >/dev/null 2>&1; then npm run build; else echo 'TROVE_SKIPPED:build'; fi",
+  lint:
+    "if node -e \"const p=require('./package.json');process.exit(p.scripts&&p.scripts.lint?0:1)\" >/dev/null 2>&1; then npm run lint; else echo 'TROVE_SKIPPED:lint'; fi",
+  test:
+    "if node -e \"const p=require('./package.json');process.exit(p.scripts&&p.scripts.test?0:1)\" >/dev/null 2>&1; then npm run test; else echo 'TROVE_SKIPPED:test'; fi",
   typecheck:
-    "if [ -x ./node_modules/.bin/tsc ]; then ./node_modules/.bin/tsc --noEmit; else echo 'TypeScript is not installed in this project.'; fi",
+    "if node -e \"const p=require('./package.json');process.exit(p.scripts&&p.scripts.typecheck?0:1)\" >/dev/null 2>&1; then npm run typecheck; elif [ -x ./node_modules/.bin/tsc ]; then ./node_modules/.bin/tsc --noEmit; else echo 'TROVE_SKIPPED:typecheck'; fi",
 } as const;
 
 function safeLocalScope(raw: unknown) {
@@ -104,12 +108,21 @@ export async function POST(req: Request) {
   try {
     const sandbox = await connectExistingSandbox(sandboxId);
     const result = await runE2BCommand(sandbox, command);
+    const rawStdout = String(result.stdout || "");
+    const rawStderr = String(result.stderr || "");
+    const skipped = /TROVE_SKIPPED:/.test(rawStdout + rawStderr);
+    const clean = (value: string) =>
+      value
+        .replace(/^.*TROVE_SKIPPED:[a-z-]+.*$/gim, "")
+        .trim();
+
     return NextResponse.json({
       ok: true,
       action,
       command,
-      stdout: String(result.stdout || "").slice(-120_000),
-      stderr: String(result.stderr || "").slice(-120_000),
+      skipped,
+      stdout: clean(rawStdout).slice(-120_000),
+      stderr: clean(rawStderr).slice(-120_000),
       exitCode: Number(result.exitCode ?? 0),
     });
   } catch {
