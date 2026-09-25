@@ -5,7 +5,6 @@ import {
   deleteProject,
   listUserProjects,
   loadProject,
-  purgeLegacyDefaultProjects,
   saveProject,
 } from "@/lib/projects";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -16,7 +15,6 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await currentUser();
   if (!user) return Response.json({ projects: [] }, { status: 401 });
-  await purgeLegacyDefaultProjects().catch(() => 0);
   const projects = await listUserProjects(40);
   return Response.json(
     { projects },
