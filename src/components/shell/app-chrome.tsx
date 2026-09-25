@@ -92,10 +92,22 @@ export function AppChrome({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div
+      className={
+        isChat
+          ? "flex h-dvh min-h-0 overflow-hidden"
+          : "flex min-h-screen"
+      }
+    >
       <CommandPalette recents={shellMeta.recents} />
       <Sidebar user={user} balance={shellMeta.balance} />
-      <main className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+      <main
+        className={
+          isChat
+            ? "relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+            : "relative flex min-h-0 min-w-0 flex-1 flex-col"
+        }
+      >
         <AuthReferralAnnouncement />
         <TopBar
           initial={user?.name?.slice(0, 1)}
