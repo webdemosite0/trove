@@ -33,7 +33,7 @@ function projectSystemContext(project: Awaited<ReturnType<typeof loadProject>>) 
   });
 
   let used = 0;
-  const MAX_TOTAL = 72_000;
+  const MAX_TOTAL = 48_000;
   const blocks: string[] = [];
 
   for (const file of preferred.slice(0, 24)) {
@@ -61,7 +61,7 @@ function localProjectSystemContext(
   if (!localProject) return "";
 
   let used = 0;
-  const MAX_TOTAL = 72_000;
+  const MAX_TOTAL = 48_000;
   const blocks: string[] = [];
 
   for (const file of localProject.files.slice(0, 80)) {
@@ -90,6 +90,29 @@ function needsWebSearch(text: string): boolean {
   return /\b(search|browse|look up|find online|on the web|internet|source this|cite sources|latest|current|today|tonight|this week|this month|recent news|breaking|live score|weather|stock price|market price|exchange rate|opening hours|release date|just announced|newly released)\b/i.test(
     t,
   );
+}
+
+function compactConversation(turns: Turn[]) {
+  const MAX_TURNS = 18;
+  const MAX_CHARS = 42_000;
+  const recent = turns.slice(-MAX_TURNS);
+  const kept: Turn[] = [];
+  let used = 0;
+
+  for (let index = recent.length - 1; index >= 0; index -= 1) {
+    const turn = recent[index];
+    const text = String(turn.text || "");
+    const remaining = MAX_CHARS - used;
+    if (remaining <= 0) break;
+    const clipped =
+      text.length <= remaining
+        ? text
+        : text.slice(Math.max(0, text.length - remaining));
+    kept.unshift({ ...turn, text: clipped });
+    used += clipped.length;
+  }
+
+  return kept;
 }
 
 function isSimpleTurn(turns: Turn[]): boolean {
@@ -236,6 +259,7 @@ async function handle(req: NextRequest) {
   });
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
+  const modelTurns = compactConversation(turns);
   const connectorContext = await buildChatConnectorContext(lastUser);
   const projectContext =
     localProjectSystemContext(localProject) || projectSystemContext(project);
@@ -273,7 +297,7 @@ async function handle(req: NextRequest) {
 
     const stream = await streamText({
       onUsage: (u) => account && spend(account.userId, "chat", u.totalTokens),
-      turns,
+      turns: modelTurns,
       system: promptFor(wantSearch),
       systemWithoutSearch: promptFor(false),
       temperature: simple ? 0.4 : temperatureFor(mode),
