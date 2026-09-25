@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { FailureNote } from "@/components/ui/failure-note";
 import { Composer } from "@/components/chat/composer";
@@ -12,12 +12,24 @@ import { useChatThread } from "@/hooks/use-chat-thread";
 import { ContinuePanel } from "@/components/home/recent-panels";
 import type { Recent } from "@/lib/recents";
 import { ConnectToolsCard } from "@/components/chat/connect-tools-card";
+import {
+  ProjectPicker,
+  type ChatProjectOption,
+} from "@/components/chat/project-picker";
+import { BrowserWorkspace } from "@/components/chat/browser-workspace";
+import {
+  writeLocalProjectFiles,
+  type LocalProjectFile,
+  type LocalProjectWorkspace,
+} from "@/lib/local-project";
 
 export function HomeChat({
   restored = null,
   name = "there",
   activity: initialActivity = [],
   draft: initialDraft = "",
+  projects: initialProjects = [],
+  initialProjectId = null,
 }: {
   restored?: {
     id: string;
@@ -27,42 +39,125 @@ export function HomeChat({
   name?: string;
   activity?: Recent[];
   draft?: string;
+  projects?: ChatProjectOption[];
+  initialProjectId?: string | null;
 }) {
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = useState(initialDraft);
   const [activity, setActivity] = useState<Recent[]>(initialActivity);
+  const [projects, setProjects] = useState<ChatProjectOption[]>(initialProjects);
+  const [projectId, setProjectId] = useState<string | null>(
+    initialProjectId &&
+      initialProjects.some((project) => project.id === initialProjectId)
+      ? initialProjectId
+      : null,
+  );
+  const [localProject, setLocalProject] =
+    useState<LocalProjectWorkspace | null>(null);
 
   useEffect(() => {
-    if (initialActivity.length) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      void fetch("/api/shell-meta?only=recents", {
-        cache: "no-store",
-        signal: controller.signal,
-      })
-        .then(async (res) =>
-          res.ok ? ((await res.json()) as { recents?: Recent[] }) : null,
-        )
-        .then((data) => {
-          if (data?.recents) setActivity(data.recents);
+      if (!initialActivity.length) {
+        void fetch("/api/shell-meta?only=recents", {
+          cache: "no-store",
+          signal: controller.signal,
         })
-        .catch(() => null);
-    }, 700);
+          .then(async (res) =>
+            res.ok ? ((await res.json()) as { recents?: Recent[] }) : null,
+          )
+          .then((data) => {
+            if (data?.recents) setActivity(data.recents);
+          })
+          .catch(() => null);
+      }
+
+      if (!initialProjects.length) {
+        void fetch("/api/projects", {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+          .then(async (res) =>
+            res.ok
+              ? ((await res.json()) as { projects?: ChatProjectOption[] })
+              : null,
+          )
+          .then((data) => {
+            if (data?.projects) setProjects(data.projects);
+          })
+          .catch(() => null);
+      }
+    }, 500);
 
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [initialActivity]);
+  }, [initialActivity.length, initialProjects.length]);
 
-  const { turns, busy, error, send, retry, regenerate, clear, bottom } = useChatThread({
-    restored,
-    mode,
-  });
+  const applyLocalFiles = useCallback(
+    async (changes: LocalProjectFile[]) => {
+      if (!localProject) return;
+      await writeLocalProjectFiles(
+        localProject.handle,
+        changes,
+        localProject.scope,
+      );
+      setLocalProject((current) => {
+        if (!current) return current;
+        const merged = new Map(current.files.map((file) => [file.path, file]));
+        for (const file of changes) merged.set(file.path, file);
+        return { ...current, files: [...merged.values()] };
+      });
+    },
+    [localProject],
+  );
+
+  const { turns, busy, error, send, retry, regenerate, clear, bottom } =
+    useChatThread({
+      restored,
+      mode,
+      projectId,
+      localProject: localProject
+        ? { name: localProject.name, files: localProject.files }
+        : null,
+      onApplyLocalFiles: applyLocalFiles,
+    });
+
+  const projectControl = (
+    <ProjectPicker
+      projects={projects}
+      value={projectId}
+      onChange={(id) => {
+        setProjectId(id);
+        if (id) setLocalProject(null);
+      }}
+      onCreated={(project) => {
+        setLocalProject(null);
+        setProjects((items) => [
+          project,
+          ...items.filter((item) => item.id !== project.id),
+        ]);
+      }}
+      localName={localProject?.name || ""}
+      onLocalFolder={(workspace) => {
+        setProjectId(null);
+        setLocalProject(workspace);
+      }}
+      onClearLocal={() => setLocalProject(null)}
+      disabled={busy}
+    />
+  );
+
+  const activeProjectName =
+    localProject?.name ||
+    projects.find((project) => project.id === projectId)?.name ||
+    null;
 
   const composerProps = {
     mode,
     onModeChange: setMode,
+    leading: projectControl,
   };
 
   if (turns.length === 0) {
@@ -98,6 +193,25 @@ export function HomeChat({
               />
             </div>
 
+            {projectId || localProject ? (
+              <div className="mt-4 text-left">
+                <BrowserWorkspace
+                  projectId={projectId}
+                  projectName={activeProjectName}
+                  localProject={
+                    localProject
+                      ? {
+                          name: localProject.name,
+                          scope: localProject.scope,
+                          files: localProject.files,
+                        }
+                      : null
+                  }
+                  compact
+                />
+              </div>
+            ) : null}
+
             <StarterCards className="mt-6" onPick={setDraft} />
             <div className="mt-6">
               <ConnectToolsCard />
@@ -122,8 +236,9 @@ export function HomeChat({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <header className="z-20 shrink-0 border-b border-line bg-canvas/85 px-5 backdrop-blur-md lg:px-8">
-        <div className="mx-auto flex h-14 max-w-[760px] items-center justify-between gap-3">
-          <p className="truncate text-[14px] text-ink">{turns[0]?.text.slice(0, 64)}</p>
+        <div className="mx-auto flex h-14 max-w-[760px] items-center gap-3">
+          <p className="min-w-0 flex-1 truncate text-[14px] text-ink">{turns[0]?.text.slice(0, 64)}</p>
+          {projectControl}
           <button
             type="button"
             onClick={clear}
@@ -134,8 +249,24 @@ export function HomeChat({
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-7 [scrollbar-gutter:stable] lg:px-8">
-        <div className="mx-auto max-w-[760px] space-y-7">
+      <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-5 [scrollbar-gutter:stable] lg:px-8">
+        <div className="mx-auto max-w-[760px] space-y-5">
+          {projectId || localProject ? (
+            <BrowserWorkspace
+              projectId={projectId}
+              projectName={activeProjectName}
+              localProject={
+                localProject
+                  ? {
+                      name: localProject.name,
+                      scope: localProject.scope,
+                      files: localProject.files,
+                    }
+                  : null
+              }
+              compact
+            />
+          ) : null}
           {turns.map((t, i) => (
             <Message
               key={t.id}
