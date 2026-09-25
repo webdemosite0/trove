@@ -11,8 +11,8 @@ const API = "https://generativelanguage.googleapis.com/v1beta/models";
  */
 const MODELS = [
   process.env.GEMINI_MODEL,
-  "gemini-3.5-flash",
   "gemini-flash-latest",
+  "gemini-3.5-flash",
   "gemini-3.7-flash",
   "gemini-3.6-flash",
   "gemini-3.1-flash-lite",
@@ -27,7 +27,8 @@ const FALLBACK_STATUS = new Set([404, 429, 503]);
 // list doubled worst-case latency before Trove could fall back to another
 // provider, which made provider trouble look like an app hang.
 const PASSES = 1;
-const REQUEST_TIMEOUT_MS = 45_000;
+const REQUEST_TIMEOUT_MS = 30_000;
+const STREAM_CONNECT_TIMEOUT_MS = 9_000;
 const PASS_DELAY_MS = 1200;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -141,8 +142,15 @@ async function callWithFallback(path: string, body: unknown, onAttempt?: OnAttem
    */
   const exhausted = new Set<string>();
 
+  const models =
+    path.startsWith("streamGenerateContent") ? MODELS.slice(0, 4) : MODELS;
+  const timeoutMs =
+    path.startsWith("streamGenerateContent")
+      ? STREAM_CONNECT_TIMEOUT_MS
+      : REQUEST_TIMEOUT_MS;
+
   for (let pass = 0; pass < PASSES; pass++) {
-    for (const model of MODELS) {
+    for (const model of models) {
       if (exhausted.has(model)) continue;
 
       let res: Response;
@@ -153,7 +161,7 @@ async function callWithFallback(path: string, body: unknown, onAttempt?: OnAttem
           body: JSON.stringify(body),
           // A congested model can hang for a minute. Cut it loose and try the
           // next one rather than making the whole request wait.
-          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+          signal: AbortSignal.timeout(timeoutMs),
         });
       } catch {
         console.warn(`gemini: ${model} timed out (pass ${pass + 1})`);
@@ -186,7 +194,7 @@ async function callWithFallback(path: string, body: unknown, onAttempt?: OnAttem
 
     // Nothing left to try. Waiting out the inter-pass delay to skip every
     // model again would just add a second to an answer that is not coming.
-    if (exhausted.size >= MODELS.length) break;
+    if (exhausted.size >= models.length) break;
 
     if (pass < PASSES - 1) await sleep(PASS_DELAY_MS * (pass + 1));
   }
