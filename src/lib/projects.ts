@@ -157,7 +157,7 @@ export async function saveProject(opts: {
 
   await ensureProjectColumns();
 
-  const name = String(opts.name || "Untitled site").slice(0, 120);
+  const name = String(opts.name || "Untitled project").slice(0, 120);
   const prompt = String(opts.prompt || "").slice(0, 4000);
   const target = String(opts.target || "react").slice(0, 40);
   const status = String(opts.status || "ready").slice(0, 40);
@@ -226,27 +226,32 @@ export async function saveProject(opts: {
   }
 
   id = uid("proj");
-  await run(
-    `INSERT INTO builder_projects
-      (id, user_id, name, prompt, target, status, files_json, preview_html, conversation_id, build_plan_json, completed_steps_json, messages_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      user.id,
-      name,
-      prompt,
-      target,
-      status,
-      filesJson,
-      previewHtml,
-      opts.conversationId || null,
-      buildPlanJson,
-      completedStepsJson,
-      messagesJson,
-      now,
-      now,
-    ],
-  );
+  try {
+    await run(
+      `INSERT INTO builder_projects
+        (id, user_id, name, prompt, target, status, files_json, preview_html, conversation_id, build_plan_json, completed_steps_json, messages_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        user.id,
+        name,
+        prompt,
+        target,
+        status,
+        filesJson,
+        previewHtml,
+        opts.conversationId || null,
+        buildPlanJson,
+        completedStepsJson,
+        messagesJson,
+        now,
+        now,
+      ],
+    );
+  } catch (e) {
+    console.error("saveProject insert failed", e);
+    return null;
+  }
 
   await syncRecentSite(user.id, id, name, now);
   return { id };
@@ -274,7 +279,7 @@ export async function loadProject(id: string): Promise<SavedProject | null> {
 
   return {
     id: String(row.id),
-    name: String(row.name || "Untitled"),
+    name: String(row.name || "Untitled project"),
     prompt: String(row.prompt || ""),
     target: String(row.target || "react"),
     status: String(row.status || "draft"),
@@ -318,7 +323,7 @@ export async function listUserProjects(limit = 24): Promise<
 
   return (rows || []).map((r) => ({
     id: String(r.id),
-    name: String(r.name || "Untitled"),
+    name: String(r.name || "Untitled project"),
     prompt: String(r.prompt || ""),
     status: String(r.status || "draft"),
     updatedAt: Number(r.updated_at) || 0,
@@ -337,4 +342,51 @@ export async function deleteProject(id: string): Promise<boolean> {
   await run(`DELETE FROM team_projects WHERE project_id = ?`, [id]).catch(() => null);
   await run(`DELETE FROM builder_projects WHERE id = ? AND user_id = ?`, [id, user.id]);
   return true;
+}
+
+/** Remove empty legacy website-builder shells so Projects starts clean. */
+export async function purgeLegacyDefaultProjects(): Promise<number> {
+  const user = await currentUser();
+  if (!user) return 0;
+  await ensureProjectColumns();
+  const rows = await all(
+    `SELECT id FROM builder_projects
+      WHERE user_id = ?
+        AND (
+          LOWER(TRIM(name)) IN ('untitled site', 'untitled', 'untitled project')
+          OR name IS NULL
+          OR TRIM(name) = ''
+        )
+        AND (prompt IS NULL OR TRIM(prompt) = '')
+        AND (
+          files_json IS NULL
+          OR files_json = ''
+          OR files_json = '[]'
+        )`,
+    [user.id],
+  ).catch(() => []);
+  let n = 0;
+  for (const row of rows || []) {
+    const id = String(row.id || "");
+    if (!id) continue;
+    if (await deleteProject(id)) n += 1;
+  }
+  return n;
+}
+
+export async function deleteAllUserProjects(): Promise<number> {
+  const user = await currentUser();
+  if (!user) return 0;
+  await ensureProjectColumns();
+  const rows = await all(
+    `SELECT id FROM builder_projects WHERE user_id = ?`,
+    [user.id],
+  ).catch(() => []);
+  let n = 0;
+  for (const row of rows || []) {
+    const id = String(row.id || "");
+    if (!id) continue;
+    if (await deleteProject(id)) n += 1;
+  }
+  return n;
 }
