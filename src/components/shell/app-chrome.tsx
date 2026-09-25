@@ -44,7 +44,7 @@ export function AppChrome({
       controller?.abort();
       controller = new AbortController();
 
-      void fetch("/api/shell-meta", {
+      void fetch(isChat ? "/api/shell-meta?only=balance" : "/api/shell-meta", {
         cache: "no-store",
         signal: controller.signal,
       })
@@ -73,7 +73,7 @@ export function AppChrome({
       controller?.abort();
       window.removeEventListener("trove:shell-meta-refresh", load);
     };
-  }, [isTeam]);
+  }, [isChat, isTeam]);
 
   if (isTeam) {
     return <>{children}</>;
