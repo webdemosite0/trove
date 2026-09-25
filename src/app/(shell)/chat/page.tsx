@@ -10,9 +10,9 @@ export const metadata = { title: "Chat" };
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string; q?: string }>;
+  searchParams: Promise<{ c?: string; q?: string; p?: string }>;
 }) {
-  const { c, q } = await searchParams;
+  const { c, q, p } = await searchParams;
   const userPromise = currentUser();
   const [saved, user, mobile] = await Promise.all([
     c ? loadConversation(c) : Promise.resolve(null),
@@ -27,6 +27,7 @@ export default async function HomePage({
       ? { id: saved.id, title: saved.title, messages: saved.messages }
       : null,
     draft: typeof q === "string" ? q.slice(0, 2000) : "",
+    initialProjectId: typeof p === "string" ? p.slice(0, 128) : null,
   };
 
   const key = saved?.id ?? "new";
