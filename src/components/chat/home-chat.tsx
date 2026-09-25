@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FailureNote } from "@/components/ui/failure-note";
 import { Composer } from "@/components/chat/composer";
@@ -16,7 +16,7 @@ import { ConnectToolsCard } from "@/components/chat/connect-tools-card";
 export function HomeChat({
   restored = null,
   name = "there",
-  activity = [],
+  activity: initialActivity = [],
   draft: initialDraft = "",
 }: {
   restored?: {
@@ -30,6 +30,30 @@ export function HomeChat({
 }) {
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = useState(initialDraft);
+  const [activity, setActivity] = useState<Recent[]>(initialActivity);
+
+  useEffect(() => {
+    if (initialActivity.length) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void fetch("/api/shell-meta?only=recents", {
+        cache: "no-store",
+        signal: controller.signal,
+      })
+        .then(async (res) =>
+          res.ok ? ((await res.json()) as { recents?: Recent[] }) : null,
+        )
+        .then((data) => {
+          if (data?.recents) setActivity(data.recents);
+        })
+        .catch(() => null);
+    }, 700);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [initialActivity]);
 
   const { turns, busy, error, send, retry, regenerate, clear, bottom } = useChatThread({
     restored,
