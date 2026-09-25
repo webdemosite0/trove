@@ -152,7 +152,13 @@ export function ProjectPicker({
         )}
         aria-expanded={open}
         aria-haspopup="menu"
-        title={active ? `Project: ${active.name}` : "Choose project"}
+        title={
+          localActive
+            ? `Local project: ${localName}`
+            : active
+              ? `Project: ${active.name}`
+              : "Choose project"
+        }
       >
         <FiFolder size={compact ? 13 : 14} className={active || localActive ? "text-violet-500 dark:text-violet-300" : "text-ink-4"} />
         <span className="max-w-[120px] truncate font-medium">
