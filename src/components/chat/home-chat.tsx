@@ -43,7 +43,7 @@ export function HomeChat({
 
   if (turns.length === 0) {
     return (
-      <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
+      <div className="relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain">
         <div className="relative z-[1] flex flex-1 flex-col items-center px-5 pb-14 pt-[6vh] lg:pt-[9vh]">
           <div className="w-full max-w-[720px] text-center">
             <div className="nx-rise">
@@ -96,7 +96,7 @@ export function HomeChat({
   }
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <header className="z-20 shrink-0 border-b border-line bg-canvas/85 px-5 backdrop-blur-md lg:px-8">
         <div className="mx-auto flex h-14 max-w-[760px] items-center justify-between gap-3">
           <p className="truncate text-[14px] text-ink">{turns[0]?.text.slice(0, 64)}</p>
@@ -110,7 +110,7 @@ export function HomeChat({
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-7 lg:px-8">
+      <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-7 [scrollbar-gutter:stable] lg:px-8">
         <div className="mx-auto max-w-[760px] space-y-7">
           {turns.map((t, i) => (
             <Message
