@@ -37,7 +37,7 @@ const PROMPTS = [
 export function MobileChat({
   restored = null,
   name = "there",
-  activity = [],
+  activity: initialActivity = [],
   draft: initialDraft = "",
   projects: initialProjects = [],
 }: {
@@ -53,10 +53,51 @@ export function MobileChat({
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = React.useState(initialDraft);
+  const [activity, setActivity] = React.useState<Recent[]>(initialActivity);
   const [projects, setProjects] = React.useState<ChatProjectOption[]>(initialProjects);
   const [projectId, setProjectId] = React.useState<string | null>(null);
   const [localProject, setLocalProject] =
     React.useState<LocalProjectWorkspace | null>(null);
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      if (!initialActivity.length) {
+        void fetch("/api/shell-meta?only=recents", {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+          .then(async (res) =>
+            res.ok ? ((await res.json()) as { recents?: Recent[] }) : null,
+          )
+          .then((data) => {
+            if (data?.recents) setActivity(data.recents);
+          })
+          .catch(() => null);
+      }
+
+      if (!initialProjects.length) {
+        void fetch("/api/projects", {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+          .then(async (res) =>
+            res.ok
+              ? ((await res.json()) as { projects?: ChatProjectOption[] })
+              : null,
+          )
+          .then((data) => {
+            if (data?.projects) setProjects(data.projects);
+          })
+          .catch(() => null);
+      }
+    }, 650);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [initialActivity.length, initialProjects.length]);
 
   const applyLocalFiles = React.useCallback(
     async (changes: LocalProjectFile[]) => {
