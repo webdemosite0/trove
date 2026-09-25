@@ -296,6 +296,9 @@ export function TeamChatPanel({
   const scroller = useRef<HTMLDivElement>(null);
   const mobileScroller = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
+  const messageIds = useRef(
+    new Set(initialState?.messages.map((message) => message.id) ?? []),
+  );
   const initialLoaded = useRef(Boolean(initialState));
   const latestCreatedAt = useMemo(
     () =>
@@ -341,16 +344,20 @@ export function TeamChatPanel({
         const data = (await res.json()) as TeamChatPanelState;
         setAvailable(true);
 
-        let newFromOthers = 0;
+        const newFromOthers = incremental
+          ? data.messages.filter(
+              (message) =>
+                !messageIds.current.has(message.id) &&
+                message.userId !== data.currentUserId,
+            ).length
+          : 0;
+
+        for (const message of data.messages) {
+          messageIds.current.add(message.id);
+        }
+
         setState((current) => {
           if (!current || !incremental) return data;
-          const existing = new Set(current.messages.map((message) => message.id));
-          newFromOthers = data.messages.filter(
-            (message) =>
-              !existing.has(message.id) &&
-              message.userId !== data.currentUserId,
-          ).length;
-
           return {
             ...data,
             messages: mergeMessages(current.messages, data.messages),
@@ -364,7 +371,7 @@ export function TeamChatPanel({
         if (!initialLoaded.current) {
           initialLoaded.current = true;
           scrollToBottom();
-        } else if (stickToBottom.current || mobileOpen) {
+        } else if (stickToBottom.current) {
           scrollToBottom("smooth");
         }
       } catch {
@@ -422,6 +429,7 @@ export function TeamChatPanel({
 
       setText("");
       stickToBottom.current = true;
+      messageIds.current.add(data.message.id);
       setState((current) =>
         current
           ? {
