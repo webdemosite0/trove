@@ -107,6 +107,8 @@ export function MobileShell({
   React.useEffect(() => setOpen(false), [pathname]);
 
   React.useEffect(() => {
+    if (isTeam) return;
+
     let controller: AbortController | null = null;
     const loadBalance = () => {
       controller?.abort();
@@ -125,7 +127,7 @@ export function MobileShell({
       controller?.abort();
       window.removeEventListener("trove:shell-meta-refresh", loadBalance);
     };
-  }, []);
+  }, [isTeam]);
 
   const activeItem = React.useMemo(() => {
     for (const group of GROUPS) {
@@ -137,11 +139,16 @@ export function MobileShell({
   }, [pathname]);
 
   const isChat = pathname === "/chat" || pathname.startsWith("/chat/");
+  const isTeam = pathname === "/team" || pathname.startsWith("/team/");
   const title = isChat ? "Trove" : activeItem?.label || "Trove";
   const credits =
     liveBalance && typeof liveBalance.remaining === "number"
       ? liveBalance.remaining
       : null;
+
+  if (isTeam) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="mobile-shell flex min-h-dvh flex-col bg-canvas text-ink">
