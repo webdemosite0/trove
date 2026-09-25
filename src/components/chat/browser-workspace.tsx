@@ -67,7 +67,7 @@ export function BrowserWorkspace({
     if (!localProject) return "";
     let hash = 2166136261;
     for (const file of localProject.files) {
-      const source = `${file.path}:${file.content.length};`;
+      const source = `${file.path}\u0000${file.content}\u0001`;
       for (let index = 0; index < source.length; index += 1) {
         hash ^= source.charCodeAt(index);
         hash = Math.imul(hash, 16777619);
@@ -225,7 +225,7 @@ export function BrowserWorkspace({
         setRunning("");
       }
     },
-    [append, localProject?.scope, projectId, running, status],
+    [append, localProject?.native, localProject?.scope, projectId, running, status],
   );
 
   const verify = useCallback(async () => {
@@ -284,7 +284,7 @@ export function BrowserWorkspace({
     } finally {
       setRunning("");
     }
-  }, [append, localProject?.scope, projectId, running, status]);
+  }, [append, localProject?.native, localProject?.scope, projectId, running, status]);
 
   useEffect(() => {
     mounted.current = true;
