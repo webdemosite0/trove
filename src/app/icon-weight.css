@@ -1,17 +1,39 @@
-/* Bold, dark icons app-wide */
+/* Icons inherit parent color so gradient buttons can use white glyphs. */
 .ico {
-  color: var(--color-ink) !important;
+  color: inherit;
 }
 .ico svg {
   stroke-width: 2.25;
   stroke-linecap: round;
   stroke-linejoin: round;
   color: inherit;
+  stroke: currentColor;
 }
 
-/* Sidebar rail: full-ink icons (not muted grey) */
+/* Default ink when the parent has no explicit text color */
+:where(main, .nx-sidebar, .rail-item, body) .ico {
+  color: var(--color-ink);
+}
+
+/* Gradient / explicit white parents — force bright glyphs */
+.btn-grad .ico,
+.btn-grad .ico svg,
+.text-white .ico,
+.text-white .ico svg,
+[class*="text-white"] .ico {
+  color: #ffffff !important;
+}
+
+/* Muted parents */
+.text-ink-2 .ico { color: var(--color-ink-2); }
+.text-ink-3 .ico { color: var(--color-ink-3); }
+.text-ink-4 .ico { color: var(--color-ink-4); }
+.text-critical .ico { color: var(--color-critical); }
+.text-accent .ico { color: var(--color-accent); }
+
+/* Sidebar rail: match link color (active/hover already set on the row) */
 .rail-item .ico,
 .rail-item-active.rail-item .ico,
 .rail-item:hover .ico {
-  color: var(--color-ink) !important;
+  color: inherit;
 }
