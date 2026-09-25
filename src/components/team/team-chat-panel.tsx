@@ -23,7 +23,7 @@ type TeamMeta = {
   role: "owner" | "admin" | "member";
 };
 
-type ApiState = {
+export type TeamChatPanelState = {
   team: TeamMeta;
   messages: TeamChatMessage[];
   currentUserId: string;
@@ -250,7 +250,7 @@ function ChatSurface({
             }}
             rows={1}
             placeholder="Message your team…"
-            className="max-h-28 min-h-9 flex-1 resize-none bg-transparent px-2.5 py-2 text-[12.5px] leading-[1.45] text-ink outline-none placeholder:text-ink-4"
+            className="field-sizing-content max-h-28 min-h-9 flex-1 resize-none overflow-y-auto bg-transparent px-2.5 py-2 text-[12.5px] leading-[1.45] text-ink outline-none placeholder:text-ink-4"
           />
           <button
             type="button"
@@ -278,20 +278,25 @@ function ChatSurface({
 export function TeamChatPanel({
   variant = "full",
   className,
+  initialState = null,
 }: {
   variant?: "full" | "dock";
   className?: string;
+  initialState?: TeamChatPanelState | null;
 }) {
-  const [state, setState] = useState<ApiState | null>(null);
-  const [available, setAvailable] = useState<boolean | null>(null);
+  const [state, setState] = useState<TeamChatPanelState | null>(initialState);
+  const [available, setAvailable] = useState<boolean | null>(
+    initialState ? true : null,
+  );
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
+  const mobileScroller = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
-  const initialLoaded = useRef(false);
+  const initialLoaded = useRef(Boolean(initialState));
   const latestCreatedAt = useMemo(
     () =>
       state?.messages.reduce(
@@ -301,14 +306,18 @@ export function TeamChatPanel({
     [state?.messages],
   );
 
-  const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
-    requestAnimationFrame(() => {
-      scroller.current?.scrollTo({
-        top: scroller.current.scrollHeight,
-        behavior,
+  const scrollToBottom = useCallback(
+    (behavior: ScrollBehavior = "auto") => {
+      requestAnimationFrame(() => {
+        const target = mobileOpen ? mobileScroller.current : scroller.current;
+        target?.scrollTo({
+          top: target.scrollHeight,
+          behavior,
+        });
       });
-    });
-  }, []);
+    },
+    [mobileOpen],
+  );
 
   const load = useCallback(
     async (incremental: boolean) => {
@@ -329,7 +338,7 @@ export function TeamChatPanel({
         }
         if (!res.ok) return;
 
-        const data = (await res.json()) as ApiState;
+        const data = (await res.json()) as TeamChatPanelState;
         setAvailable(true);
 
         let newFromOthers = 0;
@@ -366,7 +375,12 @@ export function TeamChatPanel({
   );
 
   useEffect(() => {
-    void load(false);
+    if (!initialState) void load(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!initialState) return;
+    scrollToBottom();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -474,7 +488,7 @@ export function TeamChatPanel({
   return (
     <>
       <aside className={cn(
-        "hidden h-[calc(100dvh-3.5rem)] w-[330px] shrink-0 border-l border-line bg-raised/70 lg:block xl:w-[360px]",
+        "hidden h-[calc(100dvh-3.5rem)] w-[340px] shrink-0 border-l border-line bg-raised/78 xl:block 2xl:w-[370px]",
         className,
       )}>
         <ChatSurface
@@ -498,7 +512,7 @@ export function TeamChatPanel({
           setMobileOpen(true);
           setUnread(0);
         }}
-        className="fixed bottom-24 right-4 z-40 grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] lg:hidden"
+        className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-40 grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
         aria-label="Open Team chat"
       >
         <FiUsers size={19} />
@@ -510,14 +524,14 @@ export function TeamChatPanel({
       </button>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-[80] bg-black/35 p-3 backdrop-blur-[2px] lg:hidden">
+        <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-[3px] xl:hidden">
           <button
             type="button"
             aria-label="Close Team chat"
             onClick={() => setMobileOpen(false)}
             className="absolute inset-0"
           />
-          <div className="absolute inset-x-3 bottom-3 top-[max(72px,env(safe-area-inset-top))] overflow-hidden rounded-[24px] border border-line-strong bg-raised shadow-2xl">
+          <div className="absolute inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] top-[max(68px,calc(env(safe-area-inset-top)+12px))] overflow-hidden rounded-[24px] border border-line-strong bg-raised shadow-2xl sm:left-auto sm:right-4 sm:w-[390px]">
             <ChatSurface
               compact
               team={state.team}
@@ -528,7 +542,7 @@ export function TeamChatPanel({
               sending={sending}
               error={error}
               send={send}
-              scroller={scroller}
+              scroller={mobileScroller}
               onScroll={onScroll}
               close={() => setMobileOpen(false)}
             />
