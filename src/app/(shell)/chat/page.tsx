@@ -6,7 +6,6 @@ import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
 import { listUserProjects } from "@/lib/projects";
 import { TeamChatPanel } from "@/components/team/team-chat-panel";
-import { teamChatStateForUser } from "@/lib/team-chat";
 
 export const metadata = { title: "Chat" };
 
@@ -17,23 +16,12 @@ export default async function HomePage({
 }) {
   const { c, q } = await searchParams;
   const userPromise = currentUser();
-  const teamChatPromise = userPromise.then(async (current) => {
-    if (!current) return null;
-    try {
-      const state = await teamChatStateForUser(current, 80);
-      return { ...state, currentUserId: current.id };
-    } catch {
-      return null;
-    }
-  });
-
-  const [saved, user, activity, mobile, projects, teamChat] = await Promise.all([
+  const [saved, user, activity, mobile, projects] = await Promise.all([
     c ? loadConversation(c) : Promise.resolve(null),
     userPromise,
     listAllRecents(12),
     isMobile(),
     listUserProjects(40),
-    teamChatPromise,
   ]);
 
   const props = {
@@ -48,7 +36,7 @@ export default async function HomePage({
   const key = saved?.id ?? "new";
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 w-full overflow-hidden">
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         {mobile ? (
           <MobileChat key={key} {...props} projects={projects} />
@@ -56,7 +44,7 @@ export default async function HomePage({
           <HomeChat key={key} {...props} />
         )}
       </div>
-      {teamChat ? <TeamChatPanel variant="dock" initialState={teamChat} /> : null}
+      <TeamChatPanel variant="dock" />
     </div>
   );
 }
