@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type RefObject,
 } from "react";
 import {
   FiArrowUp,
@@ -143,7 +144,7 @@ function ChatSurface({
   sending: boolean;
   error: string;
   send: () => void;
-  scroller: React.RefObject<HTMLDivElement | null>;
+  scroller: RefObject<HTMLDivElement | null>;
   onScroll: () => void;
   close?: () => void;
   compact?: boolean;
