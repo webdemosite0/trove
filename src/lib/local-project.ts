@@ -15,9 +15,14 @@ interface LocalFileHandle {
   }>;
 }
 
+type LocalPermissionMode = "read" | "readwrite";
+type LocalPermissionState = "granted" | "denied" | "prompt";
+
 interface LocalDirectoryHandle {
   kind: "directory";
   name: string;
+  queryPermission?(options?: { mode?: LocalPermissionMode }): Promise<LocalPermissionState>;
+  requestPermission?(options?: { mode?: LocalPermissionMode }): Promise<LocalPermissionState>;
   values(): AsyncIterableIterator<LocalFileHandle | LocalDirectoryHandle>;
   getDirectoryHandle(
     name: string,
@@ -131,6 +136,41 @@ function isSafeProjectFile(path: string) {
   return TEXT_EXTENSIONS.has(ext);
 }
 
+async function requestReadWritePermission(
+  handle: LocalDirectoryHandle,
+): Promise<void> {
+  const options = { mode: "readwrite" as const };
+
+  if (handle.queryPermission) {
+    const current = await handle.queryPermission(options);
+    if (current === "granted") return;
+  }
+
+  if (handle.requestPermission) {
+    const next = await handle.requestPermission(options);
+    if (next === "granted") return;
+    throw new Error(
+      "Trove needs read and write access to this folder. Choose the folder again and allow file changes.",
+    );
+  }
+
+  // Older Chromium builds grant picker permissions implicitly. If the
+  // permission APIs are unavailable, continue and let the first write be the
+  // compatibility check.
+}
+
+async function assertReadWritePermission(
+  handle: LocalDirectoryHandle,
+): Promise<void> {
+  if (!handle.queryPermission) return;
+  const current = await handle.queryPermission({ mode: "readwrite" });
+  if (current !== "granted") {
+    throw new Error(
+      "Folder write access expired. Open the local project again and grant read/write access before asking Trove to edit it.",
+    );
+  }
+}
+
 export function localFolderSupported() {
   return Boolean(
     desktopBridge() ||
@@ -191,14 +231,15 @@ export async function createLocalProject(
   }
 
   const picker = (window as unknown as {
-    showDirectoryPicker?: () => Promise<LocalDirectoryHandle>;
+    showDirectoryPicker?: (options?: { mode?: LocalPermissionMode }) => Promise<LocalDirectoryHandle>;
   }).showDirectoryPicker;
 
   if (!picker) {
     throw new Error("Creating local projects requires Trove Desktop, Chrome, or Edge.");
   }
 
-  const parent = await picker();
+  const parent = await picker({ mode: "readwrite" });
+  await requestReadWritePermission(parent);
   const slug = projectSlug(name);
   const handle = await parent.getDirectoryHandle(slug, { create: true });
   const safeTitle = name.replace(/[<>]/g, "");
@@ -280,14 +321,17 @@ export async function pickLocalProject(): Promise<LocalProjectWorkspace> {
   }
 
   const picker = (window as unknown as {
-    showDirectoryPicker?: () => Promise<LocalDirectoryHandle>;
+    showDirectoryPicker?: (options?: { mode?: LocalPermissionMode }) => Promise<LocalDirectoryHandle>;
   }).showDirectoryPicker;
 
   if (!picker) {
     throw new Error("Local folders require Trove Desktop, Chrome, or Edge.");
   }
 
-  const handle = await picker();
+  const handle = await picker({ mode: "readwrite" });
+  // This must happen immediately after the picker resolves. Browsers only
+  // permit requestPermission() during the user's click/selection gesture.
+  await requestReadWritePermission(handle);
   const files: LocalProjectFile[] = [];
   let totalBytes = 0;
   const MAX_FILES = 80;
@@ -352,6 +396,10 @@ export async function writeLocalProjectFiles(
   if (!handle) {
     throw new Error("This local project is no longer available. Open it again.");
   }
+
+  // Do not call requestPermission() here: this function runs after an async AI
+  // response, outside a user activation, and Chromium will reject that request.
+  await assertReadWritePermission(handle);
 
   for (const file of files) {
     const path = safePath(file.path);
