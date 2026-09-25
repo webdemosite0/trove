@@ -18,6 +18,54 @@ export interface Turn {
   imageCaption?: string;
 }
 
+function compactLocalProjectForPrompt(
+  project: { name: string; files: LocalProjectFile[] },
+  prompt: string,
+) {
+  const words = Array.from(
+    new Set(
+      prompt
+        .toLowerCase()
+        .split(/[^a-z0-9_.-]+/)
+        .filter((word) => word.length >= 3)
+        .slice(0, 20),
+    ),
+  );
+
+  const score = (file: LocalProjectFile) => {
+    const path = file.path.toLowerCase();
+    let value = 0;
+    if (
+      /(?:^|\/)(package\.json|tsconfig\.json|vite\.config\.|next\.config\.|src\/app\/(?:page|layout)|src\/main\.|src\/app\.)/.test(
+        path,
+      )
+    ) {
+      value += 8;
+    }
+    for (const word of words) {
+      if (path.includes(word)) value += 5;
+      else if (file.content.toLowerCase().includes(word)) value += 1;
+    }
+    return value;
+  };
+
+  const ranked = [...project.files].sort((a, b) => score(b) - score(a));
+  const files: LocalProjectFile[] = [];
+  let used = 0;
+  const MAX_TOTAL = 180_000;
+
+  for (const file of ranked) {
+    if (files.length >= 18 || used >= MAX_TOTAL) break;
+    const room = MAX_TOTAL - used;
+    const content = file.content.slice(0, Math.min(36_000, room));
+    if (!content) continue;
+    files.push({ path: file.path, content });
+    used += content.length;
+  }
+
+  return { name: project.name, files };
+}
+
 function parseProjectEdits(text: string) {
   const files: { path: string; content: string }[] = [];
   const re = /<<<FILE:\s*(.+?)\s*>>>\s*\n([\s\S]*?)<<<END>>>/g;
@@ -209,7 +257,7 @@ export function useChatThread({
             model: "auto",
             projectId,
             localProject: localProject
-              ? { name: localProject.name, files: localProject.files }
+              ? compactLocalProjectForPrompt(localProject, lastUser?.text || "")
               : null,
             timeZone: localTimeZone(),
             attachments: files?.map(({ name, mimeType, size, data, kind }) => ({
