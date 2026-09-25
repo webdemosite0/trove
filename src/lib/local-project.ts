@@ -42,6 +42,17 @@ export interface LocalProjectWorkspace {
   native?: boolean;
 }
 
+export interface LocalDevServerResult {
+  url: string;
+  port: number;
+  reused?: boolean;
+  installed?: boolean;
+  command?: string;
+  stdout?: string;
+  stderr?: string;
+  running?: boolean;
+}
+
 interface TroveDesktopBridge {
   kind: "electron";
   platform: string;
@@ -69,6 +80,9 @@ interface TroveDesktopBridge {
     stdout?: string;
     stderr?: string;
   }>;
+  startDev(scope: string): Promise<LocalDevServerResult>;
+  stopDev(scope: string): Promise<{ stopped: boolean }>;
+  devStatus(scope: string): Promise<LocalDevServerResult | null>;
 }
 
 function desktopBridge(): TroveDesktopBridge | null {
@@ -432,3 +446,27 @@ export async function runLocalProjectTask(
   }
   return native.runTask(scope, task);
 }
+
+export async function startLocalDevServer(scope: string) {
+  const native = desktopBridge();
+  if (!native) {
+    throw new Error(
+      "A real localhost dev server requires Trove Desktop. In a normal browser Trove runs the project in the isolated Browser Workspace instead.",
+    );
+  }
+  return native.startDev(scope);
+}
+
+export async function stopLocalDevServer(scope: string) {
+  const native = desktopBridge();
+  if (!native) return { stopped: false };
+  return native.stopDev(scope);
+}
+
+export async function localDevServerStatus(scope: string) {
+  const native = desktopBridge();
+  if (!native) return null;
+  return native.devStatus(scope);
+}
+
+
