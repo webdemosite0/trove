@@ -24,9 +24,14 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const limit = Number(url.searchParams.get("limit") || 80);
+  const since = Number(url.searchParams.get("since") || 0);
 
   try {
-    const state = await teamChatStateForUser(user, Number.isFinite(limit) ? limit : 80);
+    const state = await teamChatStateForUser(
+      user,
+      Number.isFinite(limit) ? limit : 80,
+      Number.isFinite(since) ? since : 0,
+    );
     return Response.json(
       { ...state, currentUserId: user.id },
       { headers: { "Cache-Control": "private, no-store" } },
