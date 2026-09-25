@@ -38,7 +38,7 @@ export async function verifyProjectWorkspace(
   if (!sync.ok) {
     const error = String(syncData?.error || "Browser Workspace is unavailable.");
     return {
-      available: sync.status !== 503,
+      available: false,
       ok: false,
       previewUrl: "",
       steps: [],
@@ -100,7 +100,10 @@ export async function verifyProjectWorkspace(
 
 export function verificationSummary(result: ProjectVerification) {
   if (!result.available) {
-    return "Verification skipped because the isolated Browser Workspace is unavailable.";
+    return (
+      "Verification skipped because the isolated Browser Workspace is unavailable." +
+      (result.diagnostics ? "\n" + result.diagnostics : "")
+    );
   }
   if (result.ok) {
     const ran = result.steps
