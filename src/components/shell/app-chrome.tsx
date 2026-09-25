@@ -23,6 +23,7 @@ export function AppChrome({
 }) {
   const pathname = usePathname();
   const isSettings = pathname === "/settings" || pathname.startsWith("/settings/");
+  const isTeam = pathname === "/team" || pathname.startsWith("/team/");
   const [shellMeta, setShellMeta] = useState<{
     due: number;
     recents: Recent[];
@@ -34,6 +35,8 @@ export function AppChrome({
   });
 
   useEffect(() => {
+    if (isTeam) return;
+
     let controller: AbortController | null = null;
 
     const load = () => {
@@ -69,7 +72,11 @@ export function AppChrome({
       controller?.abort();
       window.removeEventListener("trove:shell-meta-refresh", load);
     };
-  }, []);
+  }, [isTeam]);
+
+  if (isTeam) {
+    return <>{children}</>;
+  }
 
   if (isSettings) {
     return (
