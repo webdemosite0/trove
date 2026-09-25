@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 import { currentUser } from "@/lib/auth";
 import {
+  deleteAllUserProjects,
   deleteProject,
   listUserProjects,
   loadProject,
+  purgeLegacyDefaultProjects,
   saveProject,
 } from "@/lib/projects";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -14,6 +16,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await currentUser();
   if (!user) return Response.json({ projects: [] }, { status: 401 });
+  await purgeLegacyDefaultProjects().catch(() => 0);
   const projects = await listUserProjects(40);
   return Response.json(
     { projects },
@@ -45,14 +48,20 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Give the project a name." }, { status: 400 });
   }
 
-  const saved = await saveProject({
-    name,
-    prompt: String(body?.prompt || "").trim().slice(0, 4000),
-    target: "react",
-    status: String(body?.status || "draft").slice(0, 40) || "draft",
-    files: [],
-    previewHtml: null,
-  });
+  let saved: { id: string } | null = null;
+  try {
+    saved = await saveProject({
+      name,
+      prompt: String(body?.prompt || "").trim().slice(0, 4000),
+      target: "react",
+      status: String(body?.status || "draft").slice(0, 40) || "draft",
+      files: [],
+      previewHtml: null,
+    });
+  } catch (e) {
+    console.error("projects POST save failed", e);
+    return Response.json({ error: "Could not create project." }, { status: 500 });
+  }
 
   if (!saved) {
     return Response.json({ error: "Could not create project." }, { status: 500 });
@@ -87,18 +96,24 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: "Give the project a name." }, { status: 400 });
   }
 
-  const saved = await saveProject({
-    id,
-    name,
-    prompt,
-    target: existing.target || "react",
-    status,
-    files: existing.files || [],
-    previewHtml: existing.previewHtml,
-    buildPlan: existing.buildPlan,
-    completedStepIds: existing.completedStepIds,
-    messages: existing.messages,
-  });
+  let saved: { id: string } | null = null;
+  try {
+    saved = await saveProject({
+      id,
+      name,
+      prompt,
+      target: existing.target || "react",
+      status,
+      files: existing.files || [],
+      previewHtml: existing.previewHtml,
+      buildPlan: existing.buildPlan,
+      completedStepIds: existing.completedStepIds,
+      messages: existing.messages,
+    });
+  } catch (e) {
+    console.error("projects PATCH save failed", e);
+    return Response.json({ error: "Could not update project." }, { status: 500 });
+  }
 
   if (!saved) {
     return Response.json({ error: "Could not update project." }, { status: 500 });
@@ -114,6 +129,11 @@ export async function DELETE(req: NextRequest) {
   if (!user) return Response.json({ error: "Sign in required." }, { status: 401 });
 
   const body = await req.json().catch(() => null);
+  if (body?.all === true) {
+    const n = await deleteAllUserProjects();
+    return Response.json({ ok: true, deleted: n });
+  }
+
   const id = String(body?.id || "").trim();
   if (!id) return Response.json({ error: "Missing project id." }, { status: 400 });
 
