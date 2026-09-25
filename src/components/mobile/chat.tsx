@@ -316,6 +316,7 @@ export function MobileChat({
                       name: localProject.name,
                       scope: localProject.scope,
                       files: localProject.files,
+                      native: localProject.native,
                     }
                   : null
               }
