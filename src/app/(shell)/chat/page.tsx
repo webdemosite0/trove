@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
 import { listUserProjects } from "@/lib/projects";
 import { TeamChatPanel } from "@/components/team/team-chat-panel";
+import { teamChatStateForUser } from "@/lib/team-chat";
 
 export const metadata = { title: "Chat" };
 
@@ -15,12 +16,24 @@ export default async function HomePage({
   searchParams: Promise<{ c?: string; q?: string }>;
 }) {
   const { c, q } = await searchParams;
-  const [saved, user, activity, mobile, projects] = await Promise.all([
+  const userPromise = currentUser();
+  const teamChatPromise = userPromise.then(async (current) => {
+    if (!current) return null;
+    try {
+      const state = await teamChatStateForUser(current, 80);
+      return { ...state, currentUserId: current.id };
+    } catch {
+      return null;
+    }
+  });
+
+  const [saved, user, activity, mobile, projects, teamChat] = await Promise.all([
     c ? loadConversation(c) : Promise.resolve(null),
-    currentUser(),
+    userPromise,
     listAllRecents(12),
     isMobile(),
     listUserProjects(40),
+    teamChatPromise,
   ]);
 
   const props = {
@@ -43,7 +56,7 @@ export default async function HomePage({
           <HomeChat key={key} {...props} />
         )}
       </div>
-      <TeamChatPanel variant="dock" />
+      {teamChat ? <TeamChatPanel variant="dock" initialState={teamChat} /> : null}
     </div>
   );
 }
