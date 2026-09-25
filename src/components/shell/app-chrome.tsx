@@ -24,6 +24,7 @@ export function AppChrome({
   const pathname = usePathname();
   const isSettings = pathname === "/settings" || pathname.startsWith("/settings/");
   const isTeam = pathname === "/team" || pathname.startsWith("/team/");
+  const isChat = pathname === "/chat" || pathname.startsWith("/chat/");
   const [shellMeta, setShellMeta] = useState<{
     due: number;
     recents: Recent[];
@@ -94,7 +95,7 @@ export function AppChrome({
     <div className="flex min-h-screen">
       <CommandPalette recents={shellMeta.recents} />
       <Sidebar user={user} balance={shellMeta.balance} />
-      <main className="relative flex min-w-0 flex-1 flex-col">
+      <main className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <AuthReferralAnnouncement />
         <TopBar
           initial={user?.name?.slice(0, 1)}
@@ -102,7 +103,15 @@ export function AppChrome({
           balance={shellMeta.balance}
         />
         <AnnouncementBanner />
-        <div className="app-page-in min-w-0 flex-1">{children}</div>
+        <div
+          className={
+            isChat
+              ? "app-page-in min-h-0 min-w-0 flex-1 overflow-hidden"
+              : "app-page-in min-w-0 flex-1"
+          }
+        >
+          {children}
+        </div>
       </main>
     </div>
   );
