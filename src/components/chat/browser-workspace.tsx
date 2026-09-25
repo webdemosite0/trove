@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FiCheck,
   FiChevronDown,
@@ -62,19 +62,6 @@ export function BrowserWorkspace({
 
   const active = Boolean(projectId || localProject);
   const name = localProject?.name || projectName || "Project";
-
-  const localFingerprint = useMemo(() => {
-    if (!localProject) return "";
-    let hash = 2166136261;
-    for (const file of localProject.files) {
-      const source = `${file.path}\u0000${file.content}\u0001`;
-      for (let index = 0; index < source.length; index += 1) {
-        hash ^= source.charCodeAt(index);
-        hash = Math.imul(hash, 16777619);
-      }
-    }
-    return (hash >>> 0).toString(36);
-  }, [localProject]);
 
   const append = useCallback((value: string) => {
     const rows = String(value || "")
@@ -293,6 +280,11 @@ export function BrowserWorkspace({
     };
   }, []);
 
+  const syncRef = useRef(sync);
+  useEffect(() => {
+    syncRef.current = sync;
+  }, [sync]);
+
   useEffect(() => {
     if (!active) {
       setStatus("idle");
@@ -303,8 +295,25 @@ export function BrowserWorkspace({
       setExpanded(false);
       return;
     }
-    void sync();
-  }, [active, projectId, localProject?.scope, localFingerprint, sync]);
+
+    // Start once when the selected workspace changes. File edits are already
+    // synced by automated verification, so reacting to every files[] mutation
+    // here only starts the same runtime twice and can trip the refresh limit.
+    const timer = window.setTimeout(() => {
+      void syncRef.current();
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [active, projectId, localProject?.scope, localProject?.native]);
+
+  useEffect(() => {
+    if (!localProject || status !== "ready") return;
+    setFiles(
+      localProject.files.map((file) => ({
+        path: file.path,
+        bytes: new Blob([file.content]).size,
+      })),
+    );
+  }, [localProject, status]);
 
   useEffect(() => {
     const onProjectChanged = (event: Event) => {
