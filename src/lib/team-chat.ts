@@ -32,36 +32,48 @@ async function activeTeamForUser(user: User) {
 export async function teamChatStateForUser(
   user: User,
   limit = 80,
+  since = 0,
 ): Promise<TeamChatState> {
   const team = await activeTeamForUser(user);
   const capped = Math.min(120, Math.max(1, Math.floor(limit)));
 
-  const rows = await all(
-    `SELECT m.id, m.user_id, m.text, m.created_at, u.name, tm.role
-       FROM team_messages m
-       JOIN users u ON u.id = m.user_id
-       JOIN team_members tm ON tm.team_id = m.team_id AND tm.user_id = m.user_id
-      WHERE m.team_id = ?
-      ORDER BY m.created_at DESC, m.id DESC
-      LIMIT ?`,
-    [team.id, capped],
-  ).catch(() => []);
+  const incremental = Number.isFinite(since) && since > 0;
+  const rows = incremental
+    ? await all(
+        `SELECT m.id, m.user_id, m.text, m.created_at, u.name, tm.role
+           FROM team_messages m
+           JOIN users u ON u.id = m.user_id
+           JOIN team_members tm ON tm.team_id = m.team_id AND tm.user_id = m.user_id
+          WHERE m.team_id = ? AND m.created_at >= ?
+          ORDER BY m.created_at ASC, m.id ASC
+          LIMIT ?`,
+        [team.id, since, capped],
+      ).catch(() => [])
+    : await all(
+        `SELECT m.id, m.user_id, m.text, m.created_at, u.name, tm.role
+           FROM team_messages m
+           JOIN users u ON u.id = m.user_id
+           JOIN team_members tm ON tm.team_id = m.team_id AND tm.user_id = m.user_id
+          WHERE m.team_id = ?
+          ORDER BY m.created_at DESC, m.id DESC
+          LIMIT ?`,
+        [team.id, capped],
+      ).catch(() => []);
 
-  const messages = rows
-    .map((row) => ({
-      id: str(row.id),
-      userId: str(row.user_id),
-      name: str(row.name) || "Member",
-      role:
-        str(row.role) === "owner"
-          ? ("owner" as const)
-          : str(row.role) === "admin"
-            ? ("admin" as const)
-            : ("member" as const),
-      text: str(row.text),
-      createdAt: num(row.created_at),
-    }))
-    .reverse();
+  const mapped = rows.map((row) => ({
+    id: str(row.id),
+    userId: str(row.user_id),
+    name: str(row.name) || "Member",
+    role:
+      str(row.role) === "owner"
+        ? ("owner" as const)
+        : str(row.role) === "admin"
+          ? ("admin" as const)
+          : ("member" as const),
+    text: str(row.text),
+    createdAt: num(row.created_at),
+  }));
+  const messages = incremental ? mapped : mapped.reverse();
 
   return {
     team: {
