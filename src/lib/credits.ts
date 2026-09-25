@@ -1,6 +1,6 @@
 import "server-only";
 
-import { one, all, run, uid, num, str } from "@/lib/db";
+import { one, all, run, batchRows, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import {
@@ -276,7 +276,10 @@ async function resolveCreditPool(
 export async function balanceFor(
   userId: string,
   planId: string,
-  opts?: { email?: string },
+  opts?: {
+    email?: string;
+    pool?: Awaited<ReturnType<typeof resolveCreditPool>>;
+  },
 ): Promise<Balance> {
   const unlimited = isAdminEmail(opts?.email);
   const period = currentPeriod();
@@ -302,7 +305,7 @@ export async function balanceFor(
     };
   }
 
-  const pool = await resolveCreditPool(userId, planId);
+  const pool = opts?.pool ?? await resolveCreditPool(userId, planId);
   userId = pool.userId;
   planId = pool.planId;
 
@@ -310,43 +313,42 @@ export async function balanceFor(
   const now = Date.now();
   const since = now - RATE_WINDOW_MS;
 
-  // Keep the monthly grant in one upsert. Never shrink an existing grant when
-  // a plan changes mid-period; preserve the previous behavior without a
-  // separate SELECT + optional UPDATE.
-  await run(
-    `INSERT INTO credit_grants (user_id, period, plan, credits, created_at)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(user_id, period) DO UPDATE SET
-       credits = excluded.credits,
-       plan = excluded.plan
-     WHERE excluded.credits > credit_grants.credits`,
-    [userId, period, plan.id, plan.monthly, now],
-  );
-
-  // Monthly and rolling-window usage are calculated together instead of two
-  // separate aggregate queries.
-  const row = await one(
-    `SELECT
-       COALESCE((SELECT credits FROM credit_grants WHERE user_id = ? AND period = ?), ?) AS granted,
-       COALESCE(SUM(CASE WHEN period = ? THEN credits ELSE 0 END), 0) AS used,
-       COALESCE(SUM(CASE WHEN period = ? THEN tokens ELSE 0 END), 0) AS tokens,
-       COALESCE(SUM(CASE WHEN created_at >= ? THEN credits ELSE 0 END), 0) AS window_used,
-       MIN(CASE WHEN created_at >= ? THEN created_at END) AS window_oldest
-     FROM credit_spends
-     WHERE user_id = ? AND (period = ? OR created_at >= ?)`,
-    [
-      userId,
-      period,
-      plan.monthly,
-      period,
-      period,
-      since,
-      since,
-      userId,
-      period,
-      since,
-    ],
-  );
+  // Grant maintenance + usage aggregation travel to Turso together. The SQL
+  // remains ordered, but the network pays for one request instead of two.
+  const results = await batchRows([
+    {
+      sql: `INSERT INTO credit_grants (user_id, period, plan, credits, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(user_id, period) DO UPDATE SET
+              credits = excluded.credits,
+              plan = excluded.plan
+            WHERE excluded.credits > credit_grants.credits`,
+      args: [userId, period, plan.id, plan.monthly, now],
+    },
+    {
+      sql: `SELECT
+              COALESCE((SELECT credits FROM credit_grants WHERE user_id = ? AND period = ?), ?) AS granted,
+              COALESCE(SUM(CASE WHEN period = ? THEN credits ELSE 0 END), 0) AS used,
+              COALESCE(SUM(CASE WHEN period = ? THEN tokens ELSE 0 END), 0) AS tokens,
+              COALESCE(SUM(CASE WHEN created_at >= ? THEN credits ELSE 0 END), 0) AS window_used,
+              MIN(CASE WHEN created_at >= ? THEN created_at END) AS window_oldest
+            FROM credit_spends
+            WHERE user_id = ? AND (period = ? OR created_at >= ?)`,
+      args: [
+        userId,
+        period,
+        plan.monthly,
+        period,
+        period,
+        since,
+        since,
+        userId,
+        period,
+        since,
+      ],
+    },
+  ]);
+  const row = results[1]?.[0];
 
   const granted = num(row?.granted) || plan.monthly;
   const used = num(row?.used);
@@ -451,10 +453,11 @@ export async function requireCredits(): Promise<{
   const user = await currentUser();
   if (!user) return null;
 
-  const [balance, pool] = await Promise.all([
-    balanceFor(user.id, user.plan, { email: user.email }),
-    resolveCreditPool(user.id, user.plan),
-  ]);
+  const pool = await resolveCreditPool(user.id, user.plan);
+  const balance = await balanceFor(user.id, user.plan, {
+    email: user.email,
+    pool,
+  });
 
   const instructions =
     pool.userId !== user.id && pool.ownerInstructions
