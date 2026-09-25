@@ -78,15 +78,15 @@ export async function POST(req: Request) {
   }));
 
   const limit = await consumeRateLimit({
-    scope: "browser-workspace-sync",
+    scope: "browser-workspace-sync:" + scope,
     identity: user.id,
-    limit: 24,
+    limit: 60,
     windowMs: 10 * 60 * 1000,
     failClosed: true,
   });
   if (!limit.allowed) {
     return NextResponse.json(
-      { error: "Browser workspaces are being refreshed too quickly. Try again shortly." },
+      { error: "This project workspace is refreshing too quickly. Wait a moment, then retry." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
     );
   }
