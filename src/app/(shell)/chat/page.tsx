@@ -48,8 +48,8 @@ export default async function HomePage({
   const key = saved?.id ?? "new";
 
   return (
-    <div className="flex min-h-0 w-full">
-      <div className="min-w-0 flex-1">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 w-full overflow-hidden">
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         {mobile ? (
           <MobileChat key={key} {...props} projects={projects} />
         ) : (
