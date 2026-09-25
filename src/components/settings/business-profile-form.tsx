@@ -36,6 +36,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
   const [voice, setVoice] = useState(initial.voice);
   const [autoInstructions, setAutoInstructions] = useState(initial.instructions);
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [mobileView, setMobileView] = useState<"profile" | "context">("profile");
   const [error, setError] = useState("");
   const picker = useRef<HTMLInputElement>(null);
 
@@ -83,6 +84,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
       if (file) setProfileName(file.name);
       setFile(null);
       setState("success");
+      setMobileView("context");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not update the business profile.");
       setState("error");
@@ -90,9 +92,41 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
   }
 
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-[24px] border border-line-strong bg-raised shadow-[var(--elev)]">
-        <div className="relative overflow-hidden border-b border-line px-5 py-5 sm:px-6">
+    <div className="space-y-4 sm:space-y-5">
+      <div className="grid grid-cols-2 gap-1 rounded-2xl border border-line bg-sunk/75 p-1 sm:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileView("profile")}
+          className={cn(
+            "h-10 rounded-xl text-[12px] font-semibold transition",
+            mobileView === "profile"
+              ? "bg-raised text-ink shadow-[var(--sh-1)]"
+              : "text-ink-4",
+          )}
+        >
+          Business profile
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileView("context")}
+          className={cn(
+            "h-10 rounded-xl text-[12px] font-semibold transition",
+            mobileView === "context"
+              ? "bg-raised text-ink shadow-[var(--sh-1)]"
+              : "text-ink-4",
+          )}
+        >
+          AI context
+        </button>
+      </div>
+
+      <section
+        className={cn(
+          "overflow-hidden rounded-[22px] border border-line-strong bg-raised shadow-[var(--elev)] sm:rounded-[24px]",
+          mobileView !== "profile" && "hidden sm:block",
+        )}
+      >
+        <div className="relative overflow-hidden border-b border-line px-4 py-4 sm:px-6 sm:py-5">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-90"
@@ -106,17 +140,22 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
               <FiBriefcase size={20} />
             </span>
             <div>
-              <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-ink">
-                Business profile
-              </h2>
-              <p className="mt-1 max-w-[58ch] text-[13px] leading-relaxed text-ink-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-ink sm:text-[17px]">
+                  Business profile
+                </h2>
+                <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-violet-600 dark:text-violet-300">
+                  Business brain
+                </span>
+              </div>
+              <p className="mt-1 max-w-[58ch] text-[12px] leading-relaxed text-ink-4 sm:text-[13px] sm:text-ink-3">
                 Trove reads your business profile and automatically maintains a protected business context inside Custom Instructions. Saving here also marks this account as a Business account, which unlocks eligibility to own the Team plan. Your existing personal instructions stay untouched.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-5 p-5 sm:p-6">
+        <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
           <label className="block">
             <span className="mb-2 block text-[12.5px] font-semibold text-ink-2">Business name</span>
             <input
@@ -124,7 +163,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Acme Studio"
               maxLength={120}
-              className="h-12 w-full rounded-2xl border border-line-strong bg-sunk px-4 text-[14px] text-ink outline-none transition focus:border-accent focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+              className="h-[52px] w-full rounded-2xl border border-line-strong bg-sunk px-4 text-[14px] text-ink outline-none transition focus:border-accent focus:shadow-[0_0_0_4px_var(--focus-ring)]"
             />
           </label>
 
@@ -189,7 +228,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             type="button"
             onClick={() => void save()}
             disabled={state === "loading"}
-            className="btn-grad inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+            className="btn-grad inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_10px_28px_-14px_var(--btn-glow)] disabled:opacity-60 sm:w-auto sm:rounded-xl"
           >
             {state === "loading" ? (
               <Ico icon={FiLoader} motion="spin" size={15} live />
@@ -204,8 +243,13 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
       </section>
 
       {(analysis || autoInstructions) ? (
-        <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[20px] border border-line bg-raised p-5 shadow-[var(--sh-1)]">
+        <section
+          className={cn(
+            "grid gap-3 sm:gap-4 lg:grid-cols-[0.9fr_1.1fr]",
+            mobileView !== "context" && "hidden sm:grid",
+          )}
+        >
+          <div className="rounded-[20px] border border-line bg-raised p-4 shadow-[var(--sh-1)] sm:p-5">
             <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-accent">
               <FiFileText size={14} />
               Learned business
@@ -218,7 +262,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             </dl>
           </div>
 
-          <div className="rounded-[20px] border border-accent/20 bg-accent-soft/35 p-5 shadow-[var(--sh-1)]">
+          <div className="rounded-[20px] border border-violet-400/20 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/[0.06] to-sky-500/10 p-4 shadow-[var(--sh-1)] sm:p-5">
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-accent">Automatic business instructions</p>
             <p className="mt-2 text-[11.5px] leading-relaxed text-ink-4">
               Trove refreshes this block when you update the business profile. Your older/manual instructions remain separate and are preserved.
@@ -228,6 +272,23 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             </pre>
           </div>
         </section>
+      ) : mobileView === "context" ? (
+        <div className="rounded-[22px] border border-dashed border-line-strong bg-sunk/55 p-6 text-center sm:hidden">
+          <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-accent">
+            <FiBriefcase size={18} />
+          </span>
+          <p className="mt-3 text-[13px] font-semibold text-ink">No business context yet</p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
+            Add your business name and profile, then let Trove build the company context automatically.
+          </p>
+          <button
+            type="button"
+            onClick={() => setMobileView("profile")}
+            className="mt-4 rounded-full bg-raised px-4 py-2 text-[11.5px] font-semibold text-accent shadow-[var(--sh-1)]"
+          >
+            Add business profile
+          </button>
+        </div>
       ) : null}
     </div>
   );
