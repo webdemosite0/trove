@@ -269,7 +269,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
   }
 
   return (
-    <div className="ob-root relative flex min-h-dvh flex-col overflow-hidden">
+    <div className="ob-root relative flex h-dvh min-h-dvh flex-col overflow-hidden bg-canvas">
       <div className="ob-bg" aria-hidden />
       <div className="ob-orbs" aria-hidden>
         <span className="ob-orb ob-orb-a" />
@@ -277,7 +277,10 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
         <span className="ob-orb ob-orb-c" />
       </div>
 
-      <header className="relative z-10 mx-auto flex w-full max-w-lg items-center gap-3 px-5 pt-6 sm:gap-4 sm:pt-10">
+      <header
+        className="relative z-20 mx-auto flex w-full max-w-xl shrink-0 items-center gap-3 border-b border-line/45 bg-canvas/78 px-4 pb-3 backdrop-blur-2xl sm:gap-4 sm:border-b-0 sm:bg-transparent sm:px-5 sm:pb-0"
+        style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}
+      >
         <BrandLockup orbSize={28} wordSize={18} className="shrink-0" />
         <div className="min-w-0 flex-1 self-center">
           <div className="h-1.5 overflow-hidden rounded-full bg-sunk">
@@ -286,19 +289,32 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="mt-1.5 text-[11.5px] font-medium leading-none text-ink-4">
-            Step {step + 1} of {TOTAL_STEPS}
-          </p>
+          <div className="mt-1.5 flex items-center justify-between gap-3">
+            <p className="text-[10.5px] font-semibold leading-none text-ink-4">
+              {step + 1} / {TOTAL_STEPS}
+            </p>
+            <p className="truncate text-[10.5px] font-medium leading-none text-ink-4 sm:hidden">
+              {step === 2 || step === 3 ? "Business setup" : step === 7 ? "Ready" : "Personalizing"}
+            </p>
+          </div>
         </div>
         <ThemeToggle className="shrink-0" />
       </header>
 
-      <main className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col px-5 pb-10 pt-8">
-        <div key={step} className={cn("ob-panel flex flex-1 flex-col", dir === "fwd" ? "ob-in-fwd" : "ob-in-back")}>
+      <main
+        className="relative z-10 mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-3 pt-5 scrollbar-none sm:px-5 sm:pb-10 sm:pt-8"
+      >
+        <div
+          key={step}
+          className={cn(
+            "ob-panel flex min-h-full flex-col pb-4 sm:flex-1",
+            dir === "fwd" ? "ob-in-fwd" : "ob-in-back",
+          )}
+        >
           {step === 0 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Welcome to Trove</p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 What should we call you?
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] text-ink-3">
@@ -322,7 +338,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 How will you use Trove?
               </p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 Who are you?
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
@@ -397,7 +413,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 {accountType === "business" ? "Your business" : "Business context · optional"}
               </p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 {accountType === "business"
                   ? "Let Trove learn your business."
                   : "Do you also work with a business?"}
@@ -408,7 +424,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                   : "Optional. Add a company if you want Trove to learn its website, audience, and brand voice — or continue without one."}
               </p>
 
-              <div className="ob-rise-d2 mt-7 space-y-4">
+              <div className="ob-rise-d2 mt-6 space-y-4 rounded-[24px] border border-line bg-raised/72 p-4 shadow-[var(--sh-1)] sm:mt-7 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
                 <label className="block">
                   <span className="mb-2 block text-[13px] font-medium text-ink-2">Business name</span>
                   <input
@@ -454,7 +470,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                     <span>Business profile</span>
                     <span className="text-[11px] font-normal text-ink-4">Optional · up to 3 MB</span>
                   </span>
-                  <label className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-raised p-3.5 transition hover:border-accent hover:bg-hover">
+                  <label className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-violet-400/25 bg-gradient-to-br from-violet-500/[0.06] to-sky-500/[0.05] p-3.5 transition hover:border-accent hover:bg-hover">
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-sunk text-ink-2">
                       <FiFileText size={18} />
                     </span>
@@ -489,7 +505,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {step === 3 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Business intelligence</p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 {analysisState === "success" ? "Trove learned your business." : "AI is fetching your business…"}
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
@@ -571,7 +587,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {step === 4 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Your first focus</p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 What do you want to build first?
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] text-ink-3">We’ll open the right tool. You can switch anytime.</p>
@@ -610,7 +626,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {step === 5 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">About you</p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 Which best describes you?
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] text-ink-3">Helps tone examples and defaults — nothing permanent.</p>
@@ -641,7 +657,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {step === 6 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Your plan</p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 {accountType === "business"
                   ? "Team fits this setup best."
                   : accountType === "individual"
@@ -721,7 +737,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {step === 7 && (
             <>
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">Almost there</p>
-              <h1 className="ob-rise mt-2 text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] font-semibold tracking-tight text-ink">
+              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)] sm:leading-tight sm:tracking-tight">
                 {goal === "website" ? "Describe your first site" : "Any starting idea?"}
               </h1>
               <p className="ob-rise-d1 mt-2 text-[15px] text-ink-3">Optional — skip for a blank start.</p>
@@ -753,18 +769,21 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           )}
         </div>
 
-        <div className="mt-8 flex items-center gap-3">
+        <div
+          className="sticky bottom-0 z-20 -mx-4 mt-auto flex items-center gap-2 border-t border-line/55 bg-canvas/88 px-4 pt-3 backdrop-blur-2xl sm:static sm:mx-0 sm:mt-8 sm:border-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:backdrop-blur-none"
+          style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+        >
           {step > 0 ? (
             <button
               type="button"
               onClick={() => go(step - 1)}
               disabled={analysisState === "loading" && step === 3}
-              className="h-12 rounded-full border border-line-strong bg-raised px-5 text-[14px] font-medium text-ink-2 transition hover:bg-hover disabled:opacity-40"
+              className="h-12 min-w-[88px] rounded-full border border-line-strong bg-raised px-5 text-[13.5px] font-medium text-ink-2 shadow-[var(--sh-1)] transition active:scale-[0.98] hover:bg-hover disabled:opacity-40"
             >
               Back
             </button>
           ) : (
-            <span className="flex-1" />
+            <span className="hidden flex-1 sm:block" />
           )}
           <span className="flex-1" />
           {step < TOTAL_STEPS - 1 ? (
@@ -772,7 +791,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               type="button"
               disabled={!canNext || (step === 3 && analysisState === "loading")}
               onClick={() => go(step + 1)}
-              className="btn-grad inline-flex h-12 items-center gap-2 rounded-full px-6 text-[14.5px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-grad inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-semibold shadow-[0_10px_28px_-14px_var(--btn-glow)] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
             >
               {step === 2 && accountType === "business"
                 ? "Analyze business"
@@ -786,7 +805,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               type="button"
               disabled={pending}
               onClick={submit}
-              className="btn-grad inline-flex h-12 items-center gap-2 rounded-full px-6 text-[14.5px] font-semibold disabled:opacity-60"
+              className="btn-grad inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-semibold shadow-[0_10px_28px_-14px_var(--btn-glow)] disabled:opacity-60 sm:flex-none"
             >
               {pending ? "Opening…" : "Enter Trove"}
               <FiArrowRight size={16} />
