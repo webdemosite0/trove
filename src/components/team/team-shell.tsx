@@ -78,8 +78,6 @@ function TeamRail({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const canAdmin = role === "owner" || role === "admin";
-
   return (
     <div className="flex h-full flex-col">
       <div className="px-3 pt-3">
@@ -123,7 +121,7 @@ function TeamRail({
         <p className="mb-2 px-2 text-[9.5px] font-bold uppercase tracking-[0.14em] text-ink-4">
           Team features
         </p>
-        {ITEMS.filter((item) => !item.adminOnly || canAdmin).map((item) => {
+        {ITEMS.map((item) => {
           const active =
             pathname === item.href ||
             (item.href !== "/team" && pathname.startsWith(item.href + "/"));
@@ -138,7 +136,7 @@ function TeamRail({
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition",
                 active
-                  ? "bg-gradient-to-r from-violet-500/15 via-fuchsia-500/[0.08] to-sky-500/10 text-ink shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-violet)_18%,transparent)]"
+                  ? "bg-gradient-to-r from-violet-500/15 via-fuchsia-500/[0.08] to-sky-500/10 text-ink ring-1 ring-violet-400/20"
                   : "text-ink-2 hover:bg-hover hover:text-ink",
               )}
             >
