@@ -6,20 +6,16 @@ import type { Attachment } from "@/lib/attachments";
 import type { ModeId } from "@/lib/modes";
 import { localTimeZone } from "@/lib/context";
 import type { LocalProjectFile } from "@/lib/local-project";
+import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
 
 export interface Turn {
   id: number;
   role: "user" | "model";
   text: string;
   files?: Attachment[];
-}
-
-function isImagePrompt(text: string): boolean {
-  return (
-    /\b(generate|create|draw|make|paint|render|imagine)\b[\s\S]{0,40}\b(image|picture|photo|illustration|artwork|logo|icon)\b/i.test(
-      text,
-    ) || /\b(txt2img|text to image|image of)\b/i.test(text)
-  );
+  /** True while /api/image is in flight for this assistant turn. */
+  generatingImage?: boolean;
+  imageCaption?: string;
 }
 
 function parseProjectEdits(text: string) {
@@ -141,7 +137,7 @@ export function useChatThread({
   const finishReply = useCallback(
     (replyId: number, text: string) => {
       setTurns((t) => {
-        const next = t.map((x) => (x.id === replyId ? { ...x, text } : x));
+        const next = t.map((x) => (x.id === replyId ? { ...x, text, generatingImage: false } : x));
         void save(
           next.map(({ role, text: body }) => ({ role, text: body })),
           next[0]?.text,
@@ -157,23 +153,28 @@ export function useChatThread({
       setBusy(true);
       setError(null);
       const replyId = nextId.current++;
-      setTurns((t) => [...t, { id: replyId, role: "model", text: "" }]);
-      const caption =
-        prompt
-          .replace(
-            /^(generate|create|draw|make|paint|render|imagine)\s+(an?\s+)?(image|picture|photo|illustration)\s+(of\s+)?/i,
-            "",
-          )
-          .trim() || "Image";
+      const caption = imageCaptionFromPrompt(prompt);
+      setTurns((t) => [
+        ...t,
+        {
+          id: replyId,
+          role: "model",
+          text: "",
+          generatingImage: true,
+          imageCaption: caption,
+        },
+      ]);
       try {
         const res = await fetch("/api/image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ prompt: enrichImagePrompt(prompt) }),
         });
         const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error(data?.error ?? "Image request failed (" + res.status + ").");
-        finishReply(replyId, "![" + caption + "](" + (data?.url as string) + ")");
+        const url = String(data?.url || "");
+        if (!url) throw new Error("Image provider returned no image.");
+        finishReply(replyId, "![" + caption + "](" + url + ")");
       } catch (e) {
         setTurns((t) => t.filter((x) => x.id !== replyId));
         setError(e instanceof Error ? e.message : "Image generation failed.");
