@@ -130,7 +130,10 @@ export function BrowserWorkspace({
   }, [active, append, localProject, name, projectId]);
 
   const run = useCallback(
-    async (opts: { action?: "build" | "typecheck" | "lint"; command?: string }) => {
+    async (opts: {
+      action?: "build" | "typecheck" | "lint" | "test";
+      command?: string;
+    }) => {
       if (status !== "ready" || running) return;
       const label = opts.action || opts.command || "command";
       setRunning(label);
@@ -174,10 +177,10 @@ export function BrowserWorkspace({
     setRunning("verify");
     setTab("console");
     setExpanded(true);
-    append("verify: typecheck → lint → build");
+    append("verify: typecheck → lint → test → build");
 
     try {
-      for (const action of ["typecheck", "lint", "build"] as const) {
+      for (const action of ["typecheck", "lint", "test", "build"] as const) {
         append(`$ [${action}]`);
         const res = await fetch("/api/browser-workspace/exec", {
           method: "POST",
@@ -197,7 +200,7 @@ export function BrowserWorkspace({
         if (Number(data?.exitCode || 0) !== 0) {
           throw new Error(`${action} exited with code ${Number(data?.exitCode || 1)}.`);
         }
-        append(`✓ ${action} passed`);
+        append(data?.skipped ? `– ${action} skipped (no script/tool)` : `✓ ${action} passed`);
       }
       append("✓ verify complete — project is ready to preview");
     } catch (cause) {
@@ -368,6 +371,12 @@ export function BrowserWorkspace({
             disabled={status !== "ready" || Boolean(running)}
             onClick={() => void run({ action: "lint" })}
           />
+          <QuickAction
+            label="Test"
+            icon={<FiCheck size={12} />}
+            disabled={status !== "ready" || Boolean(running)}
+            onClick={() => void run({ action: "test" })}
+          />
           <span className="ml-auto text-[10.5px] text-ink-4">
             {files.length ? `${files.length} files synced` : "Preparing files…"}
           </span>
@@ -489,6 +498,11 @@ export function BrowserWorkspace({
                   label="Lint"
                   disabled={status !== "ready" || Boolean(running)}
                   onClick={() => void run({ action: "lint" })}
+                />
+                <ConsoleAction
+                  label="Test"
+                  disabled={status !== "ready" || Boolean(running)}
+                  onClick={() => void run({ action: "test" })}
                 />
                 <button
                   type="button"
