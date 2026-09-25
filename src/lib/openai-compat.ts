@@ -1,8 +1,8 @@
 import "server-only";
 import type { Turn, Usage, OnUsage } from "@/lib/gemini";
 
-const COMPAT_GENERATE_TIMEOUT_MS = 30_000;
-const COMPAT_STREAM_CONNECT_TIMEOUT_MS = 15_000;
+const COMPAT_GENERATE_TIMEOUT_MS = 24_000;
+const COMPAT_STREAM_CONNECT_TIMEOUT_MS = 7_000;
 
 export type CompatProvider = {
   id: string;
