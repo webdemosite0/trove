@@ -287,6 +287,15 @@ PRAGMA journal_mode = WAL;
       PRIMARY KEY (team_id, project_id)
     );
     CREATE INDEX IF NOT EXISTS team_projects_by_project ON team_projects (project_id, team_id);
+
+    CREATE TABLE IF NOT EXISTS team_messages (
+      id TEXT PRIMARY KEY,
+      team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      text TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS team_messages_by_team ON team_messages (team_id, created_at DESC);
 `;
 
 export const MIGRATIONS: string[] = [
@@ -329,6 +338,8 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS team_invites_by_team ON team_invites (team_id, created_at DESC)`,
   `CREATE TABLE IF NOT EXISTS team_projects (team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, added_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at INTEGER NOT NULL, PRIMARY KEY (team_id, project_id))`,
   `CREATE INDEX IF NOT EXISTS team_projects_by_project ON team_projects (project_id, team_id)`,
+  `CREATE TABLE IF NOT EXISTS team_messages (id TEXT PRIMARY KEY, team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, text TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS team_messages_by_team ON team_messages (team_id, created_at DESC)`,
 ];
 
 export const REPAIRS = `
