@@ -145,7 +145,7 @@ function ChatSurface({
   error: string;
   send: () => void;
   scroller: RefObject<HTMLDivElement | null>;
-  onScroll: () => void;
+  onScroll: (element: HTMLDivElement) => void;
   close?: () => void;
   compact?: boolean;
 }) {
@@ -200,7 +200,7 @@ function ChatSurface({
 
       <div
         ref={scroller}
-        onScroll={onScroll}
+        onScroll={(event) => onScroll(event.currentTarget)}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3.5 py-4"
       >
         {messages.length ? (
@@ -442,9 +442,7 @@ export function TeamChatPanel({
     }
   }
 
-  function onScroll() {
-    const el = scroller.current;
-    if (!el) return;
+  function onScroll(el: HTMLDivElement) {
     stickToBottom.current =
       el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   }
