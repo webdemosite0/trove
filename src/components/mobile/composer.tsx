@@ -147,7 +147,7 @@ export function MobileComposer({
   return (
     <div
       className={cn(
-        "composer relative rounded-[var(--r-hero)] border bg-raised px-1 pb-1 pt-1",
+        "composer relative rounded-[24px] border border-line-strong bg-raised/92 px-1.5 pb-1.5 pt-1.5 shadow-[var(--sh-2)] backdrop-blur-xl",
         disabled && "opacity-70",
       )}
     >
@@ -221,17 +221,17 @@ export function MobileComposer({
         }}
         placeholder={disabled ? "Working…" : placeholder}
         aria-label={placeholder}
-        className="block max-h-[148px] min-h-[52px] w-full resize-none bg-transparent px-3.5 pb-1 pt-3 text-[16px] leading-[1.45] text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed"
+        className="block max-h-[164px] min-h-[50px] w-full resize-none bg-transparent px-3.5 pb-1 pt-2.5 text-[16px] leading-[1.45] text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed"
       />
 
-      <div className="flex items-center gap-0.5 px-1 pb-0.5">
+      <div className="flex min-h-10 items-center gap-0.5 px-0.5 pb-0.5">
         <button
           type="button"
           aria-label="Attach files"
           disabled={disabled}
           onClick={() => picker.current?.click()}
           className={cn(
-            "grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition-colors active:bg-hover",
+            "grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition active:scale-95 active:bg-hover",
             disabled && "pointer-events-none opacity-40",
           )}
         >
@@ -263,13 +263,13 @@ export function MobileComposer({
           disabled={!ready}
           aria-label="Send"
           className={cn(
-            "grid h-11 w-11 shrink-0 place-items-center rounded-full transition-all duration-[var(--t-hover)]",
+            "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-all duration-[var(--t-hover)]",
             ready
               ? "btn-grad shadow-[0_6px_18px_-6px_var(--btn-glow)] active:scale-95"
               : "bg-sunk text-ink-4",
           )}
         >
-          <Ico icon={FiArrowUp} motion="send" size={20} />
+          <Ico icon={FiArrowUp} motion="send" size={18} />
         </button>
       </div>
     </div>
