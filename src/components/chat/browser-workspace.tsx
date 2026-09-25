@@ -169,6 +169,46 @@ export function BrowserWorkspace({
     [append, localProject?.scope, projectId, running, status],
   );
 
+  const verify = useCallback(async () => {
+    if (status !== "ready" || running) return;
+    setRunning("verify");
+    setTab("console");
+    setExpanded(true);
+    append("verify: typecheck → lint → build");
+
+    try {
+      for (const action of ["typecheck", "lint", "build"] as const) {
+        append(`$ [${action}]`);
+        const res = await fetch("/api/browser-workspace/exec", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId: projectId || undefined,
+            localScope: localProject?.scope || undefined,
+            action,
+          }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || `${action} failed.`);
+        }
+        if (data?.stdout) append(String(data.stdout));
+        if (data?.stderr) append(String(data.stderr));
+        if (Number(data?.exitCode || 0) !== 0) {
+          throw new Error(`${action} exited with code ${Number(data?.exitCode || 1)}.`);
+        }
+        append(`✓ ${action} passed`);
+      }
+      append("✓ verify complete — project is ready to preview");
+    } catch (cause) {
+      append(
+        `✗ ${cause instanceof Error ? cause.message : "Project verification failed."}`,
+      );
+    } finally {
+      setRunning("");
+    }
+  }, [append, localProject?.scope, projectId, running, status]);
+
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -305,6 +345,12 @@ export function BrowserWorkspace({
       {!expanded ? (
         <div className="flex flex-wrap items-center gap-1.5 border-t border-line px-3.5 py-2.5">
           <QuickAction
+            label={running === "verify" ? "Verifying…" : "Verify"}
+            icon={running === "verify" ? <FiLoader size={12} className="animate-spin" /> : <FiZap size={12} />}
+            disabled={status !== "ready" || Boolean(running)}
+            onClick={() => void verify()}
+          />
+          <QuickAction
             label="Build"
             icon={<FiPlay size={12} />}
             disabled={status !== "ready" || Boolean(running)}
@@ -354,6 +400,12 @@ export function BrowserWorkspace({
 
             <span className="flex-1" />
 
+            <QuickAction
+              label={running === "verify" ? "Verifying…" : "Verify"}
+              icon={running === "verify" ? <FiLoader size={12} className="animate-spin" /> : <FiZap size={12} />}
+              disabled={status !== "ready" || Boolean(running)}
+              onClick={() => void verify()}
+            />
             <QuickAction
               label={running === "build" ? "Building…" : "Build"}
               icon={running === "build" ? <FiLoader size={12} className="animate-spin" /> : <FiPlay size={12} />}
@@ -418,6 +470,11 @@ export function BrowserWorkspace({
           {tab === "console" ? (
             <div className={cn("flex flex-col bg-[#0c0b14] text-zinc-200", compact ? "h-[300px]" : "h-[420px]")}>
               <div className="flex flex-wrap gap-1.5 border-b border-white/10 px-2.5 py-2">
+                <ConsoleAction
+                  label={running === "verify" ? "Verifying…" : "Verify all"}
+                  disabled={status !== "ready" || Boolean(running)}
+                  onClick={() => void verify()}
+                />
                 <ConsoleAction
                   label="Build"
                   disabled={status !== "ready" || Boolean(running)}
