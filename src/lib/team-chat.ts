@@ -87,9 +87,7 @@ export async function teamChatStateForUser(
 
 export async function sendTeamChatMessage(user: User, rawText: string) {
   const team = await activeTeamForUser(user);
-  const text = rawText.trim().replace(/
-/g, "
-").slice(0, 4000);
+  const text = rawText.trim().replace(/\r\n/g, "\n").slice(0, 4000);
   if (!text) throw new Error("EMPTY_MESSAGE");
 
   const id = uid("tmsg");
