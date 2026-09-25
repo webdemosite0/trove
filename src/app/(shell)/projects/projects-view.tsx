@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -68,6 +68,12 @@ export function ProjectsView({
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [clearAllOpen, setClearAllOpen] = useState(false);
+  const [clearBusy, setClearBusy] = useState(false);
+
+  useEffect(() => {
+    setProjects(initial);
+  }, [initial]);
 
   async function createProject() {
     const n = name.trim();
@@ -81,12 +87,12 @@ export function ProjectsView({
         body: JSON.stringify({ name: n, prompt: prompt.trim(), status: "draft" }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (!res.ok || !data?.project?.id) {
         setError(data?.error || "Could not create project.");
         return;
       }
       const p = data.project as ProjectRow;
-      setProjects((prev) => [p, ...prev]);
+      setProjects((prev) => [p, ...prev.filter((x) => x.id !== p.id)]);
       setCreating(false);
       setName("");
       setPrompt("");
@@ -123,6 +129,30 @@ export function ProjectsView({
     }
   }
 
+  async function clearAll() {
+    setClearBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/projects", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error || "Could not clear projects.");
+        return;
+      }
+      setProjects([]);
+      setClearAllOpen(false);
+      router.refresh();
+    } catch {
+      setError("Could not clear projects.");
+    } finally {
+      setClearBusy(false);
+    }
+  }
+
   if (!signedIn) {
     return (
       <div className="nx-in mx-auto flex min-h-0 max-w-[520px] flex-1 flex-col items-center justify-center px-5 py-16 text-center">
@@ -151,7 +181,16 @@ export function ProjectsView({
         title="Projects"
         subtitle="Company workspaces — name the initiative, write the brief, and build with your team."
         action={
-          projects.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {projects.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setClearAllOpen(true)}
+                className="rounded-[var(--r-control)] border border-line px-3.5 py-2.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+              >
+                Clear all
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setCreating(true)}
@@ -159,7 +198,7 @@ export function ProjectsView({
             >
               <Ico icon={FiPlus} motion="open" size={16} /> New project
             </button>
-          ) : null
+          </div>
         }
       />
 
@@ -176,8 +215,8 @@ export function ProjectsView({
               <FiFolder size={28} className="text-ink" />
             </div>
           }
-          title="Start your first company project"
-          body="Capture the goal, status, and brief. Share with your team when you're ready."
+          title="No projects yet"
+          body="Start a company project with a clear name and brief. Nothing is pre-filled — you only see what you create."
           action={
             <button
               type="button"
@@ -244,6 +283,12 @@ export function ProjectsView({
               placeholder="e.g. Q4 product launch"
               autoFocus
               maxLength={120}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void createProject();
+                }
+              }}
             />
           </div>
           <div>
@@ -303,6 +348,36 @@ export function ProjectsView({
           >
             {deleteBusy ? <FiLoader size={15} className="animate-spin" /> : <FiTrash2 size={15} />}
             Delete
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={clearAllOpen}
+        onClose={() => !clearBusy && setClearAllOpen(false)}
+        title="Clear all projects?"
+      >
+        <p className="text-[14px] text-ink-3">
+          Deletes every project on your account, including old website-builder leftovers.
+          This cannot be undone.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            disabled={clearBusy}
+            onClick={() => setClearAllOpen(false)}
+            className="rounded-[var(--r-control)] px-3.5 py-2 text-[13.5px] text-ink-2 hover:bg-hover"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={clearBusy}
+            onClick={() => void clearAll()}
+            className="flex items-center gap-2 rounded-[var(--r-control)] bg-critical px-4 py-2 text-[13.5px] font-medium text-white disabled:opacity-50"
+          >
+            {clearBusy ? <FiLoader size={15} className="animate-spin" /> : <FiTrash2 size={15} />}
+            Clear all
           </button>
         </div>
       </Modal>
