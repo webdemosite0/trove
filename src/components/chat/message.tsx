@@ -14,7 +14,7 @@ import { Ico, type Motion } from "@/components/ui/ico";
 import { humanSize, type Attachment } from "@/lib/attachments";
 import { highlight, TOKEN_VAR } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
-import { ChatImage } from "@/components/chat/chat-image";
+import { ChatImage, ImageGeneratingCard } from "@/components/chat/chat-image";
 import { withConnectorChips } from "@/components/chat/connector-chip";
 import { ThinkingLine } from "@/components/chat/thinking-line";
 
@@ -299,12 +299,16 @@ export function Message({
   text,
   files,
   pending,
+  generatingImage,
+  imageCaption,
   onRegenerate,
 }: {
   role: "user" | "model";
   text: string;
   files?: Attachment[];
   pending?: boolean;
+  generatingImage?: boolean;
+  imageCaption?: string;
   onRegenerate?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -350,6 +354,19 @@ export function Message({
   }
 
   if (pending && !text) {
+    if (generatingImage) {
+      return (
+        <div className="nx-in group/msg">
+          <div className="mb-2 flex items-center gap-2">
+            <TroveOrb size={22} state="thinking" />
+            <span className="text-[12.5px] font-medium text-ink-3">Trove</span>
+          </div>
+          <div className="pl-8">
+            <ImageGeneratingCard caption={imageCaption} />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="nx-in group/msg">
         <ThinkingLine />
