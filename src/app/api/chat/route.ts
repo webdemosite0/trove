@@ -48,7 +48,9 @@ function projectSystemContext(project: Awaited<ReturnType<typeof loadProject>>) 
     `PROJECT WORKSPACE — ${project.name}`,
     project.prompt ? `Original project brief: ${project.prompt}` : "",
     `Current status: ${project.status}. Current files: ${project.files.length}.`,
-    blocks.length ? `Current project files:\n\n${blocks.join("\n\n")}` : "This project does not have files yet.",
+    blocks.length
+      ? `Current project files:\n\n${blocks.join("\n\n")}`
+      : "This project does not have files yet. If the user asks you to build an app, create a complete runnable scaffold, not a snippet. For a normal web app default to Vite + React + TypeScript with package.json, a dev script, index.html, src/main.tsx, the main app component, and styles unless the user asks for another stack.",
     project.files.length > blocks.length
       ? "Some project files were omitted from context for size. Ask for a specific file if needed."
       : "",
@@ -78,8 +80,10 @@ function localProjectSystemContext(
     `LOCAL PROJECT WORKSPACE — ${localProject.name}`,
     `Readable files supplied from the user's selected device folder: ${localProject.files.length}.`,
     "The user explicitly selected this folder on their device. Treat these files as the live project.",
-    blocks.length ? blocks.join("\n\n") : "No readable text/code files were supplied yet.",
-    "When the user asks for code changes, emit <<<FILE:path>>> complete contents <<<END>>> blocks. Trove will save those blocks back to the selected device project after generation.",
+    blocks.length
+      ? blocks.join("\n\n")
+      : "No readable text/code files were supplied yet. If the user asks you to build an app, create a complete runnable scaffold, not a snippet. For a normal web app default to Vite + React + TypeScript with package.json, scripts.dev, index.html, src/main.tsx, the main app component, and styles unless another stack is requested.",
+    "When the user asks for code changes, emit <<<FILE:path>>> complete contents <<<END>>> blocks. Every required new file must be included. Trove will save those blocks back to the selected device project after generation.",
   ].join("\n\n");
 }
 
