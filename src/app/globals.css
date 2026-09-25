@@ -2372,3 +2372,92 @@ a[role="button"]:active {
 @media (prefers-reduced-motion: reduce) {
   .nx-mobile-drawer { animation: none; transition: none; }
 }
+
+
+/* ============================================================
+   MOBILE EXPERIENCE
+   Conversation-first, safe-area aware, and stable under iOS UI.
+   ============================================================ */
+@media (max-width: 767px) {
+  html,
+  body {
+    min-height: 100%;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-shell {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .mobile-shell-header {
+    box-shadow: 0 1px 0 color-mix(in oklab, var(--color-line) 65%, transparent);
+  }
+
+  .mobile-shell-main,
+  .mobile-chat,
+  .nx-mobile-drawer,
+  .ob-root main {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-composer-dock {
+    box-shadow: 0 -14px 34px -28px rgb(0 0 0 / 0.42);
+  }
+
+  .mobile-chat textarea,
+  .ob-root input,
+  .ob-root textarea,
+  .ob-root select,
+  [data-mobile-form] input,
+  [data-mobile-form] textarea {
+    font-size: 16px;
+  }
+
+  .mobile-chat button,
+  .mobile-chat a,
+  .nx-mobile-drawer button,
+  .nx-mobile-drawer a {
+    touch-action: manipulation;
+  }
+
+  .ob-root {
+    background:
+      radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--color-violet) 12%, transparent), transparent 32%),
+      radial-gradient(circle at 100% 18%, color-mix(in oklab, var(--color-accent) 10%, transparent), transparent 32%),
+      var(--color-canvas);
+  }
+
+  .ob-root .ob-orbs {
+    opacity: 0.55;
+  }
+
+  .ob-root .ob-panel {
+    width: 100%;
+  }
+
+  .ob-root .ob-card {
+    box-shadow: var(--sh-1);
+  }
+
+  .ob-root .ob-card:active {
+    transform: scale(0.992);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .group:hover .ico:not(.ico-live),
+  :where(a, button, label, summary, [role="button"]):hover .ico:not(.ico-live) {
+    animation: none !important;
+  }
+
+  .nx-rise,
+  .nx-rise-slow {
+    animation-duration: 260ms;
+  }
+}
