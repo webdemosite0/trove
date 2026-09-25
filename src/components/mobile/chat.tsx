@@ -16,6 +16,7 @@ import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
 import { useChatThread } from "@/hooks/use-chat-thread";
 import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
+import { BrowserWorkspace } from "@/components/chat/browser-workspace";
 import {
   ProjectPicker,
   type ChatProjectOption,
@@ -40,6 +41,7 @@ export function MobileChat({
   activity: initialActivity = [],
   draft: initialDraft = "",
   projects: initialProjects = [],
+  initialProjectId = null,
 }: {
   restored?: {
     id: string;
@@ -50,12 +52,15 @@ export function MobileChat({
   activity?: Recent[];
   draft?: string;
   projects?: ChatProjectOption[];
+  initialProjectId?: string | null;
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = React.useState(initialDraft);
   const [activity, setActivity] = React.useState<Recent[]>(initialActivity);
   const [projects, setProjects] = React.useState<ChatProjectOption[]>(initialProjects);
-  const [projectId, setProjectId] = React.useState<string | null>(null);
+  const [projectId, setProjectId] = React.useState<string | null>(
+    initialProjectId || null,
+  );
   const [localProject, setLocalProject] =
     React.useState<LocalProjectWorkspace | null>(null);
 
@@ -153,6 +158,11 @@ export function MobileChat({
     />
   );
 
+  const activeProjectName =
+    localProject?.name ||
+    projects.find((project) => project.id === projectId)?.name ||
+    null;
+
   const composerProps = {
     mode,
     onModeChange: setMode,
@@ -192,6 +202,25 @@ export function MobileChat({
               autoFocus={false}
             />
           </div>
+
+          {projectId || localProject ? (
+            <div className="mt-4">
+              <BrowserWorkspace
+                projectId={projectId}
+                projectName={activeProjectName}
+                localProject={
+                  localProject
+                    ? {
+                        name: localProject.name,
+                        scope: localProject.scope,
+                        files: localProject.files,
+                      }
+                    : null
+                }
+                compact
+              />
+            </div>
+          ) : null}
 
           {error ? <Problem message={error} onRetry={retry} /> : null}
 
@@ -272,7 +301,23 @@ export function MobileChat({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 pt-4">
-        <div className="mx-auto max-w-[640px] space-y-6">
+        <div className="mx-auto max-w-[640px] space-y-5">
+          {projectId || localProject ? (
+            <BrowserWorkspace
+              projectId={projectId}
+              projectName={activeProjectName}
+              localProject={
+                localProject
+                  ? {
+                      name: localProject.name,
+                      scope: localProject.scope,
+                      files: localProject.files,
+                    }
+                  : null
+              }
+              compact
+            />
+          ) : null}
           {turns.map((turn, index) => (
             <Message
               key={turn.id}
@@ -296,8 +341,7 @@ export function MobileChat({
             onSend={send}
             disabled={busy}
             placeholder="Message Trove…"
-            mode={mode}
-            onModeChange={setMode}
+            {...composerProps}
           />
         </div>
       </div>
