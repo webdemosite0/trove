@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  FiArrowLeft,
-  FiSettings,
-} from "@/components/ui/icons";
+import { FiArrowLeft } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 import { SettingsNav } from "@/components/settings/settings-nav";
@@ -53,25 +50,8 @@ export function SettingsSidebar() {
         </div>
       </aside>
 
-      <div className="border-b border-line bg-canvas/92 backdrop-blur-xl lg:hidden">
-        <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link
-            href="/chat"
-            className="inline-flex items-center gap-2 rounded-xl px-2 py-2 text-[13px] font-medium text-ink-2 transition hover:bg-hover"
-          >
-            <FiArrowLeft size={17} />
-            Back
-          </Link>
-          <div className="flex items-center gap-2">
-            <FiSettings size={15} className="text-accent" />
-            <span className="text-[13px] font-semibold text-ink">Settings</span>
-          </div>
-          <ThemeToggle />
-        </div>
-
-        <div className="overflow-x-auto px-3 pb-3 scrollbar-none">
-          <SettingsNav />
-        </div>
+      <div className="sticky top-0 z-20 border-b border-line/60 bg-canvas/88 backdrop-blur-2xl lg:hidden">
+        <SettingsNav />
       </div>
     </>
   );
