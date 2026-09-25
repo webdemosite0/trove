@@ -123,7 +123,6 @@ export function Drawer({
           drag ? "transition-none" : "transition-transform duration-[var(--t-hover)]",
         )}
       >
-        <button type="button" onClick={onClose} aria-label="Close navigation" className="absolute right-3 top-[calc(env(safe-area-inset-top)+8px)] z-10 grid size-11 place-items-center rounded-full bg-raised text-ink">×</button>
         {children}
       </div>
     </div>,
