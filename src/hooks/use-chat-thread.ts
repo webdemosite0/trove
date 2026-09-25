@@ -6,6 +6,11 @@ import type { Attachment } from "@/lib/attachments";
 import type { ModeId } from "@/lib/modes";
 import { localTimeZone } from "@/lib/context";
 import type { LocalProjectFile } from "@/lib/local-project";
+import {
+  verificationSummary,
+  verifyProjectWorkspace,
+  type ProjectVerification,
+} from "@/lib/project-agent-runtime";
 import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
 
 export interface Turn {
@@ -105,6 +110,26 @@ function cleanProjectReply(text: string, changed: number) {
   return changed ? "Updated " + changed + " project file" + (changed === 1 ? "" : "s") + "." : text;
 }
 
+function mergeProjectFiles(
+  current: LocalProjectFile[],
+  changes: LocalProjectFile[],
+) {
+  const merged = new Map(current.map((file) => [file.path, file]));
+  for (const file of changes) merged.set(file.path, file);
+  return [...merged.values()];
+}
+
+function repairInstruction(result: ProjectVerification) {
+  return [
+    "AUTOMATED PROJECT VERIFICATION FAILED.",
+    "Fix the project using the diagnostics below.",
+    "Return only the complete changed files with <<<FILE:path>>> ... <<<END>>> blocks, followed by SUMMARY.",
+    "Do not explain the error without fixing it. Do not change unrelated files.",
+    "",
+    result.diagnostics.slice(-16_000),
+  ].join("\n");
+}
+
 function distanceFromBottom(anchor: HTMLElement | null): number {
   if (!anchor) return 0;
   let node: HTMLElement | null = anchor.parentElement;
@@ -129,7 +154,11 @@ export function useChatThread({
   restored?: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
   mode: ModeId;
   projectId?: string | null;
-  localProject?: { name: string; files: LocalProjectFile[] } | null;
+  localProject?: {
+    name: string;
+    scope: string;
+    files: LocalProjectFile[];
+  } | null;
   onApplyLocalFiles?: (files: LocalProjectFile[]) => Promise<void>;
 }) {
   const { save, reset } = useSaved("chat", restored?.id ?? null);
@@ -235,6 +264,58 @@ export function useChatThread({
 
   const run = useCallback(
     async (history: Turn[], files?: Attachment[]) => {
+      const requestRepair = async (
+        diagnostic: string,
+        workspace:
+          | { projectId: string; localProject?: null }
+          | {
+              projectId?: null;
+              localProject: { name: string; scope: string; files: LocalProjectFile[] };
+            },
+        summary: string,
+      ) => {
+        const repairUser = repairInstruction({
+          available: true,
+          ok: false,
+          previewUrl: "",
+          steps: [],
+          diagnostics: diagnostic,
+        });
+
+        const repairMessages = [
+          ...history.map(({ role, text }) => ({ role, text })),
+          { role: "model" as const, text: summary },
+          { role: "user" as const, text: repairUser },
+        ];
+
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: repairMessages,
+            mode,
+            model: "auto",
+            projectId: workspace.projectId || "",
+            localProject: workspace.localProject
+              ? compactLocalProjectForPrompt(
+                  workspace.localProject,
+                  repairUser,
+                )
+              : null,
+            timeZone: localTimeZone(),
+          }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(
+            data?.error || "Automatic repair could not start.",
+          );
+        }
+
+        return res.text();
+      };
+
       const lastUser = [...history].reverse().find((t) => t.role === "user");
       if (lastUser && isImagePrompt(lastUser.text) && !(files && files.length)) {
         await runImage(history, lastUser.text);
@@ -294,28 +375,144 @@ export function useChatThread({
         flush();
         let finalReply = fullReply;
         const edits = parseProjectEdits(fullReply);
+
         if (localProject && onApplyLocalFiles && edits.length) {
           try {
             await onApplyLocalFiles(edits);
-            finalReply = cleanProjectReply(fullReply, edits.length);
-            window.dispatchEvent(new CustomEvent("trove:project-changed", { detail: { local: true, name: localProject.name } }));
+            let nextFiles = mergeProjectFiles(localProject.files, edits);
+            let verification = await verifyProjectWorkspace({
+              localScope: localProject.scope,
+              files: nextFiles,
+            });
+
+            let repairNote = "";
+            if (verification.available && !verification.ok) {
+              try {
+                const repairText = await requestRepair(
+                  verification.diagnostics,
+                  {
+                    localProject: {
+                      ...localProject,
+                      files: nextFiles,
+                    },
+                  },
+                  cleanProjectReply(fullReply, edits.length),
+                );
+                const repairEdits = parseProjectEdits(repairText);
+
+                if (repairEdits.length) {
+                  await onApplyLocalFiles(repairEdits);
+                  nextFiles = mergeProjectFiles(nextFiles, repairEdits);
+                  verification = await verifyProjectWorkspace({
+                    localScope: localProject.scope,
+                    files: nextFiles,
+                  });
+                  repairNote =
+                    "\n\nAuto-repair: applied " +
+                    repairEdits.length +
+                    " additional file" +
+                    (repairEdits.length === 1 ? "" : "s") +
+                    " from the verification errors.";
+                }
+              } catch (repairError) {
+                repairNote =
+                  "\n\nAuto-repair stopped: " +
+                  (repairError instanceof Error
+                    ? repairError.message
+                    : "repair request failed.");
+              }
+            }
+
+            finalReply =
+              cleanProjectReply(fullReply, edits.length) +
+              repairNote +
+              "\n\n" +
+              verificationSummary(verification);
+
+            window.dispatchEvent(
+              new CustomEvent("trove:project-changed", {
+                detail: { local: true, name: localProject.name },
+              }),
+            );
           } catch (applyError) {
-            finalReply = cleanProjectReply(fullReply, 0) + "\n\nLocal project files were not saved: " + (applyError instanceof Error ? applyError.message : "unknown error");
+            finalReply =
+              cleanProjectReply(fullReply, 0) +
+              "\n\nLocal project files were not saved: " +
+              (applyError instanceof Error
+                ? applyError.message
+                : "unknown error");
           }
         } else if (projectId && edits.length) {
           try {
-            const apply = await fetch("/api/projects/" + encodeURIComponent(projectId) + "/apply", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ files: edits }),
-            });
-            const data = await apply.json().catch(() => null);
-            if (!apply.ok) throw new Error(data?.error || "Could not apply project changes.");
-            finalReply = cleanProjectReply(fullReply, edits.length);
-            window.dispatchEvent(new Event("trove:shell-meta-refresh"));
-            window.dispatchEvent(new CustomEvent("trove:project-changed", { detail: { projectId } }));
+            const applyFiles = async (changes: LocalProjectFile[]) => {
+              const apply = await fetch(
+                "/api/projects/" + encodeURIComponent(projectId) + "/apply",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ files: changes }),
+                },
+              );
+              const data = await apply.json().catch(() => null);
+              if (!apply.ok) {
+                throw new Error(
+                  data?.error || "Could not apply project changes.",
+                );
+              }
+            };
+
+            await applyFiles(edits);
+            let verification = await verifyProjectWorkspace({ projectId });
+            let repairNote = "";
+
+            if (verification.available && !verification.ok) {
+              try {
+                const repairText = await requestRepair(
+                  verification.diagnostics,
+                  { projectId },
+                  cleanProjectReply(fullReply, edits.length),
+                );
+                const repairEdits = parseProjectEdits(repairText);
+                if (repairEdits.length) {
+                  await applyFiles(repairEdits);
+                  verification = await verifyProjectWorkspace({ projectId });
+                  repairNote =
+                    "\n\nAuto-repair: applied " +
+                    repairEdits.length +
+                    " additional file" +
+                    (repairEdits.length === 1 ? "" : "s") +
+                    " from the verification errors.";
+                }
+              } catch (repairError) {
+                repairNote =
+                  "\n\nAuto-repair stopped: " +
+                  (repairError instanceof Error
+                    ? repairError.message
+                    : "repair request failed.");
+              }
+            }
+
+            finalReply =
+              cleanProjectReply(fullReply, edits.length) +
+              repairNote +
+              "\n\n" +
+              verificationSummary(verification);
+
+            window.dispatchEvent(
+              new Event("trove:shell-meta-refresh"),
+            );
+            window.dispatchEvent(
+              new CustomEvent("trove:project-changed", {
+                detail: { projectId },
+              }),
+            );
           } catch (applyError) {
-            finalReply = cleanProjectReply(fullReply, 0) + "\n\nProject files were not saved: " + (applyError instanceof Error ? applyError.message : "unknown error");
+            finalReply =
+              cleanProjectReply(fullReply, 0) +
+              "\n\nProject files were not saved: " +
+              (applyError instanceof Error
+                ? applyError.message
+                : "unknown error");
           }
         }
         setTurns((t) => {
