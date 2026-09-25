@@ -151,7 +151,12 @@ export function MobileShell({
   }
 
   return (
-    <div className="mobile-shell flex min-h-dvh flex-col bg-canvas text-ink">
+    <div
+      className={cn(
+        "mobile-shell flex flex-col bg-canvas text-ink",
+        isChat ? "h-dvh min-h-0 overflow-hidden" : "min-h-dvh",
+      )}
+    >
       <header
         className="mobile-shell-header sticky top-0 z-40 flex items-center gap-2 border-b border-line/55 bg-canvas/82 px-2.5 backdrop-blur-2xl"
         style={{
