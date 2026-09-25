@@ -54,3 +54,16 @@
 :root[data-theme="dark"] .nx-sidebar [aria-current="page"] {
   background: color-mix(in oklab, var(--color-accent-soft) 70%, var(--color-hover));
 }
+
+/* Gradient actions keep white glyphs (not muted grey) */
+:root:not([data-theme="light"]) .nx-sidebar .btn-grad,
+:root[data-theme="dark"] .nx-sidebar .btn-grad {
+  color: #ffffff;
+}
+:root:not([data-theme="light"]) .nx-sidebar .btn-grad .ico,
+:root:not([data-theme="light"]) .nx-sidebar .btn-grad svg,
+:root[data-theme="dark"] .nx-sidebar .btn-grad .ico,
+:root[data-theme="dark"] .nx-sidebar .btn-grad svg {
+  color: #ffffff !important;
+  stroke: currentColor;
+}
