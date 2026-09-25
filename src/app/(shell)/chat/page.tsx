@@ -4,6 +4,7 @@ import { listAllRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { currentUser } from "@/lib/auth";
 import { isMobile } from "@/lib/device";
+import { listUserProjects } from "@/lib/projects";
 
 export const metadata = { title: "Chat" };
 
@@ -13,11 +14,12 @@ export default async function HomePage({
   searchParams: Promise<{ c?: string; q?: string }>;
 }) {
   const { c, q } = await searchParams;
-  const [saved, user, activity, mobile] = await Promise.all([
+  const [saved, user, activity, mobile, projects] = await Promise.all([
     c ? loadConversation(c) : Promise.resolve(null),
     currentUser(),
     listAllRecents(12),
     isMobile(),
+    listUserProjects(40),
   ]);
 
   const props = {
@@ -32,7 +34,7 @@ export default async function HomePage({
   const key = saved?.id ?? "new";
 
   return mobile ? (
-    <MobileChat key={key} {...props} />
+    <MobileChat key={key} {...props} projects={projects} />
   ) : (
     <HomeChat key={key} {...props} />
   );
