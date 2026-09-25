@@ -23,6 +23,14 @@ export async function GET(req: Request) {
     );
   }
 
+  if (only === "recents") {
+    const recents = await listAllRecents(12, user.id).catch(() => []);
+    return Response.json(
+      { recents },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   const [due, recents, balance] = await Promise.all([
     countDueReminders(user.id),
     listAllRecents(6, user.id),
