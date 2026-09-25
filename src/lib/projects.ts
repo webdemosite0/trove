@@ -4,6 +4,7 @@ import { all, one, run, uid } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import type { BuildPlan, ProjectFile } from "@/lib/builder";
 import { projectTeamAccess } from "@/lib/team";
+import { normalizeGeneratedProjectContent } from "@/lib/project-file-normalize";
 
 export type ProjectChatMessage = {
   id: string;
@@ -65,10 +66,16 @@ function parseFiles(raw: unknown): ProjectFile[] {
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((f) => f && typeof f.path === "string")
-      .map((f) => ({
-        path: String(f.path).replace(/^\/+/, "").slice(0, 240),
-        content: String(f.content ?? "").slice(0, 500_000),
-      }));
+      .map((f) => {
+        const path = String(f.path).replace(/^\/+/, "").slice(0, 240);
+        return {
+          path,
+          content: normalizeGeneratedProjectContent(
+            path,
+            String(f.content ?? "").slice(0, 500_000),
+          ),
+        };
+      });
   } catch {
     return [];
   }
@@ -162,10 +169,16 @@ export async function saveProject(opts: {
   const target = String(opts.target || "react").slice(0, 40);
   const status = String(opts.status || "ready").slice(0, 40);
   const filesJson = JSON.stringify(
-    (opts.files || []).map((f) => ({
-      path: String(f.path || "").replace(/^\/+/, "").slice(0, 240),
-      content: String(f.content ?? "").slice(0, 500_000),
-    })),
+    (opts.files || []).map((f) => {
+      const path = String(f.path || "").replace(/^\/+/, "").slice(0, 240);
+      return {
+        path,
+        content: normalizeGeneratedProjectContent(
+          path,
+          String(f.content ?? "").slice(0, 500_000),
+        ),
+      };
+    }),
   );
   const previewHtml = opts.previewHtml
     ? String(opts.previewHtml).slice(0, 2_000_000)
