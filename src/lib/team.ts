@@ -2,7 +2,6 @@ import "server-only";
 
 import { all, batch, one, run, uid, num, str } from "@/lib/db";
 import { currentUser, type User } from "@/lib/auth";
-import { sendMail } from "@/lib/mail";
 import { site } from "@/lib/site";
 import { isAdminEmail } from "@/lib/admin";
 import {
@@ -36,6 +35,8 @@ export interface TeamInvite {
   role: "admin" | "member";
   createdAt: number;
   expiresAt: number;
+  /** In-app path the invitee opens while signed in as this email. */
+  link: string;
 }
 
 export interface TeamProject {
@@ -57,6 +58,7 @@ export interface TeamState {
     teamName: string;
     role: "admin" | "member";
     expiresAt: number;
+    link: string;
   }>;
   projects: TeamProject[];
   ownedProjects: TeamProject[];
@@ -118,6 +120,7 @@ async function pendingInvitesFor(email: string) {
     teamName: str(row.team_name),
     role: (cleanRole(row.role) === "admin" ? "admin" : "member") as "admin" | "member",
     expiresAt: num(row.expires_at),
+    link: "/team?invite=" + encodeURIComponent(str(row.id)),
   }));
 }
 
@@ -149,6 +152,7 @@ async function invitesFor(teamId: string): Promise<TeamInvite[]> {
     role: (cleanRole(row.role) === "admin" ? "admin" : "member") as "admin" | "member",
     createdAt: num(row.created_at),
     expiresAt: num(row.expires_at),
+    link: "/team?invite=" + encodeURIComponent(str(row.id)),
   }));
 }
 
@@ -315,27 +319,12 @@ export async function inviteTeamMember(
     ],
   );
 
-  const link =
-    site.url +
-    "/team?invite=" +
-    encodeURIComponent(inviteId);
-  void sendMail({
-    to: clean,
-    subject: user.name + " invited you to " + team.name + " on Trove",
-    text:
-      user.name + " invited you to join " + team.name + " on Trove.\n\n" +
-      "Sign in with " + clean + " and open: " + link + "\n\n" +
-      "The invitation expires in 7 days.",
-    html:
-      '<div style="font-family:ui-sans-serif,system-ui,sans-serif;line-height:1.6;color:#111">' +
-      "<p><strong>" + escapeHtml(user.name) + "</strong> invited you to join <strong>" +
-      escapeHtml(team.name) + "</strong> on Trove.</p>" +
-      '<p><a href="' + escapeAttr(link) + '" style="display:inline-block;padding:11px 18px;border-radius:9px;background:#5b4fe9;color:white;text-decoration:none;font-weight:600">Open Team workspace</a></p>' +
-      '<p style="color:#666;font-size:13px">Sign in with ' + escapeHtml(clean) +
-      ". This invitation expires in 7 days.</p></div>",
-  }).catch(() => null);
+  const path = "/team?invite=" + encodeURIComponent(inviteId);
+  const link = site.url + path;
 
-  return { id: inviteId };
+  // In-app only: invitee sees this under Notifications when signed in as the email.
+  // Link can also be copied and shared manually — no email required.
+  return { id: inviteId, path, link };
 }
 
 export async function acceptTeamInvite(inviteId: string) {
@@ -554,16 +543,4 @@ export async function deleteTeam(confirmName: string) {
     ],
   );
   return { ok: true };
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, """);
-}
-
-function escapeAttr(value: string) {
-  return value.replace(/"/g, """);
 }
