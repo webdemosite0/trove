@@ -20,7 +20,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
       <Backdrop />
       <LandingNav />
       <main className="flex-1">{children}</main>
