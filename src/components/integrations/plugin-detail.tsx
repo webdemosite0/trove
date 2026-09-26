@@ -59,8 +59,6 @@ export function PluginDetailView({
   signedIn,
   composioOn = false,
   composioService = false,
-  nangoOn = false,
-  nangoService = false,
 }: {
   service: Service;
   connected: boolean;
@@ -68,8 +66,6 @@ export function PluginDetailView({
   signedIn: boolean;
   composioOn?: boolean;
   composioService?: boolean;
-  nangoOn?: boolean;
-  nangoService?: boolean;
 }) {
   const router = useRouter();
   const [opening, setOpening] = useState(false);
@@ -110,46 +106,10 @@ export function PluginDetailView({
     }
   }
 
-  async function connectNango() {
-    setError(null);
-    setBusy(true);
-    try {
-      const res = await fetch("/api/nango/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ service: service.id }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? "Failed");
-      const link = data.connectLink as string;
-      const popup = window.open(link, "nango-connect", "width=520,height=720");
-      if (!popup) throw new Error("Popup blocked");
-      const started = Date.now();
-      await new Promise<void>((resolve) => {
-        const t = setInterval(() => {
-          if (popup.closed || Date.now() - started > 5 * 60_000) {
-            clearInterval(t);
-            resolve();
-          }
-        }, 800);
-      });
-      await fetch("/api/nango/sync", { method: "POST" });
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Connect failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   function install() {
     if (connected) return;
     if (composioOn && composioService) {
       void connectComposio();
-      return;
-    }
-    if (nangoOn && nangoService) {
-      void connectNango();
       return;
     }
     if (connectable) setOpening(true);
@@ -162,10 +122,7 @@ export function PluginDetailView({
     });
   }
 
-  const canInstall =
-    Boolean(connectable) ||
-    (composioOn && composioService) ||
-    (nangoOn && nangoService);
+  const canInstall = Boolean(connectable) || (composioOn && composioService);
 
   return (
     <div className="min-h-[calc(100dvh-3.5rem)] bg-transparent text-ink">

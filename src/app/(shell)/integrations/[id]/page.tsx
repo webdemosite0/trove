@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { listConnections } from "@/lib/connections";
 import { composioConfigured, COMPOSIO_MAP } from "@/lib/composio";
-import { nangoEnabled, NANGO_MAP } from "@/lib/nango";
 import { connectableProviders } from "@/lib/providers";
 import { serviceById } from "@/lib/services";
 import { PluginDetailView } from "@/components/integrations/plugin-detail";
@@ -35,7 +34,6 @@ export default async function IntegrationDetailPage({
   const connected = connections.some((c) => c.service === id);
   const connectable = connectableProviders()[id];
   const composioOn = composioConfigured();
-  const nangoOn = nangoEnabled();
 
   return (
     <PluginDetailView
@@ -45,8 +43,6 @@ export default async function IntegrationDetailPage({
       signedIn={Boolean(user)}
       composioOn={composioOn}
       composioService={composioOn && Boolean(COMPOSIO_MAP[id])}
-      nangoOn={nangoOn}
-      nangoService={nangoOn && Boolean(NANGO_MAP[id])}
     />
   );
 }

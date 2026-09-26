@@ -4,7 +4,6 @@ import { one, all, run, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { encrypt, decrypt, hint, canStoreSecrets } from "@/lib/secrets";
 import { providerFor } from "@/lib/providers";
-import { nangoIntegrationFor, resolveNangoAccessToken } from "@/lib/nango";
 
 export interface Connection {
   service: string;
@@ -32,7 +31,7 @@ export async function connectService(
     return {
       ok: false,
       error:
-        "This service needs an OAuth app registered with the provider. Only its account owner can create those credentials.",
+        "Connect this app from Plugins with one-click OAuth (Composio), or use a service that accepts a personal token.",
     };
   }
 
@@ -104,7 +103,7 @@ export async function listConnections(): Promise<Connection[]> {
 
 /**
  * Decrypted credential for server-side API calls.
- * If the row was synced from Nango, fetch a live access_token from Nango.
+ * Composio-backed rows store metadata only — tools run via Composio sessions.
  */
 export async function secretFor(service: string): Promise<string | null> {
   const user = await currentUser();
@@ -119,35 +118,14 @@ export async function secretFor(service: string): Promise<string | null> {
   const stored = str(row.secret);
   const kind = str(row.kind);
 
-  // Direct credentials are encrypted. Nango rows only contain an opaque
-  // connection id + integration metadata, never the provider access token,
-  // so legacy rows may safely contain that identifier without TROVE_SECRET.
-  const raw = decrypt(stored) ?? (kind === "nango" ? stored : null);
+  // Composio / legacy Nango rows are not usable as raw provider tokens
+  if (kind === "composio" || kind === "nango") return null;
+
+  const raw = decrypt(stored);
   if (!raw) return null;
 
-  if (kind === "nango" || raw.includes('"nango"')) {
-    let connectionId = "";
-    let integration = nangoIntegrationFor(service) ?? "";
-
-    try {
-      const p = JSON.parse(raw) as {
-        nango?: boolean;
-        connectionId?: string;
-        integration?: string;
-      };
-      connectionId = String(p.connectionId ?? "").trim();
-      integration = String(p.integration ?? integration).trim();
-    } catch {
-      // Older Nango rows stored just the opaque connection id.
-      connectionId = raw.trim();
-    }
-
-    if (connectionId && integration) {
-      const token = await resolveNangoAccessToken(integration, connectionId);
-      if (token) return token;
-    }
-    return null;
-  }
+  // Ignore leftover Nango JSON blobs
+  if (raw.includes('"nango"') || raw.includes('"composio"')) return null;
 
   return raw;
 }

@@ -8,7 +8,6 @@ import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
 import { SERVICES } from "@/lib/services";
 import { ServiceMark } from "@/components/integrations/service-mark";
-import { cn } from "@/lib/utils";
 
 export interface ConnectedService {
   service: string;
@@ -20,20 +19,15 @@ const POPULAR_IDS = [
   "gmail",
   "slack",
   "github",
-  "whatsapp",
-  "linkedin",
-  "telegram",
-  "discord",
-  "figma",
-  "meta",
-  "twitter",
-  "chatgpt",
+  "notion",
   "google-drive",
   "google-calendar",
-  "notion",
-  "outlook",
-  "vercel",
   "linear",
+  "figma",
+  "discord",
+  "hubspot",
+  "stripe",
+  "outlook",
 ];
 
 export function IntegrationsView({
@@ -42,16 +36,12 @@ export function IntegrationsView({
   signedIn,
   composioOn = false,
   composioServices = [],
-  nangoOn = false,
-  nangoServices = [],
 }: {
   connected: ConnectedService[];
   connectable: Record<string, { label: string; help: string; docs?: string }>;
   signedIn: boolean;
   composioOn?: boolean;
   composioServices?: string[];
-  nangoOn?: boolean;
-  nangoServices?: string[];
 }) {
   const router = useRouter();
   const [opening, setOpening] = useState<string | null>(null);
@@ -60,7 +50,6 @@ export function IntegrationsView({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const composioSet = useMemo(() => new Set(composioServices), [composioServices]);
-  const nangoSet = useMemo(() => new Set(nangoServices), [nangoServices]);
 
   const [optimistic, dropOne] = useOptimistic(
     connected,
@@ -136,62 +125,16 @@ export function IntegrationsView({
     }
   }
 
-  async function connectNango(service: string) {
-    setError(null);
-    setBusy(service);
-    try {
-      const res = await fetch("/api/nango/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ service }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
-      const link = data.connectLink as string;
-      if (!link || !link.startsWith("http")) {
-        throw new Error("Nango did not return a valid connect link.");
-      }
-      const popup = window.open(link, "nango-connect", "width=520,height=720");
-      if (!popup) throw new Error("Popup blocked — allow popups for this site.");
-      const started = Date.now();
-      await new Promise<void>((resolve) => {
-        const t = setInterval(() => {
-          if (popup?.closed || Date.now() - started > 5 * 60_000) {
-            clearInterval(t);
-            resolve();
-          }
-        }, 800);
-      });
-      const sync = await fetch("/api/nango/sync", { method: "POST" });
-      const syncData = await sync.json().catch(() => null);
-      if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync.");
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Connect failed.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
   function startConnect(id: string) {
-    // Prefer Composio when configured for this service
     if (composioOn && composioSet.has(id)) {
       void connectComposio(id);
-      return;
-    }
-    if (nangoOn && nangoSet.has(id)) {
-      void connectNango(id);
       return;
     }
     if (connectable[id]) setOpening(id);
   }
 
   function canConnect(id: string) {
-    return (
-      Boolean(connectable[id]) ||
-      (composioOn && composioSet.has(id)) ||
-      (nangoOn && nangoSet.has(id))
-    );
+    return Boolean(connectable[id]) || (composioOn && composioSet.has(id));
   }
 
   return (
@@ -226,7 +169,7 @@ export function IntegrationsView({
           </p>
         ) : null}
 
-        {!composioOn && !nangoOn ? (
+        {!composioOn ? (
           <p className="mt-4 rounded-xl border border-line bg-raised px-3.5 py-2.5 text-[13px] text-ink-3">
             Set <code className="text-ink">COMPOSIO_API_KEY</code> in Vercel to enable one-click
             OAuth for Gmail, Slack, GitHub, and more.
@@ -315,18 +258,6 @@ export function IntegrationsView({
             OAuth via Composio
             <a
               href="https://dashboard.composio.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-accent hover:underline"
-            >
-              <FiExternalLink size={11} />
-            </a>
-          </p>
-        ) : nangoOn ? (
-          <p className="mt-10 flex items-center gap-1.5 text-[12.5px] text-ink-4">
-            OAuth apps via Nango
-            <a
-              href="https://app.nango.dev"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-accent hover:underline"

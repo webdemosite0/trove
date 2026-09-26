@@ -11,6 +11,7 @@ import { PricingPreview, FinalCta, SectionHead } from "@/components/landing/sect
 import { ProductProof } from "@/components/landing/product-proof";
 import { TrustSection } from "@/components/landing/trust";
 import { Faq } from "@/components/landing/faq";
+import { IntegrationNetwork } from "@/components/landing/integration-network";
 import { PLANS } from "@/lib/credits";
 import { site } from "@/lib/site";
 import Link from "next/link";
@@ -112,6 +113,8 @@ export default async function Landing() {
         <Hero freeCredits={free.monthly} />
 
         <ProductProof />
+
+        <IntegrationNetwork />
 
         <section id="capabilities" className="scroll-mt-20 border-y border-line bg-rail/30 px-5 py-20 lg:py-24">
           <div className="mx-auto max-w-[1100px]">

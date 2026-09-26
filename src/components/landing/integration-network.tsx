@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { FiArrowRight, FiCheck } from "@/components/ui/icons";
+import { FiCheck } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { ServiceMark } from "@/components/integrations/service-mark";
 import { Reveal } from "@/components/landing/reveal";
+import { ConnectToolsCard } from "@/components/chat/connect-tools-card";
 
 const TOOLS = [
   { id: "gmail", name: "Gmail", x: 7, y: 48 },
@@ -52,18 +53,16 @@ export function IntegrationNetwork() {
                 ))}
               </div>
 
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/signup"
-                  className="group inline-flex h-11 items-center gap-2 rounded-full btn-grad px-5 text-[13.5px] font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  Connect your workspace
-                  <FiArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-                </Link>
-                <span className="text-[11.5px] text-ink-3">
-                  Gmail · Drive · Slack · Notion · GitHub · and more
-                </span>
+              <div className="mt-7 max-w-[640px]">
+                <ConnectToolsCard />
               </div>
+              <p className="mt-3 text-[11.5px] text-ink-3">
+                Or{" "}
+                <Link href="/signup" className="font-medium text-accent hover:underline">
+                  create a free account
+                </Link>{" "}
+                to connect Gmail, Slack, GitHub, and more.
+              </p>
             </Reveal>
 
             <Reveal delay={100} y={28}>

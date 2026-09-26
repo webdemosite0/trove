@@ -1,7 +1,6 @@
 import { currentUser } from "@/lib/auth";
 import { listConnections } from "@/lib/connections";
 import { composioConfigured, COMPOSIO_MAP } from "@/lib/composio";
-import { nangoEnabled, NANGO_MAP } from "@/lib/nango";
 import { connectableProviders } from "@/lib/providers";
 import { IntegrationsView } from "./integrations-view";
 
@@ -17,7 +16,6 @@ export default async function IntegrationsPage() {
   const connections = user ? await listConnections() : [];
   const connectable = connectableProviders();
   const composioOn = composioConfigured();
-  const nangoOn = nangoEnabled();
 
   return (
     <IntegrationsView
@@ -30,8 +28,6 @@ export default async function IntegrationsPage() {
       connectable={connectable}
       composioOn={composioOn}
       composioServices={composioOn ? Object.keys(COMPOSIO_MAP) : []}
-      nangoOn={nangoOn}
-      nangoServices={nangoOn ? Object.keys(NANGO_MAP) : []}
     />
   );
 }
