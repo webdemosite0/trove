@@ -13,7 +13,7 @@
     "backup:db": "node scripts/backup-database.mjs"
   },
   "dependencies": {
-    "@composio/core": "^0.6.0",
+    "@composio/core": "^0.21.0",
     "@libsql/client": "^0.17.4",
     "@supabase/supabase-js": "^2.112.3",
     "clsx": "^2.1.1",
