@@ -91,10 +91,11 @@ export async function POST(req: Request) {
   const action = String(body?.action || "");
 
   try {
+    let lastInvite: { id: string; path: string; link: string } | null = null;
     if (action === "create") {
       await createTeam(String(body?.name || ""));
     } else if (action === "invite") {
-      await inviteTeamMember(
+      lastInvite = await inviteTeamMember(
         String(body?.email || ""),
         body?.role === "admin" ? "admin" : "member",
       );
@@ -125,7 +126,8 @@ export async function POST(req: Request) {
       return Response.json({ error: "Unknown team action." }, { status: 400 });
     }
 
-    return Response.json(await teamStateForUser(user));
+    const state = await teamStateForUser(user);
+    return Response.json(lastInvite ? { ...state, lastInvite } : state);
   } catch (error) {
     return Response.json({ error: messageFor(error) }, { status: 400 });
   }

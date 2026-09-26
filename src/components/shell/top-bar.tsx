@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { TbSearch, TbBell, FiMenu, FiDownload } from "@/components/ui/icons";
+import { TbSearch, FiMenu, FiDownload } from "@/components/ui/icons";
 import { useNav } from "@/components/shell/nav-state";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
 import { CreditMeter } from "@/components/shell/credit-meter";
+import { NotificationsPanel } from "@/components/shell/notifications-panel";
 import type { Balance } from "@/lib/types";
 
 export function TopBar({
@@ -69,20 +70,7 @@ export function TopBar({
         <span className="hidden font-semibold text-ink md:inline">Trove</span>
       </Link>
 
-      <Link
-        href="/reminders"
-        aria-label={due > 0 ? `Reminders — ${due} due` : "Reminders"}
-        title={due > 0 ? `${due} reminder${due === 1 ? "" : "s"} due` : "Reminders"}
-        className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[var(--r-control)] text-ink-3 transition-colors hover:bg-hover hover:text-ink sm:h-9 sm:w-9"
-      >
-        <Ico icon={TbBell} motion="ring" size={18} />
-        {due > 0 ? (
-          <span
-            aria-hidden
-            className="absolute right-2 top-2 h-[7px] w-[7px] rounded-full bg-critical ring-2 ring-canvas sm:right-1.5 sm:top-1.5"
-          />
-        ) : null}
-      </Link>
+      <NotificationsPanel due={due} />
 
       <div className="shrink-0">
         <CreditMeter balance={balance} variant="topbar" />
