@@ -95,29 +95,17 @@ export type ComposioSessionInfo = {
   userId: string;
 };
 
-type SessionLike = {
-  sessionId?: string;
-  session_id?: string;
-  authorize?: (
-    toolkit: string,
-    opts?: { callbackUrl?: string },
-  ) => Promise<{ redirectUrl?: string; redirect_url?: string; url?: string }>;
-  execute?: (toolSlug: string, args?: Record<string, unknown>) => Promise<unknown>;
-  tools?: () => Promise<unknown>;
-  toolkits?: () => Promise<{
-    items?: Array<{
-      slug?: string;
-      name?: string;
-      connection?: {
-        connectedAccount?: { id?: string } | null;
-        connected_account?: { id?: string } | null;
-      } | null;
-    }>;
-  }>;
-};
+/** Loose session shape — SDK types vary across @composio/core versions. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SessionLike = any;
 
 function sessionIdOf(session: SessionLike): string {
-  return String(session.sessionId || session.session_id || "").trim();
+  if (!session || typeof session !== "object") return "";
+  return String(
+    (session as { sessionId?: string; session_id?: string }).sessionId ||
+      (session as { session_id?: string }).session_id ||
+      "",
+  ).trim();
 }
 
 export async function createUserSession(
@@ -128,7 +116,7 @@ export async function createUserSession(
   const toolkits = opts?.toolkits?.length ? opts.toolkits : [...DEFAULT_TOOLKITS];
 
   const anySdk = sdk as Composio & {
-    create: (
+    create?: (
       userId: string,
       config?: { toolkits?: string[]; manageConnections?: boolean },
     ) => Promise<SessionLike>;
@@ -191,15 +179,20 @@ export async function authorizeToolkit(
   toolkit: string,
   callbackUrl?: string,
 ): Promise<{ redirectUrl: string }> {
-  if (typeof session.authorize !== "function") {
+  if (!session || typeof session.authorize !== "function") {
     throw new Error("Session does not support authorize().");
   }
-  const result = await session.authorize(
+  const result = (await session.authorize(
     toolkit,
     callbackUrl ? { callbackUrl } : undefined,
-  );
-  const redirectUrl =
-    result.redirectUrl || result.redirect_url || result.url || "";
+  )) as {
+    redirectUrl?: string | null;
+    redirect_url?: string | null;
+    url?: string | null;
+  };
+  const redirectUrl = String(
+    result?.redirectUrl || result?.redirect_url || result?.url || "",
+  ).trim();
   if (!redirectUrl) {
     throw new Error(`Composio did not return a connect URL for ${toolkit}.`);
   }
@@ -211,7 +204,7 @@ export async function executeOnSession(
   toolSlug: string,
   args: Record<string, unknown> = {},
 ) {
-  if (typeof session.execute !== "function") {
+  if (!session || typeof session.execute !== "function") {
     throw new Error("Session does not support execute().");
   }
   return session.execute(toolSlug, args);
@@ -276,12 +269,20 @@ export async function syncComposioConnections(): Promise<{ synced: string[] }> {
   const { session } = await createUserSession(user.id, { toolkits });
 
   const synced: string[] = [];
-  if (typeof session.toolkits !== "function") {
-    // Fallback: if they just authorized, we cannot list — return empty.
+  if (!session || typeof session.toolkits !== "function") {
     return { synced };
   }
 
-  const listed = await session.toolkits();
+  const listed = (await session.toolkits()) as {
+    items?: Array<{
+      slug?: string;
+      name?: string;
+      connection?: {
+        connectedAccount?: { id?: string } | null;
+        connected_account?: { id?: string } | null;
+      } | null;
+    }>;
+  };
   const items = listed?.items ?? [];
 
   for (const item of items) {
