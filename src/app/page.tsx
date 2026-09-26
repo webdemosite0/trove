@@ -28,48 +28,48 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: "Trove — Describe the work. Get the files.",
   description:
-    "AI workspace that turns a request into documents, spreadsheets, presentations, research, websites, and agents you can edit, download, and keep.",
+    "AI workspace for websites, documents, spreadsheets, presentations, research, code, and agents. Describe the work, refine in chat, publish or export when ready.",
 };
 
 const CREATE = [
   {
     label: "Documents",
-    body: "Reports, proposals, and briefs as real Word files.",
+    body: "Reports, proposals, and briefs you can keep editing in the project.",
     href: "/documents",
     Icon: FiFileText,
     tone: "#8b5cf6",
   },
   {
     label: "Spreadsheets",
-    body: "Budgets and trackers you can export to Excel.",
+    body: "Budgets and trackers with real tables — export to Excel when you need to.",
     href: "/spreadsheets",
     Icon: FiGrid,
     tone: "#d97706",
   },
   {
     label: "Presentations",
-    body: "Pitch decks and slide structures as PowerPoint.",
+    body: "Pitch decks and slide structures you refine slide by slide in chat.",
     href: "/slides",
     Icon: FiLayers,
     tone: "#e11d48",
   },
   {
     label: "Websites",
-    body: "Sites with a live preview you keep refining in chat.",
+    body: "Sites with a live preview — publish on *.troveai.site or keep iterating.",
     href: "/websites",
     Icon: FiGlobe,
     tone: "#0284c7",
   },
   {
     label: "Research",
-    body: "Structured write-ups you can build on later.",
+    body: "Structured write-ups you can build on in later conversations.",
     href: "/research",
     Icon: FiSearch,
     tone: "#0d9488",
   },
   {
     label: "AI agents",
-    body: "Specialists with a brief, tools, and saved history.",
+    body: "Specialists with a brief, tools, and their own saved history.",
     href: "/agents",
     Icon: FiCpu,
     tone: "#7c3aed",
@@ -117,8 +117,8 @@ export default async function Landing() {
           <div className="mx-auto max-w-[1100px]">
             <SectionHead
               eyebrow="What you can create"
-              title="Work that leaves as a file — not a chat bubble."
-              lede="Core creation tools are on every plan. You upgrade for capacity and collaboration, not to unlock the product."
+              title="One workspace for the work you actually ship."
+              lede="Chat, websites, documents, sheets, decks, research, and agents — on every plan. You upgrade for capacity and team collaboration, not to unlock the product."
             />
             <ul className="nx-stagger-kids mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {CREATE.map((c) => {

@@ -35,12 +35,12 @@ export const site = {
   email: "official@troveai.site",
   tagline: "Describe the work. Get the files.",
   description:
-    "Trove is an AI workspace that turns a prompt into finished work you can keep: websites, documents, spreadsheets, decks, code and agents. Download real files, refine in the same project, and reopen conversations with the work still there.",
+    "Trove is an AI workspace for real work: chat, websites, documents, spreadsheets, decks, code, research, and agents — in projects you can refine, publish, and return to.",
   searchTitle: "Describe the work. Get the files. — Trove AI workspace",
   metaDescription:
-    "AI workspace for websites, docs, spreadsheets, decks, code and agents. Describe the work, download real files, keep refining in the same project.",
+    "AI workspace for websites, docs, spreadsheets, decks, code, research, and agents. Describe the work, refine in chat, publish or export when you are ready.",
   shortDescription:
-    "Describe the work. Get downloadable files — websites, docs, sheets, decks, code and agents.",
+    "AI workspace for websites, docs, sheets, decks, code, and agents — refine in chat, publish, or export.",
   keywords: [
     "AI website builder",
     "AI agent builder",
@@ -56,7 +56,6 @@ export const site = {
     "AI slides generator",
     "prompt to website",
     "AI file generator",
-    "downloadable AI output",
     "troveai",
   ],
   locale: "en_US",

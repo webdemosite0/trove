@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/landing/reveal";
 
 const OUTPUTS = [
-  { label: "Websites", detail: "HTML · live preview" },
-  { label: "Documents", detail: "DOCX" },
-  { label: "Spreadsheets", detail: "XLSX" },
-  { label: "Decks", detail: "PPTX" },
-  { label: "Code", detail: "ZIP · projects" },
+  { label: "Websites", detail: "live preview · publish" },
+  { label: "Documents", detail: "edit · export" },
+  { label: "Spreadsheets", detail: "tables · Excel" },
+  { label: "Decks", detail: "slides · PPTX" },
+  { label: "Code", detail: "projects" },
   { label: "Agents", detail: "saved specialists" },
 ];
 
@@ -19,7 +19,7 @@ export function TrustedBar() {
     <section className="border-y border-zinc-200/80 bg-white/40 px-5 py-14 backdrop-blur-sm">
       <Reveal>
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-          One workspace. Real files you can download.
+          One workspace for the work you ship
         </p>
       </Reveal>
       <div className="mx-auto mt-8 flex max-w-[960px] flex-wrap items-center justify-center gap-3">
@@ -56,10 +56,10 @@ export function ProductMockup() {
             Live workspace
           </p>
           <h2 className="mx-auto mt-3 max-w-[28ch] text-[clamp(1.85rem,1.2rem+1.9vw,2.7rem)] font-semibold tracking-[-0.03em] text-zinc-900">
-            Build by chatting with the AI website maker
+            Build by chatting — preview updates as you go
           </h2>
           <p className="mx-auto mt-3 max-w-[50ch] text-[15.5px] text-zinc-600">
-            Conversation on the left. Live preview on the right. Ask for changes and watch the site update.
+            Conversation on the left. Live preview on the right. Ask for changes and watch the site update in the same project.
           </p>
         </Reveal>
         <Reveal delay={100} y={40} className="mt-12">
@@ -127,11 +127,11 @@ export function WhyGallery() {
       <Reveal className="mx-auto max-w-[720px] text-center">
         <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">Why Trove</p>
         <h2 className="mt-3 text-[clamp(1.9rem,1.2rem+2vw,3rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-zinc-900">
-          The hard part was never the site
+          The hard part was never the blank page
         </h2>
         <p className="mx-auto mt-4 max-w-[50ch] text-[16px] leading-relaxed text-zinc-600">
           It is the launch due tomorrow, the portfolio still in a Doc, and the landing page you
-          promised last week. Trove takes each one off your plate.
+          promised last week. Trove takes each one from chat to a working result in the same project.
         </p>
         <Link
           href="/websites"

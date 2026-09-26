@@ -77,7 +77,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
       <div className="relative mx-auto max-w-[960px] text-center">
         <div className="lp-hero-in mb-3.5 inline-flex items-center rounded-full border border-line bg-raised/80 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-2 shadow-sm backdrop-blur-md sm:mb-5 sm:px-4 sm:text-[11px]">
-          AI THAT SHIPS REAL FILES
+          AI WORKSPACE · CHAT · BUILD · PUBLISH
         </div>
 
         <h1
@@ -95,7 +95,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           className="lp-hero-in mx-auto mt-3 max-w-[50ch] text-[13.5px] leading-6 text-ink-3 sm:mt-4 sm:text-[16px] sm:leading-relaxed lg:text-[17px]"
           style={{ animationDelay: "120ms" }}
         >
-          Real deliverables you can refine, export, and keep — websites, documents, spreadsheets, presentations, and code in the same project.
+          Websites, documents, spreadsheets, presentations, research, and agents — in one workspace. Refine in chat, publish live, or export when you need the file.
         </p>
 
         <div className="lp-hero-in mx-auto mt-5 max-w-[740px] sm:mt-7" style={{ animationDelay: "180ms" }}>
@@ -137,11 +137,11 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[10px] text-ink-3 sm:mt-4 sm:gap-x-3 sm:text-[12px]">
-            <span>HTML · React · Vite</span>
+            <span>Live preview</span>
             <span className="text-ink-4">·</span>
-            <span>Publish live</span>
+            <span>Publish on *.troveai.site</span>
             <span className="text-ink-4">·</span>
-            <span>Download real files</span>
+            <span>Export DOCX · XLSX · PPTX</span>
           </div>
 
           <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:mt-5 sm:gap-2">

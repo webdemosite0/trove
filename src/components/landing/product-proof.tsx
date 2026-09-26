@@ -11,34 +11,34 @@ import {
 const EXAMPLES = [
   {
     type: "Website",
-    file: "project · live preview",
+    file: "Live preview",
     prompt: "Create a premium landing page for a coffee brand.",
-    result: "Multi-page site with hero, menu, and contact — editable in chat.",
+    result: "Multi-page site with hero, menu, and contact — refine in chat, publish when ready.",
     href: "/websites?q=" + encodeURIComponent("Create a premium landing page for a coffee brand"),
     Icon: FiGlobe,
     tint: "bg-sky-50/90 border-sky-100/90 hover:border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/25",
   },
   {
     type: "Document",
-    file: "DOCX",
+    file: "In project",
     prompt: "Create a professional market research report.",
-    result: "Structured report with sections you can keep editing and export.",
+    result: "Structured report with sections you keep editing — export to Word anytime.",
     href: "/documents",
     Icon: FiFileText,
     tint: "bg-violet-50/90 border-violet-100/90 hover:border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/25",
   },
   {
     type: "Spreadsheet",
-    file: "XLSX",
+    file: "Tables",
     prompt: "Build a monthly financial dashboard.",
-    result: "Tables, totals, and status columns — export to Excel anytime.",
+    result: "Tables, totals, and status columns — open in the workspace or export to Excel.",
     href: "/spreadsheets",
     Icon: FiGrid,
     tint: "bg-amber-50/90 border-amber-100/90 hover:border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/25",
   },
   {
     type: "Presentation",
-    file: "PPTX",
+    file: "Slides",
     prompt: "Create a 10-slide startup pitch deck.",
     result: "Slide structure ready to present — refine in the same project.",
     href: "/slides",
@@ -47,9 +47,9 @@ const EXAMPLES = [
   },
   {
     type: "Code",
-    file: "ZIP / project",
+    file: "Project",
     prompt: "Create a React analytics dashboard.",
-    result: "Real files you can download, not a disposable chat answer.",
+    result: "Real project files you can keep building on — not a one-off chat answer.",
     href: "/chat?q=" + encodeURIComponent("Create a React analytics dashboard."),
     Icon: FiCode,
     tint: "bg-emerald-50/90 border-emerald-100/90 hover:border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/25",
@@ -79,8 +79,8 @@ export function ProductProof() {
             Describe the work. Trove builds it.
           </h2>
           <p className="mt-3 text-[13px] leading-6 text-ink-3 sm:mt-3.5 sm:text-[16px] sm:leading-relaxed">
-            Not another chat that vanishes. Real deliverables you can refine,
-            export, and keep — in the same project.
+            Not another chat that vanishes. Work lives in projects you can refine,
+            publish, and come back to — with export when you need a file outside Trove.
           </p>
         </div>
 

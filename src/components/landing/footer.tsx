@@ -16,8 +16,8 @@ export function Footer() {
               <Wordmark size={19} sweep={false} />
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-3">
-              Trove doesn't just generate work. It keeps building with you
-              — websites, docs, sheets, and files you own.
+              AI workspace for websites, docs, sheets, decks, code, and agents —
+              refine in chat, publish, or export when you need to.
             </p>
             <a
               href={site.instagramUrl}

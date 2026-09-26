@@ -5,24 +5,24 @@ import { Reveal } from "@/components/landing/reveal";
 
 const POINTS = [
   {
-    title: "Your work stays yours",
-    body: "Projects live in your workspace. Export files when you need them.",
+    title: "Work stays in your workspace",
+    body: "Projects, chats, and outputs live under your account — not lost when the tab closes.",
     Icon: FiFolder,
   },
   {
-    title: "Download the actual files",
-    body: "Word, Excel, slides, site code — not trapped inside a chat thread.",
-    Icon: FiDownload,
-  },
-  {
-    title: "Keep building, don’t start over",
-    body: "Refine the same project in chat. Changes apply to what you already made.",
+    title: "Refine without starting over",
+    body: "Keep building in the same project. Changes apply to what you already made.",
     Icon: FiRefreshCw,
   },
   {
     title: "Publish when ready",
-    body: "Ship to your own subdomain on *.troveai.site — or unpublish anytime.",
+    body: "Ship sites to your subdomain on *.troveai.site — or unpublish anytime.",
     Icon: FiLock,
+  },
+  {
+    title: "Export when you need a file",
+    body: "Word, Excel, slides, and project code — available when work has to leave Trove.",
+    Icon: FiDownload,
   },
 ];
 
@@ -32,11 +32,11 @@ export function TrustSection() {
       <div className="mx-auto max-w-[1140px]">
         <Reveal className="mx-auto max-w-[44ch] text-center">
           <h2 className="text-[clamp(1.6rem,1.1rem+1.5vw,2.2rem)] font-semibold tracking-tight text-zinc-900">
-            Your projects are not trapped inside a chat.
+            Built as a workspace — not a disposable chat.
           </h2>
           <p className="mt-3 text-[15.5px] leading-relaxed text-zinc-600">
-            Trove is built so finished work can leave the product — as files you own, and sites you
-            control.
+            Describe work, iterate in conversation, publish or export when you are ready.
+            Your projects stay where you left them.
           </p>
         </Reveal>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
