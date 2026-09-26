@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   if (service === "figma") {
     return Response.json({
       error:
-        "Figma is connected for OAuth context, but file APIs need a Figma token action path.",
+        "Connect Figma from Plugins (Composio), then use chat tools for file actions.",
       ok: false,
     });
   }
@@ -73,7 +73,7 @@ async function slackAct(
     return Response.json(
       {
         error:
-          "Slack is not connected. Open Integrations and connect Slack (bot token xoxb- recommended).",
+          "Slack is not connected. Open Plugins and connect Slack (Composio or bot token xoxb-).",
         ok: false,
       },
       { status: 400 },
@@ -158,64 +158,16 @@ async function slackAct(
   }
 }
 
-async function githubToken(): Promise<string | null> {
-  const raw = await secretFor("github");
-  if (!raw) return null;
-  if (raw.trim().startsWith("{")) {
-    try {
-      const parsed = JSON.parse(raw) as {
-        nango?: boolean;
-        connectionId?: string;
-      };
-      if (parsed.nango && parsed.connectionId) {
-        if (!process.env.NANGO_SECRET_KEY?.trim()) return null;
-        return `nango:${parsed.connectionId}`;
-      }
-    } catch {
-      /* fall through */
-    }
-  }
-  return raw.trim();
-}
-
 async function githubAct(action: string) {
-  const token = await githubToken();
+  const token = await secretFor("github");
   if (!token) {
     return Response.json(
       {
         error:
-          "GitHub is not connected. Connect GitHub under Integrations (token or Nango).",
+          "GitHub is not connected. Open Plugins and connect GitHub (Composio or personal access token).",
       },
       { status: 400 },
     );
-  }
-
-  if (token.startsWith("nango:")) {
-    const connectionId = token.slice("nango:".length);
-    const key = process.env.NANGO_SECRET_KEY!.trim();
-    const path =
-      action === "whoami"
-        ? "/user"
-        : action === "list_repos" || action === "repos"
-          ? "/user/repos?per_page=20&sort=updated"
-          : "";
-    if (!path) {
-      return Response.json({ error: "Unknown GitHub action. Use whoami or list_repos." }, { status: 400 });
-    }
-    const nangoRes = await fetch(`https://api.nango.dev/proxy${path}`, {
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Connection-Id": connectionId,
-        "Provider-Config-Key": "github",
-        Accept: "application/vnd.github+json",
-        "User-Agent": "trove",
-      },
-    });
-    const data = await nangoRes.json().catch(() => null);
-    if (!nangoRes.ok) {
-      return Response.json({ error: `GitHub/Nango returned ${nangoRes.status}`, detail: data }, { status: 400 });
-    }
-    return Response.json({ ok: true, data });
   }
 
   const path =
