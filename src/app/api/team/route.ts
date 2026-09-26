@@ -23,11 +23,11 @@ function messageFor(error: unknown) {
   const code = error instanceof Error ? error.message : String(error);
   const messages: Record<string, string> = {
     UNAUTHENTICATED: "Sign in to manage a team.",
-    TEAM_PLAN_REQUIRED: "A Team plan is required to create a workspace.",
+    TEAM_PLAN_REQUIRED: "Unable to create a workspace right now.",
     TEAM_BUSINESS_ONLY:
       "Team is a business plan. Set up your Business profile first, then upgrade to Team.",
     TEAM_MEMBERS_ONLY: "Only joined team members can use this workspace.",
-    TEAM_PLAN_INACTIVE: "This Team workspace is paused because its owner no longer has an active Team plan.",
+    TEAM_PLAN_INACTIVE: "This team workspace is not available right now.",
     ALREADY_IN_TEAM: "This account is already in a team.",
     TEAM_NAME_REQUIRED: "Give the team a name.",
     TEAM_NAME_CONFIRMATION: "Type the exact workspace name to confirm deletion.",
@@ -52,7 +52,7 @@ function messageFor(error: unknown) {
     PROJECT_NOT_OWNED: "You can only share projects you own.",
     PROJECT_NOT_SHARED: "That project is not shared with this team.",
   };
-  return messages[code] || "The team action could not be completed.";
+  return messages[code] || (error instanceof Error ? error.message : "Request failed.");
 }
 
 export async function GET() {
