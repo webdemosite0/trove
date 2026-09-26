@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   FiCopy,
   FiCheck,
@@ -17,6 +17,73 @@ import { cn } from "@/lib/utils";
 import { ChatImage, ImageGeneratingCard } from "@/components/chat/chat-image";
 import { withConnectorChips } from "@/components/chat/connector-chip";
 import { ThinkingLine } from "@/components/chat/thinking-line";
+
+/** Match bare http(s) and www. URLs; trailing punctuation is trimmed when linking. */
+const URL_RE =
+  /https?:\/\/[^\s<>\[\]()"]+|www\.[^\s<>\[\]()"]+/gi;
+
+function trimUrl(raw: string): { href: string; display: string } {
+  let display = raw;
+  // Strip common trailing punctuation that is not part of the URL.
+  while (/[.,;:!?)]+$/.test(display)) {
+    display = display.slice(0, -1);
+  }
+  const href = display.startsWith("www.") ? `https://${display}` : display;
+  return { href, display };
+}
+
+function linkClassName(tone: "accent" | "inherit" = "accent") {
+  return tone === "inherit"
+    ? "font-medium underline decoration-current/40 underline-offset-[3px] transition-colors hover:decoration-current"
+    : "font-medium text-accent underline decoration-accent/30 underline-offset-[3px] transition-colors hover:decoration-accent";
+}
+
+/**
+ * Split plain text into nodes, turning bare URLs into highlighted links.
+ * Used for user bubbles and team chat (no full markdown).
+ */
+export function withLinkedText(
+  text: string,
+  opts?: { tone?: "accent" | "inherit"; connectors?: boolean },
+): ReactNode[] {
+  const tone = opts?.tone ?? "accent";
+  const useConnectors = opts?.connectors !== false;
+  const nodes: ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let k = 0;
+  const re = new RegExp(URL_RE.source, "gi");
+
+  while ((m = re.exec(text))) {
+    if (m.index > last) {
+      const plain = text.slice(last, m.index);
+      if (useConnectors) nodes.push(...withConnectorChips(plain));
+      else nodes.push(plain);
+    }
+    const { href, display } = trimUrl(m[0]);
+    nodes.push(
+      <a
+        key={`u${k++}`}
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        className={linkClassName(tone)}
+      >
+        {display}
+      </a>,
+    );
+    // If we stripped trailing punctuation, keep it as plain text after the link.
+    const stripped = m[0].slice(display.length);
+    if (stripped) nodes.push(stripped);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) {
+    const plain = text.slice(last);
+    if (useConnectors) nodes.push(...withConnectorChips(plain));
+    else nodes.push(plain);
+  }
+  return nodes.length ? nodes : [text];
+}
 
 function render(text: string) {
   const out: React.ReactNode[] = [];
@@ -167,13 +234,15 @@ function render(text: string) {
 
 function inline(text: string) {
   const nodes: React.ReactNode[] = [];
-  const re = /(!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|`[^`]+`|\*\*[^*]+\*\*)/g;
+  // Markdown image/link/code/bold first, then bare URLs.
+  const re =
+    /(!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|`[^`]+`|\*\*[^*]+\*\*|https?:\/\/[^\s<>\[\]()"]+|www\.[^\s<>\[\]()"]+)/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let k = 0;
 
   while ((m = re.exec(text))) {
-    if (m.index > last) nodes.push(...withConnectorChips(text.slice(last, m.index)));
+    if (m.index > last) nodes.push(...withLinkedText(text.slice(last, m.index), { connectors: true }));
     const tok = m[0];
     if (tok.startsWith("![")) {
       const im = tok.match(/^!\[([^\]]*)\]\(([^)\s]+)\)/);
@@ -193,7 +262,7 @@ function inline(text: string) {
             href={lm[2]}
             target="_blank"
             rel="noreferrer noopener"
-            className="font-medium text-accent underline decoration-accent/30 underline-offset-[3px] transition-colors hover:decoration-accent"
+            className={linkClassName("accent")}
           >
             {lm[1]}
           </a>,
@@ -208,16 +277,32 @@ function inline(text: string) {
           {tok.slice(1, -1)}
         </code>,
       );
-    } else {
+    } else if (tok.startsWith("**")) {
       nodes.push(
         <strong key={k++} className="font-semibold text-ink">
           {tok.slice(2, -2)}
         </strong>,
       );
+    } else {
+      // Bare URL matched by the trailing alternation.
+      const { href, display } = trimUrl(tok);
+      nodes.push(
+        <a
+          key={k++}
+          href={href}
+          target="_blank"
+          rel="noreferrer noopener"
+          className={linkClassName("accent")}
+        >
+          {display}
+        </a>,
+      );
+      const stripped = tok.slice(display.length);
+      if (stripped) nodes.push(stripped);
     }
     last = m.index + tok.length;
   }
-  if (last < text.length) nodes.push(...withConnectorChips(text.slice(last)));
+  if (last < text.length) nodes.push(...withLinkedText(text.slice(last), { connectors: true }));
   return nodes;
 }
 
@@ -347,7 +432,7 @@ export function Message({
           </div>
         ) : null}
         <div className="max-w-[min(85%,560px)] rounded-[20px] rounded-br-md bg-accent/15 px-4 py-2.5 text-[15px] leading-relaxed text-ink">
-          <span className="whitespace-pre-wrap">{withConnectorChips(text)}</span>
+          <span className="whitespace-pre-wrap">{withLinkedText(text)}</span>
         </div>
       </div>
     );

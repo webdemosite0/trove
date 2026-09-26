@@ -14,6 +14,7 @@ import {
   FiUsers,
   FiX,
 } from "@/components/ui/icons";
+import { withLinkedText } from "@/components/chat/message";
 import type { TeamChatMessage } from "@/lib/team-chat";
 import { cn } from "@/lib/utils";
 
@@ -115,7 +116,10 @@ function MessageRow({
               : "border border-line bg-sunk/80 text-ink-2",
           )}
         >
-          {message.text}
+          {withLinkedText(message.text, {
+            tone: mine ? "inherit" : "accent",
+            connectors: false,
+          })}
         </div>
       </div>
     </div>
@@ -392,8 +396,6 @@ export function TeamChatPanel({
     }
 
     if (initialState) return;
-    // Team chat is secondary to the main AI chat. Give first paint/input a
-    // head start instead of competing with it for network + database time.
     const timer = window.setTimeout(() => void load(false), 500);
     return () => window.clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -580,14 +582,8 @@ export function TeamChatPanel({
       </button>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-[3px] xl:hidden">
-          <button
-            type="button"
-            aria-label="Close Team chat"
-            onClick={() => setMobileOpen(false)}
-            className="absolute inset-0"
-          />
-          <div className="absolute inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] top-[max(68px,calc(env(safe-area-inset-top)+12px))] overflow-hidden rounded-[24px] border border-line-strong bg-raised shadow-2xl sm:left-auto sm:right-4 sm:w-[390px]">
+        <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm xl:hidden">
+          <div className="absolute inset-x-0 bottom-0 top-12 flex flex-col overflow-hidden rounded-t-[22px] border border-line bg-raised shadow-[var(--elev)]">
             <ChatSurface
               compact
               team={state.team}
