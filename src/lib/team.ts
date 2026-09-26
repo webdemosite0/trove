@@ -8,6 +8,11 @@ import {
   accountProfileForUser,
   type AccountType,
 } from "@/lib/account-type";
+import {
+  FREE_TEAM_SEATS,
+  seatSnapshotForTeam,
+  type SeatSnapshot,
+} from "@/lib/team-seats";
 
 export type TeamRole = "owner" | "admin" | "member";
 
@@ -69,6 +74,8 @@ export interface TeamState {
   canManageWorkspace: boolean;
   accountType: AccountType;
   businessEligible: boolean;
+  /** Seat usage for the workspace (null when no team). */
+  seats: SeatSnapshot | null;
 }
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -212,14 +219,16 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
       canManageWorkspace: false,
       accountType: profile.accountType,
       businessEligible: profile.businessEligible || admin,
+      seats: null,
     };
   }
 
-  const [members, invites, projects, ownedProjects] = await Promise.all([
+  const [members, invites, projects, ownedProjects, seats] = await Promise.all([
     membersFor(team.id),
     invitesFor(team.id),
     sharedProjectsFor(team.id),
     ownedProjectsFor(user.id),
+    seatSnapshotForTeam(team.id),
   ]);
 
   // teamPlanActive still reflects whether the owner is on Team (shared credits).
@@ -236,11 +245,12 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
     ownedProjects,
     canCreateTeam: false,
     canManageMembers: canAdmin,
-    canInvite: canAdmin,
+    canInvite: canAdmin && !seats.atLimit,
     teamPlanActive,
     canManageWorkspace: canAdmin,
     accountType: profile.accountType,
     businessEligible: profile.businessEligible || admin,
+    seats,
   };
 }
 
@@ -269,8 +279,8 @@ export async function createTeam(name: string) {
   await batch(
     [
       {
-        sql: "INSERT INTO teams (id, name, owner_user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-        args: [id, clean, user.id, now, now],
+        sql: "INSERT INTO teams (id, name, owner_user_id, created_at, updated_at, seat_limit) VALUES (?, ?, ?, ?, ?, ?)",
+        args: [id, clean, user.id, now, now, FREE_TEAM_SEATS],
       },
       {
         sql: "INSERT INTO team_members (team_id, user_id, role, joined_at, created_at) VALUES (?, ?, 'owner', ?, ?)",
@@ -289,6 +299,9 @@ export async function inviteTeamMember(
   if (!user) throw new Error("UNAUTHENTICATED");
   const team = await requireActiveMembership(user);
   if (team.role !== "owner" && team.role !== "admin") throw new Error("FORBIDDEN");
+
+  const seats = await seatSnapshotForTeam(team.id);
+  if (seats.atLimit) throw new Error("SEAT_LIMIT_REACHED");
 
   const clean = email.trim().toLowerCase().slice(0, 254);
   if (!/^\S+@\S+\.\S+$/.test(clean)) throw new Error("INVALID_EMAIL");
@@ -348,6 +361,14 @@ export async function acceptTeamInvite(inviteId: string) {
     [str(invite.team_id)],
   ).catch(() => null);
   if (!active) throw new Error("INVITE_NOT_FOUND");
+
+  // Accepting consumes a seat only if the invite was already counted in used.
+  // If the team hit the limit after the invite was sent (e.g. concurrent accepts),
+  // block the join so we never exceed seat_limit.
+  const seats = await seatSnapshotForTeam(str(invite.team_id));
+  // Pending invite already counts toward used; accepting moves it from invite -> member
+  // so used stays the same. Only block if somehow over limit (data race).
+  if (seats.used > seats.limit) throw new Error("SEAT_LIMIT_REACHED");
 
   const now = Date.now();
   await batch(
