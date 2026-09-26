@@ -3,6 +3,7 @@ import { consumeRateLimit } from "@/lib/rate-limit";
 import {
   composioConfigured,
   createUserSession,
+  executeOnSession,
   executeTool,
   resumeSession,
 } from "@/lib/composio";
@@ -12,9 +13,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST {
- *   tool: "GITHUB_GET_REPOS" | ...
+ *   tool: "GITHUB_GET_REPOS" | "HACKERNEWS_GET_USER" | ...
  *   arguments?: object
- *   sessionId?: string  // preferred: execute on session
+ *   sessionId?: string  // preferred: execute on session (required for meta-tools)
  * }
  */
 export async function POST(req: Request) {
@@ -58,23 +59,30 @@ export async function POST(req: Request) {
 
   try {
     if (sessionId) {
-      const session = (await resumeSession(sessionId)) as {
-        execute?: (
-          slug: string,
-          arguments_?: Record<string, unknown>,
-        ) => Promise<unknown>;
-      };
-      if (typeof session.execute === "function") {
-        const result = await session.execute(tool, args);
-        return Response.json({ ok: true, via: "session", result });
-      }
+      const session = await resumeSession(sessionId);
+      const result = await executeOnSession(session, tool, args);
+      return Response.json({ ok: true, via: "session", result });
     }
 
-    // Ensure the user has a session context even on direct execute
-    await createUserSession(user.id).catch(() => null);
-
-    const result = await executeTool(user.id, tool, args);
-    return Response.json({ ok: true, via: "tools.execute", result });
+    // Create a session then execute on it (meta-tools need a session).
+    const created = await createUserSession(user.id);
+    try {
+      const result = await executeOnSession(created.session, tool, args);
+      return Response.json({
+        ok: true,
+        via: "session",
+        sessionId: created.sessionId,
+        result,
+      });
+    } catch {
+      const result = await executeTool(user.id, tool, args);
+      return Response.json({
+        ok: true,
+        via: "tools.execute",
+        sessionId: created.sessionId,
+        result,
+      });
+    }
   } catch (e) {
     const message = e instanceof Error ? e.message : "Tool execution failed.";
     console.error("[composio] execute", message);
