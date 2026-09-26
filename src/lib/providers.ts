@@ -227,3 +227,17 @@ export function providerFor(serviceId: string): Provider {
 }
 
 export const CONNECTABLE = Object.keys(PROVIDERS);
+
+/** Token/webhook providers the user can paste credentials for (no OAuth app). */
+export function connectableProviders(): Record<
+  string,
+  { label: string; help: string; docs?: string }
+> {
+  const out: Record<string, { label: string; help: string; docs?: string }> = {};
+  for (const [id, p] of Object.entries(PROVIDERS)) {
+    if (p.kind === "token" || p.kind === "webhook") {
+      out[id] = { label: p.label, help: p.help, docs: p.docs };
+    }
+  }
+  return out;
+}
