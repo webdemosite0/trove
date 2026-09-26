@@ -34,7 +34,12 @@ export function composio(): Composio {
   return client;
 }
 
-/** Trove service id → Composio toolkit slug */
+/**
+ * Trove service id → Composio toolkit slug.
+ * Only include toolkits that work with Composio managed auth by default.
+ * Toolkits that require custom auth_configs (e.g. twitter) are omitted until
+ * you create an auth config in the Composio dashboard and pass it explicitly.
+ */
 export const COMPOSIO_MAP: Record<string, string> = {
   gmail: "gmail",
   "google-calendar": "googlecalendar",
@@ -64,8 +69,11 @@ export const COMPOSIO_MAP: Record<string, string> = {
   zoom: "zoom",
   "microsoft-teams": "microsoft_teams",
   linkedin: "linkedin",
-  twitter: "twitter",
+  // twitter / X requires a custom auth config in Composio — not auto-created
 };
+
+/** Toolkits that cannot use managed auth without an auth_config id. */
+export const COMPOSIO_REQUIRES_AUTH_CONFIG = new Set(["twitter", "x"]);
 
 export function composioToolkitFor(service: string): string | null {
   return COMPOSIO_MAP[service] ?? null;
@@ -108,12 +116,27 @@ function sessionIdOf(session: SessionLike): string {
   ).trim();
 }
 
+function filterManagedToolkits(toolkits: string[]): string[] {
+  return toolkits
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((t) => !COMPOSIO_REQUIRES_AUTH_CONFIG.has(t));
+}
+
 export async function createUserSession(
   userId: string,
   opts?: { toolkits?: string[] },
 ): Promise<ComposioSessionInfo & { session: SessionLike }> {
   const sdk = composio();
-  const toolkits = opts?.toolkits?.length ? opts.toolkits : [...DEFAULT_TOOLKITS];
+  const raw =
+    opts?.toolkits?.length ? opts.toolkits : [...DEFAULT_TOOLKITS];
+  const toolkits = filterManagedToolkits(raw);
+
+  if (toolkits.length === 0) {
+    throw new Error(
+      "No toolkits available for this session. Some apps (e.g. X/Twitter) need a custom auth config in the Composio dashboard.",
+    );
+  }
 
   const anySdk = sdk as Composio & {
     create?: (
@@ -179,6 +202,12 @@ export async function authorizeToolkit(
   toolkit: string,
   callbackUrl?: string,
 ): Promise<{ redirectUrl: string }> {
+  const slug = toolkit.trim().toLowerCase();
+  if (COMPOSIO_REQUIRES_AUTH_CONFIG.has(slug)) {
+    throw new Error(
+      `${slug} needs a custom auth config in the Composio dashboard (Platform → Auth configs). Managed auth is not available for this toolkit.`,
+    );
+  }
   if (!session || typeof session.authorize !== "function") {
     throw new Error("Session does not support authorize().");
   }
@@ -259,14 +288,18 @@ export async function markComposioConnection(
 /**
  * After the user finishes Connect Link, sync toolkit connection status
  * into the local connections table so Integrations UI shows Installed.
+ *
+ * Uses DEFAULT_TOOLKITS only — never the full map (some toolkits need
+ * custom auth_configs and break session create).
  */
 export async function syncComposioConnections(): Promise<{ synced: string[] }> {
   const user = await currentUser();
   if (!user) return { synced: [] };
   if (!composioConfigured()) return { synced: [] };
 
-  const toolkits = Object.values(COMPOSIO_MAP);
-  const { session } = await createUserSession(user.id, { toolkits });
+  const { session } = await createUserSession(user.id, {
+    toolkits: [...DEFAULT_TOOLKITS],
+  });
 
   const synced: string[] = [];
   if (!session || typeof session.toolkits !== "function") {

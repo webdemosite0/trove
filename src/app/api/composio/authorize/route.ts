@@ -2,6 +2,7 @@ import { currentUser } from "@/lib/auth";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import {
   authorizeToolkit,
+  COMPOSIO_REQUIRES_AUTH_CONFIG,
   composioConfigured,
   composioToolkitFor,
   createUserSession,
@@ -53,12 +54,29 @@ export async function POST(req: Request) {
   // Map Trove service ids → Composio toolkit slugs
   const toolkit = composioToolkitFor(raw) ?? raw.replace(/-/g, "");
 
+  if (COMPOSIO_REQUIRES_AUTH_CONFIG.has(toolkit) || raw === "twitter") {
+    return Response.json(
+      {
+        error:
+          "X/Twitter needs a custom auth config in the Composio dashboard (Platform → Auth configs). It cannot use managed OAuth yet. Try Gmail, GitHub, Slack, or Notion instead.",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (!composioToolkitFor(raw) && !toolkit) {
+    return Response.json(
+      { error: `"${raw}" is not available via Composio on Trove yet.` },
+      { status: 400 },
+    );
+  }
+
   try {
     let session: {
       authorize: (
         t: string,
         opts?: { callbackUrl?: string },
-      ) => Promise<{ redirectUrl?: string; redirect_url?: string; url?: string }>;
+      ) => Promise<{ redirectUrl?: string | null; redirect_url?: string | null; url?: string | null }>;
     };
 
     if (sessionId) {
@@ -86,6 +104,17 @@ export async function POST(req: Request) {
   } catch (e) {
     const message = e instanceof Error ? e.message : "Authorize failed.";
     console.error("[composio] authorize", message);
+    // Surface Composio auth_config errors clearly
+    if (/auth.?config/i.test(message)) {
+      return Response.json(
+        {
+          error:
+            message +
+            " Create an auth config for this toolkit in dashboard.composio.dev, or pick an app that supports managed auth (Gmail, GitHub, Slack, Notion).",
+        },
+        { status: 400 },
+      );
+    }
     return Response.json({ error: message }, { status: 400 });
   }
 }
