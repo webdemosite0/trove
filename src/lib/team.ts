@@ -10,6 +10,7 @@ import {
 } from "@/lib/account-type";
 import {
   FREE_TEAM_SEATS,
+  ensureSeatLimitColumn,
   seatSnapshotForTeam,
   type SeatSnapshot,
 } from "@/lib/team-seats";
@@ -211,7 +212,6 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
       pendingInvites,
       projects: [],
       ownedProjects: [],
-      // Workspaces + invites are available on every plan.
       canCreateTeam: true,
       canManageMembers: false,
       canInvite: false,
@@ -231,8 +231,6 @@ export async function teamStateForUser(user: User): Promise<TeamState> {
     seatSnapshotForTeam(team.id),
   ]);
 
-  // teamPlanActive still reflects whether the owner is on Team (shared credits).
-  // Collaboration (invite/manage) works on every plan.
   const teamPlanActive = team.ownerPlan === "team";
   const canAdmin = team.role === "owner" || team.role === "admin";
 
@@ -261,8 +259,6 @@ async function requireMembership(user: User) {
 }
 
 async function requireActiveMembership(user: User) {
-  // Invitations and member management work on every plan.
-  // Shared Team credits still depend on the owner having plan === "team".
   return requireMembership(user);
 }
 
@@ -273,6 +269,8 @@ export async function createTeam(name: string) {
 
   const clean = name.trim().replace(/\s+/g, " ").slice(0, 100);
   if (clean.length < 2) throw new Error("TEAM_NAME_REQUIRED");
+
+  await ensureSeatLimitColumn();
 
   const now = Date.now();
   const id = uid("team");
@@ -335,8 +333,6 @@ export async function inviteTeamMember(
   const path = "/team?invite=" + encodeURIComponent(inviteId);
   const link = site.url + path;
 
-  // In-app only: invitee sees this under Notifications when signed in as the email.
-  // Link can also be copied and shared manually — no email required.
   return { id: inviteId, path, link };
 }
 
@@ -362,12 +358,7 @@ export async function acceptTeamInvite(inviteId: string) {
   ).catch(() => null);
   if (!active) throw new Error("INVITE_NOT_FOUND");
 
-  // Accepting consumes a seat only if the invite was already counted in used.
-  // If the team hit the limit after the invite was sent (e.g. concurrent accepts),
-  // block the join so we never exceed seat_limit.
   const seats = await seatSnapshotForTeam(str(invite.team_id));
-  // Pending invite already counts toward used; accepting moves it from invite -> member
-  // so used stays the same. Only block if somehow over limit (data race).
   if (seats.used > seats.limit) throw new Error("SEAT_LIMIT_REACHED");
 
   const now = Date.now();
