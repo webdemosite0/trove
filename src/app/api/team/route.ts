@@ -51,6 +51,8 @@ function messageFor(error: unknown) {
     INVITE_EXPIRED: "That invitation has expired.",
     PROJECT_NOT_OWNED: "You can only share projects you own.",
     PROJECT_NOT_SHARED: "That project is not shared with this team.",
+    SEAT_LIMIT_REACHED:
+      "This workspace has used all its seats. Buy more seats ($10 each, or a package) to invite more people.",
   };
   return messages[code] || (error instanceof Error ? error.message : "Request failed.");
 }

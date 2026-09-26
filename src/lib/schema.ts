@@ -252,7 +252,8 @@ PRAGMA journal_mode = WAL;
       name TEXT NOT NULL,
       owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      seat_limit INTEGER NOT NULL DEFAULT 5
     );
     CREATE INDEX IF NOT EXISTS teams_by_owner ON teams (owner_user_id, updated_at DESC);
 
@@ -316,8 +317,8 @@ export const MIGRATIONS: string[] = [
   `ALTER TABLE users ADD COLUMN provider TEXT NOT NULL DEFAULT 'password'`,
   `UPDATE users SET email_verified = 1 WHERE email_verified = 0 AND password_hash <> '' AND email NOT LIKE 'guest-%@local'`,
   `CREATE TABLE IF NOT EXISTS builder_projects (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, prompt TEXT NOT NULL, target TEXT NOT NULL DEFAULT 'static', status TEXT NOT NULL DEFAULT 'draft', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS builder_artifacts (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, path TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'file', current_version INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(project_id, path))`,
   `CREATE TABLE IF NOT EXISTS builder_artifact_versions (id TEXT PRIMARY KEY, artifact_id TEXT NOT NULL REFERENCES builder_artifacts(id) ON DELETE CASCADE, version INTEGER NOT NULL, content TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'agent', change_summary TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, UNIQUE(artifact_id, version))`,
+  `CREATE TABLE IF NOT EXISTS builder_artifacts (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, path TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'file', current_version INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(project_id, path))`,
   `CREATE TABLE IF NOT EXISTS builder_agent_runs (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, role TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', input TEXT NOT NULL DEFAULT '', output TEXT NOT NULL DEFAULT '', started_at INTEGER, finished_at INTEGER, created_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS builder_approvals (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, action TEXT NOT NULL, details TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, decided_at INTEGER)`,
   `CREATE TABLE IF NOT EXISTS builder_deployments (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES builder_projects(id) ON DELETE CASCADE, environment TEXT NOT NULL DEFAULT 'preview', status TEXT NOT NULL DEFAULT 'queued', url TEXT NOT NULL DEFAULT '', commit_ref TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, finished_at INTEGER)`,
@@ -340,6 +341,8 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS team_projects_by_project ON team_projects (project_id, team_id)`,
   `CREATE TABLE IF NOT EXISTS team_messages (id TEXT PRIMARY KEY, team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, text TEXT NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS team_messages_by_team ON team_messages (team_id, created_at DESC)`,
+  // Team seat limits: 5 free, then paid packages / $10 per extra.
+  `ALTER TABLE teams ADD COLUMN seat_limit INTEGER NOT NULL DEFAULT 5`,
 ];
 
 export const REPAIRS = `

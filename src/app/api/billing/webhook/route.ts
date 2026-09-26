@@ -8,6 +8,10 @@ import {
   completeBillingWebhook,
   releaseBillingWebhook,
 } from "@/lib/billing-webhook-events";
+import {
+  incrementTeamSeatLimit,
+  seatsFromCheckoutMetadata,
+} from "@/lib/team-seats";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -101,6 +105,26 @@ async function handle(event: Stripe.Event) {
   }
 
   const sdk = stripe();
+
+  // One-time team seat purchases (mode: payment).
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.mode === "payment") {
+      const meta = (session.metadata || {}) as Record<string, string>;
+      if (meta.kind === "team_seats") {
+        const parsed = seatsFromCheckoutMetadata(meta);
+        if (parsed) {
+          await incrementTeamSeatLimit(parsed.teamId, parsed.seats);
+          console.info(
+            `[billing] team seats +${parsed.seats} for team ${parsed.teamId}`,
+          );
+        }
+        return;
+      }
+      // Other one-time payments: ignore for now.
+      return;
+    }
+  }
 
   let subscriptionId = "";
   let customerId = "";
