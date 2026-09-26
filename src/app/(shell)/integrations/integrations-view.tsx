@@ -40,12 +40,16 @@ export function IntegrationsView({
   connected,
   connectable,
   signedIn,
+  composioOn = false,
+  composioServices = [],
   nangoOn = false,
   nangoServices = [],
 }: {
   connected: ConnectedService[];
   connectable: Record<string, { label: string; help: string; docs?: string }>;
   signedIn: boolean;
+  composioOn?: boolean;
+  composioServices?: string[];
   nangoOn?: boolean;
   nangoServices?: string[];
 }) {
@@ -53,8 +57,9 @@ export function IntegrationsView({
   const [opening, setOpening] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
-  const [nangoBusy, setNangoBusy] = useState<string | null>(null);
-  const [nangoError, setNangoError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const composioSet = useMemo(() => new Set(composioServices), [composioServices]);
   const nangoSet = useMemo(() => new Set(nangoServices), [nangoServices]);
 
   const [optimistic, dropOne] = useOptimistic(
@@ -94,9 +99,46 @@ export function IntegrationsView({
     });
   }
 
+  async function connectComposio(service: string) {
+    setError(null);
+    setBusy(service);
+    try {
+      const res = await fetch("/api/composio/authorize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toolkit: service }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
+      const link = data.redirectUrl as string;
+      if (!link || !link.startsWith("http")) {
+        throw new Error("Composio did not return a connect link.");
+      }
+      const popup = window.open(link, "composio-connect", "width=520,height=720");
+      if (!popup) throw new Error("Popup blocked — allow popups for this site.");
+      const started = Date.now();
+      await new Promise<void>((resolve) => {
+        const t = setInterval(() => {
+          if (popup?.closed || Date.now() - started > 5 * 60_000) {
+            clearInterval(t);
+            resolve();
+          }
+        }, 800);
+      });
+      const sync = await fetch("/api/composio/sync", { method: "POST" });
+      const syncData = await sync.json().catch(() => null);
+      if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync connections.");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Connect failed.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function connectNango(service: string) {
-    setNangoError(null);
-    setNangoBusy(service);
+    setError(null);
+    setBusy(service);
     try {
       const res = await fetch("/api/nango/session", {
         method: "POST",
@@ -125,13 +167,18 @@ export function IntegrationsView({
       if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync.");
       router.refresh();
     } catch (e) {
-      setNangoError(e instanceof Error ? e.message : "Connect failed.");
+      setError(e instanceof Error ? e.message : "Connect failed.");
     } finally {
-      setNangoBusy(null);
+      setBusy(null);
     }
   }
 
   function startConnect(id: string) {
+    // Prefer Composio when configured for this service
+    if (composioOn && composioSet.has(id)) {
+      void connectComposio(id);
+      return;
+    }
     if (nangoOn && nangoSet.has(id)) {
       void connectNango(id);
       return;
@@ -140,7 +187,11 @@ export function IntegrationsView({
   }
 
   function canConnect(id: string) {
-    return Boolean(connectable[id]) || (nangoOn && nangoSet.has(id));
+    return (
+      Boolean(connectable[id]) ||
+      (composioOn && composioSet.has(id)) ||
+      (nangoOn && nangoSet.has(id))
+    );
   }
 
   return (
@@ -169,9 +220,16 @@ export function IntegrationsView({
           </label>
         </div>
 
-        {nangoError ? (
+        {error ? (
           <p className="mt-4 rounded-xl border border-critical/35 bg-critical-soft px-3.5 py-2.5 text-[13px] text-critical">
-            {nangoError}
+            {error}
+          </p>
+        ) : null}
+
+        {!composioOn && !nangoOn ? (
+          <p className="mt-4 rounded-xl border border-line bg-raised px-3.5 py-2.5 text-[13px] text-ink-3">
+            Set <code className="text-ink">COMPOSIO_API_KEY</code> in Vercel to enable one-click
+            OAuth for Gmail, Slack, GitHub, and more.
           </p>
         ) : null}
 
@@ -226,12 +284,12 @@ export function IntegrationsView({
                     ) : canConnect(s.id) ? (
                       <button
                         type="button"
-                        disabled={!signedIn || nangoBusy !== null}
+                        disabled={!signedIn || busy !== null}
                         onClick={() => startConnect(s.id)}
                         className="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-accent/50 hover:bg-hover hover:text-ink disabled:opacity-40"
                         aria-label={`Add ${s.name}`}
                       >
-                        {nangoBusy === s.id ? (
+                        {busy === s.id ? (
                           <span className="text-[12px]">…</span>
                         ) : (
                           <FiPlus size={18} />
@@ -252,7 +310,19 @@ export function IntegrationsView({
           </ul>
         </section>
 
-        {nangoOn ? (
+        {composioOn ? (
+          <p className="mt-10 flex items-center gap-1.5 text-[12.5px] text-ink-4">
+            OAuth via Composio
+            <a
+              href="https://dashboard.composio.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-accent hover:underline"
+            >
+              <FiExternalLink size={11} />
+            </a>
+          </p>
+        ) : nangoOn ? (
           <p className="mt-10 flex items-center gap-1.5 text-[12.5px] text-ink-4">
             OAuth apps via Nango
             <a

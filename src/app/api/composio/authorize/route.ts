@@ -3,6 +3,7 @@ import { consumeRateLimit } from "@/lib/rate-limit";
 import {
   authorizeToolkit,
   composioConfigured,
+  composioToolkitFor,
   createUserSession,
   resumeSession,
 } from "@/lib/composio";
@@ -11,8 +12,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * POST { toolkit: "gmail" | "github" | ..., sessionId?: string }
- * Returns a Connect Link URL for the user to authorize that app.
+ * POST { toolkit: "gmail" | "github" | service id, sessionId?: string }
+ * Accepts either a Composio toolkit slug or a Trove service id.
  */
 export async function POST(req: Request) {
   const user = await currentUser();
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
 
   if (!composioConfigured()) {
     return Response.json(
-      { error: "Composio is not configured. Set COMPOSIO_API_KEY." },
+      { error: "Composio is not configured. Set COMPOSIO_API_KEY in Vercel." },
       { status: 503 },
     );
   }
@@ -42,15 +43,23 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const toolkit = String(body?.toolkit || "").trim().toLowerCase();
+  const raw = String(body?.toolkit || body?.service || "").trim().toLowerCase();
   const sessionId = String(body?.sessionId || "").trim();
 
-  if (!toolkit) {
+  if (!raw) {
     return Response.json({ error: "Pass toolkit (e.g. gmail, github, slack)." }, { status: 400 });
   }
 
+  // Map Trove service ids → Composio toolkit slugs
+  const toolkit = composioToolkitFor(raw) ?? raw.replace(/-/g, "");
+
   try {
-    let session: { authorize: (t: string) => Promise<{ redirectUrl?: string; redirect_url?: string; url?: string }> };
+    let session: {
+      authorize: (
+        t: string,
+        opts?: { callbackUrl?: string },
+      ) => Promise<{ redirectUrl?: string; redirect_url?: string; url?: string }>;
+    };
 
     if (sessionId) {
       session = (await resumeSession(sessionId)) as typeof session;
@@ -70,6 +79,7 @@ export async function POST(req: Request) {
     return Response.json({
       ok: true,
       toolkit,
+      service: raw,
       redirectUrl,
       userId: user.id,
     });

@@ -1,24 +1,37 @@
-import { ComingSoon } from "@/components/ui/coming-soon";
-import { TbPlugConnected } from "@/components/ui/icons";
+import { currentUser } from "@/lib/auth";
+import { listConnections } from "@/lib/connections";
+import { composioConfigured, COMPOSIO_MAP } from "@/lib/composio";
+import { nangoEnabled, NANGO_MAP } from "@/lib/nango";
+import { connectableProviders } from "@/lib/providers";
+import { IntegrationsView } from "./integrations-view";
 
 export const metadata = {
   title: "Plugins & Integrations",
-  description: "Connect your tools to Trove — coming soon.",
+  description: "Connect Gmail, Slack, GitHub, Notion and more to use them in Trove chat.",
 };
 
-export default function IntegrationsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function IntegrationsPage() {
+  const user = await currentUser();
+  const connections = user ? await listConnections() : [];
+  const connectable = connectableProviders();
+  const composioOn = composioConfigured();
+  const nangoOn = nangoEnabled();
+
   return (
-    <ComingSoon
-      title="Plugins & integrations"
-      blurb="Connect Slack, Google, Notion, and more so Trove can use your tools in chat. We're polishing this surface — it will land here soon."
-      icon={TbPlugConnected}
-      motion="ring"
-      tint="#10b981"
-      points={[
-        "One-click connect for popular apps",
-        "Use tools directly from chat and agents",
-        "Secure OAuth — your keys stay private",
-      ]}
+    <IntegrationsView
+      signedIn={Boolean(user)}
+      connected={connections.map((c) => ({
+        service: c.service,
+        account: c.account,
+        hint: c.hint,
+      }))}
+      connectable={connectable}
+      composioOn={composioOn}
+      composioServices={composioOn ? Object.keys(COMPOSIO_MAP) : []}
+      nangoOn={nangoOn}
+      nangoServices={nangoOn ? Object.keys(NANGO_MAP) : []}
     />
   );
 }

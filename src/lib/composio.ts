@@ -1,16 +1,16 @@
 import "server-only";
 
 import { Composio } from "@composio/core";
+import { currentUser } from "@/lib/auth";
+import { run } from "@/lib/db";
+import { encrypt, canStoreSecrets, hint } from "@/lib/secrets";
 
 /**
  * Composio Platform — unified tool integrations for Trove users.
  *
  * Env: COMPOSIO_API_KEY (project key from dashboard.composio.dev → Platform)
  *
- * Each Trove user maps to a Composio userId (our users.id). Sessions scope
- * which toolkits and connected accounts the agent can use for that user.
- *
- * Current TS API (docs):
+ * TS API:
  *   const session = await composio.create(userId, config?)
  *   const session = await composio.use(sessionId)
  *   await session.execute(toolSlug, args)
@@ -34,7 +34,51 @@ export function composio(): Composio {
   return client;
 }
 
-/** Default toolkits exposed in a Trove chat/agent session. */
+/** Trove service id → Composio toolkit slug */
+export const COMPOSIO_MAP: Record<string, string> = {
+  gmail: "gmail",
+  "google-calendar": "googlecalendar",
+  "google-drive": "googledrive",
+  outlook: "outlook",
+  slack: "slack",
+  github: "github",
+  gitlab: "gitlab",
+  linear: "linear",
+  notion: "notion",
+  jira: "jira",
+  asana: "asana",
+  trello: "trello",
+  clickup: "clickup",
+  dropbox: "dropbox",
+  onedrive: "one_drive",
+  confluence: "confluence",
+  airtable: "airtable",
+  box: "box",
+  figma: "figma",
+  hubspot: "hubspot",
+  salesforce: "salesforce",
+  stripe: "stripe",
+  intercom: "intercom",
+  zendesk: "zendesk",
+  discord: "discord",
+  zoom: "zoom",
+  "microsoft-teams": "microsoft_teams",
+  linkedin: "linkedin",
+  twitter: "twitter",
+};
+
+export function composioToolkitFor(service: string): string | null {
+  return COMPOSIO_MAP[service] ?? null;
+}
+
+export function serviceForComposioToolkit(toolkit: string): string | null {
+  const t = toolkit.toLowerCase().replace(/_/g, "");
+  for (const [service, slug] of Object.entries(COMPOSIO_MAP)) {
+    if (slug.toLowerCase().replace(/_/g, "") === t) return service;
+  }
+  return null;
+}
+
 export const DEFAULT_TOOLKITS = [
   "gmail",
   "github",
@@ -60,17 +104,22 @@ type SessionLike = {
   ) => Promise<{ redirectUrl?: string; redirect_url?: string; url?: string }>;
   execute?: (toolSlug: string, args?: Record<string, unknown>) => Promise<unknown>;
   tools?: () => Promise<unknown>;
-  toolkits?: () => Promise<unknown>;
+  toolkits?: () => Promise<{
+    items?: Array<{
+      slug?: string;
+      name?: string;
+      connection?: {
+        connectedAccount?: { id?: string } | null;
+        connected_account?: { id?: string } | null;
+      } | null;
+    }>;
+  }>;
 };
 
 function sessionIdOf(session: SessionLike): string {
   return String(session.sessionId || session.session_id || "").trim();
 }
 
-/**
- * Create a new session for a Trove user.
- * Prefer reusing a stored sessionId with resumeSession when possible.
- */
 export async function createUserSession(
   userId: string,
   opts?: { toolkits?: string[] },
@@ -78,7 +127,6 @@ export async function createUserSession(
   const sdk = composio();
   const toolkits = opts?.toolkits?.length ? opts.toolkits : [...DEFAULT_TOOLKITS];
 
-  // Primary API: composio.create(userId, config)
   const anySdk = sdk as Composio & {
     create: (
       userId: string,
@@ -115,7 +163,6 @@ export async function createUserSession(
   return { sessionId, userId, session };
 }
 
-/** Resume an existing session by id (preferred across chat turns). */
 export async function resumeSession(sessionId: string): Promise<SessionLike> {
   const sdk = composio();
   const anySdk = sdk as Composio & {
@@ -139,10 +186,6 @@ export async function resumeSession(sessionId: string): Promise<SessionLike> {
   throw new Error("This Composio SDK build cannot resume sessions (missing use()).");
 }
 
-/**
- * Start OAuth / connect flow for a toolkit.
- * Returns a URL the user opens to authorize the app.
- */
 export async function authorizeToolkit(
   session: SessionLike,
   toolkit: string,
@@ -163,7 +206,6 @@ export async function authorizeToolkit(
   return { redirectUrl };
 }
 
-/** Execute a tool on a session (required for meta-tools). */
 export async function executeOnSession(
   session: SessionLike,
   toolSlug: string,
@@ -175,10 +217,6 @@ export async function executeOnSession(
   return session.execute(toolSlug, args);
 }
 
-/**
- * Direct tool execute (no session). Fine for tools that do not need
- * tool-router meta tools; prefer executeOnSession in agent flows.
- */
 export async function executeTool(
   userId: string,
   toolSlug: string,
@@ -189,4 +227,79 @@ export async function executeTool(
     userId,
     arguments: args,
   });
+}
+
+/** Persist a Composio-backed connection in the local connections table. */
+export async function markComposioConnection(
+  userId: string,
+  service: string,
+  accountId: string,
+): Promise<void> {
+  const payload = JSON.stringify({
+    composio: true,
+    toolkit: composioToolkitFor(service) ?? service,
+    accountId,
+  });
+  const now = Date.now();
+  const secret = canStoreSecrets() ? encrypt(payload) : payload;
+  await run(
+    `INSERT INTO connections (user_id, service, kind, secret, account, hint, verified_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT (user_id, service) DO UPDATE SET
+       kind = excluded.kind,
+       secret = excluded.secret,
+       account = excluded.account,
+       hint = excluded.hint,
+       verified_at = excluded.verified_at`,
+    [
+      userId,
+      service,
+      "composio",
+      secret,
+      accountId.slice(0, 64),
+      canStoreSecrets() ? hint(accountId) : "via Composio",
+      now,
+    ],
+  );
+}
+
+/**
+ * After the user finishes Connect Link, sync toolkit connection status
+ * into the local connections table so Integrations UI shows Installed.
+ */
+export async function syncComposioConnections(): Promise<{ synced: string[] }> {
+  const user = await currentUser();
+  if (!user) return { synced: [] };
+  if (!composioConfigured()) return { synced: [] };
+
+  const toolkits = Object.values(COMPOSIO_MAP);
+  const { session } = await createUserSession(user.id, { toolkits });
+
+  const synced: string[] = [];
+  if (typeof session.toolkits !== "function") {
+    // Fallback: if they just authorized, we cannot list — return empty.
+    return { synced };
+  }
+
+  const listed = await session.toolkits();
+  const items = listed?.items ?? [];
+
+  for (const item of items) {
+    const slug = String(item.slug || item.name || "").toLowerCase();
+    if (!slug) continue;
+    const conn = item.connection;
+    const accountId =
+      conn?.connectedAccount?.id ||
+      conn?.connected_account?.id ||
+      "";
+    if (!accountId) continue;
+
+    const service = serviceForComposioToolkit(slug);
+    if (!service) continue;
+
+    await markComposioConnection(user.id, service, accountId);
+    synced.push(service);
+  }
+
+  return { synced };
 }

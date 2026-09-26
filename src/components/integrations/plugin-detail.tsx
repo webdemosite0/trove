@@ -57,15 +57,19 @@ export function PluginDetailView({
   connected,
   connectable,
   signedIn,
-  nangoOn,
-  nangoService,
+  composioOn = false,
+  composioService = false,
+  nangoOn = false,
+  nangoService = false,
 }: {
   service: Service;
   connected: boolean;
   connectable?: { label: string; help: string; docs?: string };
   signedIn: boolean;
-  nangoOn: boolean;
-  nangoService: boolean;
+  composioOn?: boolean;
+  composioService?: boolean;
+  nangoOn?: boolean;
+  nangoService?: boolean;
 }) {
   const router = useRouter();
   const [opening, setOpening] = useState(false);
@@ -73,6 +77,38 @@ export function PluginDetailView({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const demo = exampleFor(service.id);
+
+  async function connectComposio() {
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/composio/authorize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toolkit: service.id }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "Failed");
+      const link = data.redirectUrl as string;
+      const popup = window.open(link, "composio-connect", "width=520,height=720");
+      if (!popup) throw new Error("Popup blocked");
+      const started = Date.now();
+      await new Promise<void>((resolve) => {
+        const t = setInterval(() => {
+          if (popup.closed || Date.now() - started > 5 * 60_000) {
+            clearInterval(t);
+            resolve();
+          }
+        }, 800);
+      });
+      await fetch("/api/composio/sync", { method: "POST" });
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Connect failed");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function connectNango() {
     setError(null);
@@ -108,6 +144,10 @@ export function PluginDetailView({
 
   function install() {
     if (connected) return;
+    if (composioOn && composioService) {
+      void connectComposio();
+      return;
+    }
     if (nangoOn && nangoService) {
       void connectNango();
       return;
@@ -122,7 +162,10 @@ export function PluginDetailView({
     });
   }
 
-  const canInstall = Boolean(connectable) || (nangoOn && nangoService);
+  const canInstall =
+    Boolean(connectable) ||
+    (composioOn && composioService) ||
+    (nangoOn && nangoService);
 
   return (
     <div className="min-h-[calc(100dvh-3.5rem)] bg-transparent text-ink">
