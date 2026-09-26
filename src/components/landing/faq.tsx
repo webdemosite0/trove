@@ -1,50 +1,46 @@
 import { FiPlus } from "@/components/ui/icons";
 import { SectionHead } from "@/components/landing/sections";
 
+/**
+ * The questions someone actually has before signing up, answered truthfully.
+ *
+ * Built on <details>, so it works with no JavaScript, is keyboard operable and
+ * announces its state to a screen reader for free. The open/close animation is
+ * on the marker only — animating the panel height would force layout on every
+ * frame for no gain.
+ */
 const QA: { q: string; a: string }[] = [
   {
     q: "What is Trove?",
-    a: "An AI workspace for business. You describe what you need and Trove helps plan it, build it, and keep it — websites, documents, spreadsheets, decks, code, research, agents, and connected-tool workflows from one place.",
+    a: "An AI workspace for real deliverables. You describe the work and get files you can edit, download, and continue later — documents, spreadsheets, decks, websites, research, and agents — not a chat that disappears.",
   },
   {
     q: "What can I build with it?",
-    a: "Multi-page websites (with live preview and publish), Vite + React apps, Word documents, Excel workbooks, PowerPoint decks, runnable code, research write-ups, and agents that carry out multi-step work.",
-  },
-  {
-    q: "Which apps can Trove connect to?",
-    a: "Trove has an integrations layer for business tools including Gmail, Google Calendar, Google Drive, Slack, Notion, GitHub, Linear, Figma, Airtable, HubSpot, Salesforce, Stripe, Dropbox, Outlook, Microsoft Teams and more. Availability depends on the integration and workspace setup.",
-  },
-  {
-    q: "Can Trove use connected tools in AI workflows?",
-    a: "That is the purpose of the integrations layer: bring useful company context into the workspace and let supported agents or workflows work across connected services instead of treating every prompt as a blank session.",
-  },
-  {
-    q: "Can I publish a website live?",
-    a: "Yes. Publish to a subdomain like yourname.troveai.site. You choose the slug, see the final URL before going live, and can republish or unpublish anytime.",
+    a: "A complete static website, a Vite + React app, an Express or FastAPI service, Word documents, Excel workbooks, PowerPoint decks, runnable code, research write-ups, and agents that carry out multi-step work.",
   },
   {
     q: "Do I need an account?",
-    a: "Yes for saving and publishing. Sign in with email, Google, or Microsoft so your projects persist across devices.",
+    a: "No. You can start without one and everything works. An account is what makes your work persist across devices and browsers.",
   },
   {
     q: "How do credits work?",
-    a: "Credits are metered on the tokens a request actually uses, so a short answer costs less than a long build. The free plan includes 200 credits a month (about 200k tokens).",
+    a: "Credits measure AI generation only. A short answer costs less than a long document or multi-step build. Opening, editing, and exporting saved work does not use credits. Free includes 200 credits a month.",
   },
   {
     q: "Can Trove create real files?",
-    a: "Yes — genuine .docx, .xlsx, .pptx and project downloads, not a copy button. They open in Word, Excel, PowerPoint, and your local tools.",
+    a: "Yes — genuine .docx, .xlsx, .pptx and .zip files, generated in your browser and downloaded directly. They are real Office files, not a copy button, and open in Word, Excel and PowerPoint.",
   },
   {
     q: "Can I create AI agents?",
-    a: "Yes. Each agent gets its own brief, chat, and history. You can also put a team of specialists on a single task.",
+    a: "Yes. Each agent gets its own brief, its own chat page and its own saved history. You can also put a team of four specialists on a single task and get an answer from each discipline.",
   },
   {
     q: "Can I cancel anytime?",
-    a: "The free plan needs no card. Paid plans can be offered monthly or yearly depending on the plan you choose.",
+    a: "The free plan needs no card at all, so there is nothing to cancel. Paid plans are monthly.",
   },
   {
     q: "Who makes Trove?",
-    a: "A small studio. Write to official@troveai.site — a person reads that inbox.",
+    a: "A small studio. There is no sales team and no invented customer logos. Write to official@troveai.site — a person reads that inbox.",
   },
 ];
 
@@ -53,21 +49,23 @@ export function Faq() {
     <section className="mx-auto max-w-[1140px] px-5 py-20 lg:px-8 lg:py-28">
       <SectionHead title="Frequently asked questions" />
 
-      <div className="mx-auto mt-12 max-w-[720px] divide-y divide-zinc-200/90 rounded-2xl border border-zinc-200/90 bg-white/70 px-4 shadow-sm backdrop-blur-sm sm:px-6">
+      <div className="mx-auto mt-12 max-w-[720px] divide-y divide-line border-y border-line">
         {QA.map((item) => (
           <details key={item.q} className="group py-1">
             <summary
-              className={
-                "flex cursor-pointer list-none items-center gap-4 py-4 text-[15px] font-medium text-zinc-900 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
-              }
+              className={[
+                "flex cursor-pointer list-none items-center gap-4 py-4",
+                "text-[15px] font-medium text-ink transition-colors hover:text-accent",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+              ].join(" ")}
             >
               <span className="flex-1">{item.q}</span>
               <FiPlus
                 size={17}
-                className="shrink-0 text-zinc-400 transition-transform duration-200 group-open:rotate-45"
+                className="shrink-0 text-ink-4 transition-transform duration-[var(--t-hover)] group-open:rotate-45"
               />
             </summary>
-            <p className="pb-5 pr-10 text-[14.5px] leading-relaxed text-zinc-600">{item.a}</p>
+            <p className="pb-5 pr-10 text-[14.5px] leading-relaxed text-ink-3">{item.a}</p>
           </details>
         ))}
       </div>
