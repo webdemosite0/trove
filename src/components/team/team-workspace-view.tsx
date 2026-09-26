@@ -21,6 +21,14 @@ function roleLabel(role: string) {
   return role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Member";
 }
 
+const SEAT_PACKAGES = [
+  { seats: 10, priceUsd: 90, label: "10 seats" },
+  { seats: 25, priceUsd: 200, label: "25 seats" },
+  { seats: 50, priceUsd: 375, label: "50 seats" },
+  { seats: 100, priceUsd: 800, label: "100 seats" },
+  { seats: 250, priceUsd: 1750, label: "250 seats" },
+] as const;
+
 export function TeamWorkspaceView({
   initial,
   currentUserId,
@@ -37,6 +45,32 @@ export function TeamWorkspaceView({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
   const [shareProjectId, setShareProjectId] = useState("");
+  const [lastInviteLink, setLastInviteLink] = useState("");
+  const [seatBusy, setSeatBusy] = useState("");
+
+  async function buySeats(packageSeats: number) {
+    if (seatBusy) return;
+    setSeatBusy(String(packageSeats));
+    setError("");
+    try {
+      const res = await fetch("/api/team/seats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packageSeats }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Could not start checkout.");
+      if (data?.url) {
+        window.location.assign(data.url as string);
+        return;
+      }
+      throw new Error("Checkout URL missing.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Checkout failed.");
+    } finally {
+      setSeatBusy("");
+    }
+  }
 
   async function act(action: string, payload: Record<string, unknown> = {}) {
     if (busy) return;
@@ -52,7 +86,11 @@ export function TeamWorkspaceView({
       if (!res.ok) throw new Error(data?.error || "Team action failed.");
       setState(data as TeamState);
       if (action === "create") setTeamName("");
-      if (action === "invite") setInviteEmail("");
+      if (action === "invite") {
+        setInviteEmail("");
+        const link = (data as { lastInvite?: { link?: string } })?.lastInvite?.link;
+        if (link) setLastInviteLink(link);
+      }
       if (action === "share-project") setShareProjectId("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Team action failed.");
@@ -139,7 +177,7 @@ export function TeamWorkspaceView({
                   <div className="min-w-0 flex-1">
                     <p className="text-[13.5px] font-semibold text-ink">Create your Team workspace</p>
                     <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
-                      Your Team subscription owns the workspace. People you invite can join without buying a separate Team plan.
+                      Invite up to 5 people free. Extra seats are $10 each, with packages for larger teams.
                     </p>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       <input
@@ -249,6 +287,11 @@ export function TeamWorkspaceView({
               <span className="rounded-full border border-line bg-raised/80 px-2.5 py-1">
                 {state.members.length} {state.members.length === 1 ? "member" : "members"}
               </span>
+              {state.seats ? (
+                <span className="rounded-full border border-line bg-raised/80 px-2.5 py-1">
+                  {state.seats.used}/{state.seats.limit} seats
+                </span>
+              ) : null}
               <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-violet-600 dark:text-violet-300">
                 {roleLabel(state.team.role)}
               </span>
@@ -272,29 +315,41 @@ export function TeamWorkspaceView({
         </div>
       </header>
 
-      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
           {
             label: "Members",
-            value: state.members.length,
+            value: String(state.members.length),
             note: "Active workspace access",
             tone: "from-violet-500/16 to-fuchsia-500/8",
           },
           {
+            label: "Seats",
+            value: state.seats ? `${state.seats.used}/${state.seats.limit}` : "—",
+            note: state.seats?.atLimit
+              ? "At limit — buy more seats"
+              : state.seats
+                ? `${state.seats.remaining} remaining`
+                : "5 free included",
+            tone: state.seats?.atLimit
+              ? "from-amber-500/20 to-orange-500/12"
+              : "from-emerald-500/16 to-teal-500/8",
+          },
+          {
             label: "Shared projects",
-            value: state.projects.length,
+            value: String(state.projects.length),
             note: "Available to joined members",
             tone: "from-sky-500/16 to-cyan-500/8",
           },
           {
             label: "Pending invites",
-            value: state.invites.length,
+            value: String(state.invites.length),
             note: state.canInvite ? "Waiting for acceptance" : "Visible to workspace admins",
             tone: "from-amber-500/16 to-orange-500/8",
           },
           {
             label: "Your projects",
-            value: state.ownedProjects.length,
+            value: String(state.ownedProjects.length),
             note: "Can be shared with the team",
             tone: "from-emerald-500/16 to-teal-500/8",
           },
@@ -337,6 +392,80 @@ export function TeamWorkspaceView({
         <div className="mt-4 rounded-xl border border-critical/30 bg-critical-soft px-4 py-3 text-[12.5px] text-critical">
           {error}
         </div>
+      ) : null}
+
+      {lastInviteLink ? (
+        <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-500/8 px-4 py-3">
+          <p className="text-[12px] font-semibold text-ink">Invitation created</p>
+          <p className="mt-1 text-[11.5px] text-ink-3">
+            Share this link with the invitee while they are signed in as the invited email.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <code className="max-w-full truncate rounded-lg border border-line bg-raised px-2.5 py-1.5 text-[11px] text-ink-2">
+              {lastInviteLink}
+            </code>
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard.writeText(lastInviteLink);
+              }}
+              className="h-8 rounded-lg border border-line bg-raised px-2.5 text-[11px] font-medium text-ink-2 hover:bg-hover"
+            >
+              Copy link
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {canAdmin ? (
+        <section className="mt-4 rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-accent">
+                Seats
+              </p>
+              <h2 className="mt-1 text-[17px] font-semibold text-ink">
+                {state.seats
+                  ? `${state.seats.used} of ${state.seats.limit} seats used`
+                  : "5 free seats included"}
+              </h2>
+              <p className="mt-1 max-w-[62ch] text-[11.5px] leading-relaxed text-ink-4">
+                Owner and admins can invite up to 5 people for free. Need more?
+                Extra seats are $10 each, or save with a package (e.g. 100 seats for $800).
+              </p>
+            </div>
+            {state.seats ? (
+              <div className="min-w-[140px] rounded-2xl border border-line bg-sunk/70 px-3.5 py-3 text-center">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+                  Remaining
+                </p>
+                <p className="mt-1 text-[22px] font-semibold tracking-[-0.03em] text-ink">
+                  {state.seats.remaining}
+                </p>
+              </div>
+            ) : null}
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {SEAT_PACKAGES.map((pkg) => (
+              <button
+                key={pkg.seats}
+                type="button"
+                disabled={Boolean(seatBusy)}
+                onClick={() => void buySeats(pkg.seats)}
+                className="rounded-2xl border border-line-strong bg-sunk/60 px-3 py-3 text-left transition hover:border-accent/40 hover:bg-hover disabled:opacity-50"
+              >
+                <p className="text-[12.5px] font-semibold text-ink">{pkg.label}</p>
+                <p className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-ink">
+                  ${pkg.priceUsd}
+                </p>
+                <p className="mt-0.5 text-[10.5px] text-ink-4">
+                  ${(pkg.priceUsd / pkg.seats).toFixed(2)}/seat
+                  {seatBusy === String(pkg.seats) ? " · Opening…" : ""}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
@@ -385,6 +514,10 @@ export function TeamWorkspaceView({
                 {busy === "invite" ? "Inviting…" : "Invite"}
               </button>
             </div>
+          ) : canAdmin && state.seats?.atLimit ? (
+            <div className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-[12px] text-ink-2">
+              All seats are in use. Purchase a package above to invite more people.
+            </div>
           ) : null}
 
           <div className="mt-4 divide-y divide-line">
@@ -408,41 +541,15 @@ export function TeamWorkspaceView({
                     </p>
                     <p className="truncate text-[11px] text-ink-4">{member.email}</p>
                   </div>
-
-                  {isOwner && member.role !== "owner" ? (
-                    <select
-                      value={member.role}
-                      onChange={(e) =>
-                        void act("role", {
-                          memberUserId: member.userId,
-                          role: e.target.value === "admin" ? "admin" : "member",
-                        })
-                      }
-                      disabled={Boolean(busy)}
-                      className="h-8 rounded-lg border border-line bg-sunk px-2 text-[11px] text-ink"
-                    >
-                      <option value="member">Member</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  ) : (
-                    <span className={cn(
-                      "rounded-full px-2 py-1 text-[10px] font-semibold",
-                      member.role === "owner"
-                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-300"
-                        : member.role === "admin"
-                          ? "bg-violet-500/10 text-violet-600 dark:text-violet-300"
-                          : "bg-sunk text-ink-3",
-                    )}>
-                      {roleLabel(member.role)}
-                    </span>
-                  )}
-
+                  <span className="rounded-full border border-line bg-sunk px-2.5 py-1 text-[10.5px] font-medium text-ink-3">
+                    {roleLabel(member.role)}
+                  </span>
                   {canRemove ? (
                     <button
                       type="button"
                       onClick={() => void act("remove", { memberUserId: member.userId })}
                       disabled={Boolean(busy)}
-                      className="grid size-8 place-items-center rounded-lg text-ink-4 transition hover:bg-critical-soft hover:text-critical disabled:opacity-40"
+                      className="grid size-8 place-items-center rounded-lg text-ink-4 hover:bg-critical-soft hover:text-critical"
                       title="Remove member"
                     >
                       <FiTrash2 size={13} />
@@ -452,143 +559,115 @@ export function TeamWorkspaceView({
               );
             })}
           </div>
-
-          {state.invites.length ? (
-            <div className="mt-5 border-t border-line pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
-                Pending invites
-              </p>
-              <div className="mt-2 space-y-2">
-                {state.invites.map((invite) => (
-                  <div
-                    key={invite.id}
-                    className="flex items-center gap-3 rounded-xl border border-line bg-sunk/60 px-3 py-2.5"
-                  >
-                    <FiMail size={13} className="text-ink-4" />
-                    <span className="min-w-0 flex-1 truncate text-[12px] text-ink-2">
-                      {invite.email}
-                    </span>
-                    <span className="text-[10.5px] capitalize text-ink-4">{invite.role}</span>
-                    <button
-                      type="button"
-                      onClick={() => void act("revoke-invite", { inviteId: invite.id })}
-                      disabled={Boolean(busy)}
-                      className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
-                      title="Cancel invitation"
-                    >
-                      <FiX size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </section>
 
-        <section id="shared-projects" className="scroll-mt-24 rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-sky-600 dark:text-sky-300">
-                Shared projects
-              </p>
-              <h2 className="mt-1 text-[17px] font-semibold text-ink">Shared project portfolio</h2>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
-                A shared project is editable only by joined members.
-              </p>
+        <div className="space-y-5">
+          <section className="rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-sky-600 dark:text-sky-300">
+                  Projects
+                </p>
+                <h2 className="mt-1 text-[17px] font-semibold text-ink">Shared with team</h2>
+              </div>
+              <FiFolder size={18} className="text-ink-4" />
             </div>
-            <FiFolder size={20} className="text-ink-4" />
-          </div>
 
-          {shareable.length ? (
-            <div className="mt-4 flex gap-2">
-              <select
-                value={shareProjectId}
-                onChange={(e) => setShareProjectId(e.target.value)}
-                className="h-10 min-w-0 flex-1 rounded-xl border border-line-strong bg-sunk px-3 text-[12px] text-ink outline-none focus:border-accent"
-              >
-                <option value="">Choose your project…</option>
-                {shareable.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => void act("share-project", { projectId: shareProjectId })}
-                disabled={!shareProjectId || Boolean(busy)}
-                className="btn-grad inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-50"
-              >
-                <FiPlus size={13} />
-                Share
-              </button>
-            </div>
-          ) : null}
+            {shareable.length ? (
+              <div className="mt-4 flex gap-2">
+                <select
+                  value={shareProjectId}
+                  onChange={(e) => setShareProjectId(e.target.value)}
+                  className="h-10 min-w-0 flex-1 rounded-xl border border-line-strong bg-sunk px-3 text-[12px] text-ink outline-none focus:border-accent"
+                >
+                  <option value="">Share one of your projects…</option>
+                  {shareable.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => void act("share-project", { projectId: shareProjectId })}
+                  disabled={!shareProjectId || Boolean(busy)}
+                  className="btn-grad h-10 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-50"
+                >
+                  Share
+                </button>
+              </div>
+            ) : null}
 
-          <div className="mt-4 space-y-2.5">
-            {state.projects.length ? (
-              state.projects.map((project) => {
-                const canUnshare =
-                  canAdmin || project.ownerUserId === currentUserId;
-                return (
-                  <div
-                    key={project.id}
-                    className="rounded-2xl border border-line bg-sunk/55 p-3.5"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-sky-600 dark:text-sky-300">
-                        <FiFolder size={15} />
-                      </span>
+            <div className="mt-4 space-y-2">
+              {state.projects.length ? (
+                state.projects.map((project) => {
+                  const canUnshare =
+                    canAdmin || project.ownerUserId === currentUserId;
+                  return (
+                    <div
+                      key={project.id}
+                      className="flex items-center gap-3 rounded-xl border border-line bg-sunk/50 px-3 py-2.5"
+                    >
+                      <FiFolder size={14} className="shrink-0 text-sky-600 dark:text-sky-300" />
                       <div className="min-w-0 flex-1">
                         <Link
                           href={"/project/" + encodeURIComponent(project.id) + "/preview"}
-                          className="block truncate text-[13px] font-semibold text-ink hover:text-accent"
+                          className="block truncate text-[12.5px] font-medium text-ink hover:text-accent"
                         >
                           {project.name}
                         </Link>
-                        <p className="mt-0.5 truncate text-[10.5px] text-ink-4">
-                          Owned by {project.ownerName} · {project.status}
+                        <p className="truncate text-[10.5px] text-ink-4">
+                          {project.ownerName} · {project.status}
                         </p>
                       </div>
                       {canUnshare ? (
                         <button
                           type="button"
                           onClick={() => void act("unshare-project", { projectId: project.id })}
-                          disabled={Boolean(busy)}
-                          className="grid size-8 place-items-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
+                          className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
                           title="Stop sharing"
                         >
-                          <FiX size={13} />
+                          <FiX size={12} />
                         </button>
                       ) : null}
                     </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="rounded-2xl border border-dashed border-line-strong px-4 py-7 text-center">
-                <FiFolder size={20} className="mx-auto text-ink-4" />
-                <p className="mt-2 text-[12.5px] font-medium text-ink-2">No shared projects yet</p>
-                <p className="mt-1 text-[11px] text-ink-4">
-                  Share one of your projects to make it available to joined members.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
+                  );
+                })
+              ) : (
+                <p className="text-[12px] text-ink-4">No shared projects yet.</p>
+              )}
+            </div>
+          </section>
 
-      <div className="mt-5 rounded-2xl border border-line bg-raised/80 p-4">
-        <div className="flex items-start gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-            <FiShield size={15} />
-          </span>
-          <div>
-            <p className="text-[12.5px] font-semibold text-ink">Membership-enforced access</p>
-            <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
-              Team member lists, invitations, and shared project access are verified against Team membership on every server action. Knowing a project URL is not enough to open it.
-            </p>
-          </div>
+          {canAdmin && state.invites.length ? (
+            <section className="rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-amber-600 dark:text-amber-300">
+                Pending invites
+              </p>
+              <div className="mt-3 space-y-2">
+                {state.invites.map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="flex items-center gap-2 rounded-xl border border-line bg-sunk/50 px-3 py-2.5"
+                  >
+                    <FiMail size={13} className="text-accent" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[12px] font-medium text-ink">{invite.email}</p>
+                      <p className="text-[10px] capitalize text-ink-4">{invite.role}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void act("revoke-invite", { inviteId: invite.id })}
+                      className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover"
+                      title="Revoke"
+                    >
+                      <FiX size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>
