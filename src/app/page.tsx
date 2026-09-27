@@ -6,7 +6,8 @@ import { Footer } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
 import { LandingScene } from "@/components/landing/scene";
-import { ProductMockup, WhyGallery } from "@/components/landing/showcase";
+import { WhyGallery } from "@/components/landing/showcase";
+import { DeviceShowcase } from "@/components/landing/device-showcase";
 import { PricingPreview, FinalCta, SectionHead } from "@/components/landing/sections";
 import { ProductProof } from "@/components/landing/product-proof";
 import { TrustSection } from "@/components/landing/trust";
@@ -112,6 +113,8 @@ export default async function Landing() {
       <main className="relative z-[1]">
         <Hero freeCredits={free.monthly} />
 
+        <DeviceShowcase />
+
         <ProductProof />
 
         <IntegrationNetwork />
@@ -160,8 +163,6 @@ export default async function Landing() {
             </ul>
           </div>
         </section>
-
-        <ProductMockup />
 
         <WhyGallery />
 
