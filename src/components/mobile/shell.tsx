@@ -5,86 +5,62 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
 import {
-  TbHome,
+  FiPlus,
+  FiX,
+  FiMenu,
+  FiSettings,
+  FiCreditCard,
+  FiUsers,
+  FiLogOut,
+  TbLayoutDashboard,
   TbMessageCircle,
-  TbFileText,
+  TbFiles,
   TbTable,
   TbPresentation,
   TbPalette,
   TbRobot,
+  TbHelpCircle,
+  TbWorld,
   TbSearch,
-  TbUsers,
   TbPlugConnected,
   TbBell,
-  TbSettings,
-  FiMenu,
-  FiX,
-  FiPlus,
-  TbSparkles,
-  FiChevronRight,
-  TbWorld,
-  TbCreditCard,
 } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { Drawer } from "@/components/mobile/drawer";
-import { ThemeToggle } from "@/components/shell/theme";
+import { logOut } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
 import type { Balance } from "@/lib/types";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
 
-type Dest = {
+type Item = {
   href: string;
   label: string;
   icon: IconType;
-  motion?: Motion;
-  hint?: string;
+  motion: Motion;
 };
 
-/** Full product map — no Projects on mobile. */
-const GROUPS: { label: string; items: Dest[] }[] = [
-  {
-    label: "Work",
-    items: [
-      { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift", hint: "Ask, build, and edit" },
-      { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop", hint: "Recent work and shortcuts" },
-      { href: "/websites", label: "Websites", icon: TbWorld, motion: "grow", hint: "Sites and publish" },
-    ],
-  },
-  {
-    label: "Create",
-    items: [
-      { href: "/documents", label: "Documents", icon: TbFileText, motion: "type", hint: "Docs and briefs" },
-      { href: "/spreadsheets", label: "Spreadsheets", icon: TbTable, motion: "stack", hint: "Tables and data" },
-      { href: "/slides", label: "Slides", icon: TbPresentation, motion: "grow", hint: "Presentations" },
-      { href: "/design", label: "Design", icon: TbPalette, motion: "hue", hint: "Interfaces and visuals" },
-      { href: "/agents", label: "Agents", icon: TbRobot, motion: "spin", hint: "Specialists with memory" },
-      { href: "/research", label: "Research", icon: TbSearch, motion: "scan", hint: "Deep answers" },
-    ],
-  },
-  {
-    label: "Connect",
-    items: [
-      { href: "/integrations", label: "Plugins", icon: TbPlugConnected, motion: "nudge", hint: "Gmail, Slack, GitHub…" },
-      { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring", hint: "Follow-ups" },
-      { href: "/team", label: "Team", icon: TbUsers, motion: "lift", hint: "Shared workspace" },
-    ],
-  },
-  {
-    label: "Account",
-    items: [
-      { href: "/settings", label: "Settings", icon: TbSettings, motion: "spin", hint: "Account and preferences" },
-      { href: "/plans", label: "Plans & credits", icon: TbCreditCard, motion: "grow", hint: "Usage and billing" },
-      { href: "/settings/appearance", label: "Appearance", icon: TbSparkles, motion: "sparkle", hint: "Theme and display" },
-    ],
-  },
+/** Same destinations as desktop sidebar — no Projects, no theme control here. */
+const PRIMARY: Item[] = [
+  { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
+  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
+  { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
+  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
+  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
+  { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
+  { href: "/websites", label: "Websites", icon: TbWorld, motion: "grow" },
+  { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
+  { href: "/integrations", label: "Plugins", icon: TbPlugConnected, motion: "nudge" },
+  { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring" },
+  { href: "/team", label: "Team", icon: FiUsers, motion: "stack" },
 ];
 
-const TABS: Dest[] = [
-  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
-  { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
-  { href: "/documents", label: "Docs", icon: TbFileText, motion: "type" },
-  { href: "/agents", label: "Agents", icon: TbRobot, motion: "spin" },
+const TABS: Item[] = [
+  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
+  { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
+  { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
   { href: "/integrations", label: "Plugins", icon: TbPlugConnected, motion: "nudge" },
 ];
 
@@ -92,6 +68,13 @@ function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/home";
   if (href === "/chat") return pathname === "/chat" || pathname.startsWith("/chat/");
   return pathname === href || pathname.startsWith(href + "/");
+}
+
+/** Studio tools own Chat / Preview tabs — hide global bottom bar. */
+function isStudioTool(pathname: string) {
+  return /^\/(documents|spreadsheets|slides|design|research|code|websites)(\/|$)/.test(
+    pathname,
+  );
 }
 
 function initials(name: string) {
@@ -120,7 +103,6 @@ export function MobileShell({
 
   React.useEffect(() => {
     if (isTeam) return;
-
     let controller: AbortController | null = null;
     const loadBalance = () => {
       controller?.abort();
@@ -129,7 +111,9 @@ export function MobileShell({
         cache: "no-store",
         signal: controller.signal,
       })
-        .then(async (res) => (res.ok ? ((await res.json()) as { balance?: Balance | null }) : null))
+        .then(async (res) =>
+          res.ok ? ((await res.json()) as { balance?: Balance | null }) : null,
+        )
         .then((data) => data && setLiveBalance(data.balance ?? null))
         .catch(() => null);
     };
@@ -141,23 +125,19 @@ export function MobileShell({
     };
   }, [isTeam]);
 
-  const activeItem = React.useMemo(() => {
-    for (const group of GROUPS) {
-      for (const item of group.items) {
-        if (isActive(pathname, item.href)) return item;
-      }
-    }
-    return null;
-  }, [pathname]);
+  const activeItem = React.useMemo(
+    () => PRIMARY.find((item) => isActive(pathname, item.href)) ?? null,
+    [pathname],
+  );
 
   const isChat = pathname === "/chat" || pathname.startsWith("/chat/");
+  const studio = isStudioTool(pathname);
   const title = isChat ? "Trove" : activeItem?.label || "Trove";
   const credits =
     liveBalance && typeof liveBalance.remaining === "number"
       ? liveBalance.remaining
       : null;
 
-  // Hide chrome on team pages that bring their own layout
   if (isTeam) {
     return <>{children}</>;
   }
@@ -166,7 +146,7 @@ export function MobileShell({
     <div
       className={cn(
         "mobile-shell flex flex-col bg-canvas text-ink",
-        isChat ? "h-dvh min-h-0 overflow-hidden" : "min-h-dvh",
+        isChat || studio ? "h-dvh min-h-0 overflow-hidden" : "min-h-dvh",
       )}
     >
       <header
@@ -205,22 +185,20 @@ export function MobileShell({
       <main
         className={cn(
           "mobile-shell-main min-h-0 flex-1",
-          isChat ? "overflow-hidden" : "overflow-y-auto overscroll-contain",
+          isChat || studio
+            ? "overflow-hidden"
+            : "overflow-y-auto overscroll-contain",
         )}
         style={
-          isChat
-            ? undefined
-            : {
-                paddingBottom:
-                  "calc(64px + env(safe-area-inset-bottom))",
-              }
+          !isChat && !studio
+            ? { paddingBottom: "calc(64px + env(safe-area-inset-bottom))" }
+            : undefined
         }
       >
         {children}
       </main>
 
-      {/* Bottom tab bar — primary destinations (no projects) */}
-      {!isChat ? (
+      {!isChat && !studio ? (
         <nav
           aria-label="Primary"
           className="mobile-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line/60 bg-canvas/92 backdrop-blur-2xl"
@@ -240,7 +218,7 @@ export function MobileShell({
                   >
                     <Ico
                       icon={tab.icon}
-                      motion={tab.motion ?? "pop"}
+                      motion={tab.motion}
                       size={20}
                       active={active}
                       className={active ? "text-accent" : "text-ink-3"}
@@ -256,116 +234,129 @@ export function MobileShell({
 
       <Drawer open={open} onClose={() => setOpen(false)}>
         <div className="nx-mobile-drawer flex h-full flex-col bg-rail">
+          {/* Header — mirrors desktop rail */}
           <div
-            className="border-b border-line/70 px-4 pb-4"
-            style={{ paddingTop: "max(18px, env(safe-area-inset-top))" }}
+            className="flex shrink-0 items-center gap-2 border-b border-line px-3 pb-3"
+            style={{ paddingTop: "max(14px, env(safe-area-inset-top))" }}
           >
-            <div className="flex items-center gap-3">
-              <div className="grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-500 text-[13px] font-bold text-white shadow-[0_10px_28px_-12px_var(--btn-glow)]">
-                {initials(user.name)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[14.5px] font-semibold text-ink">{user.name}</p>
-                <p className="truncate text-[11.5px] text-ink-4">{user.email}</p>
-              </div>
-              <button
-                type="button"
-                aria-label="Close navigation"
-                onClick={() => setOpen(false)}
-                className="grid size-9 place-items-center rounded-full text-ink-4 transition active:bg-hover active:text-ink"
-              >
-                <FiX size={18} />
-              </button>
-            </div>
-
             <Link
               href="/chat"
               onClick={() => setOpen(false)}
-              className="mt-4 flex min-h-12 items-center gap-3 rounded-[16px] border border-violet-400/20 bg-gradient-to-r from-violet-500/12 via-fuchsia-500/8 to-sky-500/10 px-3.5 text-[13.5px] font-semibold text-ink shadow-[var(--sh-1)] active:scale-[0.99]"
+              className="flex min-w-0 flex-1 items-center gap-2"
             >
-              <span className="grid size-8 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 text-white">
-                <FiPlus size={16} />
-              </span>
-              New chat
+              <TroveOrb size={28} />
+              <Wordmark size={18} />
             </Link>
-
-            <div className="mt-3 flex items-center justify-between gap-2 rounded-[14px] border border-line bg-sunk/60 px-3 py-2.5">
-              <span className="text-[12px] font-medium text-ink-3">Theme</span>
-              <ThemeToggle />
-            </div>
+            <button
+              type="button"
+              aria-label="Close navigation"
+              onClick={() => setOpen(false)}
+              className="grid size-9 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+            >
+              <FiX size={17} />
+            </button>
           </div>
 
-          <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none">
-            {GROUPS.map((group) => (
-              <section key={group.label} className="mb-5">
-                <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-                  {group.label}
-                </p>
-                <ul className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const active = isActive(pathname, item.href);
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setOpen(false)}
-                          className={cn(
-                            "flex min-h-[52px] items-center gap-3 rounded-[15px] px-2.5 py-2.5 transition active:scale-[0.99]",
-                            active
-                              ? "bg-gradient-to-r from-violet-500/10 to-sky-500/8 text-ink"
-                              : "text-ink-2 active:bg-hover",
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "grid size-9 shrink-0 place-items-center rounded-xl",
-                              active
-                                ? "bg-gradient-to-br from-violet-500/18 to-sky-500/15 text-accent"
-                                : "bg-sunk text-ink-3",
-                            )}
-                          >
-                            <Ico
-                              icon={item.icon}
-                              motion={item.motion ?? "pop"}
-                              active={active}
-                              size={18}
-                            />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-[13.5px] font-medium">{item.label}</span>
-                            {item.hint ? (
-                              <span className="mt-0.5 block truncate text-[10.5px] text-ink-4">
-                                {item.hint}
-                              </span>
-                            ) : null}
-                          </span>
-                          <FiChevronRight size={14} className="shrink-0 text-ink-4" />
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))}
+          <div className="px-2.5 py-2">
+            <Link
+              href="/chat"
+              onClick={() => setOpen(false)}
+              className="btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white"
+            >
+              <Ico icon={FiPlus} motion="grow" size={15} />
+              New chat
+            </Link>
+          </div>
+
+          <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2 scrollbar-none">
+            {PRIMARY.map((item) => {
+              const active = isActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "group flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-[13.5px] transition-colors",
+                    active
+                      ? "bg-hover font-medium text-ink"
+                      : "text-ink-2 hover:bg-hover hover:text-ink",
+                  )}
+                >
+                  <Ico
+                    icon={item.icon}
+                    motion={item.motion}
+                    size={17}
+                    active={active}
+                    className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
+                  />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
 
           <div
-            className="border-t border-line/70 px-4 pt-3"
-            style={{ paddingBottom: "max(14px, env(safe-area-inset-bottom))" }}
+            className="shrink-0 space-y-2 border-t border-line p-2.5"
+            style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
           >
-            <div className="flex items-center justify-between rounded-[16px] bg-sunk/70 px-3.5 py-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <TroveOrb size={20} />
-                  <Wordmark size={14} />
-                </div>
-                <p className="mt-1 text-[10.5px] text-ink-4">AI workspace</p>
-              </div>
-              {credits != null ? (
-                <span className="rounded-full border border-line bg-raised px-2.5 py-1 text-[10.5px] font-semibold tabular-nums text-ink-3">
-                  {credits.toLocaleString()} cr
+            <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
+                {initials(user.name)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-medium text-ink">
+                  {user.name}
                 </span>
-              ) : null}
+                <span className="block truncate text-[11px] text-ink-4">
+                  {user.email}
+                  {credits != null ? ` · ${credits.toLocaleString()} cr` : ""}
+                </span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Link
+                href="/settings"
+                onClick={() => setOpen(false)}
+                aria-label="Settings"
+                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+              >
+                <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
+              </Link>
+              <Link
+                href="/plans"
+                onClick={() => setOpen(false)}
+                aria-label="Plan"
+                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+              >
+                <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
+              </Link>
+              <Link
+                href="/settings/support"
+                onClick={() => setOpen(false)}
+                aria-label="Help"
+                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+              >
+                <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
+              </Link>
+              <Link
+                href="/settings/appearance"
+                onClick={() => setOpen(false)}
+                className="ml-auto rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-ink-3 transition hover:bg-hover hover:text-ink"
+              >
+                Theme
+              </Link>
+              <form action={logOut}>
+                <button
+                  type="submit"
+                  aria-label="Log out"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+                >
+                  <FiLogOut size={15} />
+                </button>
+              </form>
             </div>
           </div>
         </div>
