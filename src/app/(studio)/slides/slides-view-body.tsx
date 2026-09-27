@@ -194,41 +194,41 @@ export function SlidesViewBody({
 
   return (
     <div className="mobile-editor deck-editor flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-canvas/90 px-3 py-2.5 backdrop-blur-md lg:px-4">
+      <header className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-line bg-canvas/90 px-2.5 py-2 backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2.5">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-medium text-ink">
+          <p className="truncate text-[13px] font-medium text-ink sm:text-[14px]">
             {slides[0]?.title || prompt || "Presentation"}
           </p>
-          <p className="text-[11.5px] text-ink-4">
+          <p className="text-[11px] text-ink-4 sm:text-[11.5px]">
             {total} slides{busy ? " · writing…" : deck.edited ? " · edited" : ""}
           </p>
         </div>
-        <div className="mr-1 flex items-center gap-0.5 rounded-[var(--r-control)] border border-line bg-rail p-0.5">
-          <button onClick={deck.undo} disabled={!deck.canUndo} aria-label="Undo" className="group grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink disabled:opacity-30">
+        <div className="mr-0.5 flex items-center gap-0.5 rounded-[var(--r-control)] border border-line bg-rail p-0.5">
+          <button onClick={deck.undo} disabled={!deck.canUndo} aria-label="Undo" className="group grid size-8 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink disabled:opacity-30 sm:size-7">
             <Ico icon={FiCornerUpLeft} motion="back" size={14} />
           </button>
-          <button onClick={deck.redo} disabled={!deck.canRedo} aria-label="Redo" className="group grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink disabled:opacity-30">
+          <button onClick={deck.redo} disabled={!deck.canRedo} aria-label="Redo" className="group grid size-8 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink disabled:opacity-30 sm:size-7">
             <Ico icon={FiCornerUpRight} motion="nudge" size={14} />
           </button>
         </div>
-        <button onClick={attachImagesToAll} disabled={!total || busy} className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-40" title="Generate photos for every slide">
-          <Ico icon={FiImage} motion="pop" size={13} /> Images
+        <button onClick={attachImagesToAll} disabled={!total || busy} className="chip group !px-2.5 !py-1.5 !text-[12px] disabled:opacity-40 sm:!px-3 sm:!text-[12.5px]" title="Generate photos for every slide">
+          <Ico icon={FiImage} motion="pop" size={13} /> <span className="hidden sm:inline">Images</span>
         </button>
-        <button onClick={present} disabled={!total} className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-40">
-          <Ico icon={FiPlay} motion="lift" size={13} /> Present
+        <button onClick={present} disabled={!total} className="chip group !px-2.5 !py-1.5 !text-[12px] disabled:opacity-40 sm:!px-3 sm:!text-[12.5px]">
+          <Ico icon={FiPlay} motion="lift" size={13} /> <span className="hidden sm:inline">Present</span>
         </button>
-        <button onClick={() => downloadPptx(slides, `${filename}.pptx`, slides[0]?.title ?? prompt)} disabled={!total || busy} className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-40">
-          <Ico icon={FiDownload} motion="lift" size={13} /> Export
+        <button onClick={() => downloadPptx(slides, `${filename}.pptx`, slides[0]?.title ?? prompt)} disabled={!total || busy} className="chip group !px-2.5 !py-1.5 !text-[12px] disabled:opacity-40 sm:!px-3 sm:!text-[12.5px]">
+          <Ico icon={FiDownload} motion="lift" size={13} /> <span className="hidden sm:inline">Export</span>
         </button>
-        <button onClick={() => { setCurrent(0); deck.load([]); importedFrom.current = null; startOver(); }} className="chip group !px-3 !py-1.5 !text-[12.5px]">
-          <Ico icon={FiRotateCcw} motion="spin" size={13} /> New
+        <button onClick={() => { setCurrent(0); deck.load([]); importedFrom.current = null; startOver(); }} className="chip group !px-2.5 !py-1.5 !text-[12px] sm:!px-3 sm:!text-[12.5px]">
+          <Ico icon={FiRotateCcw} motion="spin" size={13} /> <span className="hidden sm:inline">New</span>
         </button>
       </header>
 
       <nav aria-label="Presentation view" className="mobile-editor-tabs lg:hidden">
-        {(["preview", "slides", "edit"] as const).map((panel) => (
+        {(["edit", "preview", "slides"] as const).map((panel) => (
           <button key={panel} type="button" aria-pressed={mobilePanel === panel} onClick={() => setMobilePanel(panel)}>
-            {panel === "edit" ? "Edit & chat" : panel === "slides" ? "Slides" : "Preview"}
+            {panel === "edit" ? "Chat" : panel === "slides" ? "Slides" : "Preview"}
           </button>
         ))}
       </nav>
@@ -246,20 +246,20 @@ export function SlidesViewBody({
                   <SlideCanvas slide={s} index={i} total={total} thumb className={cn("transition", i === safeIndex ? "ring-2 ring-accent" : "opacity-75 group-hover:opacity-100")} />
                 </button>
                 <div className="slide-actions mt-1 flex flex-wrap items-center gap-0.5 transition-opacity focus-within:opacity-100 group-hover/slide:opacity-100 lg:opacity-0">
-                  <button onClick={() => deck.moveSlide(i, i - 1)} aria-label={`Move slide ${i + 1} earlier`} disabled={i === 0} className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25">
+                  <button onClick={() => deck.moveSlide(i, i - 1)} aria-label={`Move slide ${i + 1} earlier`} disabled={i === 0} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25 sm:size-6">
                     <Ico icon={FiChevronUp} motion="lift" size={13} />
                   </button>
-                  <button onClick={() => deck.moveSlide(i, i + 1)} aria-label={`Move slide ${i + 1} later`} disabled={i >= total - 1} className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25">
+                  <button onClick={() => deck.moveSlide(i, i + 1)} aria-label={`Move slide ${i + 1} later`} disabled={i >= total - 1} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25 sm:size-6">
                     <Ico icon={FiChevronDown} motion="down" size={13} />
                   </button>
                   <span className="flex-1" />
-                  <button onClick={() => attachImageToSlide(i)} className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover" aria-label={`Generate image for slide ${i + 1}`}>
+                  <button onClick={() => attachImageToSlide(i)} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover sm:size-6" aria-label={`Generate image for slide ${i + 1}`}>
                     <Ico icon={FiImage} motion="pop" size={13} />
                   </button>
-                  <button onClick={() => { deck.duplicateSlide(i); setCurrent(i + 1); }} aria-label={`Duplicate slide ${i + 1}`} className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover">
+                  <button onClick={() => { deck.duplicateSlide(i); setCurrent(i + 1); }} aria-label={`Duplicate slide ${i + 1}`} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover sm:size-6">
                     <Ico icon={FiCopy} motion="copy" size={13} />
                   </button>
-                  <button onClick={() => { deck.removeSlide(i); setCurrent((c) => Math.max(0, Math.min(c, total - 2))); }} aria-label={`Delete slide ${i + 1}`} className="grid size-6 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:text-critical">
+                  <button onClick={() => { deck.removeSlide(i); setCurrent((c) => Math.max(0, Math.min(c, total - 2))); }} aria-label={`Delete slide ${i + 1}`} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:text-critical sm:size-6">
                     <Ico icon={FiTrash2} motion="shake" size={13} />
                   </button>
                 </div>
@@ -288,7 +288,7 @@ export function SlidesViewBody({
           ) : null}
           {total ? (
             <div ref={stageRef} className={cn("flex min-h-0 flex-1 flex-col", presenting && "fixed inset-0 z-50 bg-black p-0")}>
-              <div className={cn("min-h-0 flex-1 overflow-auto p-4 lg:p-6", presenting && "grid place-items-center p-0")}>
+              <div className={cn("min-h-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-6", presenting && "grid place-items-center p-0")}>
                 <div className={cn("mx-auto w-full max-w-[920px]", presenting && "max-w-[min(100vw,1400px)]")}>
                   <SlideCanvas
                     slide={slide!}
@@ -309,7 +309,7 @@ export function SlidesViewBody({
                 </div>
               </div>
               {!presenting ? (
-                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-4 py-2.5">
+                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-3 py-2.5 sm:px-4">
                   <button onClick={() => go(-1)} disabled={safeIndex === 0} className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-30">
                     <Ico icon={FiChevronLeft} motion="nudge" size={14} /> Back
                   </button>
@@ -356,7 +356,7 @@ export function SlidesViewBody({
               </>
             ) : null}
             <div className="mt-6 border-t border-line pt-4">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">Ask the agent</p>
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">Chat</p>
               <Composer onSend={run} placeholder="Continue the deck…" disabled={busy} compact />
               {error ? <FailureNote error={error} onRetry={() => run(prompt)} /> : null}
               {prompt ? (
