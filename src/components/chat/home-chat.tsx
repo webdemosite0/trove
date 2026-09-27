@@ -110,7 +110,7 @@ export function HomeChat({
     [localProject],
   );
 
-  const { turns, busy, error, send, retry, regenerate, clear, bottom } =
+  const { turns, busy, error, send, stop, retry, regenerate, clear, bottom } =
     useChatThread({
       restored,
       mode,
@@ -189,7 +189,8 @@ export function HomeChat({
                 initialValue={draft}
                 placeholder="Ask anything, or describe what to create…"
                 autoFocus
-                disabled={busy}
+                busy={busy}
+                onStop={stop}
                 {...composerProps}
               />
             </div>
@@ -293,7 +294,7 @@ export function HomeChat({
 
       <div className="shrink-0 border-t border-line/60 bg-canvas px-5 pb-5 pt-3 lg:px-8">
         <div className="mx-auto max-w-[760px]">
-          <Composer onSend={send} placeholder="Reply…" disabled={busy} {...composerProps} />
+          <Composer onSend={send} placeholder="Reply…" busy={busy} onStop={stop} {...composerProps} />
         </div>
       </div>
     </div>
