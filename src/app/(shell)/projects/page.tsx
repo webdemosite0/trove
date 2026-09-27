@@ -1,18 +1,19 @@
-import { ProjectsView } from "./projects-view";
-import { listUserProjects, purgeLegacyDefaultProjects } from "@/lib/projects";
+import { redirect } from "next/navigation";
+import { isMobile } from "@/lib/device";
 import { currentUser } from "@/lib/auth";
+import { ProjectsView } from "./projects-view";
 
-export const metadata = { title: "Projects" };
+export const metadata = {
+  title: "Projects",
+  description: "Cloud and local project workspaces",
+};
+
+export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
+  // Mobile product surface does not include the project system
+  if (await isMobile()) redirect("/chat");
+
   const user = await currentUser();
-  if (user) {
-    await purgeLegacyDefaultProjects().catch(() => 0);
-  }
-  const projects = user ? await listUserProjects(40) : [];
-  return (
-    <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-      <ProjectsView projects={projects} signedIn={Boolean(user)} />
-    </div>
-  );
+  return <ProjectsView signedIn={Boolean(user)} />;
 }

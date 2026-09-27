@@ -12,7 +12,7 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ c?: string; q?: string; p?: string }>;
 }) {
-  const { c, q, p } = await searchParams;
+  const { c, q } = await searchParams;
   const userPromise = currentUser();
   const [saved, user, mobile] = await Promise.all([
     c ? loadConversation(c) : Promise.resolve(null),
@@ -22,24 +22,27 @@ export default async function HomePage({
 
   const props = {
     name: user?.name?.split(" ")[0] ?? "there",
-    activity: [],
+    activity: [] as [],
     restored: saved
       ? { id: saved.id, title: saved.title, messages: saved.messages }
       : null,
     draft: typeof q === "string" ? q.slice(0, 2000) : "",
-    initialProjectId: typeof p === "string" ? p.slice(0, 128) : null,
   };
 
   const key = saved?.id ?? "new";
 
+  if (mobile) {
+    return (
+      <div className="h-full min-h-0 w-full overflow-hidden">
+        <MobileChat key={key} {...props} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-        {mobile ? (
-          <MobileChat key={key} {...props} projects={[]} />
-        ) : (
-          <HomeChat key={key} {...props} />
-        )}
+        <HomeChat key={key} {...props} />
       </div>
       <TeamChatPanel variant="dock" />
     </div>

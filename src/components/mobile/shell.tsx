@@ -21,11 +21,13 @@ import {
   FiX,
   FiPlus,
   TbSparkles,
-  FiFolder,
   FiChevronRight,
+  TbWorld,
+  TbCreditCard,
 } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { Drawer } from "@/components/mobile/drawer";
+import { ThemeToggle } from "@/components/shell/theme";
 import { cn } from "@/lib/utils";
 import type { Balance } from "@/lib/types";
 import { TroveOrb } from "@/components/brand/orb";
@@ -39,13 +41,14 @@ type Dest = {
   hint?: string;
 };
 
+/** Full product map — no Projects on mobile. */
 const GROUPS: { label: string; items: Dest[] }[] = [
   {
     label: "Work",
     items: [
       { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift", hint: "Ask, build, and edit" },
-      { href: "/projects", label: "Projects", icon: FiFolder, motion: "open", hint: "Cloud and local work" },
       { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop", hint: "Recent work and shortcuts" },
+      { href: "/websites", label: "Websites", icon: TbWorld, motion: "grow", hint: "Sites and publish" },
     ],
   },
   {
@@ -55,26 +58,34 @@ const GROUPS: { label: string; items: Dest[] }[] = [
       { href: "/spreadsheets", label: "Spreadsheets", icon: TbTable, motion: "stack", hint: "Tables and data" },
       { href: "/slides", label: "Slides", icon: TbPresentation, motion: "grow", hint: "Presentations" },
       { href: "/design", label: "Design", icon: TbPalette, motion: "hue", hint: "Interfaces and visuals" },
-      { href: "/agents", label: "Agents", icon: TbRobot, motion: "spin", hint: "Multi-step work" },
+      { href: "/agents", label: "Agents", icon: TbRobot, motion: "spin", hint: "Specialists with memory" },
       { href: "/research", label: "Research", icon: TbSearch, motion: "scan", hint: "Deep answers" },
     ],
   },
   {
-    label: "Business",
+    label: "Connect",
     items: [
-      { href: "/integrations", label: "Integrations", icon: TbPlugConnected, motion: "nudge", hint: "Slack, GitHub, and more" },
+      { href: "/integrations", label: "Plugins", icon: TbPlugConnected, motion: "nudge", hint: "Gmail, Slack, GitHub…" },
       { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring", hint: "Follow-ups" },
       { href: "/team", label: "Team", icon: TbUsers, motion: "lift", hint: "Shared workspace" },
-      { href: "/settings/business", label: "Business profile", icon: TbSparkles, motion: "sparkle", hint: "Company context for AI" },
     ],
   },
   {
     label: "Account",
     items: [
       { href: "/settings", label: "Settings", icon: TbSettings, motion: "spin", hint: "Account and preferences" },
-      { href: "/plans", label: "Plans & credits", icon: TbSparkles, motion: "grow", hint: "Usage and billing" },
+      { href: "/plans", label: "Plans & credits", icon: TbCreditCard, motion: "grow", hint: "Usage and billing" },
+      { href: "/settings/appearance", label: "Appearance", icon: TbSparkles, motion: "sparkle", hint: "Theme and display" },
     ],
   },
+];
+
+const TABS: Dest[] = [
+  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "lift" },
+  { href: "/dashboard", label: "Home", icon: TbHome, motion: "pop" },
+  { href: "/documents", label: "Docs", icon: TbFileText, motion: "type" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "spin" },
+  { href: "/integrations", label: "Plugins", icon: TbPlugConnected, motion: "nudge" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -146,6 +157,7 @@ export function MobileShell({
       ? liveBalance.remaining
       : null;
 
+  // Hide chrome on team pages that bring their own layout
   if (isTeam) {
     return <>{children}</>;
   }
@@ -158,9 +170,9 @@ export function MobileShell({
       )}
     >
       <header
-        className="mobile-shell-header sticky top-0 z-40 flex items-center gap-2 border-b border-line/55 bg-canvas/82 px-2.5 backdrop-blur-2xl"
+        className="mobile-shell-header sticky top-0 z-40 flex items-center gap-1.5 border-b border-line/55 bg-canvas/90 px-2 backdrop-blur-2xl"
         style={{
-          minHeight: "calc(54px + env(safe-area-inset-top))",
+          minHeight: "calc(52px + env(safe-area-inset-top))",
           paddingTop: "env(safe-area-inset-top)",
         }}
       >
@@ -168,13 +180,13 @@ export function MobileShell({
           type="button"
           aria-label="Open navigation"
           onClick={() => setOpen(true)}
-          className="grid size-10 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+          className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
         >
           <Ico icon={FiMenu} motion="menu" size={20} />
         </button>
 
         <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
-          {isChat ? <TroveOrb size={24} /> : null}
+          {isChat ? <TroveOrb size={22} /> : null}
           <span className="truncate text-[14.5px] font-semibold tracking-[-0.015em] text-ink">
             {title}
           </span>
@@ -184,7 +196,7 @@ export function MobileShell({
           type="button"
           aria-label="New chat"
           onClick={() => router.push("/chat")}
-          className="grid size-10 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+          className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
         >
           <Ico icon={FiPlus} motion="pop" size={20} />
         </button>
@@ -195,9 +207,52 @@ export function MobileShell({
           "mobile-shell-main min-h-0 flex-1",
           isChat ? "overflow-hidden" : "overflow-y-auto overscroll-contain",
         )}
+        style={
+          isChat
+            ? undefined
+            : {
+                paddingBottom:
+                  "calc(64px + env(safe-area-inset-bottom))",
+              }
+        }
       >
         {children}
       </main>
+
+      {/* Bottom tab bar — primary destinations (no projects) */}
+      {!isChat ? (
+        <nav
+          aria-label="Primary"
+          className="mobile-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line/60 bg-canvas/92 backdrop-blur-2xl"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
+          <ul className="mx-auto flex h-14 max-w-[560px] items-stretch justify-between px-1">
+            {TABS.map((tab) => {
+              const active = isActive(pathname, tab.href);
+              return (
+                <li key={tab.href} className="flex min-w-0 flex-1">
+                  <Link
+                    href={tab.href}
+                    className={cn(
+                      "flex w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-medium transition active:scale-95",
+                      active ? "text-accent" : "text-ink-4",
+                    )}
+                  >
+                    <Ico
+                      icon={tab.icon}
+                      motion={tab.motion ?? "pop"}
+                      size={20}
+                      active={active}
+                      className={active ? "text-accent" : "text-ink-3"}
+                    />
+                    <span className="truncate">{tab.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      ) : null}
 
       <Drawer open={open} onClose={() => setOpen(false)}>
         <div className="nx-mobile-drawer flex h-full flex-col bg-rail">
@@ -233,6 +288,11 @@ export function MobileShell({
               </span>
               New chat
             </Link>
+
+            <div className="mt-3 flex items-center justify-between gap-2 rounded-[14px] border border-line bg-sunk/60 px-3 py-2.5">
+              <span className="text-[12px] font-medium text-ink-3">Theme</span>
+              <ThemeToggle />
+            </div>
           </div>
 
           <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none">
@@ -299,7 +359,7 @@ export function MobileShell({
                   <TroveOrb size={20} />
                   <Wordmark size={14} />
                 </div>
-                <p className="mt-1 text-[10.5px] text-ink-4">AI workspace for business</p>
+                <p className="mt-1 text-[10.5px] text-ink-4">AI workspace</p>
               </div>
               {credits != null ? (
                 <span className="rounded-full border border-line bg-raised px-2.5 py-1 text-[10.5px] font-semibold tabular-nums text-ink-3">

@@ -4,11 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import {
   FiArrowRight,
-  FiFolder,
   TbFileText,
   TbPalette,
   TbSearch,
   TbSparkles,
+  TbPlugConnected,
 } from "@/components/ui/icons";
 import { Message } from "@/components/chat/message";
 import { MobileComposer } from "@/components/mobile/composer";
@@ -16,16 +16,6 @@ import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
 import { useChatThread } from "@/hooks/use-chat-thread";
 import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
-import { BrowserWorkspace } from "@/components/chat/browser-workspace";
-import {
-  ProjectPicker,
-  type ChatProjectOption,
-} from "@/components/chat/project-picker";
-import {
-  writeLocalProjectFiles,
-  type LocalProjectFile,
-  type LocalProjectWorkspace,
-} from "@/lib/local-project";
 import { TroveOrb } from "@/components/brand/orb";
 import { cn } from "@/lib/utils";
 
@@ -35,13 +25,15 @@ const PROMPTS = [
   { label: "Research", prompt: "Research and summarize ", icon: TbSearch, tone: "emerald" },
 ] as const;
 
+/**
+ * Mobile chat — no project picker, no local folder workspace.
+ * Same core chat as desktop, tuned for phone chrome.
+ */
 export function MobileChat({
   restored = null,
   name = "there",
   activity: initialActivity = [],
   draft: initialDraft = "",
-  projects: initialProjects = [],
-  initialProjectId = null,
 }: {
   restored?: {
     id: string;
@@ -51,18 +43,14 @@ export function MobileChat({
   name?: string;
   activity?: Recent[];
   draft?: string;
-  projects?: ChatProjectOption[];
+  /** @deprecated ignored on mobile */
+  projects?: unknown;
+  /** @deprecated ignored on mobile */
   initialProjectId?: string | null;
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = React.useState(initialDraft);
   const [activity, setActivity] = React.useState<Recent[]>(initialActivity);
-  const [projects, setProjects] = React.useState<ChatProjectOption[]>(initialProjects);
-  const [projectId, setProjectId] = React.useState<string | null>(
-    initialProjectId || null,
-  );
-  const [localProject, setLocalProject] =
-    React.useState<LocalProjectWorkspace | null>(null);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -80,103 +68,30 @@ export function MobileChat({
           })
           .catch(() => null);
       }
-
-      if (!initialProjects.length) {
-        void fetch("/api/projects", {
-          cache: "no-store",
-          signal: controller.signal,
-        })
-          .then(async (res) =>
-            res.ok
-              ? ((await res.json()) as { projects?: ChatProjectOption[] })
-              : null,
-          )
-          .then((data) => {
-            if (data?.projects) setProjects(data.projects);
-          })
-          .catch(() => null);
-      }
-    }, 650);
+    }, 400);
 
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [initialActivity.length, initialProjects.length]);
-
-  const applyLocalFiles = React.useCallback(
-    async (changes: LocalProjectFile[]) => {
-      if (!localProject) return;
-      await writeLocalProjectFiles(
-        localProject.handle,
-        changes,
-        localProject.scope,
-      );
-      setLocalProject((current) => {
-        if (!current) return current;
-        const merged = new Map(current.files.map((file) => [file.path, file]));
-        for (const file of changes) merged.set(file.path, file);
-        return { ...current, files: [...merged.values()] };
-      });
-    },
-    [localProject],
-  );
+  }, [initialActivity.length]);
 
   const { turns, busy, error, send, retry, clear, bottom } = useChatThread({
     restored,
     mode,
-    projectId,
-    localProject: localProject
-      ? {
-          name: localProject.name,
-          scope: localProject.scope,
-          files: localProject.files,
-        }
-      : null,
-    onApplyLocalFiles: applyLocalFiles,
+    projectId: null,
+    localProject: null,
   });
-
-  const projectControl = (
-    <ProjectPicker
-      projects={projects}
-      value={projectId}
-      onChange={(id) => {
-        setProjectId(id);
-        if (id) setLocalProject(null);
-      }}
-      onCreated={(project) => {
-        setLocalProject(null);
-        setProjects((items) => [
-          project,
-          ...items.filter((item) => item.id !== project.id),
-        ]);
-      }}
-      localName={localProject?.name || ""}
-      onLocalFolder={(workspace) => {
-        setProjectId(null);
-        setLocalProject(workspace);
-      }}
-      onClearLocal={() => setLocalProject(null)}
-      disabled={busy}
-      compact
-    />
-  );
-
-  const activeProjectName =
-    localProject?.name ||
-    projects.find((project) => project.id === projectId)?.name ||
-    null;
 
   const composerProps = {
     mode,
     onModeChange: setMode,
-    leading: projectControl,
   };
 
   if (turns.length === 0) {
     return (
       <div className="mobile-chat flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain">
-        <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col px-4 pb-6 pt-[clamp(28px,7vh,64px)]">
+        <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col px-3.5 pb-6 pt-[clamp(20px,5vh,48px)] sm:px-4">
           <div className="nx-rise flex flex-col items-center text-center">
             <div className="relative grid size-14 place-items-center">
               <span
@@ -187,15 +102,15 @@ export function MobileChat({
                 <TroveOrb size={29} />
               </span>
             </div>
-            <h1 className="mt-5 text-[27px] font-semibold tracking-[-0.04em] text-ink">
+            <h1 className="mt-5 text-[clamp(1.45rem,1.2rem+1.5vw,1.75rem)] font-semibold tracking-[-0.04em] text-ink">
               What can I help with?
             </h1>
-            <p className="mt-2 max-w-[32ch] text-[13px] leading-relaxed text-ink-4">
-              Hi {name}. Ask anything, connect an app with @, or work inside a project.
+            <p className="mt-2 max-w-[34ch] text-[13px] leading-relaxed text-ink-4">
+              Hi {name}. Ask anything, or connect tools from Plugins.
             </p>
           </div>
 
-          <div className="nx-rise mt-7" style={{ animationDelay: "55ms" }}>
+          <div className="nx-rise mt-6" style={{ animationDelay: "55ms" }}>
             <MobileComposer
               onSend={send}
               disabled={busy}
@@ -206,25 +121,6 @@ export function MobileChat({
               autoFocus={false}
             />
           </div>
-
-          {projectId || localProject ? (
-            <div className="mt-4">
-              <BrowserWorkspace
-                projectId={projectId}
-                projectName={activeProjectName}
-                localProject={
-                  localProject
-                    ? {
-                        name: localProject.name,
-                        scope: localProject.scope,
-                        files: localProject.files,
-                      }
-                    : null
-                }
-                compact
-              />
-            </div>
-          ) : null}
 
           {error ? <Problem message={error} onRetry={retry} /> : null}
 
@@ -245,6 +141,13 @@ export function MobileChat({
                 {item.label}
               </button>
             ))}
+            <Link
+              href="/integrations"
+              className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/8 px-3.5 text-[12px] font-medium text-ink-2 transition active:scale-95"
+            >
+              <TbPlugConnected size={14} className="text-accent" />
+              Plugins
+            </Link>
           </div>
 
           {activity.length ? (
@@ -253,15 +156,12 @@ export function MobileChat({
                 <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-4">
                   Recent
                 </h2>
-                <Link
-                  href="/projects"
-                  className="text-[11px] font-medium text-accent"
-                >
-                  View work
+                <Link href="/dashboard" className="text-[11px] font-medium text-accent">
+                  Home
                 </Link>
               </div>
               <div className="overflow-hidden rounded-[18px] border border-line bg-raised/70 shadow-[var(--sh-1)]">
-                {activity.slice(0, 5).map((recent, index) => (
+                {activity.slice(0, 6).map((recent, index) => (
                   <Link
                     key={`${recent.kind}-${recent.href}-${recent.title}`}
                     href={recent.href}
@@ -271,11 +171,7 @@ export function MobileChat({
                     )}
                   >
                     <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/10 to-sky-500/10 text-accent">
-                      {recent.kind === "site" ? (
-                        <FiFolder size={14} />
-                      ) : (
-                        <TbSparkles size={14} />
-                      )}
+                      <TbSparkles size={14} />
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-2">
                       {recent.title}
@@ -293,8 +189,7 @@ export function MobileChat({
 
   return (
     <div className="mobile-chat flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 items-center gap-2 border-b border-line/45 px-3 py-2">
-        <div className="min-w-0 flex-1">{projectControl}</div>
+      <div className="flex shrink-0 items-center justify-end gap-2 border-b border-line/45 px-3 py-1.5">
         <button
           type="button"
           onClick={clear}
@@ -304,25 +199,8 @@ export function MobileChat({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 pt-4">
-        <div className="mx-auto max-w-[640px] space-y-5">
-          {projectId || localProject ? (
-            <BrowserWorkspace
-              projectId={projectId}
-              projectName={activeProjectName}
-              localProject={
-                localProject
-                  ? {
-                      name: localProject.name,
-                      scope: localProject.scope,
-                      files: localProject.files,
-                      native: localProject.native,
-                    }
-                  : null
-              }
-              compact
-            />
-          ) : null}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3.5 pb-4 pt-3 sm:px-4">
+        <div className="mx-auto max-w-[640px] space-y-4">
           {turns.map((turn, index) => (
             <Message
               key={turn.id}
@@ -338,7 +216,7 @@ export function MobileChat({
       </div>
 
       <div
-        className="mobile-composer-dock shrink-0 border-t border-line/55 bg-canvas/88 px-3 pt-2 backdrop-blur-2xl"
+        className="mobile-composer-dock shrink-0 border-t border-line/55 bg-canvas/92 px-2.5 pt-2 backdrop-blur-2xl sm:px-3"
         style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}
       >
         <div className="mx-auto max-w-[640px]">
