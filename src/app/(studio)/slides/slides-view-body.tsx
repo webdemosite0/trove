@@ -48,6 +48,7 @@ const EXAMPLES = [
   "A product launch deck for a mobile app",
 ];
 
+/** Square icon button — balanced, not circular. */
 function ToolBtn({
   onClick,
   disabled,
@@ -66,15 +67,11 @@ function ToolBtn({
       disabled={disabled}
       aria-label={label}
       title={label}
-      className="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink disabled:opacity-35"
+      className="grid size-8 shrink-0 place-items-center rounded-md text-ink-3 transition-colors hover:bg-hover hover:text-ink active:scale-95 disabled:pointer-events-none disabled:opacity-35 sm:size-9 sm:rounded-lg"
     >
       {children}
     </button>
   );
-}
-
-export function SubidesViewBody() {
-  return null;
 }
 
 export function SlidesViewBody({
@@ -96,8 +93,11 @@ export function SlidesViewBody({
   });
   const [current, setCurrent] = useState(0);
   const [presenting, setPresenting] = useState(false);
-  const [mobilePanel, setMobilePanel] = useState<"preview" | "slides" | "edit">("preview");
+  const [mobilePanel, setMobilePanel] = useState<"preview" | "slides" | "edit">(
+    "preview",
+  );
   const stageRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const deck = useDeck([]);
   const slides = deck.slides;
 
@@ -110,6 +110,13 @@ export function SlidesViewBody({
     // Keep the user on a valid slide after AI updates the deck in place.
     setCurrent((c) => Math.min(c, Math.max(0, next.length - 1)));
   }, [busy, text, deck]);
+
+  // Keep chat scrolled to latest when new turns arrive.
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (!el || mobilePanel !== "edit") return;
+    el.scrollTop = el.scrollHeight;
+  }, [turns, busy, mobilePanel]);
 
   const total = slides.length;
   const safeIndex = Math.min(current, Math.max(0, total - 1));
@@ -126,7 +133,11 @@ export function SlidesViewBody({
     if (!total) return;
     const onKey = (e: KeyboardEvent) => {
       const el = document.activeElement;
-      if (el instanceof HTMLElement && el.matches("input, textarea, [contenteditable]")) return;
+      if (
+        el instanceof HTMLElement &&
+        el.matches("input, textarea, [contenteditable]")
+      )
+        return;
       if (e.key === "ArrowRight" || e.key === "PageDown") {
         e.preventDefault();
         go(1);
@@ -199,7 +210,9 @@ export function SlidesViewBody({
           <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[var(--r-panel)] bg-accent/15 text-accent">
             <Ico icon={FiLayout} motion="lift" size={26} />
           </span>
-          <h1 className="text-[27px] font-semibold tracking-[-0.02em] text-ink">Decks</h1>
+          <h1 className="text-[27px] font-semibold tracking-[-0.02em] text-ink">
+            Decks
+          </h1>
           <p className="mt-1.5 text-[14.5px] text-ink-3">
             Build a visual deck with photos, present it, then export PowerPoint.
           </p>
@@ -230,6 +243,7 @@ export function SlidesViewBody({
     <nav
       aria-label="Presentation view"
       className="flex shrink-0 border-t border-line bg-canvas lg:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {(
         [
@@ -260,9 +274,9 @@ export function SlidesViewBody({
 
   return (
     <div className="mobile-editor deck-editor flex h-full min-h-0 flex-col overflow-hidden">
-      {/* Header + single-line toolbar */}
-      <header className="flex shrink-0 items-center gap-1 border-b border-line bg-canvas/95 px-2 py-1.5 backdrop-blur-md sm:gap-1.5 sm:px-3 sm:py-2">
-        <div className="min-w-0 flex-1 px-1">
+      {/* Header — single balanced toolbar row */}
+      <header className="flex shrink-0 items-center gap-0.5 border-b border-line bg-canvas/95 px-1.5 py-1.5 backdrop-blur-md sm:gap-1 sm:px-3 sm:py-2">
+        <div className="min-w-0 flex-1 px-1.5">
           <p className="truncate text-[13px] font-medium text-ink sm:text-[14px]">
             {slides[0]?.title || prompt || "Presentation"}
           </p>
@@ -272,15 +286,19 @@ export function SlidesViewBody({
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-0.5">
+        <div className="flex shrink-0 items-center">
           <ToolBtn onClick={deck.undo} disabled={!deck.canUndo} label="Undo">
             <Ico icon={FiCornerUpLeft} motion="back" size={16} />
           </ToolBtn>
           <ToolBtn onClick={deck.redo} disabled={!deck.canRedo} label="Redo">
             <Ico icon={FiCornerUpRight} motion="nudge" size={16} />
           </ToolBtn>
-          <span className="mx-0.5 hidden h-5 w-px bg-line sm:block" />
-          <ToolBtn onClick={attachImagesToAll} disabled={!total || busy} label="Images">
+          <span className="mx-0.5 hidden h-4 w-px bg-line sm:block" aria-hidden />
+          <ToolBtn
+            onClick={attachImagesToAll}
+            disabled={!total || busy}
+            label="Generate images"
+          >
             <Ico icon={FiImage} motion="pop" size={16} />
           </ToolBtn>
           <ToolBtn onClick={present} disabled={!total} label="Present">
@@ -291,7 +309,7 @@ export function SlidesViewBody({
               downloadPptx(slides, `${filename}.pptx`, slides[0]?.title ?? prompt)
             }
             disabled={!total || busy}
-            label="Export"
+            label="Export PowerPoint"
           >
             <Ico icon={FiDownload} motion="lift" size={16} />
           </ToolBtn>
@@ -311,7 +329,7 @@ export function SlidesViewBody({
 
       {/* Main panels */}
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[200px_minmax(0,1fr)_minmax(220px,280px)]">
-        {/* Slides list */}
+        {/* Spides list */}
         <aside
           className={cn(
             "min-h-0 overflow-y-auto bg-rail/40 lg:block lg:border-r lg:border-line",
@@ -333,7 +351,10 @@ export function SlidesViewBody({
                   <span className="mb-1 flex items-center gap-1.5 text-[11px] tabular-nums text-ink-4">
                     <span>{i + 1}</span>
                     {s.image && /^https?:\/\//i.test(s.image) ? (
-                      <span className="size-1.5 rounded-full bg-accent" title="Has image" />
+                      <span
+                        className="size-1.5 rounded-full bg-accent"
+                        title="Has image"
+                      />
                     ) : null}
                   </span>
                   <SlideCanvas
@@ -343,7 +364,9 @@ export function SlidesViewBody({
                     thumb
                     className={cn(
                       "transition",
-                      i === safeIndex ? "ring-2 ring-accent" : "opacity-75 group-hover:opacity-100",
+                      i === safeIndex
+                        ? "ring-2 ring-accent"
+                        : "opacity-75 group-hover:opacity-100",
                     )}
                   />
                 </button>
@@ -352,7 +375,7 @@ export function SlidesViewBody({
                     onClick={() => deck.moveSlide(i, i - 1)}
                     aria-label={`Move slide ${i + 1} earlier`}
                     disabled={i === 0}
-                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover disabled:opacity-25"
+                    className="grid size-7 place-items-center rounded-md text-ink-4 hover:bg-hover disabled:opacity-25"
                   >
                     <Ico icon={FiChevronUp} motion="lift" size={13} />
                   </button>
@@ -360,14 +383,14 @@ export function SlidesViewBody({
                     onClick={() => deck.moveSlide(i, i + 1)}
                     aria-label={`Move slide ${i + 1} later`}
                     disabled={i >= total - 1}
-                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover disabled:opacity-25"
+                    className="grid size-7 place-items-center rounded-md text-ink-4 hover:bg-hover disabled:opacity-25"
                   >
                     <Ico icon={FiChevronDown} motion="down" size={13} />
                   </button>
                   <span className="flex-1" />
                   <button
                     onClick={() => attachImageToSlide(i)}
-                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover"
+                    className="grid size-7 place-items-center rounded-md text-ink-4 hover:bg-hover"
                     aria-label={`Generate image for slide ${i + 1}`}
                   >
                     <Ico icon={FiImage} motion="pop" size={13} />
@@ -378,7 +401,7 @@ export function SlidesViewBody({
                       setCurrent(i + 1);
                     }}
                     aria-label={`Duplicate slide ${i + 1}`}
-                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover"
+                    className="grid size-7 place-items-center rounded-md text-ink-4 hover:bg-hover"
                   >
                     <Ico icon={FiCopy} motion="copy" size={13} />
                   </button>
@@ -388,7 +411,7 @@ export function SlidesViewBody({
                       setCurrent((c) => Math.max(0, Math.min(c, total - 2)));
                     }}
                     aria-label={`Delete slide ${i + 1}`}
-                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:text-critical"
+                    className="grid size-7 place-items-center rounded-md text-ink-4 hover:text-critical"
                   >
                     <Ico icon={FiTrash2} motion="shake" size={13} />
                   </button>
@@ -491,7 +514,8 @@ export function SlidesViewBody({
                 <button
                   type="button"
                   onClick={() => {
-                    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+                    if (document.fullscreenElement)
+                      document.exitFullscreen().catch(() => {});
                     setPresenting(false);
                   }}
                   className="absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
@@ -514,7 +538,7 @@ export function SlidesViewBody({
           ) : null}
         </section>
 
-        {/* Chat panel — fixed height, composer pinned, no page scroll */}
+        {/* Chat panel — fixed height, no page scroll; composer pinned */}
         <aside
           className={cn(
             "min-h-0 flex-col overflow-hidden bg-canvas lg:flex lg:border-l lg:border-line",
@@ -522,9 +546,9 @@ export function SlidesViewBody({
           )}
         >
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* Optional notes / layout — compact, collapsible feel */}
+            {/* Compact notes + layout for current slide */}
             {slide ? (
-              <div className="shrink-0 space-y-3 border-b border-line px-3 py-3 sm:px-4">
+              <div className="shrink-0 space-y-2.5 border-b border-line px-3 py-2.5 sm:px-4">
                 <div>
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                     Notes · slide {safeIndex + 1}
@@ -535,7 +559,7 @@ export function SlidesViewBody({
                     placeholder="Speaker notes…"
                     aria-label="Speaker notes"
                     rows={2}
-                    className="w-full resize-none rounded-xl border border-line bg-raised px-3 py-2 text-[13px] text-ink outline-none focus:border-accent/50"
+                    className="w-full resize-none rounded-lg border border-line bg-raised px-3 py-2 text-[13px] text-ink outline-none focus:border-accent/50"
                   />
                 </div>
                 <div>
@@ -543,13 +567,15 @@ export function SlidesViewBody({
                     Layout
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {(["title", "bullets", "split", "quote", "section"] as const).map((layout) => (
+                    {(
+                      ["title", "bullets", "split", "quote", "section"] as const
+                    ).map((layout) => (
                       <button
                         key={layout}
                         type="button"
                         onClick={() => deck.setLayout(safeIndex, layout)}
                         className={cn(
-                          "rounded-lg border px-2.5 py-1 text-[11.5px] capitalize",
+                          "rounded-md border px-2.5 py-1 text-[11.5px] capitalize transition-colors",
                           slide.layout === layout
                             ? "border-accent bg-accent/15 font-medium text-accent"
                             : "border-line text-ink-3 hover:bg-hover",
@@ -563,19 +589,43 @@ export function SlidesViewBody({
               </div>
             ) : null}
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
-              {busy ? (
-                <div className="mb-3 flex items-center gap-2 text-[13px] text-ink-3">
-                  <span className="size-1.5 animate-pulse rounded-full bg-accent" />
-                  Updating this deck…
-                </div>
+            {/* Scrollable conversation only — page itself does not scroll */}
+            <div
+              ref={chatScrollRef}
+              className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4"
+            >
+              {turns.map((t) =>
+                t.role === "user" ? (
+                  <div key={t.id} className="flex justify-end">
+                    <p className="max-w-[90%] rounded-2xl rounded-br-md bg-accent/15 px-3.5 py-2 text-[13.5px] leading-relaxed text-ink">
+                      {t.text}
+                    </p>
+                  </div>
+                ) : (
+                  <div key={t.id} className="space-y-1.5">
+                    {!t.text && busy ? (
+                      <div className="flex items-center gap-2.5">
+                        <Bot size={28} state="working" />
+                        <span className="nx-dots text-[13px] text-ink-2">
+                          Updating this deck
+                        </span>
+                      </div>
+                    ) : t.text ? (
+                      <p className="text-[12.5px] leading-relaxed text-ink-3">
+                        Deck updated
+                        {total ? ` · ${total} slide${total === 1 ? "" : "s"}` : ""}.
+                        Switch to Preview to review.
+                      </p>
+                    ) : null}
+                  </div>
+                ),
+              )}
+              {error ? (
+                <FailureNote error={error} onRetry={() => run(prompt)} />
               ) : null}
-              {error ? <FailureNote error={error} onRetry={() => run(prompt)} /> : null}
-              <p className="text-[12.5px] leading-relaxed text-ink-3">
-                Ask for changes — the AI updates this deck instead of starting over.
-              </p>
             </div>
 
+            {/* Composer pinned — always visible, never pushed off-screen */}
             <div className="shrink-0 border-t border-line bg-canvas p-3 sm:p-4">
               <Composer
                 onSend={run}
@@ -597,7 +647,7 @@ export function SlidesViewBody({
         </aside>
       </div>
 
-      {/* Bottom tabs on mobile */}
+      {/* Bottom tabs on mobile only */}
       {mobileTabs}
     </div>
   );
