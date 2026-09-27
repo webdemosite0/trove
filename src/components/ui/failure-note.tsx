@@ -45,6 +45,13 @@ const FACE: Record<
     tint: "bg-sunk",
     ring: "border-line",
   },
+  image: {
+    icon: FiAlertTriangle,
+    motion: "alert",
+    tone: "text-ink",
+    tint: "bg-sunk",
+    ring: "border-line",
+  },
   unknown: {
     icon: FiAlertTriangle,
     motion: "alert",

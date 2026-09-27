@@ -1,6 +1,7 @@
 /**
  * Turns internal failures into short, user-safe messages.
- * Technical provider/runtime details stay out of the UI.
+ * Technical provider/runtime details stay out of the UI —
+ * except for image generation, where a short actionable hint helps.
  */
 
 export type FailureKind =
@@ -8,6 +9,7 @@ export type FailureKind =
   | "capacity"
   | "auth"
   | "network"
+  | "image"
   | "unknown";
 
 export interface Failure {
@@ -25,6 +27,7 @@ const PROVIDER_KEY = /api.?key|apikey|_API_KEY|available to this api key|no mode
 const AUTH = /\b(401|403)\b|log ?in|sign ?in|signed out|session (has )?expired|not authorised|not authorized|unauthorized/i;
 const NETWORK = /failed to fetch|network ?error|networkerror|offline|econnrefused|timed? ?out|deadline/i;
 const PROVIDER_NAME = /\b(gemini|openrouter|xai|grok|google|the model|model returned|provider)\b/i;
+const IMAGE = /image generation failed|returned no image|no image provider|puter |gemini-.*image|txt2img/i;
 
 export function classify(raw: unknown): Failure {
   const message = (raw instanceof Error ? raw.message : String(raw ?? "")).trim();
@@ -47,6 +50,19 @@ export function classify(raw: unknown): Failure {
       title: "You are signed out",
       detail: "Log in again and continue from where you left off.",
       retryable: false,
+    };
+  }
+
+  if (IMAGE.test(message)) {
+    const quota = /\b429\b|quota/i.test(message);
+    return {
+      ...base,
+      kind: "image",
+      title: quota ? "Image quota reached" : "Could not create the image",
+      detail: quota
+        ? "The image provider hit a rate limit. Wait a minute and try again."
+        : "The image provider did not return a picture. Try a simpler prompt, or try again in a moment.",
+      retryable: true,
     };
   }
 
