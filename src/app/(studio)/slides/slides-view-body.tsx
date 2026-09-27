@@ -18,6 +18,8 @@ import {
   FiX,
   FiLayout,
   FiImage,
+  FiMessageSquare,
+  FiEye,
 } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { Composer } from "@/components/chat/composer";
@@ -45,6 +47,35 @@ const EXAMPLES = [
   "An engineering all-hands on migrating to Postgres",
   "A product launch deck for a mobile app",
 ];
+
+function ToolBtn({
+  onClick,
+  disabled,
+  label,
+  children,
+}: {
+  onClick?: () => void;
+  disabled?: boolean;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className="grid size-9 shrink-0 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-hover hover:text-ink disabled:opacity-35"
+    >
+      {children}
+    </button>
+  );
+}
+
+export function SubidesViewBody() {
+  return null;
+}
 
 export function SlidesViewBody({
   recents = [],
@@ -74,7 +105,10 @@ export function SlidesViewBody({
   useEffect(() => {
     if (busy || !text.trim() || importedFrom.current === text) return;
     importedFrom.current = text;
-    deck.load(enrichDeckImages(parseDeck(text)));
+    const next = enrichDeckImages(parseDeck(text));
+    deck.load(next);
+    // Keep the user on a valid slide after AI updates the deck in place.
+    setCurrent((c) => Math.min(c, Math.max(0, next.length - 1)));
   }, [busy, text, deck]);
 
   const total = slides.length;
@@ -129,7 +163,7 @@ export function SlidesViewBody({
   }
 
   function run(value: string, attachments?: Attachment[]) {
-    setCurrent(0);
+    // Update the existing deck — pass serialised slides so the model edits in place.
     void ask(value, {
       attachments,
       current: slides.length ? serialiseDeck(slides) : undefined,
@@ -192,88 +226,197 @@ export function SlidesViewBody({
     );
   }
 
+  const mobileTabs = (
+    <nav
+      aria-label="Presentation view"
+      className="flex shrink-0 border-t border-line bg-canvas lg:hidden"
+    >
+      {(
+        [
+          { id: "edit" as const, label: "Chat", Icon: FiMessageSquare },
+          { id: "preview" as const, label: "Preview", Icon: FiEye },
+          { id: "slides" as const, label: "Slides", Icon: FiLayout },
+        ] as const
+      ).map((tab) => {
+        const on = mobilePanel === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            aria-pressed={on}
+            onClick={() => setMobilePanel(tab.id)}
+            className={cn(
+              "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors",
+              on ? "text-accent" : "text-ink-4",
+            )}
+          >
+            <tab.Icon size={18} strokeWidth={on ? 2.25 : 1.75} />
+            {tab.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <div className="mobile-editor deck-editor flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-line bg-canvas/90 px-2.5 py-2 backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2.5">
-        <div className="min-w-0 flex-1">
+      {/* Header + single-line toolbar */}
+      <header className="flex shrink-0 items-center gap-1 border-b border-line bg-canvas/95 px-2 py-1.5 backdrop-blur-md sm:gap-1.5 sm:px-3 sm:py-2">
+        <div className="min-w-0 flex-1 px-1">
           <p className="truncate text-[13px] font-medium text-ink sm:text-[14px]">
             {slides[0]?.title || prompt || "Presentation"}
           </p>
-          <p className="text-[11px] text-ink-4 sm:text-[11.5px]">
-            {total} slides{busy ? " · writing…" : deck.edited ? " · edited" : ""}
+          <p className="text-[11px] text-ink-4">
+            {total} slide{total === 1 ? "" : "s"}
+            {busy ? " · updating…" : deck.edited ? " · edited" : ""}
           </p>
         </div>
-        <div className="mr-0.5 flex items-center gap-0.5 rounded-[var(--r-control)] border border-line bg-rail p-0.5">
-          <button onClick={deck.undo} disabled={!deck.canUndo} aria-label="Undo" className="group grid size-8 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink disabled:opacity-30 sm:size-7">
-            <Ico icon={FiCornerUpLeft} motion="back" size={14} />
-          </button>
-          <button onClick={deck.redo} disabled={!deck.canRedo} aria-label="Redo" className="group grid size-8 place-items-center rounded-[var(--r-chip)] text-ink-3 hover:bg-hover hover:text-ink disabled:opacity-30 sm:size-7">
-            <Ico icon={FiCornerUpRight} motion="nudge" size={14} />
-          </button>
+
+        <div className="flex shrink-0 items-center gap-0.5">
+          <ToolBtn onClick={deck.undo} disabled={!deck.canUndo} label="Undo">
+            <Ico icon={FiCornerUpLeft} motion="back" size={16} />
+          </ToolBtn>
+          <ToolBtn onClick={deck.redo} disabled={!deck.canRedo} label="Redo">
+            <Ico icon={FiCornerUpRight} motion="nudge" size={16} />
+          </ToolBtn>
+          <span className="mx-0.5 hidden h-5 w-px bg-line sm:block" />
+          <ToolBtn onClick={attachImagesToAll} disabled={!total || busy} label="Images">
+            <Ico icon={FiImage} motion="pop" size={16} />
+          </ToolBtn>
+          <ToolBtn onClick={present} disabled={!total} label="Present">
+            <Ico icon={FiPlay} motion="lift" size={16} />
+          </ToolBtn>
+          <ToolBtn
+            onClick={() =>
+              downloadPptx(slides, `${filename}.pptx`, slides[0]?.title ?? prompt)
+            }
+            disabled={!total || busy}
+            label="Export"
+          >
+            <Ico icon={FiDownload} motion="lift" size={16} />
+          </ToolBtn>
+          <ToolBtn
+            onClick={() => {
+              setCurrent(0);
+              deck.load([]);
+              importedFrom.current = null;
+              startOver();
+            }}
+            label="New deck"
+          >
+            <Ico icon={FiRotateCcw} motion="spin" size={16} />
+          </ToolBtn>
         </div>
-        <button onClick={attachImagesToAll} disabled={!total || busy} className="chip group !px-2.5 !py-1.5 !text-[12px] disabled:opacity-40 sm:!px-3 sm:!text-[12.5px]" title="Generate photos for every slide">
-          <Ico icon={FiImage} motion="pop" size={13} /> <span className="hidden sm:inline">Images</span>
-        </button>
-        <button onClick={present} disabled={!total} className="chip group !px-2.5 !py-1.5 !text-[12px] disabled:opacity-40 sm:!px-3 sm:!text-[12.5px]">
-          <Ico icon={FiPlay} motion="lift" size={13} /> <span className="hidden sm:inline">Present</span>
-        </button>
-        <button onClick={() => downloadPptx(slides, `${filename}.pptx`, slides[0]?.title ?? prompt)} disabled={!total || busy} className="chip group !px-2.5 !py-1.5 !text-[12px] disabled:opacity-40 sm:!px-3 sm:!text-[12.5px]">
-          <Ico icon={FiDownload} motion="lift" size={13} /> <span className="hidden sm:inline">Export</span>
-        </button>
-        <button onClick={() => { setCurrent(0); deck.load([]); importedFrom.current = null; startOver(); }} className="chip group !px-2.5 !py-1.5 !text-[12px] sm:!px-3 sm:!text-[12.5px]">
-          <Ico icon={FiRotateCcw} motion="spin" size={13} /> <span className="hidden sm:inline">New</span>
-        </button>
       </header>
 
-      <nav aria-label="Presentation view" className="mobile-editor-tabs lg:hidden">
-        {(["edit", "preview", "slides"] as const).map((panel) => (
-          <button key={panel} type="button" aria-pressed={mobilePanel === panel} onClick={() => setMobilePanel(panel)}>
-            {panel === "edit" ? "Chat" : panel === "slides" ? "Slides" : "Preview"}
-          </button>
-        ))}
-      </nav>
-
+      {/* Main panels */}
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[200px_minmax(0,1fr)_minmax(220px,280px)]">
-        <aside className={cn("min-h-0 overflow-y-auto border-b border-line bg-rail/40 lg:block lg:border-b-0 lg:border-r", mobilePanel !== "slides" && "hidden")}>
+        {/* Slides list */}
+        <aside
+          className={cn(
+            "min-h-0 overflow-y-auto bg-rail/40 lg:block lg:border-r lg:border-line",
+            mobilePanel !== "slides" && "hidden",
+          )}
+        >
           <ol className="flex gap-2 overflow-x-auto p-3 lg:flex-col lg:overflow-x-visible">
             {slides.map((s, i) => (
               <li key={i} className="group/slide w-[140px] shrink-0 lg:w-full">
-                <button type="button" onClick={() => { setCurrent(i); setMobilePanel("preview"); }} aria-current={i === safeIndex} className="block w-full rounded-[var(--r-panel)] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrent(i);
+                    setMobilePanel("preview");
+                  }}
+                  aria-current={i === safeIndex}
+                  className="block w-full rounded-[var(--r-panel)] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                >
                   <span className="mb-1 flex items-center gap-1.5 text-[11px] tabular-nums text-ink-4">
                     <span>{i + 1}</span>
-                    {s.image && /^https?:\/\//i.test(s.image) ? <span className="size-1.5 rounded-full bg-accent" title="Has image" /> : null}
+                    {s.image && /^https?:\/\//i.test(s.image) ? (
+                      <span className="size-1.5 rounded-full bg-accent" title="Has image" />
+                    ) : null}
                   </span>
-                  <SlideCanvas slide={s} index={i} total={total} thumb className={cn("transition", i === safeIndex ? "ring-2 ring-accent" : "opacity-75 group-hover:opacity-100")} />
+                  <SlideCanvas
+                    slide={s}
+                    index={i}
+                    total={total}
+                    thumb
+                    className={cn(
+                      "transition",
+                      i === safeIndex ? "ring-2 ring-accent" : "opacity-75 group-hover:opacity-100",
+                    )}
+                  />
                 </button>
                 <div className="slide-actions mt-1 flex flex-wrap items-center gap-0.5 transition-opacity focus-within:opacity-100 group-hover/slide:opacity-100 lg:opacity-0">
-                  <button onClick={() => deck.moveSlide(i, i - 1)} aria-label={`Move slide ${i + 1} earlier`} disabled={i === 0} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25 sm:size-6">
+                  <button
+                    onClick={() => deck.moveSlide(i, i - 1)}
+                    aria-label={`Move slide ${i + 1} earlier`}
+                    disabled={i === 0}
+                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover disabled:opacity-25"
+                  >
                     <Ico icon={FiChevronUp} motion="lift" size={13} />
                   </button>
-                  <button onClick={() => deck.moveSlide(i, i + 1)} aria-label={`Move slide ${i + 1} later`} disabled={i >= total - 1} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover disabled:opacity-25 sm:size-6">
+                  <button
+                    onClick={() => deck.moveSlide(i, i + 1)}
+                    aria-label={`Move slide ${i + 1} later`}
+                    disabled={i >= total - 1}
+                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover disabled:opacity-25"
+                  >
                     <Ico icon={FiChevronDown} motion="down" size={13} />
                   </button>
                   <span className="flex-1" />
-                  <button onClick={() => attachImageToSlide(i)} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover sm:size-6" aria-label={`Generate image for slide ${i + 1}`}>
+                  <button
+                    onClick={() => attachImageToSlide(i)}
+                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover"
+                    aria-label={`Generate image for slide ${i + 1}`}
+                  >
                     <Ico icon={FiImage} motion="pop" size={13} />
                   </button>
-                  <button onClick={() => { deck.duplicateSlide(i); setCurrent(i + 1); }} aria-label={`Duplicate slide ${i + 1}`} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover sm:size-6">
+                  <button
+                    onClick={() => {
+                      deck.duplicateSlide(i);
+                      setCurrent(i + 1);
+                    }}
+                    aria-label={`Duplicate slide ${i + 1}`}
+                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:bg-hover"
+                  >
                     <Ico icon={FiCopy} motion="copy" size={13} />
                   </button>
-                  <button onClick={() => { deck.removeSlide(i); setCurrent((c) => Math.max(0, Math.min(c, total - 2))); }} aria-label={`Delete slide ${i + 1}`} className="grid size-7 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:text-critical sm:size-6">
+                  <button
+                    onClick={() => {
+                      deck.removeSlide(i);
+                      setCurrent((c) => Math.max(0, Math.min(c, total - 2)));
+                    }}
+                    aria-label={`Delete slide ${i + 1}`}
+                    className="grid size-7 place-items-center rounded-lg text-ink-4 hover:text-critical"
+                  >
                     <Ico icon={FiTrash2} motion="shake" size={13} />
                   </button>
                 </div>
               </li>
             ))}
             <li className="w-[140px] shrink-0 lg:w-full">
-              <button type="button" onClick={() => { deck.addSlide(safeIndex); setCurrent(safeIndex + 1); }} className="flex h-[88px] w-full items-center justify-center gap-1.5 rounded-[var(--r-panel)] border border-dashed border-line text-[12.5px] text-ink-4 hover:border-accent/40">
+              <button
+                type="button"
+                onClick={() => {
+                  deck.addSlide(safeIndex);
+                  setCurrent(safeIndex + 1);
+                }}
+                className="flex h-[88px] w-full items-center justify-center gap-1.5 rounded-[var(--r-panel)] border border-dashed border-line text-[12.5px] text-ink-4 hover:border-accent/40"
+              >
                 <Ico icon={FiPlus} motion="open" size={14} /> Add
               </button>
             </li>
           </ol>
         </aside>
 
-        <section className={cn("relative min-h-0 flex-col overflow-hidden lg:flex", mobilePanel === "preview" ? "flex" : "hidden")}>
+        {/* Preview */}
+        <section
+          className={cn(
+            "relative min-h-0 flex-col overflow-hidden lg:flex",
+            mobilePanel === "preview" ? "flex" : "hidden",
+          )}
+        >
           {busy && !total ? (
             <div className="m-4 flex items-center gap-3.5 rounded-[var(--r-panel)] border border-line bg-raised px-5 py-4">
               <Bot size={38} state="working" />
@@ -281,15 +424,31 @@ export function SlidesViewBody({
             </div>
           ) : null}
           {busy && total ? (
-            <div className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-line bg-raised/95 px-3 py-1.5 text-[12px] text-ink-2 shadow-sm backdrop-blur">
+            <div className="absolute right-3 top-3 z-10 inline-flex items-center gap-2 rounded-full border border-line bg-raised/95 px-3 py-1.5 text-[12px] text-ink-2 shadow-sm backdrop-blur">
               <span className="size-1.5 animate-pulse rounded-full bg-accent" />
-              Agent is editing…
+              Updating…
             </div>
           ) : null}
           {total ? (
-            <div ref={stageRef} className={cn("flex min-h-0 flex-1 flex-col", presenting && "fixed inset-0 z-50 bg-black p-0")}>
-              <div className={cn("min-h-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-6", presenting && "grid place-items-center p-0")}>
-                <div className={cn("mx-auto w-full max-w-[920px]", presenting && "max-w-[min(100vw,1400px)]")}>
+            <div
+              ref={stageRef}
+              className={cn(
+                "flex min-h-0 flex-1 flex-col",
+                presenting && "fixed inset-0 z-50 bg-black p-0",
+              )}
+            >
+              <div
+                className={cn(
+                  "min-h-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-6",
+                  presenting && "grid place-items-center p-0",
+                )}
+              >
+                <div
+                  className={cn(
+                    "mx-auto w-full max-w-[920px]",
+                    presenting && "max-w-[min(100vw,1400px)]",
+                  )}
+                >
                   <SlideCanvas
                     slide={slide!}
                     index={safeIndex}
@@ -309,24 +468,44 @@ export function SlidesViewBody({
                 </div>
               </div>
               {!presenting ? (
-                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-3 py-2.5 sm:px-4">
-                  <button onClick={() => go(-1)} disabled={safeIndex === 0} className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-30">
+                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-3 py-2 sm:px-4">
+                  <button
+                    onClick={() => go(-1)}
+                    disabled={safeIndex === 0}
+                    className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-30"
+                  >
                     <Ico icon={FiChevronLeft} motion="nudge" size={14} /> Back
                   </button>
-                  <span className="text-[12.5px] tabular-nums text-ink-4">{safeIndex + 1} / {total}</span>
-                  <button onClick={() => go(1)} disabled={safeIndex >= total - 1} className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-30">
+                  <span className="text-[12.5px] tabular-nums text-ink-4">
+                    {safeIndex + 1} / {total}
+                  </span>
+                  <button
+                    onClick={() => go(1)}
+                    disabled={safeIndex >= total - 1}
+                    className="chip group !px-3 !py-1.5 !text-[12.5px] disabled:opacity-30"
+                  >
                     Next <Ico icon={FiChevronRight} motion="nudge" size={14} />
                   </button>
                 </div>
               ) : (
-                <button type="button" onClick={() => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); setPresenting(false); }} className="absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20" aria-label="Exit presentation">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+                    setPresenting(false);
+                  }}
+                  className="absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                  aria-label="Exit presentation"
+                >
                   <Ico icon={FiX} motion="pop" size={16} />
                 </button>
               )}
             </div>
           ) : null}
           {!total && text && !busy ? (
-            <article className="m-4 whitespace-pre-wrap rounded-[var(--r-panel)] border border-line bg-raised px-6 py-6 text-[14px] text-ink-2">{text}</article>
+            <article className="m-4 whitespace-pre-wrap rounded-[var(--r-panel)] border border-line bg-raised px-6 py-6 text-[14px] text-ink-2">
+              {text}
+            </article>
           ) : null}
           {error ? (
             <div className="p-4">
@@ -335,39 +514,91 @@ export function SlidesViewBody({
           ) : null}
         </section>
 
-        <aside className={cn("min-h-0 flex-col border-t border-line bg-rail/30 lg:flex lg:border-l lg:border-t-0", mobilePanel === "edit" ? "flex" : "hidden")}>
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">Speaker notes</p>
+        {/* Chat panel — fixed height, composer pinned, no page scroll */}
+        <aside
+          className={cn(
+            "min-h-0 flex-col overflow-hidden bg-canvas lg:flex lg:border-l lg:border-line",
+            mobilePanel === "edit" ? "flex" : "hidden",
+          )}
+        >
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {/* Optional notes / layout — compact, collapsible feel */}
             {slide ? (
-              <textarea value={slide.note} onChange={(e) => deck.setNote(safeIndex, e.target.value)} placeholder="No notes for this slide" aria-label="Speaker notes" rows={6} className="w-full resize-y rounded-[var(--r-control)] border border-line bg-canvas px-3 py-2 text-[13px] text-ink outline-none focus:border-accent/50" />
-            ) : (
-              <p className="text-[13px] text-ink-4">Select a slide to edit notes.</p>
-            )}
-            {slide ? (
-              <>
-                <p className="mb-1.5 mt-5 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">Layout</p>
-                <div className="flex flex-wrap gap-1">
-                  {(["title", "bullets", "split", "quote", "section"] as const).map((layout) => (
-                    <button key={layout} type="button" onClick={() => deck.setLayout(safeIndex, layout)} className={cn("rounded-full border px-2.5 py-1 text-[11.5px] capitalize", slide.layout === layout ? "border-accent bg-accent/15 text-accent" : "border-line text-ink-3 hover:bg-hover")}>
-                      {layout}
-                    </button>
-                  ))}
+              <div className="shrink-0 space-y-3 border-b border-line px-3 py-3 sm:px-4">
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-4">
+                    Notes · slide {safeIndex + 1}
+                  </p>
+                  <textarea
+                    value={slide.note}
+                    onChange={(e) => deck.setNote(safeIndex, e.target.value)}
+                    placeholder="Speaker notes…"
+                    aria-label="Speaker notes"
+                    rows={2}
+                    className="w-full resize-none rounded-xl border border-line bg-raised px-3 py-2 text-[13px] text-ink outline-none focus:border-accent/50"
+                  />
                 </div>
-              </>
+                <div>
+                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-4">
+                    Layout
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(["title", "bullets", "split", "quote", "section"] as const).map((layout) => (
+                      <button
+                        key={layout}
+                        type="button"
+                        onClick={() => deck.setLayout(safeIndex, layout)}
+                        className={cn(
+                          "rounded-lg border px-2.5 py-1 text-[11.5px] capitalize",
+                          slide.layout === layout
+                            ? "border-accent bg-accent/15 font-medium text-accent"
+                            : "border-line text-ink-3 hover:bg-hover",
+                        )}
+                      >
+                        {layout}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ) : null}
-            <div className="mt-6 border-t border-line pt-4">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.1em] text-ink-4">Chat</p>
-              <Composer onSend={run} placeholder="Continue the deck…" disabled={busy} compact />
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
+              {busy ? (
+                <div className="mb-3 flex items-center gap-2 text-[13px] text-ink-3">
+                  <span className="size-1.5 animate-pulse rounded-full bg-accent" />
+                  Updating this deck…
+                </div>
+              ) : null}
               {error ? <FailureNote error={error} onRetry={() => run(prompt)} /> : null}
+              <p className="text-[12.5px] leading-relaxed text-ink-3">
+                Ask for changes — the AI updates this deck instead of starting over.
+              </p>
+            </div>
+
+            <div className="shrink-0 border-t border-line bg-canvas p-3 sm:p-4">
+              <Composer
+                onSend={run}
+                placeholder="Edit this deck…"
+                busy={busy}
+                compact
+              />
               {prompt ? (
-                <button type="button" onClick={() => downloadMarkdown(text || "", `${filename}.md`)} className="chip group mt-3 w-full !justify-center !px-3 !py-2 !text-[12.5px]">
-                  <Ico icon={FiDownload} motion="lift" size={13} /> Download markdown
+                <button
+                  type="button"
+                  onClick={() => downloadMarkdown(text || "", `${filename}.md`)}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-line py-2 text-[12px] text-ink-3 hover:bg-hover"
+                >
+                  <Ico icon={FiDownload} motion="lift" size={13} /> Markdown
                 </button>
               ) : null}
             </div>
           </div>
         </aside>
       </div>
+
+      {/* Bottom tabs on mobile */}
+      {mobileTabs}
     </div>
   );
 }
