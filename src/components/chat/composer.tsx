@@ -86,10 +86,17 @@ export function Composer({
     : [];
   const mentionOpen = Boolean(mention) && focused && !disabled;
 
+  function minHeight() {
+    return compact ? 40 : 72;
+  }
+
+  function maxHeight() {
+    return compact ? 140 : 200;
+  }
+
   function grow(el: HTMLTextAreaElement) {
     el.style.height = "0px";
-    const min = compact ? 40 : 84;
-    const next = Math.min(Math.max(el.scrollHeight, min), compact ? 148 : 220);
+    const next = Math.min(Math.max(el.scrollHeight, minHeight()), maxHeight());
     el.style.height = `${next}px`;
   }
 
@@ -157,7 +164,7 @@ export function Composer({
     setFiles([]);
     setError(null);
     if (ref.current) {
-      ref.current.style.height = compact ? "40px" : "84px";
+      ref.current.style.height = `${minHeight()}px`;
     }
   }
 
@@ -181,10 +188,12 @@ export function Composer({
       data-disabled={disabled}
       data-focused={focused}
       className={cn(
-        "composer relative border bg-rail",
+        "composer relative w-full max-w-full border bg-rail/95 backdrop-blur-md",
+        "transition-[border-color,box-shadow,background-color,transform] duration-[var(--t-card)] ease-[var(--ease-ui)]",
         compact
-          ? "rounded-[var(--r-panel)]"
-          : "rounded-[24px] shadow-[var(--sh-2)]",
+          ? "rounded-[16px] sm:rounded-[var(--r-panel)]"
+          : "rounded-[20px] shadow-[var(--sh-2)] sm:rounded-[24px]",
+        focused && !disabled ? "bg-rail" : null,
       )}
     >
       {mentionOpen ? (
@@ -198,21 +207,21 @@ export function Composer({
       ) : null}
 
       {files.length > 0 ? (
-        <div className="flex flex-wrap gap-2 px-3.5 pt-3.5">
+        <div className="flex flex-wrap gap-1.5 px-3 pt-3 sm:gap-2 sm:px-3.5 sm:pt-3.5">
           {files.map((a, i) => (
             <div
               key={`${a.name}-${i}`}
-              className="nx-in group relative flex items-center gap-2 rounded-[var(--r-control)] border border-line bg-raised py-1.5 pl-1.5 pr-7"
+              className="nx-in group relative flex max-w-full items-center gap-2 rounded-[var(--r-control)] border border-line bg-raised py-1.5 pl-1.5 pr-7 transition-[border-color,background-color] duration-[var(--t-hover)] ease-[var(--ease-ui)]"
             >
               {a.preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={a.preview}
                   alt={a.name}
-                  className="h-8 w-8 rounded-[var(--r-chip)] object-cover"
+                  className="h-8 w-8 shrink-0 rounded-[var(--r-chip)] object-cover"
                 />
               ) : (
-                <span className="grid h-8 w-8 place-items-center rounded-[var(--r-chip)] bg-sunk text-ink-3">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-chip)] bg-sunk text-ink-3">
                   {a.kind === "text" ? (
                     <Ico icon={FiFileText} motion="lift" size={14} />
                   ) : (
@@ -221,7 +230,7 @@ export function Composer({
                 </span>
               )}
               <span className="min-w-0">
-                <span className="block max-w-[150px] truncate text-[12.5px] text-ink">
+                <span className="block max-w-[min(150px,40vw)] truncate text-[12.5px] text-ink">
                   {a.name}
                 </span>
                 <span className="block text-[11px] text-ink-4">
@@ -229,9 +238,10 @@ export function Composer({
                 </span>
               </span>
               <button
+                type="button"
                 onClick={() => remove(i)}
                 aria-label={`Remove ${a.name}`}
-                className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-[var(--r-chip)] text-ink-4 hover:bg-hover hover:text-ink"
+                className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-[var(--r-chip)] text-ink-4 transition-colors hover:bg-hover hover:text-ink"
               >
                 <Ico icon={FiX} motion="close" size={12} />
               </button>
@@ -241,20 +251,20 @@ export function Composer({
       ) : null}
 
       {error || voice.error ? (
-        <p className="flex items-center gap-1.5 px-4 pt-3 text-[12.5px] text-critical">
+        <p className="flex items-center gap-1.5 px-3 pt-2.5 text-[12.5px] text-critical sm:px-4 sm:pt-3">
           <Ico icon={FiAlertCircle} motion="alert" size={12} /> {error ?? voice.error}
         </p>
       ) : null}
 
       {voice.listening ? (
-        <p className="flex items-center gap-2 px-5 pt-3 text-[12.5px] text-critical">
+        <p className="flex items-center gap-2 px-3 pt-2.5 text-[12.5px] text-critical sm:px-5 sm:pt-3">
           <span className="nx-pulse h-2 w-2 rounded-full bg-critical" />
           Listening — speak now
         </p>
       ) : null}
 
       {mentionedIds.length ? (
-        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+        <div className="flex flex-wrap items-center gap-1.5 px-3 pt-2.5 sm:px-4 sm:pt-3">
           {mentionedIds.map((id) => (
             <ConnectorChip key={id} id={id} tone="auto" />
           ))}
@@ -263,7 +273,7 @@ export function Composer({
 
       <textarea
         ref={ref}
-        rows={compact ? 1 : 3}
+        rows={compact ? 1 : 2}
         value={value}
         autoFocus={autoFocus}
         disabled={disabled}
@@ -309,17 +319,22 @@ export function Composer({
         placeholder={dragging ? "Drop files here…" : disabled ? "Working…" : placeholder}
         aria-label={placeholder}
         className={cn(
-          "block w-full resize-none overflow-y-auto bg-transparent text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed",
+          "block w-full max-w-full resize-none overflow-y-auto bg-transparent text-ink outline-none",
+          "placeholder:text-ink-4 disabled:cursor-not-allowed",
+          "transition-[height] duration-[var(--t-hover)] ease-[var(--ease-ui)]",
+          "[scrollbar-width:thin]",
           compact
-            ? "min-h-[40px] max-h-[148px] px-3.5 pb-1.5 pt-3 text-[16px] leading-[1.45] sm:text-[13.5px]"
-            : "min-h-[84px] max-h-[220px] px-5 pb-3 pt-5 text-[16px] leading-[1.6]",
+            ? "min-h-[40px] max-h-[140px] px-3 pb-1.5 pt-2.5 text-[16px] leading-[1.45] sm:px-3.5 sm:pt-3 sm:text-[13.5px]"
+            : "min-h-[72px] max-h-[200px] px-3.5 pb-2.5 pt-3.5 text-[16px] leading-[1.55] sm:min-h-[84px] sm:max-h-[220px] sm:px-5 sm:pb-3 sm:pt-5 sm:leading-[1.6]",
         )}
       />
 
       <div
         className={cn(
-          "relative z-10 flex items-center",
-          compact ? "gap-1.5 px-2 pb-2" : "gap-2 border-t border-line/70 px-3.5 py-3",
+          "relative z-10 flex flex-wrap items-center",
+          compact
+            ? "gap-1 px-1.5 pb-1.5 sm:gap-1.5 sm:px-2 sm:pb-2"
+            : "gap-1.5 border-t border-line/70 px-2.5 py-2 sm:gap-2 sm:px-3.5 sm:py-3",
         )}
       >
         {allowAttachments ? (
@@ -352,18 +367,23 @@ export function Composer({
           <ModePicker value={mode} onChange={onModeChange} disabled={disabled} compact={compact} />
         ) : null}
 
-        {leading}
+        {leading ? (
+          <div className="min-w-0 max-w-full shrink sm:max-w-none">{leading}</div>
+        ) : null}
 
-        <span className="flex-1" />
+        <span className="min-w-[0.5rem] flex-1" />
 
         <button
+          type="button"
           onClick={voice.toggle}
           disabled={disabled}
           aria-label={voice.listening ? "Stop dictating" : "Dictate a message"}
           aria-pressed={voice.listening}
           className={cn(
-            "tap-44 group relative grid shrink-0 place-items-center rounded-full transition-colors disabled:opacity-40",
-            compact ? "size-7" : "size-9",
+            "tap-44 group relative grid shrink-0 place-items-center rounded-full",
+            "transition-[background-color,color,transform] duration-[var(--t-tap)] ease-[var(--ease-ui)]",
+            "disabled:opacity-40 active:scale-[0.96]",
+            compact ? "size-8 sm:size-7" : "size-10 sm:size-9",
             voice.listening
               ? "bg-critical/15 text-critical"
               : "text-ink-3 hover:bg-hover hover:text-ink",
@@ -376,22 +396,34 @@ export function Composer({
         </button>
 
         <button
+          type="button"
           onClick={send}
           disabled={!ready}
           aria-label="Send message"
           className={cn(
             "group grid shrink-0 place-items-center rounded-full",
-            "transition-[transform,box-shadow,opacity] duration-[var(--t-tap)] ease-[var(--ease-ui)]",
-            compact ? "size-8" : "size-12",
+            "transition-[transform,box-shadow,opacity,background-color] duration-[var(--t-tap)] ease-[var(--ease-ui)]",
+            compact ? "size-9 sm:size-8" : "size-11 sm:size-12",
             ready
               ? "btn-grad hover:shadow-[0_6px_20px_-6px_var(--btn-glow)] active:scale-[0.94]"
               : "bg-raised text-ink-4 opacity-60",
           )}
         >
           {disabled ? (
-            <Ico icon={FiLoader} motion="spin" size={compact ? 14 : 16} live className={ready ? "text-white" : undefined} />
+            <Ico
+              icon={FiLoader}
+              motion="spin"
+              size={compact ? 14 : 16}
+              live
+              className={ready ? "text-white" : undefined}
+            />
           ) : (
-            <Ico icon={FiArrowUp} motion="launch" size={compact ? 15 : 19} className={ready ? "text-white" : undefined} />
+            <Ico
+              icon={FiArrowUp}
+              motion="launch"
+              size={compact ? 15 : 19}
+              className={ready ? "text-white" : undefined}
+            />
           )}
         </button>
       </div>
@@ -405,6 +437,7 @@ export function Composer({
       strength={disabled ? 0.85 : 0.55}
       active={beamActive}
       theme="auto"
+      className="w-full max-w-full"
     >
       {shell}
     </BorderBeam>
