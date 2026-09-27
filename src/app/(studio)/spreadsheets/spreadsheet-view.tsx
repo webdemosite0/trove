@@ -117,6 +117,9 @@ export function SpreadsheetView({
       ? [toMarkdownTable(rows), notes].filter(Boolean).join("\n\n")
       : undefined;
     void ask(text, { attachments, current });
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+      setShowPreview(false);
+    }
   }
 
   function edit(r: number, c: number, value: string) {
@@ -183,7 +186,7 @@ export function SpreadsheetView({
 
   if (turns.length === 0) {
     return (
-      <div className="nx-in relative mx-auto flex min-h-screen max-w-[760px] flex-col justify-center px-5 py-16">
+      <div className="nx-in relative mx-auto flex min-h-[70dvh] max-w-[760px] flex-col justify-center px-4 py-12 sm:px-5 sm:py-16">
         <div className="mb-7 text-center">
           <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[var(--r-panel)] bg-positive/15 text-positive">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -201,6 +204,7 @@ export function SpreadsheetView({
           {EXAMPLES.map((e, i) => (
             <button
               key={e}
+              type="button"
               onClick={() => run(e)}
               className="chip group nx-in"
               style={{ animationDelay: `${80 + i * 50}ms`, animationFillMode: "backwards" }}
@@ -224,10 +228,14 @@ export function SpreadsheetView({
   return (
     <div className="mobile-editor sheet-editor flex h-full min-h-0 flex-1 flex-col lg:flex-row">
       <nav aria-label="Spreadsheet view" className="mobile-editor-tabs lg:hidden">
-        <button type="button" aria-pressed={!showPreview} onClick={() => setShowPreview(false)}>Chat</button>
-        <button type="button" aria-pressed={showPreview} onClick={() => setShowPreview(true)}>Spreadsheet</button>
+        <button type="button" aria-pressed={!showPreview} onClick={() => setShowPreview(false)}>
+          Chat
+        </button>
+        <button type="button" aria-pressed={showPreview} onClick={() => setShowPreview(true)}>
+          Preview
+        </button>
       </nav>
-      <div className={`${showPreview ? "hidden lg:flex" : "flex"} min-h-0 min-w-0 flex-1 flex-col border-b border-line lg:border-b-0 lg:border-r`}>
+      <div className={`${showPreview ? "hidden lg:flex" : "flex"} min-h-0 min-w-0 flex-1 flex-col border-b border-line lg:max-w-[420px] lg:border-b-0 lg:border-r`}>
         <header className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] uppercase tracking-[0.08em] text-ink-4">Spreadsheets</p>
@@ -270,12 +278,12 @@ export function SpreadsheetView({
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13.5px] font-medium text-ink">{xlsxName}</p>
-                      <p className="text-[12px] text-ink-4">Preview File</p>
+                      <p className="text-[12px] text-ink-4">Preview file</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowPreview(true)}
-                      className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 hover:bg-hover"
+                      className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 hover:bg-hover lg:hidden"
                     >
                       Preview
                     </button>
@@ -302,7 +310,7 @@ export function SpreadsheetView({
               type="button"
               className="grid size-11 place-items-center rounded-full text-[#666] hover:bg-[#f3f3f3] lg:hidden"
               onClick={() => setShowPreview(false)}
-              aria-label="Close preview"
+              aria-label="Back to chat"
             >
               ←
             </button>
