@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { isMobile } from "@/lib/device";
 import { currentUser } from "@/lib/auth";
-import { ProjectsView } from "./projects-view";
+import { all, str, num } from "@/lib/db";
+import { ProjectsView, type ProjectRow } from "./projects-view";
 
 export const metadata = {
   title: "Projects",
@@ -15,5 +16,26 @@ export default async function ProjectsPage() {
   if (await isMobile()) redirect("/chat");
 
   const user = await currentUser();
-  return <ProjectsView signedIn={Boolean(user)} />;
+  let projects: ProjectRow[] = [];
+  if (user) {
+    try {
+      const rows = await all(
+        `SELECT id, name, prompt, status, updated_at
+         FROM projects WHERE user_id = ?
+         ORDER BY updated_at DESC LIMIT 100`,
+        [user.id],
+      );
+      projects = rows.map((r) => ({
+        id: str(r.id),
+        name: str(r.name),
+        prompt: str(r.prompt),
+        status: str(r.status) || "draft",
+        updatedAt: num(r.updated_at),
+      }));
+    } catch {
+      projects = [];
+    }
+  }
+
+  return <ProjectsView projects={projects} signedIn={Boolean(user)} />;
 }
