@@ -1,406 +1,159 @@
 # Trove
 
-An AI workspace: chat, a website builder, an agent builder, and a swarm that
-puts four specialists on one task. Light and dark.
+AI workspace for real work: chat, websites, documents, spreadsheets, decks, research, code, agents, and team collaboration. Describe the work, refine in chat, publish or export when ready.
+
+**Live product:** [troveai.site](https://troveai.site) (or your deployed `SITE_URL`)
 
 ## The name
 
-A **trove** is a stack of stones raised by travellers to mark a route across
-ground that has no path — moorland, desert, mountain. Each person who passes
-adds a stone. It is two things at once: proof that someone came this way, and a
-guide for whoever comes next.
-
-That is the product. Your chats, documents, sites and agents pile up into
-something that persists and marks the way back — which is why every
-conversation is saved and reopens exactly as you left it, rather than being
-regenerated into a different answer.
-
-One syllable, a real English word, a concrete image, and rare as a software
-name. Trademark and domain availability are not something I have checked.
+A **trove** is a stack of stones raised by travellers to mark a route — proof that someone came this way, and a guide for whoever comes next. Your chats, documents, sites, and agents pile up into something that persists and marks the way back.
 
 ## Stack
 
 - **Next.js 16** (App Router, React 19, TypeScript)
 - **Tailwind CSS v4** — tokens in `src/app/globals.css`
-- **react-icons** — all iconography
-- **Gemini 2.5 Flash** — every AI feature
-- **libSQL** — a local SQLite file in development, hosted Turso in production
-- No animation library; motion is CSS keyframes and inline SVG
+- **libSQL / Turso** — local SQLite in development, Turso in production
+- **Models** — Gemini and optional OpenAI-compatible gateways (Experiential Labs, OpenRouter, xAI, etc.)
+- **Billing** — Stripe and/or Lemon Squeezy (Pro + Team, monthly/yearly)
+- **Integrations** — **Composio** for one-click OAuth (Gmail, Slack, GitHub, Notion, …); personal tokens still work for some tools
+- **react-icons** — iconography; motion is CSS / inline SVG (no animation library)
 
 ## Setup
 
 ```bash
-GEMINI_API_KEY=your-key-here   # in .env.local (gitignored)
+cp .env.example .env.local
+# Required for AI:
+#   GEMINI_API_KEY=...
+# Optional but required for durable production data:
+#   TURSO_DATABASE_URL=...
+#   TURSO_AUTH_TOKEN=...
+# Optional billing:
+#   STRIPE_* or LEMONSQUEEZY_*
+# Optional tool OAuth:
+#   COMPOSIO_API_KEY=...   # from dashboard.composio.dev → Platform
+
+npm install
 npm run dev
 ```
 
-The key is read only in server routes. It never reaches the browser.
+Server-only secrets never reach the browser. See `.env.example` for the full list.
 
-## What actually works
+## What works in the live app
 
-| Feature | Status |
+| Area | Status |
 | --- | --- |
-| Website builder | **Built and working, but switched OFF.** `/websites` shows a Coming soon screen. Set `ENABLED = true` in `src/app/(shell)/websites/page.tsx` to restore it — `website-builder.tsx` is untouched. |
-| Saved conversations | Real. Every exchange is stored and reopens from `?c=<id>` with the **same** text — no second model call. Scoped by owner: another identity opening the id gets the empty state. |
-| Recents | Real. Each page shows its last few threads under the composer; clicking one reopens the saved answer. Kept per identity, 12 per kind. |
-| Chat / Swarm / Agent builder | Real. Streams from Gemini; agents persist and their instructions become the system prompt. |
-| Docs | Real. Streams a document and exports a genuine **.docx** (Word) or .md. |
-| Sheets | Real. Streams a table into an editable Excel-style grid (A/B/C columns, numbered rows) and exports genuine **.xlsx** or .csv. |
-| Reminders | Real. Persisted, browser notifications, in-app fallback. |
-| Signup / login / logout | Real. scrypt-hashed passwords, httpOnly session cookies. |
-| Supabase | **Live.** The integrations page queries your project on load and reports its real auth + OAuth provider state. |
-| Credits | Real, and metered off actual Gemini usage — see below. |
-| Plans | Free is selectable. Pro and Team say **Coming soon**: there is no payment processor, and letting anyone switch to Team for free would make the credit budget meaningless. Enforced in the server action, not just hidden in the UI. |
-| Other integrations | 76 services, connect state persists. **No OAuth handshake.** |
-| Gmail / Google sign-in | **Not working, and cannot be from this app alone.** See below. |
+| Chat + saved conversations | Working — threads persist and reopen from `?c=<id>` |
+| Documents / sheets / slides / research / code | Working — export to real `.docx` / `.xlsx` where applicable |
+| Websites & builder | Working (product surface; deploy via your host settings) |
+| Agents | Working — agents persist; instructions feed the system prompt |
+| Team workspaces | Working — invites, roles, **seat limits** (5 free seats; extra seats via packages) |
+| Plans & billing | **Free, Pro, Team** — checkout via Stripe and/or Lemon Squeezy when env prices/variants are set |
+| Credits | Metered from model usage (1 credit ≈ 1,000 tokens) + rolling 5-hour window |
+| Integrations / Plugins | **Composio** one-click OAuth for major apps; token paste for GitHub, Slack, Notion, etc. |
+| Connect tools UI | Same “Connect your tools” card on **chat home**, **landing**, and link to `/integrations` |
+| Nango | **Removed** — do not set `NANGO_*`; use Composio instead |
 
-### Gmail
+### Pricing (product)
 
-Your Supabase project reports **zero OAuth providers enabled**. To make Gmail real:
+| Plan | Monthly credits | ≈ tokens | Price (USD) |
+| --- | --- | --- | --- |
+| **Free** | 200 | ~200k | $0 |
+| **Pro** | 5,000 | ~5M | $19/mo or $200/yr |
+| **Team** | 20,000 shared | ~20M | $99/mo or $1,100/yr |
 
-1. Google Cloud Console → create an OAuth 2.0 client ID.
-2. Supabase dashboard → Authentication → Providers → Google → paste the client
-   ID and secret, and enable it.
-3. The integrations page will then show Google in its live provider list.
+Pro/Team also include higher 5-hour burst windows, publish on `*.troveai.site` (Pro+), and Team adds shared workspace, invites, and a shared credit pool. Exact UI copy lives in `src/lib/credits.ts` and the plans page.
 
-No amount of app code substitutes for step 1 and 2 — the credentials are yours.
+Checkout needs the matching Stripe price IDs and/or Lemon Squeezy variant IDs in env. Without them, the app still runs; paid upgrade buttons will not complete payment.
 
-## Saved conversations
+### Integrations (Composio)
 
-The Recents strip used to store only the prompt, so clicking one re-ran it — and
-a model asked the same question twice does not answer the same way, so people
-lost the reply they came back for. Threads are now stored in `conversations` +
-`messages` and replayed on open.
+1. Create a project at [dashboard.composio.dev](https://dashboard.composio.dev) → **Platform**
+2. Set `COMPOSIO_API_KEY` in Vercel / `.env.local`
+3. Redeploy
+4. Open **Plugins** (`/integrations`) or use **Connect all tools** from chat/landing
 
-- The client issues the save, because the model response is streamed straight
-  through to the browser and the client is the only place holding the finished
-  text.
-- Messages are rewritten wholesale on each save rather than appended: the client
-  always sends the full thread, so a replace cannot drift out of order or
-  duplicate a turn on a retry.
-- Loading is scoped by `user_id`. Verified: a second identity requesting the
-  same id gets the empty state, not the transcript.
-- The thread id lives in `?c=<id>` via `replaceState`, so reload and back both
-  behave.
+APIs: `POST /api/composio/authorize`, `POST /api/composio/sync`, `POST /api/composio/session`, `POST /api/composio/execute`, `GET /api/composio/verify`.
 
-Covers chat, code, design, research, slides, documents and spreadsheets. The AI
-Team and the website builder still re-run rather than replay.
+Some toolkits (e.g. X/Twitter) need a **custom auth config** in the Composio dashboard and are not enabled for managed OAuth by default.
 
 ## Credits
 
-**One credit = 1,000 tokens that Google actually reported.** Nothing is
-estimated up front and no call is flat-rated — a one-line chat and a 30k-token
-site build are not the same amount of work, so they do not cost the same.
+- **1 credit = 1,000 tokens** reported by the model (prompt + completion), minimum 1 credit per call
+- Monthly grant by plan + **rolling 5-hour window** (see `RATE_WINDOW_MS` / plan `windowLimit`)
+- Balance checked **before** the model call; spend recorded **after** from real usage
+- Exhausted balance → **402** with a clear message (no wasted provider quota)
+- Admin emails (`ADMIN_EMAIL` / `ADMIN_EMAILS`) can be unlimited
 
-Both `streamText` and `generateText` surface Gemini's `usageMetadata` through an
-`onUsage` callback. Routes check the balance *before* calling and debit *after*,
-from the real number. On a stream, usage arrives on the final SSE frames; if the
-stream dies before one arrives, nothing is charged.
-
-| Plan | Credits / month | ≈ tokens |
-| --- | --- | --- |
-| Free | 200 | 200k |
-| Pro | 5,000 | 5M |
-| Team | 20,000 | 20M |
-
-Two tables: `credit_grants` (one row per person per month — the primary key is
-what makes granting idempotent under a race) and `credit_spends` (one row per
-call, storing the raw token count next to the derived credit cost so the ledger
-stays auditable if the rate ever changes). Grants are topped up, never reduced,
-when the plan changes mid-month, so an upgrade applies immediately.
-
-Running out returns **402** with a plain message, *before* any Gemini call — so
-an exhausted account does not burn API quota either. The meter lives at the
-bottom of the sidebar and turns amber at 85% and red at zero; `/plans` shows the
-per-tool breakdown.
-
-Note the real ceiling is still your Gemini key: the free tier allows 20 requests
-per day per model regardless of how many credits are left.
-
-### Gemini quota
-
-The free tier allows **20 requests per day per model**. When it is exhausted
-every AI feature returns a clear rate-limit message rather than a raw 502.
-Enable billing on the key to lift it.
-
-## Routes
+## Main routes
 
 ```
-/                 chat home
-/dashboard        your account and counts
+/                 marketing landing (signed-in users redirect to /chat)
+/chat             chat home
+/dashboard        account overview
 /websites         website builder
-/agents           build your own AI agents
-/team             four agents on one task
-/code             code generation
-/documents        documents      -> .docx
-/spreadsheets     spreadsheets   -> .xlsx
-/slides           slide outlines
-/design           design specs
+/agents           agents
+/team             team workspace & seats
+/documents        docs → .docx
+/spreadsheets     sheets → .xlsx
+/slides           decks
 /research         research
-/reminders        reminders and notifications
-/integrations  /plans  /settings  /login  /signup
+/integrations     plugins (Composio + tokens)
+/plans            pricing & upgrade
+/settings         account settings
+/login  /signup
 ```
 
 ## Deploying
 
-The storage layer decides where this can run, and it now runs almost anywhere.
-
-| Host | Works |
+| Host | Notes |
 | --- | --- |
-| **Vercel / Netlify / Workers** | **Yes, with Turso.** Their filesystems are read-only, so without it data does not survive a refresh — see below |
-| A VPS / container with a mounted volume (Fly, Railway, a droplet) | **Yes**, durable out of the box |
-| **GitHub Pages, S3, any static host** | **No, and it never can be** — see below |
-
-## Diagnosing a broken deploy
-
-Next hides server errors in production and Vercel does not surface the message,
-so a misconfigured database looks exactly like a code bug: every page returns
-500. **`/api/health`** answers it without a dashboard login:
+| **Vercel / Netlify / similar** | Set `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` — serverless disk is not durable |
+| **VPS / Docker with a volume** | Local SQLite under `TROVE_DATA_DIR` works |
+| **Static-only hosts** | Not supported (API routes, auth, DB) |
 
 ```bash
-curl https://your-app.vercel.app/api/health
+curl https://your-app.example/api/health
 ```
 
-It reports which mode the database is in, whether it can be reached, and which
-environment variables are present — booleans only, never the values. A 503 with
-`"mode":"local-file"` on a serverless host means the Turso variables are missing.
+Health reports DB mode and whether required env vars are present (booleans only).
 
-Static routes (`/robots.txt`, `/llms.txt`, `/login`) do not touch the database,
-so if those return 200 while pages return 500, the problem is the database and
-not the build.
+### Production checklist
 
-## Deploying: a database is required in production
-
-The app builds and boots with no database configured. It will not *serve* the
-app that way in production, and that is deliberate.
-
-When the data directory is not writable — Vercel's bundle is read-only — Trove
-falls back to the OS temp directory. Each serverless instance has its own
-`/tmp` and they are recycled freely, so a request can land on an instance whose
-database has never been written to. The symptom is unmistakable once you know
-it: **you sign in, refresh the page, and you are signed out with an empty
-account.** Nothing is recoverable.
-
-That used to be a console warning while the app kept accepting sign-ups it was
-going to lose. It now stops instead: in production on ephemeral storage the
-shell renders a setup screen explaining the problem, and sign-up refuses rather
-than take a password for an account the next restart deletes. Development is
-unaffected — a local `.data/` file is durable, so this never fires there.
-
-`/api/health` reports it either way: `"mode":"ephemeral-tmp"`,
-`"durable":false`, plus a warning.
-
-Set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` and redeploy — environment
-variables only apply to new builds. No code change; the same client handles
-both destinations.
-
-## The database
-
-One client, two destinations. `src/lib/db.ts` uses libSQL, which speaks both a
-local SQLite file and hosted Turso over HTTP:
-
-- **No env vars** → a file under `.data/`. Zero setup for development, and
-  correct for a container with a volume.
-- **`TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`** → hosted, which is what makes
-  serverless deployment possible at all.
-
-It is the same client and the same SQL either way, so what runs locally is what
-runs in production — which is the only reason the migration off `node:sqlite`
-could be verified without deploying.
-
-Turso's free tier is 5 GB, 500 M row reads and 10 M writes a month, with no card.
-Trove uses a few MB and a few thousand writes.
-
-```bash
-turso db create trove
-turso db show trove --url      # -> TURSO_DATABASE_URL
-turso db tokens create trove   # -> TURSO_AUTH_TOKEN
-```
-
-**Why this was necessary.** The database used to be `node:sqlite`, which is
-synchronous and writes to disk. On a read-only filesystem it did not merely lose
-data — the shell layout reads the account and credit balance on every render, so
-**every page returned 500**. Measured, not assumed.
-
-### Static hosting cannot work
-
-GitHub Pages serves files. Trove is not a set of files — it is a server. Setting
-`output: "export"` fails on the first server-dependent route, and there are a lot
-of them: **7 API routes** (`/api/chat`, `/api/tool`, `/api/builder`,
-`/api/conversations`, `/api/agent`, `/api/swarm`, `/api/build-site`), **5 server
-action modules** (auth, agents, reminders, billing, integrations), the middleware
-that issues guest identities, and the database behind all of it.
-
-There is no configuration that makes a static host run those. Use a host that
-runs Node.
+- `SITE_URL` or `NEXT_PUBLIC_SITE_URL` — canonical URLs, sitemap, OG
+- `TURSO_*` — durable auth, credits, conversations
+- `GEMINI_API_KEY` (and optional secondary model keys)
+- `COMPOSIO_API_KEY` — one-click tool OAuth
+- `STRIPE_*` and/or `LEMONSQUEEZY_*` — paid plans
+- `TROVE_SECRET` — encrypt stored personal tokens
+- Node **≥ 24** (`engines` in `package.json`)
 
 ### Docker
 
-The included `Dockerfile` builds the `output: "standalone"` bundle — a
-self-contained `server.js` with only the modules actually reached, **31 MB**
-against an 863 MB `.next` directory.
-
 ```bash
 docker build --build-arg NEXT_PUBLIC_SITE_URL=https://your-domain.com -t trove .
-docker run -p 3000:3000 -e GEMINI_API_KEY=... -v trove-data:/data trove
+docker run -p 3000:3000 \
+  -e GEMINI_API_KEY=... \
+  -e COMPOSIO_API_KEY=... \
+  -v trove-data:/data \
+  trove
 ```
 
-The volume is not optional. `TROVE_DATA_DIR` defaults to `/data` in the image;
-without a volume mounted there, every account and saved conversation disappears
-on redeploy. If the filesystem is read-only, startup fails with an explicit
-message naming the directory rather than a bare `EROFS`.
+Mount a volume at `/data` (or set `TROVE_DATA_DIR`) so accounts and threads survive restarts.
 
-Verified by running the standalone artifact exactly as the container does: it
-served every route and created its database at the configured path.
-
-### Also required before going live
-
-- `NEXT_PUBLIC_SITE_URL=https://your-domain.com` — canonical URLs, the sitemap
-  and the OG image all derive from it, and it defaults to localhost. It is baked
-  into the client bundle at **build** time, hence the `--build-arg`.
-- `GEMINI_API_KEY` with billing enabled. The free tier is 20 requests per day
-  per model, which is a demo budget, not a product one.
-- Node 24 or newer, pinned in `engines`.
-- Rotate any key that has been pasted into a chat.
-
-## Publishing
-
-Set your real domain before deploying — canonical URLs, the sitemap and the OG
-image URL all derive from it:
+## Development notes
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
+npm run dev      # development
+npm run serve    # production build + start locally
+npm run build
 ```
 
-### SEO
-
-- Title template, description, keywords, canonical, Open Graph and Twitter card
-- **Generated OG image** at `/opengraph-image` (1200x630) and favicon at `/icon`
-- **JSON-LD** graph: Organization, WebSite and SoftwareApplication with a
-  feature list and the three pricing offers
-- `/sitemap.xml` with per-route priority and change frequency
-- `/robots.txt` blocking `/settings`, `/dashboard` and `/api/`
-- `/manifest.webmanifest` for installability, theme colour `#0f0f0f`
-
-### AI SEO
-
-- **`/llms.txt`** — a plain-text brief for LLM crawlers describing what the
-  product does *and what it does not do*, so an assistant summarising Trove
-  does not overstate it.
-- Seventeen AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended and
-  others) are explicitly allowed on public pages and blocked from private ones.
-- The JSON-LD feature list gives models structured facts rather than making
-  them infer capability from an app shell.
-
-## Performance
-
-**Run the production server, not `next dev`.** Dev mode compiles on demand and
-ships unminified code — it measured ~9x slower here.
-
-```bash
-npm run serve      # builds, then serves on the production runtime
-```
-
-Measured on this machine, dashboard route:
-
-| | dev | production |
-| --- | --- | --- |
-| TTFB | 409 ms | **31 ms** |
-| DOM interactive | 570 ms | **97 ms** |
-| Requests | 31 | **13** |
-
-Other things that keep it fast:
-
-- `optimizePackageImports` for react-icons — the barrel import for
-  `react-icons/tb` alone measured 4 s before this.
-- `will-change` is applied only while an icon is actually animating, not to
-  all ~95 icons at rest.
-- The backdrop uses static radial gradients instead of blurred layers; a large
-  `filter: blur()` re-rasterises every frame.
-- `loading.tsx` gives instant skeleton feedback on navigation.
-- Word, Excel and ZIP libraries are dynamically imported — verified absent from
-  the initial chunks, so they download only when you export.
-
-## Attachments
-
-The paperclip accepts files by click, drag-and-drop, or paste. Up to 6 files,
-8 MB each, 16 MB total.
-
-| Type | Handling |
-| --- | --- |
-| Images (png, jpeg, webp, heic) | Sent to the model as inline image data — it sees the picture |
-| PDF | Sent inline; the model reads the document |
-| Text, code, csv, json, yaml, md… | Read as text and quoted into the prompt |
-| Anything else | Name, type and size are passed with an explicit note that the contents could not be read, so the model says so instead of guessing |
-
-## No account needed
-
-Every visitor gets a guest identity from  on first request,
-so agents, reminders and integrations work immediately. Signing up later keeps
-whatever the guest already created.
-
-## Voice input
-
-The mic in the composer uses the browser Web Speech API — nothing is uploaded
-by us. Chrome and Edge support it; elsewhere the button says so plainly.
-
-## Data
-
-SQLite at `.data/nexora.db` (gitignored) unless Turso is configured. Tables: `users`,
-`sessions`, `agents`, `sites`, `reminders`, `recents`, `integrations`.
-
-To reset everything, delete the `.data` directory.
+Prefer `npm run serve` when measuring performance — `next dev` is much slower.
 
 ## Design
 
-Two themes. The switch is at the bottom of the sidebar: **Light / Dark /
-System**. System follows `prefers-color-scheme`; an explicit choice is stored in
-`localStorage` and re-applied by a tiny inline script in `<head>` before the
-first paint, so there is no flash of the wrong theme.
+Light / dark / system themes (sidebar control). Tokens live in `src/app/globals.css`. Elevation ramps reverse between themes so “raised” always means step-away-from-the-page.
 
-| Token | Dark | Light |
-| --- | --- | --- |
-| `canvas` / `rail` / `sunk` | `#0f0f0f` / `#171717` / `#1e1e1e` | `#ffffff` / `#f6f8fa` / `#f0f3f7` |
-| `raised` / `hover` | `#242424` / `#2a2a2a` | `#ffffff` + shadow / `#eef1f6` |
-| `ink` → `ink-4` | `#f2f2f3` → `#7d838d` | `#1a1f36` → `#636b7b` |
-| `line` / `line-strong` | `#262626` / `#333333` | `#e6e9ef` / `#d5dbe4` |
-| `accent` | `#3b82f6` | `#5b51f5` |
+## License / trademark
 
-**The elevation ramp reverses direction between themes.** In dark, `canvas` is
-darkest and `hover` lightest; in light, `canvas` is lightest and `hover`
-darkest. Every `hover:bg-hover` in the app means "step away from the page", and
-only reversing the ramp keeps that true. In light mode `raised` equals the
-canvas, so cards earn their elevation from `--elev` (a shadow) instead of
-lightness — that token is `none` in dark.
-
-Components that take a colour as a prop (`Bot`, `ComingSoon`) are handed
-dark-mode neons like `#7dcfff` by their call sites. Those sit at ~1.6:1 on
-white, so both mix black in via `--tint-darken` (`0%` dark, `30%` light) rather
-than making every call site theme-aware.
-
-Verified with a scripted sweep over 16 routes in both themes, compositing every
-translucent layer on a canvas to get true effective contrast: **zero text below
-3:1, and zero surfaces that fail to flip.**
-
-### Code blocks
-
-Syntax highlighting is a ~150-line tokenizer in `src/lib/highlight.ts`, not a
-library. Shiki (~1MB) and Prism were both rejected on size — this app already
-fights for its bundle, and only a handful of languages ever reach a code block.
-It covers js/ts, json, bash, python, sql, css and yaml, and degrades to plain
-text rather than mangling anything it cannot parse.
-
-Every token colour is a `--sx-*` variable, so blocks re-colour with the theme
-instead of staying dark on a white page. Tested for lossless round-tripping
-(the tokens always reassemble into the exact input) and for contrast: all eight
-token roles clear 4.5:1 on the block surface in both themes.
-
-Agents are drawn as inline SVG robots (`src/components/agents/bot.tsx`) with
-four states — idle, working, done, failed. They bob, blink, sweep a visor while
-thinking, and show a check when finished.
-
-## Accessibility
-
-Semantic landmarks, `aria-current` on navigation, labelled icon buttons,
-`role="dialog"` with Escape-to-close, real `role="switch"` toggles, visible focus
-rings, and full `prefers-reduced-motion` support.
+Product and branding are owned by the Trove operators. This repository’s license, if any, is whatever is declared in the repo root; trademark and domain availability are the operator’s responsibility.
