@@ -8,7 +8,6 @@ import {
   endSession,
   findByEmail,
   issueToken,
-  lastTokenAt,
   markVerified,
   resetPassword as resetUserPassword,
   startSession,
@@ -20,8 +19,6 @@ import {
   passwordResetEmail,
   passwordSignupReady,
   sendMail,
-  verificationEmail,
-  verificationEnforced,
 } from "@/lib/mail";
 import { site } from "@/lib/site";
 import { consumeRateLimit, requestIdentity } from "@/lib/rate-limit";
@@ -52,13 +49,6 @@ function safeNext(value: string): string | null {
 
 function withReferralWelcome(path: string) {
   return `${path}${path.includes("?") ? "&" : "?"}welcome=referral`;
-}
-
-async function sendVerification(user: { id: string; email: string; name: string }) {
-  const token = await issueToken(user.id, "verify-email");
-  const link = `${site.url}/verify-email/confirm?token=${token}`;
-  const mail = verificationEmail(user.name, link);
-  return sendMail({ to: user.email, ...mail });
 }
 
 export async function signUp(_prev: AuthState, form: FormData): Promise<AuthState> {
@@ -114,9 +104,8 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
     };
   }
 
-  const mustVerifyEmail = verificationEnforced();
   const user = await createUser(email, name, password, {
-    emailVerified: !mustVerifyEmail,
+    emailVerified: true,
   });
 
   const refCode = String(form.get("ref") ?? "").trim();
@@ -132,17 +121,6 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
   });
 
   await startSession(user.id);
-
-  if (mustVerifyEmail) {
-    const result = await sendVerification(user);
-    if (!result.sent) {
-      console.error("[auth] initial verification email failed", result.reason || "unknown");
-      await opsAlert("email_verification_delivery_failed", {
-        reason: result.reason || "unknown",
-      });
-    }
-    redirect("/verify-email");
-  }
 
   redirect("/launching?next=/onboarding");
 }
@@ -167,16 +145,11 @@ export async function logIn(_prev: AuthState, form: FormData): Promise<AuthState
     return { error: "That email and password do not match." };
   }
 
-  const mustVerifyEmail = verificationEnforced();
-  if (!row.emailVerified && !mustVerifyEmail) {
+  if (!row.emailVerified) {
     await markVerified(row.id);
   }
 
   await startSession(row.id, { persistent: keepSignedIn });
-
-  if (!row.emailVerified && mustVerifyEmail) {
-    redirect("/verify-email");
-  }
 
   if (!row.onboardingDone) {
     redirect("/launching?next=/onboarding");
@@ -259,28 +232,6 @@ export async function resetPassword(
 export async function resendVerification(): Promise<AuthState> {
   const user = await currentUser();
   if (!user) return { error: "Sign in first." };
-  if (user.emailVerified) return { notice: "That address is already confirmed." };
-
-  const last = await lastTokenAt(user.id, "verify-email");
-  if (last && Date.now() - last < 60_000) {
-    const wait = Math.ceil((60_000 - (Date.now() - last)) / 1000);
-    return { error: `Just sent one. Try again in ${wait}s.` };
-  }
-
-  const result = await sendVerification(user);
-
-  if (!result.sent) {
-    console.error("[auth] verification resend failed", result.reason || "unknown");
-    await opsAlert("email_verification_delivery_failed", {
-      reason: result.reason || "unknown",
-    });
-    return {
-      error:
-        result.reason === "not-configured"
-          ? "Email verification is temporarily unavailable."
-          : "We could not send the verification email. Please try again shortly.",
-    };
-  }
-
-  return { notice: `Sent again to ${user.email}.` };
+  if (!user.emailVerified) await markVerified(user.id);
+  return { notice: "Email verification is not required — you can use your account now." };
 }
