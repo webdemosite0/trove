@@ -7,7 +7,7 @@ function resolveSiteUrl(): string {
     process.env.SITE_URL?.trim() || process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
   if (raw) {
-    const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    const withScheme = /^https?:\/\/i.test(raw) ? raw : `https://${raw}`;
     try {
       return new URL(withScheme).origin;
     } catch {
@@ -35,17 +35,15 @@ export const site = {
   email: "official@troveai.site",
   tagline: "Describe the work. Get the files.",
   description:
-    "Trove is an AI workspace for real work: chat, websites, documents, spreadsheets, decks, code, research, and agents — in projects you can refine, publish, and return to.",
+    "Trove is an AI workspace for real work: chat, websites, documents, spreadsheets, decks, code, research, and agents — in projects you can refine and return to.",
   searchTitle: "Describe the work. Get the files. — Trove AI workspace",
   metaDescription:
-    "AI workspace for websites, docs, spreadsheets, decks, code, research, and agents. Describe the work, refine in chat, publish or export when you are ready.",
+    "AI workspace for websites, docs, spreadsheets, decks, code, research, and agents. Describe the work, refine in chat, and export when you are ready.",
   shortDescription:
-    "AI workspace for websites, docs, sheets, decks, code, and agents — refine in chat, publish, or export.",
+    "AI workspace for websites, docs, sheets, decks, code, and agents — refine in chat or export.",
   keywords: [
-    "AI website builder",
     "AI agent builder",
     "AI workspace",
-    "generate website from prompt",
     "custom AI agents",
     "AI document generator",
     "AI spreadsheet generator",
@@ -54,7 +52,6 @@ export const site = {
     "Gemini app",
     "AI presentation generator",
     "AI slides generator",
-    "prompt to website",
     "AI file generator",
     "troveai",
   ],
