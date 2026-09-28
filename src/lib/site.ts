@@ -7,7 +7,7 @@ function resolveSiteUrl(): string {
     process.env.SITE_URL?.trim() || process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
   if (raw) {
-    const withScheme = /^https?:\/\/i.test(raw) ? raw : `https://${raw}`;
+    const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
     try {
       return new URL(withScheme).origin;
     } catch {
