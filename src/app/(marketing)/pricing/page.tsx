@@ -3,25 +3,43 @@ import Link from "next/link";
 import { FiCheck, FiArrowRight } from "@/components/ui/icons";
 
 import { PLANS } from "@/lib/credits";
-import { FEATURES } from "@/lib/features";
+import {
+  PLAN_COMPARISON,
+  PLAN_COMPARE_GROUPS,
+  type PlanCompareValue,
+} from "@/lib/plan-pricing";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const freePlan = PLANS.find((plan) => plan.id === "free")!;
+const proPlan = PLANS.find((plan) => plan.id === "pro")!;
 const teamPlan = PLANS.find((plan) => plan.id === "team")!;
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month and all solo tools. Pro adds capacity. Team is ${teamPlan.price}/month and adds the shared Team workspace, roles, invites, shared projects, company context, and a shared credit pool.`,
+  description: `Trove starts free with ${freePlan.monthly.toLocaleString()} credits a month and the full toolkit. Pro is $${proPlan.price}/mo for daily capacity. Team is $${teamPlan.price}/mo with a shared workspace, roles, projects, and a shared credit pool.`,
   alternates: { canonical: "/pricing" },
   openGraph: {
     type: "website",
     url: "/pricing",
     title: `Pricing · ${site.name}`,
     description:
-      "Free to start. Pro adds higher daily capacity. Team adds a private business workspace with members, roles, shared projects, company context, and shared credits.",
+      "Free and Pro for solo work. Team adds a private business workspace with members, roles, shared projects, company context, and shared credits.",
   },
 };
+
+function CompareCell({ value }: { value: PlanCompareValue }) {
+  if (typeof value === "boolean") {
+    return value ? (
+      <FiCheck size={16} className="mx-auto text-positive" aria-label="Included" />
+    ) : (
+      <span className="text-ink-4" aria-label="Not included">
+        —
+      </span>
+    );
+  }
+  return <span className="text-ink-2">{value}</span>;
+}
 
 export default function PricingPage() {
   return (
@@ -31,180 +49,178 @@ export default function PricingPage() {
           Plans for solo work and teams
         </p>
         <h1 className="mt-3 text-[clamp(2rem,1.2rem+2.4vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
-          Start solo. Upgrade when work becomes daily or collaborative.
+          Start solo. Bring the team when work becomes shared.
         </h1>
         <p className="mt-5 text-[17px] leading-relaxed text-ink-2">
-          Free and Pro are for solo accounts. Team is a business-only plan that adds
-          the private company workspace: members, admin roles, invitations, shared
-          projects, shared company context, and one shared Team credit pool.
+          Free and Pro include the full toolkit for one person. Team keeps everything in
+          Pro and adds a private workspace: invites, roles, shared projects, company
+          context, and one credit pool for the group.
         </p>
       </header>
 
       <div className="mt-12 grid gap-4 lg:grid-cols-3">
         {PLANS.map((plan) => {
           const featured = plan.id === "pro";
-          const available = true;
+          const isTeam = plan.id === "team";
           return (
             <section
               key={plan.id}
               className={cn(
                 "relative flex flex-col rounded-[var(--r-hero)] border p-6 transition hover:-translate-y-0.5",
                 featured
-                  ? "border-violet-400/50 bg-gradient-to-b from-violet-50/80 to-rail shadow-[var(--sh-2)]"
-                  : "border-line bg-rail",
+                  ? "border-violet-400/50 bg-gradient-to-b from-violet-50/80 to-rail shadow-[var(--sh-2)] dark:from-violet-500/10"
+                  : isTeam
+                    ? "border-sky-400/35 bg-gradient-to-b from-sky-50/60 to-rail dark:from-sky-500/10"
+                    : "border-line bg-rail",
               )}
             >
-              <div className="absolute -top-2.5 left-6 flex gap-2">
-                {featured ? (
-                  <span className="rounded-full bg-violet-600 px-2.5 py-0.5 text-[11px] font-medium text-white">
-                    Most popular
-                  </span>
-                ) : null}
-                {plan.id === "team" ? (
-                  <span className="rounded-full border border-sky-300/50 bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-300">
-                    Business only
-                  </span>
-                ) : null}
-              </div>
-              <h2 className="text-[15px] font-semibold text-ink">{plan.name}</h2>
-
-              <p className="mt-3 flex items-baseline gap-1.5">
-                <span className="text-[34px] font-semibold leading-none tracking-[-0.02em] text-ink">
-                  ${plan.price}
+              {featured ? (
+                <span className="absolute -top-2.5 left-6 rounded-full bg-violet-600 px-2.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-white">
+                  Most popular
                 </span>
-                <span className="text-[13.5px] text-ink-4">
-                  {plan.price === 0 ? "forever" : "per month"}
+              ) : null}
+              {isTeam ? (
+                <span className="absolute -top-2.5 left-6 rounded-full bg-sky-600 px-2.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-white">
+                  For groups
+                </span>
+              ) : null}
+
+              <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink">
+                {plan.name}
+              </h2>
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">{plan.blurb}</p>
+
+              <p className="mt-5 flex items-baseline gap-1">
+                <span className="text-[36px] font-semibold tracking-[-0.03em] tabular-nums text-ink">
+                  {plan.price === 0 ? "$0" : `$${plan.price}`}
+                </span>
+                <span className="text-[13px] text-ink-4">
+                  {plan.price === 0 ? "forever" : "/ month"}
                 </span>
               </p>
+              {plan.priceYearly > 0 ? (
+                <p className="mt-1 text-[12.5px] text-ink-4">
+                  or ${plan.priceYearly}/year · save vs monthly
+                </p>
+              ) : (
+                <p className="mt-1 text-[12.5px] text-ink-4">No card required</p>
+              )}
 
-              <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">
-                {plan.blurb}
+              <p className="mt-4 text-[13px] font-medium text-ink">
+                {plan.monthly.toLocaleString()}{" "}
+                {isTeam ? "shared credits / month" : "credits / month"}
               </p>
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <div className="rounded-xl border border-line bg-white/60 px-3 py-2.5">
-                  <p className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">
-                    Month
-                  </p>
-                  <p className="mt-0.5 text-[15px] font-semibold tabular-nums text-ink">
-                    {plan.monthly.toLocaleString()}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-line bg-white/60 px-3 py-2.5">
-                  <p className="text-[10.5px] font-medium uppercase tracking-wide text-ink-4">
-                    5-hour
-                  </p>
-                  <p className="mt-0.5 text-[15px] font-semibold tabular-nums text-ink">
-                    {plan.windowLimit.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              <ul className="mt-5 flex-1 space-y-2.5">
+              <ul className="mt-5 flex-1 space-y-2.5 border-t border-line pt-5">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-[13.5px] text-ink-2">
-                    <FiCheck size={14} className="mt-0.5 shrink-0 text-positive" />
+                  <li key={f} className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink-2">
+                    <FiCheck size={15} className="mt-0.5 shrink-0 text-positive" />
                     {f}
                   </li>
                 ))}
               </ul>
 
-              {available ? (
-                <Link
-                  href="/signup"
-                  className={cn(
-                    "mt-6 inline-flex items-center justify-center gap-2 rounded-[var(--r-control)] px-4 py-2.5 text-[14px] font-medium transition-colors",
-                    featured
-                      ? "btn-grad"
-                      : "border border-line-strong text-ink-2 hover:bg-hover hover:text-ink",
-                  )}
-                >
-                  {plan.price === 0
-                    ? "Start free"
-                    : plan.id === "team"
-                      ? "Start as a business"
-                      : `Choose ${plan.name}`}
-                  <FiArrowRight size={15} />
-                </Link>
-              ) : (
-                <span className="mt-6 inline-flex items-center justify-center rounded-[var(--r-control)] border border-line bg-sunk px-4 py-2.5 text-[14px] font-medium text-ink-4">
-                  Team workspaces coming soon
-                </span>
-              )}
+              <Link
+                href="/plans"
+                className={cn(
+                  "mt-6 flex h-10 items-center justify-center gap-2 rounded-[var(--r-control)] text-[13.5px] font-medium transition",
+                  featured
+                    ? "btn-grad font-semibold text-white"
+                    : "border border-line-strong text-ink hover:bg-hover",
+                )}
+              >
+                {plan.price === 0 ? "Get started free" : `Choose ${plan.name}`}
+                <FiArrowRight size={15} />
+              </Link>
             </section>
           );
         })}
       </div>
 
-      <section className="mt-16 max-w-[720px]">
-        <h2 className="text-[22px] font-semibold tracking-[-0.015em] text-ink">
-          What is a credit?
-        </h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          One credit is roughly a thousand tokens of model work — text in and
-          text back. A short question costs one. A full website costs more.
-        </p>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          Nothing is metered except model work. Editing, exporting, renaming,
-          and opening old work are free.
-        </p>
-      </section>
-
-      <section className="mt-12 max-w-[720px]">
-        <h2 className="text-[22px] font-semibold tracking-[-0.015em] text-ink">
-          Why a 5-hour window?
-        </h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          Same idea as Codex: intense sessions are paced so one afternoon cannot
-          burn the entire monthly grant. Capacity returns as older usage ages
-          out of the window — not as a hard lockout until tomorrow.
-        </p>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          The month is still the hard ceiling. The window only shapes how fast
-          you can spend.
-        </p>
-      </section>
-
-      <section className="mt-14 max-w-[720px]">
-        <h2 className="text-[22px] font-semibold tracking-[-0.015em] text-ink">
-          Core tools included
-        </h2>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {FEATURES.map((f) => {
-            const Icon = f.icon;
-            return (
-              <Link
-                key={f.slug}
-                href={`/features/${f.slug}`}
-                className="group flex items-start gap-3 rounded-[var(--r-card)] border border-line bg-rail p-4 transition-[transform,border-color] duration-[var(--t-hover)] hover:-translate-y-0.5 hover:border-line-strong"
-              >
-                <Icon size={18} className="mt-0.5 shrink-0" style={{ color: f.tone }} />
-                <span className="min-w-0">
-                  <span className="block text-[14px] font-medium text-ink">{f.label}</span>
-                  <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-4">
-                    {f.title}
-                  </span>
-                </span>
-              </Link>
-            );
-          })}
+      <section className="mt-16 overflow-hidden rounded-[var(--r-hero)] border border-line bg-rail">
+        <div className="border-b border-line px-5 py-6 sm:px-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-600">
+            Side-by-side
+          </p>
+          <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.02em] text-ink sm:text-[24px]">
+            What every plan includes — and what only Team unlocks
+          </h2>
+          <p className="mt-2 max-w-[60ch] text-[14.5px] leading-relaxed text-ink-3">
+            Tools are available on Free and Pro. Team is the collaboration layer: workspace,
+            roles, shared projects, company context, and a shared credit pool.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-left text-[13.5px]">
+            <thead>
+              <tr className="border-b border-line bg-sunk/40">
+                <th className="px-5 py-3.5 font-medium text-ink-3 sm:px-8">Feature</th>
+                <th className="px-3 py-3.5 text-center font-semibold text-ink">Free</th>
+                <th className="px-3 py-3.5 text-center font-semibold text-ink">Pro</th>
+                <th className="px-3 py-3.5 text-center font-semibold text-ink sm:pr-8">Team</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PLAN_COMPARE_GROUPS.map((group) => (
+                <PricingGroup key={group.id} label={group.label} groupId={group.id!} />
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      <div className="mt-16 rounded-[var(--r-hero)] border border-line bg-gradient-to-br from-violet-50/50 to-rail p-7">
-        <h2 className="text-[19px] font-semibold text-ink">Start on the free plan</h2>
-        <p className="mt-2 max-w-[52ch] text-[14.5px] leading-relaxed text-ink-3">
-          200 credits a month, 40 per 5-hour window, every tool, no card. Upgrade
-          only when you need more capacity.
+      <section className="mt-10 rounded-[var(--r-hero)] border border-sky-400/25 bg-gradient-to-r from-sky-500/[0.08] to-violet-500/[0.08] p-6 sm:p-8">
+        <h2 className="text-[18px] font-semibold text-ink">Why Team exists</h2>
+        <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed text-ink-2">
+          Solo plans keep work private to one account. When a company needs members,
+          admin roles, shared projects, and one billable credit pool, Team is the plan —
+          not a separate product. Everyone on Team still gets Pro-level tools; the
+          difference is collaboration and shared capacity.
         </p>
         <Link
-          href="/signup"
-          className="btn-grad mt-6 inline-flex items-center gap-2 rounded-[var(--r-control)] px-5 py-2.5 text-[14px] font-medium"
+          href="/plans"
+          className="mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-violet-700 hover:underline dark:text-violet-300"
         >
-          Create an account
+          Open plans in the app
           <FiArrowRight size={15} />
         </Link>
-      </div>
+      </section>
     </div>
+  );
+}
+
+function PricingGroup({
+  label,
+  groupId,
+}: {
+  label: string;
+  groupId: NonNullable<(typeof PLAN_COMPARE_GROUPS)[number]["id"]>;
+}) {
+  const rows = PLAN_COMPARISON.filter((row) => row.group === groupId);
+  return (
+    <>
+      <tr className="bg-sunk/50">
+        <td
+          colSpan={4}
+          className="px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4 sm:px-8"
+        >
+          {label}
+        </td>
+      </tr>
+      {rows.map((row) => (
+        <tr key={row.label} className="border-b border-line/70 last:border-0">
+          <td className="px-5 py-3 text-ink-2 sm:px-8">{row.label}</td>
+          <td className="px-3 py-3 text-center">
+            <CompareCell value={row.free} />
+          </td>
+          <td className="px-3 py-3 text-center">
+            <CompareCell value={row.pro} />
+          </td>
+          <td className="px-3 py-3 text-center sm:pr-8">
+            <CompareCell value={row.team} />
+          </td>
+        </tr>
+      ))}
+    </>
   );
 }
