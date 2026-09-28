@@ -343,7 +343,13 @@ export function Composer({
           <>
             <AttachMenu
               disabled={locked}
-              onPickFiles={() => picker.current?.click()}
+              onPick={(accept) => {
+                const input = picker.current;
+                if (!input) return;
+                if (accept) input.accept = accept;
+                else input.removeAttribute("accept");
+                input.click();
+              }}
               compact={compact}
             />
             <input
@@ -372,7 +378,7 @@ export function Composer({
           type="button"
           aria-label={voice.listening ? "Stop listening" : "Voice input"}
           disabled={locked}
-          onClick={() => (voice.listening ? voice.stop() : voice.start())}
+          onClick={() => voice.toggle()}
           className={cn(
             "grid place-items-center rounded-full text-ink-3 transition hover:bg-hover hover:text-ink",
             compact ? "size-8" : "size-9",
@@ -421,7 +427,7 @@ export function Composer({
   );
 
   return (
-    <BorderBeam active={beamActive} className="w-full" radius="28px">
+    <BorderBeam active={beamActive} className="w-full rounded-[28px]">
       {shell}
     </BorderBeam>
   );
