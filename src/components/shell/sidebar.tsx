@@ -6,20 +6,21 @@ import { usePathname } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
 import {
   FiPlus,
-  FiSidebar,
-  FiX,
-  FiUser,
-  FiLogOut,
-  FiChevronRight,
   FiSettings,
   FiCreditCard,
+  FiLogOut,
   FiUsers,
+  FiChevronLeft,
+  FiChevronRight,
+  FiMenu,
+  FiX,
   TbLayoutDashboard,
   TbMessageCircle,
   TbFiles,
   TbTable,
   TbPresentation,
   TbPalette,
+  TbWorld,
   TbRobot,
   TbFolder,
   TbHelpCircle,
@@ -34,13 +35,13 @@ import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
 import { Tooltip } from "@/components/ui/tooltip";
 
-interface Item {
+type Item = {
   href: string;
   label: string;
   icon: IconType;
   motion: Motion;
   teamOnly?: boolean;
-}
+};
 
 const PRIMARY: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
@@ -50,9 +51,15 @@ const PRIMARY: Item[] = [
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
+  { href: "/websites", label: "Websites", icon: TbWorld, motion: "grow" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
   { href: "/team", label: "Team", icon: FiUsers, motion: "stack", teamOnly: true },
 ];
+
+function isActive(pathname: string, href: string) {
+  if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/home";
+  return pathname === href || pathname.startsWith(href + "/");
+}
 
 function NavRow({
   item,
@@ -65,10 +72,7 @@ function NavRow({
   onNavigate?: () => void;
   compact?: boolean;
 }) {
-  const active =
-    pathname === item.href ||
-    (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
-
+  const active = isActive(pathname, item.href);
   if (compact) {
     return (
       <Tooltip label={item.label} side="right">
@@ -77,10 +81,8 @@ function NavRow({
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "grid h-9 w-9 place-items-center rounded-lg transition-colors",
-            active
-              ? "bg-hover text-ink"
-              : "text-ink-3 hover:bg-hover hover:text-ink",
+            "grid size-9 place-items-center rounded-lg transition-colors",
+            active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
           <Ico icon={item.icon} motion={item.motion} size={17} active={active} />
@@ -88,7 +90,6 @@ function NavRow({
       </Tooltip>
     );
   }
-
   return (
     <Link
       href={item.href}
@@ -96,9 +97,7 @@ function NavRow({
       aria-current={active ? "page" : undefined}
       className={cn(
         "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
-        active
-          ? "rail-item-active bg-hover font-medium text-ink"
-          : "text-ink-2 hover:bg-hover hover:text-ink",
+        active ? "bg-hover font-medium text-ink" : "text-ink-2 hover:bg-hover hover:text-ink",
       )}
     >
       <Ico
@@ -113,408 +112,174 @@ function NavRow({
   );
 }
 
-function UserMenu({
+export function Sidebar({
   user,
-  isAdmin = false,
-  onNavigate,
-}: {
-  user: User;
-  isAdmin?: boolean;
-  onNavigate?: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover"
-      >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
-          {user.name.slice(0, 1).toUpperCase()}
-        </span>
-        <span className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
-          <span className="block truncate text-[11px] capitalize text-ink-3">
-            {user.effectivePlan || user.plan} plan
-          </span>
-        </span>
-        <FiChevronRight
-          size={14}
-          className={cn("shrink-0 text-ink-3 transition-transform", open && "rotate-90")}
-        />
-      </button>
-
-      {open ? (
-        <div
-          role="menu"
-          className="absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-xl border border-line bg-raised shadow-lg"
-        >
-          {isAdmin ? (
-            <Link
-              href="/admin"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onNavigate?.();
-              }}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-violet-600 transition-colors hover:bg-hover dark:text-violet-300"
-            >
-              <FiUsers size={15} />
-              Admin
-            </Link>
-          ) : null}
-          <Link
-            href="/settings"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              onNavigate?.();
-            }}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink transition-colors hover:bg-hover"
-          >
-            <FiSettings size={15} className="text-ink" />
-            Settings
-          </Link>
-          <Link
-            href="/plans"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              onNavigate?.();
-            }}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink transition-colors hover:bg-hover"
-          >
-            <FiCreditCard size={15} className="text-ink" />
-            Plan & billing
-          </Link>
-          <form action={logOut} className="border-t border-line">
-            <button
-              role="menuitem"
-              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink transition-colors hover:bg-hover"
-            >
-              <FiLogOut size={15} className="text-ink" />
-              Log out
-            </button>
-          </form>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function ReferralPromoSurface({ mode }: { mode: "light" | "dark" }) {
-  const dark = mode === "dark";
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-[15px] px-3 py-3 backdrop-blur-sm",
-        dark
-          ? "bg-[#0f1017] text-white ring-1 ring-white/10"
-          : "bg-white text-slate-950 ring-1 ring-black/[0.04]",
-      )}
-    >
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -right-4 -top-4 size-16 rounded-full blur-2xl",
-          dark ? "opacity-55" : "opacity-25",
-        )}
-        style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
-      />
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -bottom-6 -left-5 size-14 rounded-full blur-2xl",
-          dark ? "opacity-35" : "opacity-15",
-        )}
-        style={{ background: "linear-gradient(135deg,#a78bfa,#fbbf24)" }}
-      />
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0",
-          dark
-            ? "bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-sky-500/[0.10]"
-            : "bg-gradient-to-br from-fuchsia-50/70 via-transparent to-sky-50/70",
-        )}
-      />
-      <div className="relative">
-        <p className={cn("text-[10px] font-bold uppercase tracking-[0.14em]", dark ? "text-fuchsia-300" : "text-fuchsia-600")}>
-          Refer & earn
-        </p>
-        <p className={cn("mt-1 text-[13px] font-semibold leading-snug", dark ? "text-white" : "text-slate-950")}>
-          Share Trove · get credits
-        </p>
-        <p className={cn("mt-0.5 text-[11px]", dark ? "text-zinc-400" : "text-slate-600")}>
-          100 qualified paid → $200
-        </p>
-        <span className={cn("mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold", dark ? "text-sky-300" : "text-blue-600")}>
-          Open affiliates
-          <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <Link
-      href="/affiliates"
-      onClick={onNavigate}
-      className="group relative block overflow-hidden rounded-2xl p-[1px] transition hover:scale-[1.02]"
-      style={{
-        background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
-      }}
-    >
-      <div className="block dark:hidden">
-        <ReferralPromoSurface mode="light" />
-      </div>
-      <div className="hidden dark:block">
-        <ReferralPromoSurface mode="dark" />
-      </div>
-    </Link>
-  );
-}
-
-function RailBody({
-  user,
-  isAdmin,
-  onCollapse,
-  onNavigate,
+  balance,
+  teamEligible = false,
 }: {
   user: User | null;
-  balance?: Balance | null;
-  isAdmin?: boolean;
-  onCollapse?: () => void;
-  onNavigate?: () => void;
+  balance: Balance | null;
+  teamEligible?: boolean;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useNav();
+  const [liveBalance, setLiveBalance] = useState(balance);
 
-  return (
-    <>
-      <div className="flex shrink-0 items-center gap-2 px-3 pb-2 pt-3">
-        <Link href="/chat" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2">
+  useEffect(() => {
+    setLiveBalance(balance);
+  }, [balance]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname, setMobileOpen]);
+
+  const credits =
+    liveBalance && typeof liveBalance.remaining === "number"
+      ? liveBalance.remaining
+      : null;
+
+  const rail = (
+    <div className="flex h-full flex-col bg-rail">
+      <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-3">
+        <Link href="/chat" onClick={() => setMobileOpen(false)} className="flex min-w-0 flex-1 items-center gap-2">
           <TroveOrb size={28} />
-          <Wordmark size={18} />
+          {!collapsed ? <Wordmark size={18} /> : null}
         </Link>
-        {onCollapse ? (
-          <button
-            type="button"
-            onClick={onCollapse}
-            title="Toggle sidebar  ⌘B"
-            className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-          >
-            <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
-          </button>
-        ) : null}
+        <button
+          type="button"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          onClick={() => setCollapsed(!collapsed)}
+          className="hidden size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:grid"
+        >
+          {collapsed ? <FiChevronRight size={16} /> : <FiChevronLeft size={16} />}
+        </button>
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={() => setMobileOpen(false)}
+          className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden"
+        >
+          <FiX size={16} />
+        </button>
       </div>
 
-      <div className="px-2.5 pb-2">
+      <div className="px-2.5 py-2">
         <Link
           href="/chat"
-          onClick={onNavigate}
+          onClick={() => setMobileOpen(false)}
           className="btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white"
         >
           <Ico icon={FiPlus} motion="grow" size={15} />
-          New chat
+          {!collapsed ? "New chat" : null}
         </Link>
       </div>
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2 scrollbar-none">
-        {PRIMARY.filter(
-          (it) =>
-            !it.teamOnly ||
-            Boolean(user?.teamMember) ||
-            Boolean(user?.teamPlanActive) ||
-            user?.effectivePlan === "team" ||
-            user?.plan === "team",
-        ).map((it) => (
-          <NavRow key={it.href} item={it} pathname={pathname} onNavigate={onNavigate} />
+        {PRIMARY.filter((it) => !it.teamOnly || teamEligible).map((it) => (
+          <NavRow
+            key={it.href}
+            item={it}
+            pathname={pathname}
+            onNavigate={() => setMobileOpen(false)}
+            compact={collapsed}
+          />
         ))}
       </nav>
 
       <div className="shrink-0 space-y-2 border-t border-line p-2.5">
-        <ReferralPromo onNavigate={onNavigate} />
-
         {user ? (
-          <UserMenu user={user} isAdmin={isAdmin} onNavigate={onNavigate} />
+          <>
+            {!collapsed ? (
+              <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
+                  {(user.name || "T").slice(0, 1).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
+                  <span className="block truncate text-[11px] text-ink-4">
+                    {user.email}
+                    {credits != null ? ` · ${credits.toLocaleString()} cr` : ""}
+                  </span>
+                </span>
+              </div>
+            ) : null}
+            <div className={cn("flex items-center gap-1", collapsed && "flex-col")}>
+              <Tooltip label="Settings" side="top">
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Settings"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                >
+                  <Ico icon={FiSettings} motion="spin" size={16} />
+                </Link>
+              </Tooltip>
+              <Tooltip label="Plan" side="top">
+                <Link
+                  href="/plans"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Plan"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                >
+                  <Ico icon={FiCreditCard} motion="pop" size={16} />
+                </Link>
+              </Tooltip>
+              <Tooltip label="Help & support" side="top">
+                <Link
+                  href="/settings/support"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Help & support"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                >
+                  <Ico icon={TbHelpCircle} motion="ring" size={16} />
+                </Link>
+              </Tooltip>
+              <ThemeToggle />
+              <form action={logOut}>
+                <button
+                  type="submit"
+                  aria-label="Log out"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+                >
+                  <FiLogOut size={15} />
+                </button>
+              </form>
+            </div>
+          </>
         ) : (
           <Link
             href="/login"
-            onClick={onNavigate}
-            className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[13.5px] text-ink transition-colors hover:bg-hover"
+            className="btn-grad flex h-9 w-full items-center justify-center rounded-full text-[13px] font-semibold text-white"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-raised text-ink">
-              <Ico icon={FiUser} motion="tilt" size={14} className="text-ink" />
-            </span>
             Log in
           </Link>
         )}
-
-        <div className="flex items-center gap-1 pt-1">
-          <Tooltip label="Settings" side="top">
-            <Link
-              href="/settings"
-              onClick={onNavigate}
-              aria-label="Settings"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-            >
-              <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
-            </Link>
-          </Tooltip>
-          <Tooltip label="Plan" side="top">
-            <Link
-              href="/plans"
-              onClick={onNavigate}
-              aria-label="Plan"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-            >
-              <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
-            </Link>
-          </Tooltip>
-          <Tooltip label="Help" side="top">
-            <Link
-              href="/settings/support"
-              onClick={onNavigate}
-              aria-label="Help & support"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-            >
-              <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
-            </Link>
-          </Tooltip>
-          <span className="flex-1" />
-          <ThemeToggle />
-        </div>
       </div>
-    </>
+    </div>
   );
-}
-
-export function Sidebar({
-  user,
-  balance,
-  isAdmin = false,
-}: {
-  user: User | null;
-  balance: Balance | null;
-  isAdmin?: boolean;
-}) {
-  const { open, setOpen, collapsed, setCollapsed } = useNav();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        setCollapsed(!collapsed);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [collapsed, setCollapsed]);
 
   return (
     <>
       <aside
         className={cn(
-          "nx-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-rail text-ink transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:flex",
+          "hidden h-dvh shrink-0 border-r border-line bg-rail transition-[width] duration-200 lg:flex lg:flex-col",
           collapsed ? "w-[64px]" : "w-[240px]",
         )}
       >
-        {collapsed ? (
-          <div className="flex h-full min-h-0 flex-col items-center overflow-hidden px-1.5 py-3">
-            <div className="flex w-full flex-col items-center">
-              <button
-                type="button"
-                onClick={() => setCollapsed(false)}
-                title="Toggle sidebar  ⌘B"
-                className="mb-1 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-              >
-                <Ico icon={FiSidebar} motion="nudge" size={17} className="text-ink" />
-              </button>
-              <Link
-                href="/chat"
-                title="New chat"
-                aria-label="New chat"
-                className="btn-grad mb-1 grid h-9 w-9 place-items-center rounded-full text-white"
-              >
-                <Ico icon={FiPlus} motion="grow" size={16} />
-              </Link>
-            </div>
-
-            <div className="mt-1 flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto overflow-x-hidden scrollbar-none">
-              {PRIMARY.filter(
-                (i) =>
-                  !i.teamOnly ||
-                  Boolean(user?.teamMember) ||
-                  Boolean(user?.teamPlanActive) ||
-                  user?.effectivePlan === "team" ||
-                  user?.plan === "team",
-              ).map((i) => (
-                <NavRow key={i.href} item={i} pathname={pathname} compact />
-              ))}
-            </div>
-
-            <div className="mt-1 shrink-0 pt-1">
-              <Link
-                href="/affiliates"
-                title="Refer & earn"
-                className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-[11px] font-bold text-white shadow-md"
-              >
-                $
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full min-h-0 flex-col overflow-hidden">
-            <RailBody user={user} balance={balance} isAdmin={isAdmin} onCollapse={() => setCollapsed(true)} />
-          </div>
-        )}
+        {rail}
       </aside>
 
-      {open ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
+      {mobileOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden">
           <button
+            type="button"
             aria-label="Close menu"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileOpen(false)}
           />
-          <div className="nx-sidebar absolute inset-y-0 left-0 flex w-[260px] flex-col border-r border-line bg-rail text-ink shadow-xl">
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-            >
-              <FiX size={17} className="text-ink" />
-            </button>
-            <div className="flex h-full min-h-0 flex-col overflow-hidden">
-              <RailBody user={user} balance={balance} isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
-            </div>
-          </div>
+          <div className="absolute inset-y-0 left-0 w-[min(288px,88vw)] shadow-xl">{rail}</div>
         </div>
       ) : null}
-
-      <div
-        className={cn(
-          "nx-no-print hidden shrink-0 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:block",
-          collapsed ? "w-[64px]" : "w-[240px]",
-        )}
-      />
     </>
   );
 }
