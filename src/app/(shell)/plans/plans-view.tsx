@@ -20,7 +20,10 @@ import type { Balance, Plan, UsageRow } from "@/lib/credits";
 import {
   priceForInterval,
   yearlyDiscountPercent,
+  PLAN_COMPARISON,
+  PLAN_COMPARE_GROUPS,
   type BillingInterval,
+  type PlanCompareValue,
 } from "@/lib/plan-pricing";
 import { kindLabel } from "@/lib/kind-label";
 
@@ -180,7 +183,7 @@ export function PlansView({
           Pay for what the model actually used
         </span>
         <h1 className="mt-4 text-[32px] font-semibold tracking-tight text-ink sm:text-[36px]">
-          Credits and plans
+          Plans & pricing
         </h1>
         <p className="mx-auto mt-2.5 max-w-[560px] text-[14.5px] leading-relaxed text-ink-3">
           One credit is 1,000 tokens of real usage. Nothing is estimated — you
@@ -406,6 +409,66 @@ export function PlansView({
         })}
       </div>
 
+      <section className="mt-12 overflow-hidden rounded-[var(--r-hero)] border border-line bg-rail shadow-[var(--sh-1)]">
+        <div className="border-b border-line px-5 py-5 sm:px-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-600 dark:text-violet-300">
+            Compare plans
+          </p>
+          <h2 className="mt-1.5 text-[20px] font-semibold tracking-[-0.02em] text-ink sm:text-[22px]">
+            Free and Pro are solo. Team adds the shared workspace.
+          </h2>
+          <p className="mt-2 max-w-[62ch] text-[13.5px] leading-relaxed text-ink-3">
+            Every plan includes the full toolkit. Team is for groups: invites,
+            roles, shared projects, company context, and one credit pool for everyone.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-line bg-sunk/40">
+                <th className="px-5 py-3.5 font-medium text-ink-3 sm:px-6">Feature</th>
+                <th className="px-3 py-3.5 text-center font-semibold text-ink">Free</th>
+                <th className="px-3 py-3.5 text-center font-semibold text-ink">
+                  Pro
+                  <span className="ml-1.5 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-300">
+                    Popular
+                  </span>
+                </th>
+                <th className="px-3 py-3.5 text-center font-semibold text-ink sm:pr-6">Team</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PLAN_COMPARE_GROUPS.map((group) => (
+                <FragmentGroup key={group.id!} label={group.label!}>
+                  {PLAN_COMPARISON.filter((row) => row.group === group.id).map((row) => (
+                    <tr key={row.label} className="border-b border-line/70 last:border-0">
+                      <td className="px-5 py-3 text-ink-2 sm:px-6">{row.label}</td>
+                      <td className="px-3 py-3 text-center">
+                        <CompareCell value={row.free} />
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <CompareCell value={row.pro} />
+                      </td>
+                      <td className="px-3 py-3 text-center sm:pr-6">
+                        <CompareCell value={row.team} highlight />
+                      </td>
+                    </tr>
+                  ))}
+                </FragmentGroup>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-line bg-sunk/30 px-5 py-4 sm:px-6">
+          <p className="text-[12.5px] leading-relaxed text-ink-3">
+            <span className="font-semibold text-ink">Team tip:</span> business accounts
+            can open a Team workspace, invite members with owner/admin/member roles, and
+            share one credit pool. Solo Free and Pro users keep personal credits until
+            they upgrade or join a Team.
+          </p>
+        </div>
+      </section>
+
       {!signedIn ? (
         <p className="mt-8 text-center text-[13.5px] text-ink-4">
           <Link href="/login" className="text-accent hover:underline">
@@ -415,6 +478,51 @@ export function PlansView({
         </p>
       ) : null}
     </div>
+  );
+}
+
+function FragmentGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <tr className="bg-sunk/50">
+        <td
+          colSpan={4}
+          className="px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4 sm:px-6"
+        >
+          {label}
+        </td>
+      </tr>
+      {children}
+    </>
+  );
+}
+
+function CompareCell({
+  value,
+  highlight = false,
+}: {
+  value: PlanCompareValue;
+  highlight?: boolean;
+}) {
+  if (typeof value === "boolean") {
+    return value ? (
+      <span className="inline-flex items-center justify-center text-positive">
+        <Ico icon={FiCheck} motion="check" size={16} />
+      </span>
+    ) : (
+      <span className="text-ink-4">—</span>
+    );
+  }
+  return (
+    <span className={highlight ? "font-medium text-ink" : "text-ink-2"}>
+      {value}
+    </span>
   );
 }
 
