@@ -246,6 +246,9 @@ export function serializeDeck(slides: Slide[], theme?: DeckTheme): string {
   return out.join("\n").trim() + "\n";
 }
 
+/** British spelling alias used by studio views. */
+export const serialiseDeck = serializeDeck;
+
 export function deckFilename(slides: Slide[], fallback: string): string {
   const base = slides[0]?.title || fallback || "deck";
   return (
