@@ -135,7 +135,7 @@ export function MobileShell({
   const title = isChat ? "Trove" : activeItem?.label || "Trove";
   // On studio tools, + starts a new item of that tool — not a chat.
   const studioNewHref = studio
-    ? (activeItem?.href ?? pathname.split("/").slice(0, 2).join("/") || "/chat")
+    ? (activeItem?.href ?? (pathname.split("/").slice(0, 2).join("/") || "/chat"))
     : "/chat";
   const studioNewLabel = studio
     ? `New ${(activeItem?.label ?? "item").replace(/s$/, "") || "item"}`
@@ -241,7 +241,6 @@ export function MobileShell({
 
       <Drawer open={open} onClose={() => setOpen(false)}>
         <div className="nx-mobile-drawer flex h-full flex-col bg-rail">
-          {/* Header — mirrors desktop rail */}
           <div
             className="flex shrink-0 items-center gap-2 border-b border-line px-3 pb-3"
             style={{ paddingTop: "max(14px, env(safe-area-inset-top))" }}
@@ -328,7 +327,7 @@ export function MobileShell({
                 href="/settings"
                 onClick={() => setOpen(false)}
                 aria-label="Settings"
-                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover hover:text-ink"
               >
                 <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
               </Link>
@@ -336,7 +335,7 @@ export function MobileShell({
                 href="/plans"
                 onClick={() => setOpen(false)}
                 aria-label="Plan"
-                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover hover:text-ink"
               >
                 <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
               </Link>
@@ -344,7 +343,7 @@ export function MobileShell({
                 href="/settings/support"
                 onClick={() => setOpen(false)}
                 aria-label="Help"
-                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover hover:text-ink"
               >
                 <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
               </Link>
