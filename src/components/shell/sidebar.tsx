@@ -99,7 +99,7 @@ function NavRow({
       className={cn(
         "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
         active
-          ? "bg-hover font-medium text-ink"
+          ? "rail-item-active bg-hover font-medium text-ink"
           : "text-ink-2 hover:bg-hover hover:text-ink",
       )}
     >
@@ -115,11 +115,122 @@ function NavRow({
   );
 }
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "T";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+function UserMenu({
+  user,
+  isAdmin = false,
+  onNavigate,
+}: {
+  user: User;
+  isAdmin?: boolean;
+  onNavigate?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover"
+      >
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
+          {user.name.slice(0, 1).toUpperCase()}
+        </span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
+          <span className="block truncate text-[11px] capitalize text-ink-3">
+            {user.effectivePlan || user.plan} plan
+          </span>
+        </span>
+        <FiChevronRight
+          size={14}
+          className={cn("shrink-0 text-ink-3 transition-transform", open && "rotate-90")}
+        />
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
+          className="absolute bottom-full left-0 z-50 mb-1.5 w-full overflow-hidden rounded-xl border border-line bg-raised shadow-lg"
+        >
+          <Link
+            href="/settings"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink hover:bg-hover"
+          >
+            <FiSettings size={15} className="text-ink-3" />
+            Settings
+          </Link>
+          <Link
+            href="/plans"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink hover:bg-hover"
+          >
+            <FiCreditCard size={15} className="text-ink-3" />
+            Plan & billing
+          </Link>
+          <Link
+            href="/settings/support"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink hover:bg-hover"
+          >
+            <TbHelpCircle size={15} className="text-ink-3" />
+            Help & support
+          </Link>
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+              }}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-ink hover:bg-hover"
+            >
+              <FiUser size={15} className="text-ink-3" />
+              Admin
+            </Link>
+          ) : null}
+          <div className="border-t border-line">
+            <form action={logOut}>
+              <button
+                type="submit"
+                role="menuitem"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] text-ink hover:bg-hover"
+              >
+                <FiLogOut size={15} className="text-ink-3" />
+                Log out
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function RailBody({
@@ -200,76 +311,27 @@ function RailBody({
       >
         {user ? (
           <>
-            <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
-                {initials(user.name)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-medium text-ink">
-                  {user.name}
-                </span>
-                <span className="block truncate text-[11px] text-ink-4">
-                  {user.email}
-                  {credits != null ? ` · ${credits.toLocaleString()} cr` : ""}
-                </span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <Link
-                href="/settings"
-                onClick={onNavigate}
-                aria-label="Settings"
-                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-              >
-                <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
-              </Link>
+            {credits != null ? (
               <Link
                 href="/plans"
                 onClick={onNavigate}
-                aria-label="Plan"
-                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                className="block rounded-xl border border-line bg-raised/50 px-3 py-2 text-[12px] text-ink-3 hover:bg-hover"
               >
-                <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
-              </Link>
-              <Link
-                href="/settings/support"
-                onClick={onNavigate}
-                aria-label="Help"
-                className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
-              >
-                <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
-              </Link>
-              <ThemeToggle />
-              <form action={logOut} className="ml-auto">
-                <button
-                  type="submit"
-                  aria-label="Log out"
-                  className="grid h-9 w-9 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
-                >
-                  <FiLogOut size={15} />
-                </button>
-              </form>
-            </div>
-
-            {isAdmin ? (
-              <Link
-                href="/admin"
-                onClick={onNavigate}
-                className="block rounded-lg px-2 py-1.5 text-[12px] font-medium text-ink-3 hover:bg-hover hover:text-ink"
-              >
-                Admin
+                <span className="font-medium text-ink">{credits.toLocaleString()}</span> credits left
               </Link>
             ) : null}
-
-            <Link
-              href="/affiliates"
-              onClick={onNavigate}
-              className="flex items-center justify-between rounded-xl border border-line bg-raised/60 px-3 py-2 text-[12.5px] font-medium text-ink hover:bg-hover"
-            >
-              <span>Refer & earn</span>
-              <FiChevronRight size={14} className="text-ink-4" />
-            </Link>
+            <UserMenu user={user} isAdmin={isAdmin} onNavigate={onNavigate} />
+            <div className="flex items-center gap-1 px-1">
+              <ThemeToggle />
+              <Link
+                href="/affiliates"
+                onClick={onNavigate}
+                className="ml-auto flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-ink-2 hover:bg-hover hover:text-ink"
+              >
+                Refer & earn
+                <FiChevronRight size={13} />
+              </Link>
+            </div>
           </>
         ) : (
           <Link
