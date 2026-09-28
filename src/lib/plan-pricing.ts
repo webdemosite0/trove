@@ -37,7 +37,6 @@ export const PLAN_COMPARISON: PlanCompareRow[] = [
   { group: "tools", label: "Chat, docs, sheets, decks", free: true, pro: true, team: true },
   { group: "tools", label: "Design, research, code", free: true, pro: true, team: true },
   { group: "tools", label: "Agents, reminders, integrations", free: true, pro: true, team: true },
-  { group: "tools", label: "Publish on *.troveai.site", free: false, pro: true, team: true },
   { group: "team", label: "Private Team workspace", free: false, pro: false, team: true },
   { group: "team", label: "Invite members & roles", free: false, pro: false, team: true },
   { group: "team", label: "Shared projects", free: false, pro: false, team: true },
@@ -47,6 +46,6 @@ export const PLAN_COMPARISON: PlanCompareRow[] = [
 
 export const PLAN_COMPARE_GROUPS: { id: PlanCompareRow["group"]; label: string }[] = [
   { id: "capacity", label: "Capacity" },
-  { id: "tools", label: "Tools & publishing" },
+  { id: "tools", label: "Tools" },
   { id: "team", label: "Team workspace" },
 ];
