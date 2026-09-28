@@ -92,7 +92,6 @@ export const PLANS: Plan[] = [
       "500 credits per 5-hour window",
       "Everything in Free, with room to work all day",
       "Priority model fallback when providers are busy",
-      "Publish live on *.troveai.site",
       "Solo account — Team adds members, roles, and a shared credit pool",
     ],
   },
