@@ -77,7 +77,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
       <div className="relative mx-auto max-w-[960px] text-center">
         <div className="lp-hero-in mb-2.5 hidden items-center rounded-full border border-line bg-raised/80 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-2 shadow-sm backdrop-blur-md sm:mb-5 sm:inline-flex">
-          AI WORKSPACE · CHAT · BUILD · PUBLISH
+          AI WORKSPACE · CHAT · BUILD · EXPORT
         </div>
 
         <h1
@@ -91,14 +91,13 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           </span>
         </h1>
 
-        {/* Short on mobile; fuller on desktop */}
         <p
           className="lp-hero-in mx-auto mt-2.5 max-w-[50ch] text-[13px] leading-5 text-ink-3 sm:mt-4 sm:text-[16px] sm:leading-relaxed lg:text-[17px]"
           style={{ animationDelay: "120ms" }}
         >
           <span className="sm:hidden">Websites, docs, sheets, decks — one workspace.</span>
           <span className="hidden sm:inline">
-            Websites, documents, spreadsheets, presentations, research, and agents — in one workspace. Refine in chat, publish live, or export when you need the file.
+            Websites, documents, spreadsheets, presentations, research, and agents — in one workspace. Refine in chat, or export when you need the file.
           </span>
         </p>
 
@@ -141,9 +140,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           </div>
 
           <div className="mt-2.5 hidden flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-ink-3 sm:mt-4 sm:flex">
-            <span>Live preview</span>
-            <span className="text-ink-4">·</span>
-            <span>Publish on *.troveai.site</span>
+            <span>Chat to refine</span>
             <span className="text-ink-4">·</span>
             <span>Export DOCX · XLSX · PPTX</span>
           </div>
