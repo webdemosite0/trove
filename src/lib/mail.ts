@@ -133,18 +133,15 @@ async function sendViaSmtp(opts: MailOptions): Promise<MailResult> {
 }
 
 /**
- * Enforce email verification whenever Trove has a working outbound mail
- * transport. This avoids fake-email account abuse in production without
- * hard-locking a development/demo deployment that has no mail provider.
+ * Email verification is disabled — accounts are usable immediately after signup.
  */
 export function verificationEnforced(): boolean {
-  return mailerConfigured();
+  return false;
 }
 
+/** Password signup is always available (no mail-provider gate). */
 export function passwordSignupReady(): boolean {
-  if (mailerConfigured()) return true;
-  if (process.env.NODE_ENV !== "production") return true;
-  return process.env.TROVE_ALLOW_UNVERIFIED_PASSWORD_SIGNUP?.trim() === "1";
+  return true;
 }
 
 export function verificationEmail(name: string, link: string) {
@@ -168,7 +165,7 @@ export function verificationEmail(name: string, link: string) {
       </p>
       <p style="color:#555;font-size:13px">
         The link works once and expires in 24 hours. If you did not create an
-        account, ignore this — nothing happens until the link is opened.
+        account, ignore this email.
       </p>
       <p style="color:#888;font-size:12px;word-break:break-all">${escapeHtml(link)}</p>
     </div>`;
@@ -207,10 +204,10 @@ export function passwordResetEmail(name: string, link: string) {
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+    ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "&#39;" })[c]!,
   );
 }
 
 function escapeAttr(s: string) {
-  return s.replace(/"/g, "&quot;");
+  return s.replace(/"/g, """);
 }
