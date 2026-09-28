@@ -203,11 +203,14 @@ export function passwordResetEmail(name: string, link: string) {
 }
 
 function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "&#39;" })[c]!,
-  );
+  return s
+    .replace(/&/g, "&" + "amp;")
+    .replace(/</g, "&" + "lt;")
+    .replace(/>/g, "&" + "gt;")
+    .replace(/"/g, "&" + "quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function escapeAttr(s: string) {
-  return s.replace(/"/g, """);
+  return s.replace(/"/g, "&" + "quot;");
 }
