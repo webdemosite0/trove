@@ -12,7 +12,7 @@ import {
   FiLogOut,
   FiX,
   FiChevronRight,
-  FiHelpCircle,
+  TbHelpCircle,
 } from "@/components/ui/icons";
 import { ThemePicker } from "@/components/settings/theme-picker";
 import { logOut } from "@/app/actions/auth";
@@ -40,7 +40,7 @@ const NAV: {
   { id: "usage", label: "Usage", icon: FiActivity },
   { id: "plan", label: "Plan & billing", icon: FiCreditCard, external: "/plans" },
   { id: "integrations", label: "Connectors", icon: FiGrid, external: "/integrations" },
-  { id: "help", label: "Help & support", icon: FiHelpCircle, external: "/security" },
+  { id: "help", label: "Help & support", icon: TbHelpCircle, external: "/settings/support" },
 ];
 
 /** Floating settings dialog — Meta-style overlay, not a separate page. */

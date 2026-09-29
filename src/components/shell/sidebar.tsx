@@ -23,6 +23,7 @@ import {
   TbRobot,
   TbFolder,
   TbHelpCircle,
+  TbWorld,
 } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
 import { Wordmark } from "@/components/brand/logo";
@@ -50,6 +51,7 @@ const PRIMARY: Item[] = [
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
+  { href: "/websites", label: "Sites", icon: TbWorld, motion: "grow" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
   { href: "/team", label: "Team", icon: FiUsers, motion: "stack", teamOnly: true },
 ];

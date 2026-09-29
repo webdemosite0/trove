@@ -26,6 +26,23 @@ export function textToTokens(text: string): StreamingToken[] {
   return text.split(/(\s+)/).filter(Boolean).map((t) => ({ text: t }));
 }
 
+/** Map search result rows into StreamingSource chips. */
+export function sourcesFromSearch(
+  items?: { title: string; url: string; domain?: string }[] | null,
+): StreamingSource[] {
+  if (!items?.length) return [];
+  return items.map((s) => {
+    const domain =
+      s.domain ||
+      (s.url ? s.url.replace(/^https?:\/\//, "").split("/")[0] : "source");
+    return {
+      name: s.title || domain,
+      domain,
+      href: s.url || "#",
+    };
+  });
+}
+
 function SourceChip({ source }: { source?: StreamingSource }) {
   if (!source) return null;
   return (

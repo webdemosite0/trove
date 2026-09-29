@@ -373,7 +373,7 @@ export function Message({
           <span className="text-[12.5px] font-medium text-ink-3">Trove</span>
         </div>
         <div className="pl-8">
-          <StreamingText text={text} live fill />
+          <StreamingText text={text} live />
         </div>
       </div>
     );
