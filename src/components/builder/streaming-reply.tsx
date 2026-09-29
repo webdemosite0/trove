@@ -12,7 +12,6 @@ export function BuilderStreamingReply({
   searchSources,
   followUps,
   onFollowUp,
-  className,
 }: {
   text: string;
   live?: boolean;
@@ -26,8 +25,6 @@ export function BuilderStreamingReply({
     <StreamingText
       text={text}
       live={live}
-      fill
-      className={className}
       sources={sourcesFromSearch(searchSources)}
       followUps={followUps}
       labels={{
