@@ -1,1 +1,6 @@
-PLACEHOLDER5
+@import "tailwindcss";
+
+/* Restored — full tokens; remaining rules in globals-p1.css + globals-p2.css */
+@import "./globals-p1.css";
+@import "./globals-p2.css";
+@import "./stream-anim.css";
