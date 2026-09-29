@@ -16,6 +16,7 @@ import {
 
 /**
  * Full-height project preview. Clean Trove chrome — no product-clone UI.
+ * Prefers live sandbox when ready; otherwise falls back to HTML snapshot (srcDoc).
  */
 export function BuilderPreviewPane({
   preview,
@@ -64,8 +65,9 @@ export function BuilderPreviewPane({
     void syncLocalProject(files, projectId);
   }, [files, filesKey, projectId]);
 
+  // Live sandbox only when fully ready. Snapshot always wins otherwise so the
+  // user never stares at an empty pane after a successful generate.
   const useLive = runtime.status === "ready" && Boolean(runtime.url);
-  // Always keep the HTML snapshot as a fallback while the sandbox boots or fails.
   const useSnapshot = Boolean(preview) && !useLive;
   const displayUrl = useLive
     ? `localhost:${runtime.port || 5173}`
@@ -97,7 +99,13 @@ export function BuilderPreviewPane({
       window.open(runtime.url, "_blank", "noopener,noreferrer");
       return;
     }
-    if (!preview || !projectId) return;
+    if (preview) {
+      const blob = new Blob([preview], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (!projectId) return;
     window.open(
       `/api/builder/projects/${encodeURIComponent(projectId)}/preview`,
       "_blank",
@@ -141,16 +149,18 @@ export function BuilderPreviewPane({
   };
 
   const chromeStatus =
-    runtime.status === "error"
-      ? "error"
-      : useLive
+    useLive
+      ? "ready"
+      : useSnapshot
         ? "ready"
-        : runtime.status === "booting" ||
-            runtime.status === "installing" ||
-            runtime.status === "starting" ||
-            runtime.status === "syncing"
-          ? "working"
-          : "idle";
+        : runtime.status === "error"
+          ? "error"
+          : runtime.status === "booting" ||
+              runtime.status === "installing" ||
+              runtime.status === "starting" ||
+              runtime.status === "syncing"
+            ? "working"
+            : "idle";
 
   const realPublishControl =
     publishControl ?? (
@@ -170,7 +180,7 @@ export function BuilderPreviewPane({
         activeTab={activeTab}
         publishControl={realPublishControl}
         onNavigate={navigate}
-        onOpen={useLive || (preview && projectId) ? openPreview : undefined}
+        onOpen={useLive || Boolean(preview) ? openPreview : undefined}
         onRefresh={() => {
           setRefreshKey((value) => value + 1);
           if (files.length && projectId) void syncLocalProject(files, projectId);
@@ -190,11 +200,11 @@ export function BuilderPreviewPane({
           />
         ) : useSnapshot && preview ? (
           <iframe
-            key={`${projectId || "site"}:${preview.slice(0, 80)}:${refreshKey}`}
+            key={`${projectId || "site"}:snap:${refreshKey}:${preview.length}`}
             title="Preview snapshot"
             srcDoc={preview}
             className="absolute inset-0 h-full w-full border-0 bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+            sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
             referrerPolicy="no-referrer"
           />
         ) : (
@@ -220,9 +230,9 @@ export function BuilderPreviewPane({
         )}
       </BrowserFrame>
 
-      {runtime.status === "error" ? (
+      {runtime.status === "error" && !preview ? (
         <div className="pointer-events-none absolute bottom-4 left-4 z-50 max-w-[340px] rounded-[var(--r-panel)] border border-line bg-raised px-3.5 py-2.5 text-[12px] leading-relaxed text-ink-2 shadow-[var(--sh-2)]">
-          Preview is reconnecting. Showing the last saved snapshot if available.
+          Live preview could not start. Build the site again to get a snapshot.
         </div>
       ) : null}
     </div>

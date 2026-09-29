@@ -23,7 +23,6 @@ import {
   mergeFiles,
   type BuildPlan,
   type LogLine,
-  type PlanStep,
   type ProjectFile,
   type Question,
   type Task,
@@ -40,6 +39,16 @@ const IDEAS = [
   "SaaS landing page with pricing",
   "Portfolio for a designer",
 ];
+
+function htmlFromFiles(next: ProjectFile[]): string | null {
+  if (!next.length) return null;
+  try {
+    const html = bundle(next);
+    return html && html.trim() ? html : null;
+  } catch {
+    return null;
+  }
+}
 
 export function BuilderView({
   mobile = false,
@@ -72,7 +81,6 @@ export function BuilderView({
   const [targetId] = useState<TargetId>("react");
   const msgId = useRef(0);
   const logId = useRef(0);
-  const hydrated = useRef(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const busy = phase === "asking" || phase === "planning" || phase === "building";
 
@@ -80,14 +88,11 @@ export function BuilderView({
     if (phase !== "idle") setCollapsed(true);
   }, [phase, setCollapsed]);
 
+  // Rebuild HTML snapshot whenever files change — this drives the iframe srcDoc.
   useEffect(() => {
     if (!files.length) return;
-    try {
-      const html = bundle(files);
-      if (html) setPreview(html);
-    } catch {
-      /* keep */
-    }
+    const html = htmlFromFiles(files);
+    if (html) setPreview(html);
   }, [files]);
 
   useEffect(() => {
@@ -95,9 +100,6 @@ export function BuilderView({
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [messages, tasks, phase, finalMsg]);
-
-  // NOTE: full hydrate / ask / plan_ / generate / continueChat logic preserved from prior workspace view.
-  // This commit restores the chat UI shell with StreamingText + thinking orbs + PromptBar.
 
   const pushMsg = useCallback((role: ChatMsg["role"], text: string) => {
     msgId.current += 1;
@@ -176,28 +178,41 @@ export function BuilderView({
     if (!plan || busy) return;
     setPhase("building");
     setTasks([]);
-    setFiles([]);
+    setError(null);
     try {
       const res = await fetch("/api/builder/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, idea, answers, targetId, storage }),
+        body: JSON.stringify({
+          plan,
+          idea,
+          answers,
+          targetId,
+          storage,
+          projectId,
+        }),
       });
       if (!res.ok) throw new Error((await res.text().catch(() => "")) || "Generate failed");
       const data = await res.json();
-      if (Array.isArray(data.files)) setFiles(data.files);
+      const nextFiles = Array.isArray(data.files) ? (data.files as ProjectFile[]) : [];
+      if (nextFiles.length) {
+        setFiles(nextFiles);
+        const html =
+          (typeof data.previewHtml === "string" && data.previewHtml) ||
+          htmlFromFiles(nextFiles);
+        if (html) setPreview(html);
+      }
       if (Array.isArray(data.tasks)) setTasks(data.tasks);
-      if (data.previewHtml) setPreview(data.previewHtml);
-      if (data.projectId) setProjectId(data.projectId);
+      if (data.projectId) setProjectId(String(data.projectId));
       pushMsg("assistant", data.message || "Site is ready. Refine anything from chat.");
       setFinalMsg("Saved. Ask for changes anytime.");
       setPhase("ready");
-      if (mobile) setPane("preview");
+      setPane("preview");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generate failed");
       setPhase("review");
     }
-  }, [plan, busy, idea, answers, targetId, storage, pushMsg, mobile]);
+  }, [plan, busy, idea, answers, targetId, storage, projectId, pushMsg]);
 
   const continueChat = useCallback(
     async (prompt: string) => {
@@ -216,13 +231,22 @@ export function BuilderView({
             messages,
             projectId,
             targetId,
+            idea,
           }),
         });
         if (!res.ok) throw new Error((await res.text().catch(() => "")) || "Update failed");
         const data = await res.json();
-        if (Array.isArray(data.files)) setFiles((prev) => mergeFiles(prev, data.files));
+        if (Array.isArray(data.files)) {
+          setFiles((prev) => {
+            const merged = mergeFiles(prev, data.files);
+            const html =
+              (typeof data.previewHtml === "string" && data.previewHtml) ||
+              htmlFromFiles(merged);
+            if (html) setPreview(html);
+            return merged;
+          });
+        }
         if (Array.isArray(data.tasks)) setTasks(data.tasks);
-        if (data.previewHtml) setPreview(data.previewHtml);
         pushMsg("assistant", data.message || "Updated.");
         setPhase("ready");
       } catch (e) {
@@ -230,7 +254,7 @@ export function BuilderView({
         setPhase("ready");
       }
     },
-    [busy, files, plan, messages, projectId, targetId, pushMsg],
+    [busy, files, plan, messages, projectId, targetId, idea, pushMsg],
   );
 
   const sendFromComposer = useCallback(
@@ -289,6 +313,7 @@ export function BuilderView({
       title={plan?.title || idea.slice(0, 40) || "Site"}
       publishedUrl={publishedUrl}
       onPublished={(url) => setPublishedUrl(url)}
+      previewHtml={preview}
     />
   );
 
@@ -309,7 +334,7 @@ export function BuilderView({
           <aside
             className={cn(
               "min-h-0 w-full flex-1 flex-col border-b border-line lg:flex lg:w-[380px] lg:flex-none lg:shrink-0 lg:border-b-0 lg:border-r",
-              pane === "chat" ? "flex" : "hidden",
+              pane === "chat" ? "flex" : "hidden lg:flex",
             )}
           >
             <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-canvas px-3">
@@ -374,8 +399,8 @@ export function BuilderView({
 
           <main
             className={cn(
-              "relative min-h-0 min-w-0 flex-1 overflow-hidden lg:block",
-              pane === "chat" && "hidden",
+              "relative min-h-0 min-w-0 flex-1 overflow-hidden",
+              pane === "chat" ? "hidden lg:block" : "block",
             )}
           >
             <div className="h-full min-h-0 overflow-hidden">
@@ -383,6 +408,7 @@ export function BuilderView({
                 <BuilderPreviewPane
                   preview={preview}
                   files={files}
+                  projectId={projectId}
                   activeTab="preview"
                   onNavigate={goPane}
                   publishControl={publishCtrl}
