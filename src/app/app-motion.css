@@ -23,7 +23,6 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Apply to main content region on desktop */
 .app-page-in {
   animation: app-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -42,7 +41,6 @@
   animation-delay: var(--app-delay, 0ms);
 }
 
-/* Auto-stagger children inside lists / grids */
 .app-stagger > * {
   opacity: 0;
   animation: app-stagger 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -70,7 +68,6 @@
   }
 }
 
-/* Mobile: keep motion subtle / off for performance */
 @media (max-width: 1023px) {
   .app-page-in,
   .app-title-in,
@@ -80,61 +77,34 @@
   }
 }
 
-/* ============================================================
-   Pixel-grid thinking loader (chat LoadingState / ThinkingLine)
-   ============================================================ */
-
+/* Pixel-grid thinking loader */
 @keyframes pixel-on {
-  0%,
-  100% {
-    opacity: 0.12;
-  }
-  40% {
-    opacity: 0.95;
-  }
-  70% {
-    opacity: 0.35;
-  }
+  0%, 100% { opacity: 0.12; }
+  40% { opacity: 0.95; }
+  70% { opacity: 0.35; }
 }
 
 @keyframes shimmer-text {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 @keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  @keyframes pixel-on {
-    0%,
-    100% {
-      opacity: 0.35;
-    }
-  }
-  @keyframes shimmer-text {
-    0%,
-    100% {
-      background-position: 0 0;
-    }
-  }
-  @keyframes pop-in {
-    from,
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
+/* ThinkingState expandable trace */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
