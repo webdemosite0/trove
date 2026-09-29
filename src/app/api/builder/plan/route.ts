@@ -64,10 +64,11 @@ Reply with ONE JSON object and nothing else — no prose, no markdown fence.
   ]
 }
 
-SCOPE — plan a FULL website, not a demo:
+SCOPE — plan a FULL, LONG website, not a thin demo:
 - At least 4 distinct pages or routed views (Home, Features/Services, Pricing or Menu, About/Contact). Prefer 5–7 when the idea supports it.
-- Home alone must include multiple substantial sections: hero, social proof, features grid, how-it-works, testimonials, FAQ, and a strong CTA.
-- Real navigation linking every page; footer with secondary links.
+- Home alone must be a long scrolling page: hero (headline + multi-sentence subcopy + dual CTAs), social proof, features grid, how-it-works, testimonials (3+), pricing or menu, FAQ (4+), and a strong final CTA. Each section needs unique multi-sentence copy — never repeated taglines.
+- Every page includes a real header (logo, nav to all pages, primary CTA) and a real footer (brand blurb, link columns, contact, copyright).
+- style.type must describe TWO different system-font stacks: one for display/headings and one for body (never a single font for the whole site).
 - Forms that validate client-side; interactive components (tabs, accordions, filters, modals, or carts) where needed.
 - Inline SVG icon set (no emoji as UI icons). Prefer CSS/SVG art over remote images.
 - Thoughtful empty states, hover/focus, and responsive layout to 360px.
@@ -75,9 +76,9 @@ SCOPE — plan a FULL website, not a demo:
 
 Rules for steps:
 - Between MIN_STEPS and MAX_STEPS steps, ordered so each builds on the last.
-- FIRST step: design system (tokens, type, components) + global styles.
-- Middle steps: one major page or feature cluster each — do not cram the whole site into two steps.
-- LAST step: polish pass — consistency, a11y, motion, cross-links, content.
+- FIRST step: design system (tokens, dual font stacks, components) + global styles including shared header and footer chrome.
+- Middle steps: one major page or feature cluster each — do not cram the whole site into two steps. Each page step must produce long copy and complete sections, not stubs.
+- LAST step: polish pass — consistency, a11y, motion, cross-links, content density (fill thin sections with real unique prose).
 - skills must be drawn from the allowed skill ids only.
 - Prefer depth over thin placeholders. No \"coming soon\" pages.
 `;
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
   const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
   const attachments = Array.isArray(body.attachments) ? body.attachments : [];
 
-  const minSteps = depth === "quick" ? 4 : 7;
+  const minSteps = depth === "quick" ? 4 : 6;
   const maxSteps = depth === "quick" ? 6 : 12;
 
   const system = SYSTEM.replace("MIN_STEPS", String(minSteps)).replace(
