@@ -18,7 +18,7 @@ export function TopBar({
   due?: number;
   balance?: Balance | null;
 }) {
-  const { setOpen } = useNav();
+  const { setOpen, setSettingsOpen } = useNav();
 
   const openPalette = () =>
     window.dispatchEvent(
@@ -76,13 +76,14 @@ export function TopBar({
         <CreditMeter balance={balance} variant="topbar" />
       </div>
 
-      <Link
-        href="/settings"
-        aria-label="Account"
+      <button
+        type="button"
+        onClick={() => setSettingsOpen(true)}
+        aria-label="Account settings"
         className="tap-44 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-[12px] font-semibold text-accent transition-transform duration-[var(--t-hover)] ease-[var(--ease-ui)] hover:scale-105 sm:h-8 sm:w-8"
       >
         {(initial ?? "Y").slice(0, 1).toUpperCase()}
-      </Link>
+      </button>
     </header>
   );
 }
