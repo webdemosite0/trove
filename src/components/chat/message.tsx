@@ -16,8 +16,8 @@ import { highlight, TOKEN_VAR } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 import { ChatImage, ImageGeneratingCard } from "@/components/chat/chat-image";
 import { withConnectorChips } from "@/components/chat/connector-chip";
-import { ThinkingLine } from "@/components/chat/thinking-line";
 import { ThinkingState, type ThinkRow } from "@/components/chat/thinking-state";
+import { ThinkingReasoning } from "@aicss/react/thinking-reasoning";
 
 /** Match bare http(s) and www. URLs; trailing punctuation is trimmed when linking. */
 const URL_RE =
@@ -453,24 +453,36 @@ export function Message({
         </div>
       );
     }
-    const variant =
-      thinkVariant ??
-      (searchQuery || (searchSources && searchSources.length) ? "Search" : "Steps");
-    const searchRows: ThinkRow[] | undefined = searchSources?.map((s) => ({
-      primary: s.title,
-      secondary:
-        s.domain ||
-        (s.url ? s.url.replace(/^https?:\/\//, "").split("/")[0] : undefined),
-      href: s.url,
-    }));
+    const isSearch =
+      thinkVariant === "Search" ||
+      Boolean(searchQuery) ||
+      Boolean(searchSources?.length);
+    if (isSearch || thinkVariant === "Steps" || thinkVariant === "Coding") {
+      const variant =
+        thinkVariant ??
+        (searchQuery || (searchSources && searchSources.length) ? "Search" : "Steps");
+      const searchRows: ThinkRow[] | undefined = searchSources?.map((s) => ({
+        primary: s.title,
+        secondary:
+          s.domain ||
+          (s.url ? s.url.replace(/^https?:\/\//, "").split("/")[0] : undefined),
+        href: s.url,
+      }));
+      return (
+        <div className="nx-in group/msg">
+          <ThinkingState
+            variant={variant}
+            query={searchQuery}
+            rows={searchRows}
+            active={variant === "Search" ? "Searching the web" : "Thinking"}
+          />
+        </div>
+      );
+    }
+    // Default pending: AICSS Thinking + Reasoning (shimmer → expand → Thought for Ns)
     return (
       <div className="nx-in group/msg">
-        <ThinkingState
-          variant={variant}
-          query={searchQuery}
-          rows={searchRows}
-          active={variant === "Search" ? "Searching the web" : "Thinking"}
-        />
+        <ThinkingReasoning />
       </div>
     );
   }
