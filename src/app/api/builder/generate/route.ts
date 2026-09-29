@@ -6,6 +6,7 @@ import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { skillPrompts } from "@/lib/skills";
 import { targetFor } from "@/lib/targets";
 import {
+  bundle,
   safeProjectPath,
   type BuildPlan,
   type ProjectFile,
@@ -38,7 +39,7 @@ function mergeFiles(prev: ProjectFile[], next: ProjectFile[]): ProjectFile[] {
 
 /**
  * Batch-generate a site from an agreed plan (all steps).
- * Returns JSON the websites workspace expects: files, tasks, message, projectId.
+ * Returns JSON the websites workspace expects: files, tasks, message, projectId, previewHtml.
  */
 export async function POST(req: NextRequest) {
   let account: Awaited<ReturnType<typeof requireCredits>> = null;
@@ -125,6 +126,7 @@ export async function POST(req: NextRequest) {
         `<<<END>>>`,
         `SUMMARY: 2–5 sentences on what you built.`,
         `HARD RULES: emit COMPLETE file contents. Prefer a full multi-page site with header and footer.`,
+        `Always include a root index.html (or App.jsx + styles) so the preview can render.`,
         target.prompt,
         styleNote ? `STYLE: ${styleNote}` : "",
         skillPrompts(skills),
@@ -173,6 +175,14 @@ Write the complete files for this step.`;
       summaries.slice(-1)[0] ||
       `Built ${files.length} files across ${plan.steps.length} steps. Refine anything from chat.`;
 
+    let previewHtml: string | null = null;
+    try {
+      const html = bundle(files);
+      if (html && html.trim()) previewHtml = html;
+    } catch {
+      previewHtml = null;
+    }
+
     let projectId = body.projectId || null;
     try {
       const saved = await saveProject({
@@ -182,7 +192,7 @@ Write the complete files for this step.`;
         target: target.id,
         status: "ready",
         files,
-        previewHtml: null,
+        previewHtml,
         buildPlan: plan,
         completedStepIds: plan.steps.map((s, i) => s.id || `step-${i}`),
       });
@@ -197,6 +207,7 @@ Write the complete files for this step.`;
       tasks,
       message,
       projectId,
+      previewHtml,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Generate failed";
