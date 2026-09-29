@@ -1,6 +1,127 @@
 @import "tailwindcss";
-
-/* Restored — full tokens; remaining rules in globals-p1.css + globals-p2.css */
-@import "./globals-p1.css";
-@import "./globals-p2.css";
 @import "./stream-anim.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-canvas: #0a0a0b;
+  --color-rail: #0e0e10;
+  --color-sunk: #121214;
+  --color-raised: #17171a;
+  --color-hover: #1e1e22;
+  --color-ink: #f4f4f4;
+  --color-ink-2: #f4f4f4;
+  --color-ink-3: #a9a9ae;
+  --color-ink-4: #8a8a90;
+  --color-line: #26262b;
+  --color-line-strong: #34343a;
+  --color-accent: #5aa9ff;
+  --color-accent-soft: #0d1b33;
+  --color-violet: #7cc0ff;
+  --color-positive: #34d399;
+  --color-positive-soft: #10291f;
+  --color-caution: #fbbf24;
+  --color-critical: #f87171;
+  --color-critical-soft: #2a1616;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-code), ui-monospace, monospace;
+  --font-display: var(--font-display-face), "Segoe UI", system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-tap: 120ms;
+  --t-hover: 180ms;
+  --t-card: 240ms;
+  --t-panel: 320ms;
+  --r-tight: 4px;
+  --r-chip: 6px;
+  --r-control: 8px;
+  --r-panel: 12px;
+  --r-card: 14px;
+  --r-hero: 18px;
+}
+
+:root {
+  --color-canvas: #0a0a0b;
+  --color-rail: #0e0e10;
+  --color-sunk: #121214;
+  --color-raised: #17171a;
+  --color-hover: #1e1e22;
+  --color-ink: #f4f4f4;
+  --color-ink-2: #f4f4f4;
+  --color-ink-3: #a9a9ae;
+  --color-ink-4: #8a8a90;
+  --color-line: #26262b;
+  --color-line-strong: #34343a;
+  --color-accent: #5aa9ff;
+  --color-accent-soft: #0d1b33;
+  --color-violet: #7cc0ff;
+  --color-positive: #34d399;
+  --color-positive-soft: #10291f;
+  --color-caution: #fbbf24;
+  --color-critical: #f87171;
+  --color-critical-soft: #2a1616;
+  --shade: #ffffff;
+  --ground: #000000;
+  --btn-a: #2563eb;
+  --btn-b: #1d4ed8;
+  --btn-ink: #ffffff;
+  --focus-ring: rgb(90 169 255 / 0.32);
+  --focus-line: rgb(90 169 255 / 0.80);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --color-canvas: #f7f6f3;
+  --color-rail: #fbfaf8;
+  --color-sunk: #f1efea;
+  --color-raised: #ffffff;
+  --color-hover: #edebe5;
+  --color-ink: #101014;
+  --color-ink-2: #101014;
+  --color-ink-3: #3f3f4a;
+  --color-ink-4: #63636f;
+  --color-line: #e6e3dc;
+  --color-line-strong: #d6d2c8;
+  --color-accent: #4f46e5;
+  --color-accent-soft: #eeecfd;
+  --color-positive: #0b6553;
+  --color-critical: #c2325a;
+  --shade: #1a1f36;
+  --ground: #ffffff;
+  --btn-a: #4f46e5;
+  --btn-b: #4338ca;
+  color-scheme: light;
+}
+
+@layer base {
+  * { border-color: var(--color-line); }
+}
+
+html {
+  color-scheme: dark light;
+  background: var(--color-canvas);
+}
+
+body {
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.bg-canvas { background-color: var(--color-canvas); }
+.bg-rail { background-color: var(--color-rail); }
+.bg-sunk { background-color: var(--color-sunk); }
+.bg-raised { background-color: var(--color-raised); }
+.bg-hover { background-color: var(--color-hover); }
+.bg-accent { background-color: var(--color-accent); }
+.text-ink { color: var(--color-ink); }
+.text-ink-2 { color: var(--color-ink-2); }
+.text-ink-3 { color: var(--color-ink-3); }
+.text-ink-4 { color: var(--color-ink-4); }
+.text-accent { color: var(--color-accent); }
+.text-positive { color: var(--color-positive); }
+.border-line { border-color: var(--color-line); }
+.border-accent { border-color: var(--color-accent); }
+
+.nx-in { animation: fade-in 200ms var(--ease-ui) both; }
