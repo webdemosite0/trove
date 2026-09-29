@@ -3,7 +3,7 @@ import { generateText } from "@/lib/ai";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { targetFor } from "@/lib/targets";
-import { safeProjectPath, type ProjectFile } from "@/lib/builder";
+import { safeProjectPath, type ProjectFile, type Task } from "@/lib/builder";
 import { saveProject } from "@/lib/projects";
 
 export const runtime = "nodejs";
@@ -130,15 +130,18 @@ Current files: ${fileList}`;
         }
       }
 
+      const tasks: Task[] = parsed.map((f, i) => ({
+        id: `edit-${i}`,
+        kind: "write",
+        label: f.path,
+        state: "ok",
+      }));
+
       return NextResponse.json({
         ok: true,
         message,
         files: parsed.length ? files : undefined,
-        tasks: parsed.map((f, i) => ({
-          id: `edit-${i}`,
-          label: f.path,
-          status: "done" as const,
-        })),
+        tasks,
       });
     }
 

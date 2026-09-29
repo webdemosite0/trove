@@ -5,7 +5,12 @@ import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { skillPrompts } from "@/lib/skills";
 import { targetFor } from "@/lib/targets";
-import { safeProjectPath, type BuildPlan, type ProjectFile, type Task } from "@/lib/builder";
+import {
+  safeProjectPath,
+  type BuildPlan,
+  type ProjectFile,
+  type Task,
+} from "@/lib/builder";
 import { saveProject } from "@/lib/projects";
 
 export const runtime = "nodejs";
@@ -85,7 +90,7 @@ export async function POST(req: NextRequest) {
   const target = targetFor(body.targetId || body.target || "react");
   const styleNote = plan.style
     ? [
-        plan.style.direction,
+        plan.style.name,
         plan.style.mood,
         Array.isArray(plan.style.palette)
           ? `Palette: ${plan.style.palette.join(", ")}`
@@ -106,9 +111,9 @@ export async function POST(req: NextRequest) {
       const taskId = step.id || `step-${i}`;
       tasks.push({
         id: taskId,
+        kind: "write",
         label: step.title,
-        status: "running",
-        detail: step.detail,
+        state: "run",
       });
 
       const skills = Array.isArray(step.skills) ? step.skills : [];
@@ -161,7 +166,7 @@ Write the complete files for this step.`;
       if (sumMatch) summaries.push(sumMatch[1].trim().slice(0, 500));
 
       const ti = tasks.findIndex((t) => t.id === taskId);
-      if (ti >= 0) tasks[ti] = { ...tasks[ti], status: "done" };
+      if (ti >= 0) tasks[ti] = { ...tasks[ti], state: "ok" };
     }
 
     const message =
