@@ -50,7 +50,15 @@ vite.config.js should bind the dev server to 0.0.0.0 on port 5173 so the local r
 
 Pinned versions only. Fully working UI — no dead buttons.
 No remote stock photos — CSS gradients, SVG, solid color blocks only.
-Multi-page products use React Router or simple state routing.`,
+Multi-page products use React Router or simple state routing.
+
+LONG SITES — every generated product site must:
+- Include a full header (logo, nav to all pages, primary CTA) and full footer
+  (brand blurb, link columns, contact, copyright) on every page/view.
+- Be long: Home scrolls through many sections with unique multi-sentence copy
+  per section (never repeated taglines or one-line filler).
+- Use TWO system-font stacks: --font-display for headings/brand and
+  --font-body for paragraphs (never one font for the whole UI).`,
   },
 
   node: {
