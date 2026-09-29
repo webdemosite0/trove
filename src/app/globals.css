@@ -200,8 +200,7 @@ body {
 
 /**
  * Primary CTA gradient — login submit, New chat, etc.
- * Always pairs a solid gradient background with light ink so text never
- * disappears on light theme surfaces.
+ * Solid fallback + gradient so text-white never sits on a blank surface.
  */
 .btn-grad {
   background-image: linear-gradient(
@@ -221,10 +220,36 @@ body {
   filter: none;
 }
 
-/* Force readable ink on gradient buttons even if a parent sets text-ink */
 .btn-grad,
 .btn-grad * {
   color: var(--btn-ink, #ffffff);
+}
+
+/* Logo wordmark — theme-aware ink (never pure white-on-light) */
+.wordmark-gradient {
+  color: var(--color-ink);
+  background-image: linear-gradient(
+    120deg,
+    var(--color-ink) 0%,
+    var(--color-accent) 55%,
+    var(--color-violet) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Fallback if background-clip unsupported */
+@supports not (background-clip: text) {
+  .wordmark-gradient {
+    color: var(--color-ink);
+    background-image: none;
+    -webkit-text-fill-color: unset;
+  }
+}
+
+.nx-sweep-text {
+  /* decorative; safe no-op if motion CSS omitted */
 }
 
 .nx-in {
@@ -238,12 +263,10 @@ body {
   display: none;
 }
 
-/* Sidebar active rail item */
 .rail-item-active {
   box-shadow: inset 2px 0 0 0 var(--color-accent);
 }
 
-/* Elevation helpers used by auth card / settings modal */
 :root {
   --elev-lift: 0 24px 64px -16px rgb(0 0 0 / 0.55);
   --sh-2: 0 8px 24px -8px rgb(0 0 0 / 0.35);
