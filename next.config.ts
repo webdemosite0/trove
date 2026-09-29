@@ -8,6 +8,8 @@ const sitesHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Ship CSS modules + TS sources from AICSS agent UI package.
+  transpilePackages: ["@aicss/react"],
   // Next 16 builds with Turbopack by default. Keep these legacy package-style
   // imports mapped to Trove-owned components at the bundler level as well as
   // in tsconfig, so Vercel production builds never try to resolve npm packages
