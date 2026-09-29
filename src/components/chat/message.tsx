@@ -18,6 +18,7 @@ import { ChatImage, ImageGeneratingCard } from "@/components/chat/chat-image";
 import { withConnectorChips } from "@/components/chat/connector-chip";
 import { ThinkingLine } from "@/components/chat/thinking-line";
 import { ThinkingState, type ThinkRow } from "@/components/chat/thinking-state";
+import { StreamingText, sourcesFromSearch } from "@/components/chat/streaming-text";
 
 const URL_RE =
   /https?:\/\/[^\s<>\[\]()"]+|www\.[^\s<>\[\]()"]+/gi;
@@ -140,7 +141,6 @@ function render(text: string) {
       .filter((b) => b.trim())
       .forEach((block, j) => {
         const key = `b${i}-${j}`;
-        const lines = block.split("\n");
         const imgOnly = block.trim().match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)$/);
         if (imgOnly) {
           out.push(
@@ -242,6 +242,8 @@ export function Message({
   searchQuery,
   searchSources,
   thinkVariant,
+  followUps,
+  onFollowUp,
 }: {
   role: "user" | "model";
   text: string;
@@ -254,6 +256,8 @@ export function Message({
   searchQuery?: string;
   searchSources?: { title: string; url: string; domain?: string }[];
   thinkVariant?: string;
+  followUps?: string[];
+  onFollowUp?: (prompt: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -295,8 +299,6 @@ export function Message({
     );
   }
 
-  // Pending with no tokens yet — stay in a live thinking state until text arrives.
-  // Never use self-timed demos that show "Thought for Ns" while the bubble is empty.
   if (pending && !text) {
     if (generatingImage) {
       return (
@@ -362,13 +364,28 @@ export function Message({
     href: s.url,
   }));
 
+  // Live tokens: caret stream (does not replace markdown render once complete).
+  if (pending && text) {
+    return (
+      <div className="nx-in group/msg">
+        <div className="mb-2 flex items-center gap-2">
+          <TroveOrb size={22} state="thinking" />
+          <span className="text-[12.5px] font-medium text-ink-3">Trove</span>
+        </div>
+        <div className="pl-8">
+          <StreamingText text={text} live fill />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="nx-in group/msg">
       <div className="mb-2 flex items-center gap-2">
-        <TroveOrb size={22} state={pending ? "thinking" : "idle"} />
+        <TroveOrb size={22} state="idle" />
         <span className="text-[12.5px] font-medium text-ink-3">Trove</span>
       </div>
-      {!pending && text && (thinkMs != null || searchQuery || (searchSources && searchSources.length)) ? (
+      {text && (thinkMs != null || searchQuery || (searchSources && searchSources.length)) ? (
         <div className="mb-1.5 pl-8">
           <ThinkingState
             variant={settledVariant}
@@ -381,9 +398,32 @@ export function Message({
           />
         </div>
       ) : null}
-      {/* Reply body always renders when text exists — thinking never replaces it */}
       <div className="space-y-3 pl-8 text-[15px] text-ink">{render(text)}</div>
-      {!pending && text ? (
+      {searchSources && searchSources.length > 0 ? (
+        <div className="mt-2 pl-8">
+          <StreamingText
+            text=""
+            live={false}
+            sources={sourcesFromSearch(searchSources)}
+            followUps={followUps}
+            labels={{
+              sources: `${searchSources.length} sources`,
+              followUps: "Follow-ups",
+            }}
+            onFollowUp={(prompt) => onFollowUp?.(prompt)}
+          />
+        </div>
+      ) : followUps && followUps.length > 0 ? (
+        <div className="mt-2 pl-8">
+          <StreamingText
+            text=""
+            live={false}
+            followUps={followUps}
+            onFollowUp={(prompt) => onFollowUp?.(prompt)}
+          />
+        </div>
+      ) : null}
+      {text ? (
         <div className="mt-2 flex items-center gap-0.5 pl-8 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100">
           <Action
             icon={copied ? FiCheck : FiCopy}
