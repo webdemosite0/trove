@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
       "liquid-gooey": "./src/components/ui/liquid-gooey.tsx",
     },
   },
+  async redirects() {
+    return [
+      { source: "/agents", destination: "/tros", permanent: true },
+      { source: "/agents/:id", destination: "/tros/:id", permanent: true },
+    ];
+  },
   async headers() {
     return [
       { source: "/websites", headers: sitesHeaders },
