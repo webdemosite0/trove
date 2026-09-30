@@ -14,6 +14,7 @@ import {
   FiSettings,
   FiCreditCard,
   FiUsers,
+  FiHome,
   TbLayoutDashboard,
   TbMessageCircle,
   TbFiles,
@@ -24,12 +25,12 @@ import {
   TbFolder,
   TbHelpCircle,
   TbWorld,
+  TbSparkles,
 } from "@/components/ui/icons";
-import { TroveOrb } from "@/components/brand/orb";
-import { Wordmark } from "@/components/brand/logo";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
 import { ThemeToggle } from "@/components/shell/theme";
+import { ProductSwitcher, useIsTrosProduct } from "@/components/shell/product-switcher";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
@@ -43,7 +44,8 @@ interface Item {
   teamOnly?: boolean;
 }
 
-const PRIMARY: Item[] = [
+/** Main Trove workspace — chat, artifacts, sites. */
+const TROVE_NAV: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
   { href: "/projects", label: "Projects", icon: TbFolder, motion: "stack" },
@@ -52,7 +54,13 @@ const PRIMARY: Item[] = [
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
   { href: "/websites", label: "Sites", icon: TbWorld, motion: "grow" },
-  { href: "/tros", label: "Tros", icon: TbRobot, motion: "ring" },
+  { href: "/team", label: "Team", icon: FiUsers, motion: "stack", teamOnly: true },
+];
+
+/** Tros product area — specialists only. */
+const TROS_NAV: Item[] = [
+  { href: "/tros", label: "Library", icon: TbRobot, motion: "ring" },
+  { href: "/tros?new=1", label: "New Tro", icon: FiPlus, motion: "open" },
   { href: "/team", label: "Team", icon: FiUsers, motion: "stack", teamOnly: true },
 ];
 
@@ -67,9 +75,15 @@ function NavRow({
   onNavigate?: () => void;
   compact?: boolean;
 }) {
+  const hrefPath = item.href.split("?")[0] || item.href;
   const active =
-    pathname === item.href ||
-    (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+    pathname === hrefPath ||
+    (hrefPath !== "/dashboard" &&
+      hrefPath !== "/tros" &&
+      pathname.startsWith(hrefPath + "/")) ||
+    (hrefPath === "/tros" &&
+      (pathname === "/tros" || pathname.startsWith("/tros/")) &&
+      !item.href.includes("new=1"));
 
   if (compact) {
     return (
@@ -151,7 +165,7 @@ function ReferralPromoSurface({ mode }: { mode: "light" | "dark" }) {
       />
       <div className="relative">
         <p className={cn("text-[10px] font-bold uppercase tracking-[0.14em]", dark ? "text-fuchsia-300" : "text-fuchsia-600")}>
-          Refer & earn
+          Refer &amp; earn
         </p>
         <p className={cn("mt-1 text-[13px] font-semibold leading-snug", dark ? "text-white" : "text-slate-950")}>
           Share Trove · get credits
@@ -272,30 +286,40 @@ export function Sidebar({
     user?.effectivePlan === "team" ||
     user?.plan === "team" ||
     isAdmin;
-  const items = PRIMARY.filter((item) => !item.teamOnly || showTeam);
+  const isTros = useIsTrosProduct(pathname);
+  const items = (isTros ? TROS_NAV : TROVE_NAV).filter((item) => !item.teamOnly || showTeam);
   const body = (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-14 shrink-0 items-center gap-2.5 px-3">
-        <Link href="/dashboard" onClick={closeMobile} className="flex min-w-0 flex-1 items-center gap-2.5">
-          <TroveOrb size={28} />
-          {!collapsed ? <Wordmark size={18} /> : null}
-        </Link>
-        <button type="button" className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden" onClick={closeMobile} aria-label="Close menu">
+      <div className="flex h-14 shrink-0 items-center gap-1.5 px-2.5">
+        <ProductSwitcher collapsed={collapsed} onNavigate={closeMobile} />
+        <button type="button" className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden" onClick={closeMobile} aria-label="Close menu">
           <FiX size={18} />
         </button>
-        <button type="button" className="hidden size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:grid" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+        <button type="button" className="hidden size-8 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:grid" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <FiSidebar size={16} />
         </button>
       </div>
       <div className="shrink-0 px-3 pb-3">
-        <Link href="/chat" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white", collapsed && "px-0")}>
-          <FiPlus size={15} />
-          {!collapsed ? <span>New chat</span> : null}
-        </Link>
+        {isTros ? (
+          <Link href="/tros?new=1" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white", collapsed && "px-0")}>
+            <FiPlus size={15} />
+            {!collapsed ? <span>New Tro</span> : null}
+          </Link>
+        ) : (
+          <Link href="/chat" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white", collapsed && "px-0")}>
+            <FiPlus size={15} />
+            {!collapsed ? <span>New chat</span> : null}
+          </Link>
+        )}
       </div>
+      {!collapsed ? (
+        <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+          {isTros ? "Tros" : "Workspace"}
+        </p>
+      ) : null}
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 pb-2">
         {items.map((item) => (
-          <NavRow key={item.href} item={item} pathname={pathname} onNavigate={closeMobile} compact={collapsed} />
+          <NavRow key={item.href + item.label} item={item} pathname={pathname} onNavigate={closeMobile} compact={collapsed} />
         ))}
       </nav>
       <div className="relative z-10 shrink-0 space-y-2 border-t border-line bg-rail p-2.5">
@@ -358,7 +382,13 @@ export function Sidebar({
   );
   return (
     <>
-      <aside className={cn("sticky top-0 hidden h-dvh shrink-0 overflow-hidden border-r border-line bg-rail transition-[width] duration-200 lg:flex lg:flex-col", collapsed ? "w-[64px]" : "w-[240px]")}>
+      <aside className={cn(
+        "sticky top-0 hidden h-dvh shrink-0 overflow-hidden border-r transition-[width] duration-200 lg:flex lg:flex-col",
+        collapsed ? "w-[64px]" : "w-[240px]",
+        isTros
+          ? "border-violet-500/20 bg-rail shadow-[inset_3px_0_0_0_rgba(139,92,246,0.35)]"
+          : "border-line bg-rail",
+      )}>
         {body}
       </aside>
       {open ? (
