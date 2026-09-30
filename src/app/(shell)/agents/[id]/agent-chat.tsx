@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
-import { FiArrowLeft, FiPlus } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -86,6 +86,7 @@ export function AgentChat({
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [computer, setComputer] = useState<ComputerState>(IDLE_COMPUTER);
   const [computerBusy, setComputerBusy] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const bottom = useRef<HTMLDivElement>(null);
   const nextId = useRef(restored?.messages.length ?? 0);
   const stickToBottom = useRef(true);
@@ -239,6 +240,7 @@ export function AgentChat({
       if (!text || busy) return;
       stickToBottom.current = true;
       pushActivity("New task", text.slice(0, 80), "run");
+      if (!panelOpen) setPanelOpen(true);
       const browseUrl = extractBrowseUrl(text);
       if (browseUrl) {
         try {
@@ -328,7 +330,7 @@ export function AgentChat({
         setBusy(false);
       }
     },
-    [agent.id, agent.name, agent.role, busy, navigateComputer, pushActivity, save, turns],
+    [agent.id, agent.name, agent.role, busy, navigateComputer, panelOpen, pushActivity, save, turns],
   );
 
   const retry = useCallback(() => {
@@ -349,8 +351,9 @@ export function AgentChat({
           : "Offline";
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
-      <div className="order-first flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
+      {/* Chat column */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="shrink-0 border-b border-line/80 bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
           <div className="flex h-14 items-center gap-3">
             <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink">
@@ -376,101 +379,235 @@ export function AgentChat({
                 <Ico icon={FiPlus} motion="open" size={13} /> New
               </button>
             ) : null}
+            <button
+              type="button"
+              onClick={() => setPanelOpen((v) => !v)}
+              aria-expanded={panelOpen}
+              aria-label={panelOpen ? "Close task panel" : "Open task panel"}
+              className={cn(
+                "grid h-9 w-9 shrink-0 place-items-center rounded-xl transition",
+                panelOpen ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
+              )}
+            >
+              <FiSidebar size={17} />
+            </button>
           </div>
         </header>
+
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-6 lg:px-10">
           <div className="mx-auto max-w-[720px] space-y-6">
             {turns.length === 0 ? (
               <div className="py-10 text-center">
-                <Bot size={80} accent={agent.accent} seed={agent.id} state="idle" />
-                <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">Chat with {agent.name.split(" ")[0]}</h2>
-                <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">{agent.instructions}</p>
+                <Bot size={88} accent={agent.accent} seed={agent.id} state="idle" />
+                <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">
+                  Chat with {agent.name.split(" ")[0]}
+                </h2>
+                <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">
+                  {agent.instructions}
+                </p>
                 <Recents className="mx-auto mt-10 max-w-[520px] text-left" label="Earlier sessions" items={recents} />
               </div>
             ) : (
               turns.map((t, i) => (
-                <Message key={t.id} role={t.role} text={t.text} pending={busy && i === turns.length - 1 && t.role === "model"} />
+                <Message
+                  key={t.id}
+                  role={t.role}
+                  text={t.text}
+                  pending={busy && i === turns.length - 1 && t.role === "model"}
+                />
               ))
             )}
             {error ? <FailureNote error={error} onRetry={retry} /> : null}
             <div ref={bottom} />
           </div>
         </div>
+
         <div className="relative z-20 shrink-0 border-t border-line/50 bg-canvas/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:px-10">
           <div className="mx-auto max-w-[720px]">
-            <Composer onSend={send} disabled={busy} placeholder={busy ? "Working…" : `Message ${agent.name}…`} />
+            <Composer
+              onSend={send}
+              disabled={busy}
+              placeholder={busy ? "Working…" : `Message ${agent.name}…`}
+            />
           </div>
         </div>
       </div>
 
-      <aside className="order-last hidden w-[300px] shrink-0 flex-col border-l border-line bg-rail xl:flex xl:w-[340px]">
-        <div className="flex items-center gap-3 border-b border-line px-4 py-4">
-          <Bot size={44} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
+      {/* Backdrop on small screens when panel open */}
+      <button
+        type="button"
+        aria-label="Close panel"
+        onClick={() => setPanelOpen(false)}
+        className={cn(
+          "absolute inset-0 z-30 bg-black/35 transition-opacity duration-300 lg:hidden",
+          panelOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      />
+
+      {/* Task manager panel — ChatGPT-style */}
+      <aside
+        className={cn(
+          "absolute inset-y-0 right-0 z-40 flex w-[min(100vw-1.5rem,340px)] flex-col border-l border-line bg-raised/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
+          panelOpen ? "translate-x-0" : "translate-x-full lg:hidden",
+        )}
+      >
+        {/* Agent header */}
+        <div className="flex items-center gap-3 border-b border-line px-4 py-3.5">
+          <Bot size={40} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] font-semibold text-ink">{agent.name}</p>
             <p className="truncate text-[11.5px] text-ink-3">{agent.role}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setPanelOpen(false)}
+            aria-label="Close task panel"
+            className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+          >
+            <FiX size={16} />
+          </button>
         </div>
-        <div className="border-b border-line px-4 py-3">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Computer</p>
-            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", computerConnected ? "bg-positive/15 text-positive" : "bg-ink/10 text-ink-4")}>
-              {computerLabel}
-            </span>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-line bg-canvas/60">
-            <div className="relative aspect-[16/10] bg-sunk">
-              {computer.screenshotBase64 ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={`data:image/jpeg;base64,${computer.screenshotBase64}`} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
-              ) : (
-                <div className="flex h-full items-center justify-center px-3 text-center text-[11px] text-ink-4">
-                  {computer.error || (computerConnected ? "Ready — paste a URL in chat" : "Start computer to browse")}
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {/* Computers */}
+          <section className="border-b border-line px-4 py-3">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Computers</p>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas/60 px-2.5 py-2">
+                <span
+                  className={cn(
+                    "grid size-8 shrink-0 place-items-center rounded-lg",
+                    computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3",
+                  )}
+                >
+                  <FiMonitor size={15} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[12.5px] font-medium text-ink">{agent.name.split(" ")[0]}&apos;s computer</p>
+                  <p className={cn("text-[11px]", computerConnected ? "text-positive" : "text-ink-4")}>
+                    {computerLabel}
+                    {computer.pageUrl ? ` · ${computer.title || computer.pageUrl}` : ""}
+                  </p>
                 </div>
-              )}
+                {computer.screenshotBase64 ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`data:image/jpeg;base64,${computer.screenshotBase64}`}
+                    alt=""
+                    className="h-9 w-12 shrink-0 rounded-md border border-line object-cover"
+                  />
+                ) : null}
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-line bg-canvas/40">
+                <div className="relative aspect-[16/9] bg-sunk">
+                  {computer.screenshotBase64 ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`data:image/jpeg;base64,${computer.screenshotBase64}`}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover object-top"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center px-3 text-center text-[11px] text-ink-4">
+                      {computer.error ||
+                        (computerConnected ? "Ready — paste a URL in chat" : "Start computer to browse")}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 border-t border-line px-2.5 py-2">
+                  {!computerConnected ? (
+                    <button
+                      type="button"
+                      disabled={computerBusy}
+                      onClick={() => void startComputer().catch(() => undefined)}
+                      className="rounded-lg bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent disabled:opacity-50"
+                    >
+                      {computerBusy ? "Starting…" : "Start"}
+                    </button>
+                  ) : (
+                    <>
+                      {computer.liveUrl ? (
+                        <a
+                          href={computer.liveUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover"
+                        >
+                          Live
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={computerBusy}
+                        onClick={() => void browserAction("screenshot").catch(() => undefined)}
+                        className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50"
+                      >
+                        Snap
+                      </button>
+                      <button
+                        type="button"
+                        disabled={computerBusy}
+                        onClick={() => void stopComputer()}
+                        className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50"
+                      >
+                        Stop
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1.5 border-t border-line px-2.5 py-2">
-              {!computerConnected ? (
-                <button type="button" disabled={computerBusy} onClick={() => void startComputer().catch(() => undefined)} className="rounded-lg bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent disabled:opacity-50">
-                  {computerBusy ? "Starting…" : "Start"}
-                </button>
-              ) : (
-                <>
-                  {computer.liveUrl ? (
-                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover">Live</a>
-                  ) : null}
-                  <button type="button" disabled={computerBusy} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50">Snap</button>
-                  <button type="button" disabled={computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50">Stop</button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="border-b border-line px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tools</p>
-          <ul className="mt-2 space-y-1">
-            {["Cloud browser", ...tools.slice(0, 5)].map((tool) => (
-              <li key={tool} className="flex items-center gap-2 text-[12px] text-ink-2">
-                <span className="size-1.5 rounded-full" style={{ background: agent.accent }} />
-                {tool}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tasks</p>
-          {activity.length === 0 ? (
-            <p className="mt-3 text-[12px] text-ink-4">Activity shows up here while the Tro works.</p>
-          ) : (
-            <ul className="mt-2 space-y-2">
-              {activity.map((a) => (
-                <li key={a.id} className="rounded-xl border border-line bg-canvas/50 px-3 py-2">
-                  <p className="text-[12px] font-medium text-ink">{a.label}</p>
-                  {a.detail ? <p className="mt-0.5 truncate text-[11px] text-ink-3">{a.detail}</p> : null}
+          </section>
+
+          {/* Recent activity */}
+          <section className="border-b border-line px-4 py-3">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Recent activity</p>
+            {activity.length === 0 ? (
+              <p className="text-[12px] text-ink-4">Tasks appear here as the Tro works.</p>
+            ) : (
+              <ul className="space-y-1">
+                {activity.map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-start gap-2 rounded-lg px-1.5 py-1.5 transition hover:bg-hover/60"
+                  >
+                    <span
+                      className={cn(
+                        "mt-1.5 size-1.5 shrink-0 rounded-full",
+                        a.tone === "ok"
+                          ? "bg-positive"
+                          : a.tone === "warn"
+                            ? "bg-critical"
+                            : a.tone === "run"
+                              ? "bg-accent animate-pulse"
+                              : "bg-ink-4",
+                      )}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[12.5px] font-medium text-ink">{a.label}</span>
+                      {a.detail ? (
+                        <span className="block truncate text-[11px] text-ink-3">{a.detail}</span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Tools / outputs */}
+          <section className="px-4 py-3">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tools</p>
+            <ul className="space-y-1">
+              {["Cloud browser", ...tools.slice(0, 6)].map((tool) => (
+                <li key={tool} className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[12px] text-ink-2">
+                  <span className="size-1.5 rounded-full" style={{ background: agent.accent }} />
+                  {tool}
                 </li>
               ))}
             </ul>
-          )}
+          </section>
         </div>
       </aside>
     </div>
