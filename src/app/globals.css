@@ -1,74 +1,41 @@
-@import "tailwindcss";
-@import "./stream-anim.css";
+/* Tokens live on :root / data-theme. Utilities map to CSS variables so Tailwind purge cannot drop them. */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-@theme {
-  --color-canvas: #0a0a0b;
-  --color-rail: #0e0e10;
-  --color-sunk: #121214;
-  --color-raised: #17171a;
-  --color-hover: #1e1e22;
-  --color-ink: #f4f4f4;
-  --color-ink-2: #f4f4f4;
-  --color-ink-3: #a9a9ae;
-  --color-ink-4: #8a8a90;
-  --color-line: #26262b;
-  --color-line-strong: #34343a;
-  --color-accent: #5aa9ff;
-  --color-accent-soft: #0d1b33;
-  --color-violet: #7cc0ff;
-  --color-positive: #34d399;
-  --color-positive-soft: #10291f;
-  --color-caution: #fbbf24;
-  --color-critical: #f87171;
-  --color-critical-soft: #2a1616;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono-code), ui-monospace, monospace;
-  --font-display: var(--font-display-face), "Segoe UI", system-ui, sans-serif;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --t-tap: 120ms;
-  --t-hover: 180ms;
-  --t-card: 240ms;
-  --t-panel: 320ms;
-  --r-tight: 4px;
-  --r-chip: 6px;
-  --r-control: 8px;
-  --r-panel: 12px;
-  --r-card: 14px;
-  --r-hero: 18px;
-}
-
-/* Default tokens (overridden by data-theme on <html>) */
 :root {
-  --color-canvas: #0a0a0b;
-  --color-rail: #0e0e10;
-  --color-sunk: #121214;
-  --color-raised: #17171a;
-  --color-hover: #1e1e22;
-  --color-ink: #f4f4f4;
-  --color-ink-2: #f4f4f4;
-  --color-ink-3: #a9a9ae;
-  --color-ink-4: #8a8a90;
-  --color-line: #26262b;
-  --color-line-strong: #34343a;
-  --color-accent: #5aa9ff;
-  --color-accent-soft: #0d1b33;
-  --color-violet: #7cc0ff;
-  --color-positive: #34d399;
-  --color-positive-soft: #10291f;
-  --color-caution: #fbbf24;
-  --color-critical: #f87171;
-  --color-critical-soft: #2a1616;
+  --color-canvas: #212121;
+  --color-rail: #171717;
+  --color-sunk: #2a2a2a;
+  --color-raised: #2f2f2f;
+  --color-hover: #3a3a3a;
+  --color-ink: #ececec;
+  --color-ink-2: #ececec;
+  --color-ink-3: #b4b4b4;
+  --color-ink-4: #8e8e8e;
+  --color-line: #3a3a3a;
+  --color-line-strong: #4a4a4a;
+  --color-accent: #8ab4f8;
+  --color-accent-soft: #1a2332;
+  --color-violet: #a0a0a0;
+  --color-positive: #81c995;
+  --color-positive-soft: #1a2a1f;
+  --color-caution: #fdd663;
+  --color-critical: #f28b82;
+  --color-critical-soft: #2a1a1a;
   --shade: #ffffff;
   --ground: #000000;
-  --btn-a: #2563eb;
-  --btn-b: #1d4ed8;
+  --btn-a: #3c4043;
+  --btn-b: #2f3133;
   --btn-ink: #ffffff;
-  --btn-glow: rgb(37 99 235 / 0.55);
-  --focus-ring: rgb(90 169 255 / 0.32);
-  --focus-line: rgb(90 169 255 / 0.80);
+  --btn-glow: rgb(138 180 248 / 0.25);
+  --focus-ring: rgb(138 180 248 / 0.28);
+  --focus-line: rgb(138 180 248 / 0.7);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-display-face), var(--font-sans);
+  --font-mono: var(--font-mono-code), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --r-chip: 10px;
+  --r-control: 12px;
+  --elev-lift: 0 12px 40px -16px rgb(0 0 0 / 0.45);
   color-scheme: dark;
 }
 
@@ -103,33 +70,33 @@
 }
 
 :root[data-theme="dark"] {
-  --color-canvas: #0a0a0b;
-  --color-rail: #0e0e10;
-  --color-sunk: #121214;
-  --color-raised: #17171a;
-  --color-hover: #1e1e22;
-  --color-ink: #f4f4f4;
-  --color-ink-2: #f4f4f4;
-  --color-ink-3: #a9a9ae;
-  --color-ink-4: #8a8a90;
-  --color-line: #26262b;
-  --color-line-strong: #34343a;
-  --color-accent: #5aa9ff;
-  --color-accent-soft: #0d1b33;
-  --color-violet: #7cc0ff;
-  --color-positive: #34d399;
-  --color-positive-soft: #10291f;
-  --color-caution: #fbbf24;
-  --color-critical: #f87171;
-  --color-critical-soft: #2a1616;
+  --color-canvas: #212121;
+  --color-rail: #171717;
+  --color-sunk: #2a2a2a;
+  --color-raised: #2f2f2f;
+  --color-hover: #3a3a3a;
+  --color-ink: #ececec;
+  --color-ink-2: #ececec;
+  --color-ink-3: #b4b4b4;
+  --color-ink-4: #8e8e8e;
+  --color-line: #3a3a3a;
+  --color-line-strong: #4a4a4a;
+  --color-accent: #8ab4f8;
+  --color-accent-soft: #1a2332;
+  --color-violet: #a0a0a0;
+  --color-positive: #81c995;
+  --color-positive-soft: #1a2a1f;
+  --color-caution: #fdd663;
+  --color-critical: #f28b82;
+  --color-critical-soft: #2a1a1a;
   --shade: #ffffff;
   --ground: #000000;
-  --btn-a: #2563eb;
-  --btn-b: #1d4ed8;
+  --btn-a: #3c4043;
+  --btn-b: #2f3133;
   --btn-ink: #ffffff;
-  --btn-glow: rgb(37 99 235 / 0.55);
-  --focus-ring: rgb(90 169 255 / 0.32);
-  --focus-line: rgb(90 169 255 / 0.80);
+  --btn-glow: rgb(138 180 248 / 0.25);
+  --focus-ring: rgb(138 180 248 / 0.28);
+  --focus-line: rgb(138 180 248 / 0.7);
   color-scheme: dark;
 }
 
@@ -151,128 +118,53 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Token utility classes (survive Tailwind purge) */
-.bg-canvas {
-  background-color: var(--color-canvas);
-}
-.bg-rail {
-  background-color: var(--color-rail);
-}
-.bg-sunk {
-  background-color: var(--color-sunk);
-}
-.bg-raised {
-  background-color: var(--color-raised);
-}
-.bg-hover {
-  background-color: var(--color-hover);
-}
-.bg-accent {
-  background-color: var(--color-accent);
-}
-.text-ink {
-  color: var(--color-ink);
-}
-.text-ink-2 {
-  color: var(--color-ink-2);
-}
-.text-ink-3 {
-  color: var(--color-ink-3);
-}
-.text-ink-4 {
-  color: var(--color-ink-4);
-}
-.text-accent {
-  color: var(--color-accent);
-}
-.text-positive {
-  color: var(--color-positive);
-}
-.border-line {
-  border-color: var(--color-line);
-}
-.border-line-strong {
-  border-color: var(--color-line-strong);
-}
-.border-accent {
-  border-color: var(--color-accent);
-}
+.bg-canvas { background-color: var(--color-canvas); }
+.bg-rail { background-color: var(--color-rail); }
+.bg-sunk { background-color: var(--color-sunk); }
+.bg-raised { background-color: var(--color-raised); }
+.bg-hover { background-color: var(--color-hover); }
+.bg-accent { background-color: var(--color-accent); }
+.text-ink { color: var(--color-ink); }
+.text-ink-2 { color: var(--color-ink-2); }
+.text-ink-3 { color: var(--color-ink-3); }
+.text-ink-4 { color: var(--color-ink-4); }
+.text-accent { color: var(--color-accent); }
+.text-positive { color: var(--color-positive); }
+.text-critical { color: var(--color-critical); }
+.border-line { border-color: var(--color-line); }
+.border-line-strong { border-color: var(--color-line-strong); }
+.bg-positive\/15 { background-color: color-mix(in oklab, var(--color-positive) 15%, transparent); }
+.bg-critical\/10 { background-color: color-mix(in oklab, var(--color-critical) 10%, transparent); }
+.bg-accent\/15 { background-color: color-mix(in oklab, var(--color-accent) 15%, transparent); }
 
-/**
- * Primary CTA gradient — login submit, New chat, etc.
- * Solid fallback + gradient so text-white never sits on a blank surface.
- */
 .btn-grad {
-  background-image: linear-gradient(
-    135deg,
-    var(--btn-a) 0%,
-    var(--btn-b) 100%
-  );
   background-color: var(--btn-a);
-  color: var(--btn-ink, #ffffff);
+  background-image: linear-gradient(135deg, var(--btn-a), var(--btn-b));
+  color: var(--btn-ink);
 }
-
-.btn-grad:hover {
-  filter: brightness(1.05);
-}
-
-.btn-grad:disabled {
-  filter: none;
-}
-
+.btn-grad:hover { filter: brightness(1.06); }
+.btn-grad:disabled { opacity: 0.6; }
 .btn-grad,
-.btn-grad * {
-  color: var(--btn-ink, #ffffff);
-}
+.btn-grad * { color: var(--btn-ink); }
 
-/* Logo wordmark — theme-aware ink (never pure white-on-light) */
 .wordmark-gradient {
-  color: var(--color-ink);
-  background-image: linear-gradient(
-    120deg,
-    var(--color-ink) 0%,
-    var(--color-accent) 55%,
-    var(--color-violet) 100%
-  );
+  background-image: linear-gradient(90deg, var(--color-ink) 0%, var(--color-ink-3) 100%);
   -webkit-background-clip: text;
   background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
-/* Fallback if background-clip unsupported */
-@supports not (background-clip: text) {
-  .wordmark-gradient {
-    color: var(--color-ink);
-    background-image: none;
-    -webkit-text-fill-color: unset;
-  }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-raised);
+  padding: 0.35rem 0.75rem;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-ink);
+  transition: background 0.15s ease;
 }
-
-.nx-sweep-text {
-  /* decorative; safe no-op if motion CSS omitted */
-}
-
-.nx-in {
-  animation: fade-in 200ms var(--ease-ui) both;
-}
-
-.scrollbar-none {
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
-.rail-item-active {
-  box-shadow: inset 2px 0 0 0 var(--color-accent);
-}
-
-:root {
-  --elev-lift: 0 24px 64px -16px rgb(0 0 0 / 0.55);
-  --sh-2: 0 8px 24px -8px rgb(0 0 0 / 0.35);
-}
-
-:root[data-theme="light"] {
-  --elev-lift: 0 24px 64px -20px rgb(26 31 54 / 0.18);
-  --sh-2: 0 8px 24px -10px rgb(26 31 54 / 0.12);
-}
+.chip:hover { background: var(--color-hover); }

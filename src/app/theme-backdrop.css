@@ -1,5 +1,5 @@
 /*
- * Theme backdrop + dark surface polish.
+ * Theme backdrop + surface polish.
  * Static only — no animated layers.
  */
 
@@ -8,22 +8,17 @@
   inset: 0;
   background-color: #f7f3ff;
   background-image:
-    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.5), transparent 72%),
-    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.42), transparent 70%),
-    radial-gradient(ellipse 55% 45% at 90% 92%, rgba(200, 190, 255, 0.32), transparent 74%),
-    radial-gradient(ellipse 50% 40% at 8% 94%, rgba(175, 185, 255, 0.26), transparent 72%),
-    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(255, 255, 255, 0.78), transparent 68%),
+    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.35), transparent 72%),
+    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.28), transparent 70%),
     linear-gradient(180deg, #f7f5ff 0%, #eef1ff 45%, #f3f5fb 100%);
   transform: translateZ(0);
   backface-visibility: hidden;
 }
 
-/* Grid removed — clean wash only */
 .nx-photo-bg::after {
   content: none;
 }
 
-/* Theme switch — opacity (no display flash) */
 .nx-bg-light {
   opacity: 1;
   visibility: visible;
@@ -42,256 +37,9 @@
   visibility: visible;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .nx-bg-light {
-    opacity: 0;
-    visibility: hidden;
-  }
-  :root:not([data-theme="light"]) .nx-bg-dark {
-    opacity: 1;
-    visibility: visible;
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .nx-bg-light {
-    opacity: 1;
-    visibility: visible;
-  }
-  :root:not([data-theme="dark"]) .nx-bg-dark {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-/* Match page fill to photo in light */
-:root[data-theme="light"] {
-  --color-canvas: #f7f3ff;
-  --color-rail: #fcfaff;
-  --color-sunk: #f0ecff;
-  --color-raised: #fffefe;
-  --color-hover: #ece6ff;
-  --color-line: #e2daf5;
-  --color-line-strong: #cfc2ee;
-  --color-accent: #6846e8;
-  --color-accent-soft: #eee8ff;
-  --color-violet: #a447e6;
-  --btn-a: #7048e8;
-  --btn-b: #3f67e8;
-  --btn-glow: rgb(112 72 232 / 0.30);
-}
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --color-canvas: #f7f3ff;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Dark mode surface polish                                           */
-/* Stronger hierarchy, clearer borders, readable secondary text.      */
-/* ------------------------------------------------------------------ */
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --color-canvas: #070613;
-  --color-rail: #0d0a1c;
-  --color-sunk: #131026;
-  --color-raised: #1a1631;
-  --color-hover: #241e42;
-  --color-ink: #f5f5f7;
-  --color-ink-2: #e8e8ed;
-  --color-ink-3: #a8a8b3;
-  --color-ink-4: #7e7e8a;
-  --color-line: #302850;
-  --color-line-strong: #493b75;
-  --color-accent: #8b7cff;
-  --color-accent-soft: #1d173b;
-  --color-violet: #d275ff;
-  --btn-a: #7c4dff;
-  --btn-b: #3478f6;
-  --btn-glow: rgb(124 77 255 / 0.38);
-  --scrollbar: #302850;
-  --scrollbar-hover: #493b75;
-  --chip-hover-line: #45455a;
-  --hairline: rgb(180 200 255 / 0.16);
-  --bezel: rgb(180 200 255 / 0.06);
-  --focus-ring: rgb(139 124 255 / 0.30);
-  --focus-line: rgb(139 124 255 / 0.90);
-  --elev: 0 12px 40px -12px rgb(0 0 0 / 0.65);
-  --elev-lift: 0 20px 56px -16px rgb(0 0 0 / 0.75);
-  --sh-1: 0 1px 2px rgb(0 0 0 / 0.35);
-  --sh-2: 0 2px 8px rgb(0 0 0 / 0.28), 0 12px 32px -12px rgb(0 0 0 / 0.4);
-  --sh-3: 0 4px 12px rgb(0 0 0 / 0.3), 0 24px 48px -16px rgb(0 0 0 / 0.45);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-canvas: #070613;
-    --color-rail: #0d0a1c;
-    --color-sunk: #131026;
-    --color-raised: #1a1631;
-    --color-hover: #241e42;
-    --color-ink: #f5f5f7;
-    --color-ink-2: #e8e8ed;
-    --color-ink-3: #a8a8b3;
-    --color-ink-4: #7e7e8a;
-    --color-line: #302850;
-    --color-line-strong: #493b75;
-    --color-accent: #8b7cff;
-    --color-accent-soft: #1d173b;
-    --color-violet: #d275ff;
-    --scrollbar: #302850;
-    --scrollbar-hover: #493b75;
-    --chip-hover-line: #45455a;
-    --hairline: rgb(180 200 255 / 0.16);
-    --bezel: rgb(180 200 255 / 0.06);
-    --focus-ring: rgb(139 124 255 / 0.30);
-    --focus-line: rgb(139 124 255 / 0.90);
-  }
-}
-
-/* Panels and cards sit more clearly on dark canvas */
-:root[data-theme="dark"] .panel {
-  background: color-mix(in oklab, var(--color-raised) 92%, var(--color-accent) 8%);
-  border-color: var(--color-line);
-  box-shadow: var(--sh-1);
-}
-
-:root[data-theme="dark"] .composer {
-  background: color-mix(in oklab, var(--color-raised) 88%, #ffffff 4%);
-  border-color: var(--color-line-strong);
-}
-
-:root[data-theme="dark"] .chip {
-  border-color: var(--color-line-strong);
-  background: color-mix(in oklab, var(--color-sunk) 80%, transparent);
-}
-
-:root[data-theme="dark"] .chip:hover,
-:root[data-theme="dark"] .chip:hover {
-  border-color: var(--chip-hover-line);
-  background: var(--color-hover);
-}
-
-
-/* -------------------------------------------------------------- */
-/* Colorful theme language — shared across the whole product.     */
-/* These rules intentionally live in the theme layer, not pages.  */
-/* -------------------------------------------------------------- */
-:root[data-theme="light"] .panel {
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in oklab, var(--color-raised) 92%, #f7d9ff 8%),
-      color-mix(in oklab, var(--color-raised) 94%, #dce8ff 6%)
-    );
-  border-color: color-mix(in oklab, var(--color-line) 80%, var(--color-violet) 20%);
-}
-
-:root[data-theme="dark"] .panel {
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in oklab, var(--color-raised) 88%, #7c3aed 12%),
-      color-mix(in oklab, var(--color-raised) 92%, #2563eb 8%)
-    );
-  border-color: color-mix(in oklab, var(--color-line) 74%, var(--color-violet) 26%);
-}
-
-:root[data-theme="light"] .composer {
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in oklab, white 94%, #f4d9ff 6%),
-      color-mix(in oklab, white 95%, #dceaff 5%)
-    );
-}
-
-:root[data-theme="dark"] .composer {
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in oklab, var(--color-raised) 88%, #6d28d9 12%),
-      color-mix(in oklab, var(--color-raised) 91%, #0ea5e9 9%)
-    );
-}
-
-:root[data-theme="light"] .rail-item-active,
-:root[data-theme="dark"] .rail-item-active {
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--color-accent-soft) 88%, var(--color-violet) 12%),
-      color-mix(in oklab, var(--color-hover) 90%, #38bdf8 10%)
-    );
-}
-
-
-/* Sidebar uses the same atmospheric gradient language as the workspace.
-   Icons stay neutral; the background carries the color. */
-:root[data-theme="light"] .nx-sidebar {
-  background:
-    radial-gradient(ellipse 90% 42% at 8% 8%, rgba(168,85,247,0.16), transparent 62%),
-    radial-gradient(ellipse 85% 38% at 94% 20%, rgba(59,130,246,0.14), transparent 60%),
-    linear-gradient(180deg, rgba(251,247,255,0.96), rgba(242,246,255,0.94));
-  backdrop-filter: blur(18px);
-}
-
-:root[data-theme="dark"] .nx-sidebar {
-  background:
-    radial-gradient(ellipse 95% 42% at 8% 8%, rgba(124,58,237,0.22), transparent 62%),
-    radial-gradient(ellipse 80% 36% at 92% 18%, rgba(37,99,235,0.16), transparent 58%),
-    linear-gradient(180deg, rgba(13,10,28,0.97), rgba(8,7,20,0.97));
-  backdrop-filter: blur(18px);
-}
-
-@keyframes nx-thinking-dot {
-  0%, 65%, 100% { opacity: 0.25; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-1px); }
-}
-
-.nx-thinking-dot {
-  display: inline-block;
-  animation: nx-thinking-dot 1.15s ease-in-out infinite;
-}
-
-
-/* Sidebar intentionally keeps Trove's earlier neutral palette.
- * The workspace can be colorful without turning navigation into decoration. */
-:root[data-theme="light"] .nx-sidebar {
-  --color-rail: #fbfaf8;
-  --color-sunk: #f1efea;
-  --color-raised: #ffffff;
-  --color-hover: #edebe5;
-  --color-ink: #101014;
-  --color-ink-2: #101014;
-  --color-ink-3: #3f3f4a;
-  --color-ink-4: #63636f;
-  --color-line: #e6e3dc;
-  --color-line-strong: #d6d2c8;
-  --color-accent: #4f46e5;
-  --color-accent-soft: #eeecfd;
-  --color-violet: #6366f1;
-  --btn-a: #4f46e5;
-  --btn-b: #4338ca;
-  --btn-glow: rgb(79 70 229 / 0.26);
-}
-
-:root[data-theme="dark"] .nx-sidebar {
-  --color-rail: #0c0c14;
-  --color-sunk: #111118;
-  --color-raised: #16161f;
-  --color-hover: #1e1e2a;
-  --color-ink: #f5f5f7;
-  --color-ink-2: #e8e8ed;
-  --color-ink-3: #a8a8b3;
-  --color-ink-4: #7e7e8a;
-  --color-line: #2a2a36;
-  --color-line-strong: #3a3a4a;
-  --color-accent: #6bb3ff;
-  --color-accent-soft: #0f1c33;
-  --color-violet: #8ec5ff;
-  --btn-a: #2563eb;
-  --btn-b: #1d4ed8;
-  --btn-glow: rgb(37 99 235 / 0.30);
+/* Dark mode — flat neutral (ChatGPT / Grok style) */
+:root[data-theme="dark"] .nx-photo-bg,
+:root[data-theme="dark"] .nx-bg-dark {
+  background-color: #212121 !important;
+  background-image: none !important;
 }
