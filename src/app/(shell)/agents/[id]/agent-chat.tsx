@@ -31,6 +31,42 @@ interface ActivityItem {
   tone: "idle" | "run" | "ok" | "warn";
 }
 
+type ComputerState = {
+  configured: boolean;
+  sessionId: string | null;
+  status: "idle" | "starting" | "ready" | "working" | "error";
+  liveUrl: string | null;
+  pageUrl: string | null;
+  title: string | null;
+  error: string | null;
+  screenshotBase64: string | null;
+};
+
+const IDLE_COMPUTER: ComputerState = {
+  configured: true,
+  sessionId: null,
+  status: "idle",
+  liveUrl: null,
+  pageUrl: null,
+  title: null,
+  error: null,
+  screenshotBase64: null,
+};
+
+function extractBrowseUrl(text: string): string | null {
+  const m = text.match(/https?:\/\/[^\s<>"']+/i);
+  if (m) return m[0];
+  const bare = text.match(
+    /\b((?:www\.)?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z]{2,}){1,})(?:\/[^\s]*)?/i,
+  );
+  if (!bare) return null;
+  const host = bare[1].toLowerCase();
+  if (host.includes("@") || /^\d+$/.test(host)) return null;
+  // Avoid treating common words as domains
+  if (!host.includes(".")) return null;
+  return `https://${bare[0]}`;
+}
+
 export function AgentChat({
   agent,
   recents,
@@ -48,6 +84,8 @@ export function AgentChat({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [computer, setComputer] = useState<ComputerState>(IDLE_COMPUTER);
+  const [computerBusy, setComputerBusy] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
   const nextId = useRef(restored?.messages.length ?? 0);
   const stickToBottom = useRef(true);
@@ -62,20 +100,107 @@ export function AgentChat({
     }
   }, [agent.tools]);
 
-  const pushActivity = useCallback((label: string, detail?: string, tone: ActivityItem["tone"] = "run") => {
-    setActivity((prev) =>
-      [
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          label,
-          detail,
-          at: Date.now(),
-          tone,
-        },
-        ...prev,
-      ].slice(0, 24),
-    );
-  }, []);
+  const pushActivity = useCallback(
+    (label: string, detail?: string, tone: ActivityItem["tone"] = "run") => {
+      setActivity((prev) =>
+        [
+          {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            label,
+            detail,
+            at: Date.now(),
+            tone,
+          },
+          ...prev,
+        ].slice(0, 24),
+      );
+    },
+    [],
+  );
+
+  const browserAction = useCallback(
+    async (action: string, extra?: Record<string, string>) => {
+      setComputerBusy(true);
+      try {
+        const res = await fetch("/api/tro/browser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agentId: agent.id, action, ...extra }),
+        });
+        const data = (await res.json().catch(() => null)) as ComputerState | null;
+        if (!data) throw new Error("Browser request failed.");
+        setComputer(data);
+        if (!res.ok) throw new Error(data.error || `Browser ${res.status}`);
+        return data;
+      } finally {
+        setComputerBusy(false);
+      }
+    },
+    [agent.id],
+  );
+
+  const startComputer = useCallback(async () => {
+    pushActivity("Starting computer", "Cloud browser session", "run");
+    try {
+      const data = await browserAction("start");
+      pushActivity("Computer connected", data.sessionId || undefined, "ok");
+      return data;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not start computer";
+      pushActivity("Computer failed", msg, "warn");
+      throw e;
+    }
+  }, [browserAction, pushActivity]);
+
+  const stopComputer = useCallback(async () => {
+    pushActivity("Stopping computer", undefined, "run");
+    try {
+      await browserAction("stop");
+      pushActivity("Computer stopped", undefined, "ok");
+    } catch (e) {
+      pushActivity(
+        "Stop failed",
+        e instanceof Error ? e.message : "Error",
+        "warn",
+      );
+    }
+  }, [browserAction, pushActivity]);
+
+  const navigateComputer = useCallback(
+    async (url: string) => {
+      pushActivity("Navigating", url, "run");
+      let session = computer;
+      if (!session.sessionId) {
+        session = await startComputer();
+      }
+      const data = await browserAction("navigate", { url });
+      pushActivity("Opened page", data.title || data.pageUrl || url, "ok");
+      try {
+        const shot = await browserAction("screenshot");
+        if (shot.screenshotBase64) setComputer(shot);
+      } catch {
+        /* screenshot optional */
+      }
+      return data;
+    },
+    [browserAction, computer, pushActivity, startComputer],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/tro/browser?agentId=${encodeURIComponent(agent.id)}`);
+        const data = (await res.json().catch(() => null)) as ComputerState | null;
+        if (!cancelled && data) setComputer(data);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [agent.id]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -123,6 +248,19 @@ export function AgentChat({
       stickToBottom.current = true;
       pushActivity("Received task", text.slice(0, 80), "run");
 
+      const browseUrl = extractBrowseUrl(text);
+      if (browseUrl) {
+        try {
+          await navigateComputer(browseUrl);
+        } catch (e) {
+          pushActivity(
+            "Browse skipped",
+            e instanceof Error ? e.message : "Could not open URL",
+            "warn",
+          );
+        }
+      }
+
       const history = [...(base ?? turns), { id: nextId.current++, role: "user" as const, text }];
       setTurns(history);
       setBusy(true);
@@ -164,6 +302,13 @@ export function AgentChat({
             messages: history.map(({ role, text: body }) => ({ role, text: body })),
             timeZone: localTimeZone(),
             attachments: strip(attachments),
+            browser: computer.sessionId
+              ? {
+                  sessionId: computer.sessionId,
+                  pageUrl: computer.pageUrl,
+                  title: computer.title,
+                }
+              : null,
           }),
         });
         if (!res.ok || !res.body) {
@@ -214,7 +359,19 @@ export function AgentChat({
         setBusy(false);
       }
     },
-    [agent.id, agent.name, agent.role, busy, save, turns, pushActivity],
+    [
+      agent.id,
+      agent.name,
+      agent.role,
+      busy,
+      computer.pageUrl,
+      computer.sessionId,
+      computer.title,
+      navigateComputer,
+      pushActivity,
+      save,
+      turns,
+    ],
   );
 
   const retry = useCallback(() => {
@@ -227,10 +384,19 @@ export function AgentChat({
     void send(lastUser.text, undefined, base);
   }, [send, turns]);
 
+  const computerConnected = Boolean(computer.sessionId);
+  const computerLabel =
+    computer.status === "error"
+      ? "Error"
+      : computerBusy || computer.status === "starting" || computer.status === "working"
+        ? "Working"
+        : computerConnected
+          ? "Connected"
+          : "Offline";
+
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
-      {/* Left control panel — apps, status, activity */}
-      <aside className="hidden w-[300px] shrink-0 flex-col border-r border-line bg-rail lg:flex xl:w-[320px]">
+      <aside className="hidden w-[320px] shrink-0 flex-col border-r border-line bg-rail lg:flex xl:w-[360px]">
         <div className="flex items-center gap-3 border-b border-line px-4 py-4">
           <Bot size={44} accent={agent.accent} state={busy ? "working" : "idle"} />
           <div className="min-w-0 flex-1">
@@ -243,53 +409,115 @@ export function AgentChat({
         </div>
 
         <div className="border-b border-line px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">Workspace</p>
-          <div className="mt-2 rounded-xl border border-line bg-canvas/70 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className="text-[13px] font-medium text-ink">{agent.name}'s computer</p>
-                <p className="text-[11.5px] text-ink-3">
-                  {busy ? "Running task" : "Idle · ready"}
-                </p>
-              </div>
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                  busy
-                    ? "bg-accent/15 text-accent"
-                    : "bg-positive/15 text-positive",
-                )}
-              >
-                {busy ? "Busy" : "Connected"}
-              </span>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+              Computer
+            </p>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                computer.status === "error"
+                  ? "bg-critical/15 text-critical"
+                  : computerConnected
+                    ? "bg-positive/15 text-positive"
+                    : "bg-ink/10 text-ink-4",
+              )}
+            >
+              {computerLabel}
+            </span>
+          </div>
+
+          <div className="mt-2 overflow-hidden rounded-xl border border-line bg-canvas/70">
+            <div className="relative aspect-[16/11] bg-sunk">
+              {computer.liveUrl && computerConnected ? (
+                <iframe
+                  title="Tro computer live view"
+                  src={computer.liveUrl}
+                  className="absolute inset-0 h-full w-full border-0 bg-white"
+                  allow="clipboard-read; clipboard-write"
+                  referrerPolicy="no-referrer"
+                />
+              ) : computer.screenshotBase64 ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`data:image/jpeg;base64,${computer.screenshotBase64}`}
+                  alt={computer.title || "Browser screenshot"}
+                  className="absolute inset-0 h-full w-full object-cover object-top"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center px-4 text-center text-[11.5px] leading-relaxed text-ink-4">
+                  {computer.error
+                    ? computer.error
+                    : computerConnected
+                      ? "Session live — open a URL from chat to browse."
+                      : "Start the cloud computer to watch pages load here."}
+                </div>
+              )}
             </div>
-            <div className="mt-3 h-24 overflow-hidden rounded-lg border border-line bg-sunk">
-              <div className="flex h-full items-center justify-center px-3 text-center text-[11.5px] leading-relaxed text-ink-4">
-                {busy
-                  ? "Tro is working in the cloud workspace. Live browser control can stream here when enabled."
-                  : "No live screen yet. Assign a task in chat to see activity."}
+            <div className="space-y-1 border-t border-line px-3 py-2">
+              <p className="truncate font-mono text-[10.5px] text-ink-3">
+                {computer.pageUrl || computer.title || "about:blank"}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {!computerConnected ? (
+                  <button
+                    type="button"
+                    disabled={computerBusy}
+                    onClick={() => void startComputer().catch(() => undefined)}
+                    className="rounded-lg bg-accent/15 px-2.5 py-1 text-[11.5px] font-semibold text-accent transition hover:bg-accent/25 disabled:opacity-50"
+                  >
+                    {computerBusy ? "Starting…" : "Start computer"}
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={computerBusy}
+                      onClick={() =>
+                        void browserAction("screenshot").catch(() => undefined)
+                      }
+                      className="rounded-lg border border-line px-2.5 py-1 text-[11.5px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50"
+                    >
+                      Snapshot
+                    </button>
+                    <button
+                      type="button"
+                      disabled={computerBusy}
+                      onClick={() => void stopComputer()}
+                      className="rounded-lg border border-line px-2.5 py-1 text-[11.5px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50"
+                    >
+                      Stop
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         <div className="border-b border-line px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">Apps & tools</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+            Apps & tools
+          </p>
           <ul className="mt-2 space-y-1">
-            {(tools.length ? tools : ["Chat", "Web search"]).map((tool) => (
-              <li
-                key={tool}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-ink-2"
-              >
-                <span className="size-1.5 rounded-full bg-accent/70" />
-                {tool}
-              </li>
-            ))}
+            {["Cloud browser", ...(tools.length ? tools : ["Chat", "Web search"])].map(
+              (tool) => (
+                <li
+                  key={tool}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-ink-2"
+                >
+                  <span className="size-1.5 rounded-full bg-accent/70" />
+                  {tool}
+                </li>
+              ),
+            )}
           </ul>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">Recent activity</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+            Recent activity
+          </p>
           {activity.length === 0 ? (
             <p className="mt-2 text-[12.5px] leading-relaxed text-ink-4">
               Activity shows up here as {agent.name} works.
@@ -297,7 +525,10 @@ export function AgentChat({
           ) : (
             <ul className="mt-2 space-y-2">
               {activity.map((item) => (
-                <li key={item.id} className="rounded-lg border border-line bg-canvas/50 px-2.5 py-2">
+                <li
+                  key={item.id}
+                  className="rounded-lg border border-line bg-canvas/50 px-2.5 py-2"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-[12.5px] font-medium text-ink">{item.label}</p>
                     <span
@@ -314,7 +545,9 @@ export function AgentChat({
                     />
                   </div>
                   {item.detail ? (
-                    <p className="mt-0.5 line-clamp-2 text-[11.5px] text-ink-3">{item.detail}</p>
+                    <p className="mt-0.5 line-clamp-2 text-[11.5px] text-ink-3">
+                      {item.detail}
+                    </p>
                   ) : null}
                 </li>
               ))}
@@ -324,13 +557,12 @@ export function AgentChat({
 
         <div className="border-t border-line px-4 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">Brief</p>
-          <p className="mt-1.5 line-clamp-6 text-[12px] leading-relaxed text-ink-3">
+          <p className="mt-1.5 line-clamp-5 text-[12px] leading-relaxed text-ink-3">
             {agent.instructions}
           </p>
         </div>
       </aside>
 
-      {/* Right / main chat */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="shrink-0 border-b border-line bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
           <div className="flex h-12 items-center gap-2.5">
@@ -342,15 +574,21 @@ export function AgentChat({
               <Ico icon={FiArrowLeft} motion="nudge" size={17} />
             </Link>
 
-            <Bot size={32} accent={agent.accent} state={busy ? "working" : "idle"} className="lg:hidden" />
+            <Bot
+              size={32}
+              accent={agent.accent}
+              state={busy ? "working" : "idle"}
+              className="lg:hidden"
+            />
 
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-[14px] font-semibold text-ink">{agent.name}</h1>
-              <p className="truncate text-[12px] lg:hidden" style={{ color: agent.accent }}>
-                {busy ? "Working…" : agent.role}
-              </p>
-              <p className="hidden truncate text-[12px] text-ink-3 lg:block">
-                Chat · {busy ? "working" : "ready"}
+              <p className="truncate text-[12px] text-ink-3">
+                {computerConnected
+                  ? `Computer · ${computer.pageUrl || "ready"}`
+                  : busy
+                    ? "Working…"
+                    : "Chat · ready"}
               </p>
             </div>
 
@@ -383,6 +621,9 @@ export function AgentChat({
                 <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">
                   {agent.instructions}
                 </p>
+                <p className="mx-auto mt-3 max-w-[46ch] text-[12.5px] text-ink-4">
+                  Tip: paste a URL and Tros will open it on the cloud computer.
+                </p>
                 <Recents
                   className="mx-auto mt-9 max-w-[520px] text-left"
                   label={`Earlier with ${agent.name.split(" ")[0]}`}
@@ -411,7 +652,13 @@ export function AgentChat({
             <Composer
               onSend={send}
               disabled={busy}
-              placeholder={busy ? "Working…" : `Message ${agent.name}…`}
+              placeholder={
+                busy
+                  ? "Working…"
+                  : computerConnected
+                    ? `Message ${agent.name} — paste a URL to browse…`
+                    : `Message ${agent.name}…`
+              }
             />
           </div>
         </div>
