@@ -2,7 +2,7 @@ import { AgentsView } from "./agents-view";
 import { listAgents } from "@/app/actions/agents";
 import { currentUser } from "@/lib/auth";
 
-export const metadata = { title: "Agents" };
+export const metadata = { title: "Tros" };
 
 export default async function AgentsPage() {
   const user = await currentUser();

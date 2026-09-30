@@ -1,220 +1,263 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export type BotState = "idle" | "working" | "done" | "failed";
 
+/** Visual species for each Tro — deterministic from a seed (id or name). */
+export type SplashySpecies =
+  | "muse"
+  | "pulse"
+  | "orb"
+  | "spark"
+  | "nova"
+  | "drift";
+
+const SPECIES: SplashySpecies[] = ["muse", "pulse", "orb", "spark", "nova", "drift"];
+
+export function speciesFromSeed(seed?: string | null): SplashySpecies {
+  const s = String(seed || "trove");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return SPECIES[h % SPECIES.length]!;
+}
+
 /**
- * A small 2D robot, drawn in SVG. It bobs while idle, blinks on a loop,
- * spins its antenna and gets a scanning visor while working, and shows a
- * check or a flat mouth when it finishes.
+ * Animated splashy mascot for Tros.
+ * Each species has a distinct silhouette; working state adds motion.
  */
 export function Bot({
   size = 56,
   accent = "#3b82f6",
   state = "idle",
+  species,
+  seed,
   className,
 }: {
   size?: number;
   accent?: string;
   state?: BotState;
+  species?: SplashySpecies;
+  /** Used to pick a stable species when `species` is omitted. */
+  seed?: string;
   className?: string;
 }) {
-  // Callers pass neon pastels tuned to glow on black (#7dcfff, #9ece6a, ...).
-  // On a white page those drop to ~2:1 contrast, so the bot goes invisible.
-  // --tint-darken is 0% on dark and mixes in black on light, which keeps all
-  // ~10 call sites working untouched.
-  const ink = `color-mix(in oklab, ${accent}, #000 var(--tint-darken))`;
-
-  // Two bots sharing an accent previously generated the same clipPath id.
-  const visor = `visor-${useId().replace(/:/g, "")}`;
-
+  const ink = `color-mix(in oklab, ${accent}, #000 var(--tint-darken, 0%))`;
+  const soft = `color-mix(in oklab, ${accent} 35%, transparent)`;
+  const uid = useId().replace(/:/g, "");
+  const kind = species || speciesFromSeed(seed);
   const working = state === "working";
   const done = state === "done";
   const failed = state === "failed";
+
+  const face = useMemo(() => {
+    if (failed) return { eye: "M" as const, mouth: "flat" as const };
+    if (done) return { eye: "happy" as const, mouth: "smile" as const };
+    if (working) return { eye: "focus" as const, mouth: "dot" as const };
+    return { eye: "round" as const, mouth: "soft" as const };
+  }, [done, failed, working]);
 
   return (
     <span
       className={cn("relative inline-block shrink-0", className)}
       style={{ width: size, height: size }}
       aria-hidden
+      data-species={kind}
+      data-state={state}
     >
+      {/* ambient glow */}
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-[-12%] rounded-full opacity-0 blur-xl transition-opacity duration-500",
+          working && "opacity-70",
+        )}
+        style={{
+          background: `radial-gradient(circle, ${soft}, transparent 70%)`,
+          animation: working ? "tro-glow 1.8s ease-in-out infinite" : undefined,
+        }}
+      />
+
       <svg
         viewBox="0 0 64 64"
         width={size}
         height={size}
-        className={working ? "" : "nx-bob"}
-        style={working ? undefined : { animationDelay: `${(size % 7) * 0.2}s` }}
+        className={cn(!working && "nx-bob")}
+        style={!working ? { animationDelay: `${(size % 7) * 0.15}s` } : undefined}
       >
-        {/* antenna */}
-        <g style={{ transformOrigin: "32px 16px" }}>
-          <g
-            style={{
-              transformOrigin: "32px 16px",
-              animation: working ? "nx-antenna 0.7s ease-in-out infinite" : undefined,
-            }}
-          >
-            <line x1="32" y1="16" x2="32" y2="8" stroke={ink} strokeWidth="2.5" strokeLinecap="round" />
-            <circle cx="32" cy="6" r="3.2" fill={ink}>
-              {working ? (
-                <animate
-                  attributeName="opacity"
-                  values="1;0.3;1"
-                  dur="0.9s"
-                  repeatCount="indefinite"
-                />
-              ) : null}
-            </circle>
-          </g>
-        </g>
+        <defs>
+          <linearGradient id={`g-${uid}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.95" />
+            <stop offset="100%" stopColor={ink} stopOpacity="0.85" />
+          </linearGradient>
+          <clipPath id={`c-${uid}`}>
+            <circle cx="32" cy="34" r="18" />
+          </clipPath>
+        </defs>
 
-        {/* head */}
-        <rect
-          x="12"
-          y="15"
-          width="40"
-          height="32"
-          rx="11"
-          fill="var(--color-raised)"
-          stroke={working ? ink : "var(--color-line-strong)"}
-          strokeWidth="2"
-        />
-
-        {/* visor sweep while working */}
-        {working ? (
+        {/* species body */}
+        {kind === "muse" ? (
           <>
-            <clipPath id={visor}>
-              <rect x="12" y="15" width="40" height="32" rx="11" />
-            </clipPath>
-            <g clipPath={`url(#${visor})`}>
-              <rect x="0" y="15" width="14" height="32" fill={ink} opacity="0.22">
-                <animate
-                  attributeName="x"
-                  values="4;50;4"
-                  dur="1.8s"
-                  repeatCount="indefinite"
-                />
-              </rect>
-            </g>
+            <ellipse cx="32" cy="38" rx="18" ry="16" fill={`url(#g-${uid})`} opacity="0.92" />
+            <circle cx="32" cy="26" r="14" fill={`url(#g-${uid})`} />
+            {/* ear tufts */}
+            <path d="M20 18 L16 8 L24 16 Z" fill={ink} opacity="0.9" />
+            <path d="M44 18 L48 8 L40 16 Z" fill={ink} opacity="0.9" />
           </>
         ) : null}
 
-        {/* eyes */}
-        {failed ? (
+        {kind === "pulse" ? (
           <>
-            <line x1="21" y1="26" x2="28" y2="33" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
-            <line x1="28" y1="26" x2="21" y2="33" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
-            <line x1="36" y1="26" x2="43" y2="33" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
-            <line x1="43" y1="26" x2="36" y2="33" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
+            <rect x="14" y="18" width="36" height="32" rx="14" fill={`url(#g-${uid})`} />
+            <circle cx="32" cy="14" r="5" fill={ink}>
+              {working ? (
+                <animate attributeName="r" values="4;6;4" dur="0.9s" repeatCount="indefinite" />
+              ) : null}
+            </circle>
+            <line x1="32" y1="19" x2="32" y2="14" stroke={ink} strokeWidth="2" />
           </>
-        ) : (
-          <>
-            <ellipse
-              cx="24.5"
-              cy="29.5"
-              rx="3.6"
-              ry="4.2"
-              fill={ink}
-              style={{
-                transformOrigin: "24.5px 29.5px",
-                animation: "nx-eye 3.6s ease-in-out infinite",
-              }}
-            />
-            <ellipse
-              cx="39.5"
-              cy="29.5"
-              rx="3.6"
-              ry="4.2"
-              fill={ink}
-              style={{
-                transformOrigin: "39.5px 29.5px",
-                animation: "nx-eye 3.6s ease-in-out infinite",
-              }}
-            />
-          </>
-        )}
+        ) : null}
 
-        {/* mouth */}
-        {done ? (
-          <path
-            d="M25 39 l4.5 4.5 L40 33"
-            fill="none"
-            stroke="var(--color-positive)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ) : working ? (
-          <g>
-            {[27, 32, 37].map((x, i) => (
-              <circle key={x} cx={x} cy="39.5" r="1.7" fill="var(--color-ink-3)">
-                <animate
-                  attributeName="opacity"
-                  values="0.25;1;0.25"
-                  dur="1.2s"
-                  begin={`${i * 0.18}s`}
+        {kind === "orb" ? (
+          <>
+            <circle cx="32" cy="34" r="20" fill={`url(#g-${uid})`} />
+            <circle cx="32" cy="34" r="14" fill="var(--color-raised)" opacity="0.25" />
+            {working ? (
+              <circle
+                cx="32"
+                cy="34"
+                r="22"
+                fill="none"
+                stroke={accent}
+                strokeWidth="1.5"
+                opacity="0.5"
+                strokeDasharray="8 6"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 32 34"
+                  to="360 32 34"
+                  dur="3s"
                   repeatCount="indefinite"
                 />
               </circle>
-            ))}
-          </g>
-        ) : (
-          <line
-            x1="27"
-            y1="39.5"
-            x2="37"
-            y2="39.5"
-            stroke="var(--color-ink-4)"
-            strokeWidth="2.4"
-            strokeLinecap="round"
+            ) : null}
+          </>
+        ) : null}
+
+        {kind === "spark" ? (
+          <>
+            <path
+              d="M32 10 L38 24 L54 26 L42 36 L46 52 L32 44 L18 52 L22 36 L10 26 L26 24 Z"
+              fill={`url(#g-${uid})`}
+            >
+              {working ? (
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  values="-4 32 32;4 32 32;-4 32 32"
+                  dur="0.7s"
+                  repeatCount="indefinite"
+                />
+              ) : null}
+            </path>
+          </>
+        ) : null}
+
+        {kind === "nova" ? (
+          <>
+            <path
+              d="M32 12 C42 12 50 22 48 34 C46 46 36 52 32 52 C28 52 18 46 16 34 C14 22 22 12 32 12Z"
+              fill={`url(#g-${uid})`}
+            />
+            <ellipse cx="32" cy="28" rx="10" ry="6" fill="white" opacity="0.2" />
+          </>
+        ) : null}
+
+        {kind === "drift" ? (
+          <>
+            <ellipse cx="32" cy="36" rx="20" ry="14" fill={`url(#g-${uid})`} />
+            <circle cx="22" cy="28" r="8" fill={`url(#g-${uid})`} />
+            <circle cx="42" cy="28" r="8" fill={`url(#g-${uid})`} />
+            <circle cx="32" cy="22" r="9" fill={`url(#g-${uid})`} />
+          </>
+        ) : null}
+
+        {/* visor / face plate */}
+        <g clipPath={kind === "orb" ? `url(#c-${uid})` : undefined}>
+          <rect
+            x="20"
+            y="28"
+            width="24"
+            height="14"
+            rx="7"
+            fill="var(--color-canvas)"
+            opacity="0.92"
           />
-        )}
+          {/* eyes */}
+          {face.eye === "focus" ? (
+            <>
+              <rect x="25" y="32" width="5" height="2.5" rx="1" fill={ink}>
+                <animate attributeName="width" values="5;7;5" dur="0.6s" repeatCount="indefinite" />
+              </rect>
+              <rect x="34" y="32" width="5" height="2.5" rx="1" fill={ink}>
+                <animate attributeName="width" values="5;7;5" dur="0.6s" begin="0.1s" repeatCount="indefinite" />
+              </rect>
+            </>
+          ) : face.eye === "happy" ? (
+            <>
+              <path d="M24 34 Q27 31 30 34" fill="none" stroke={ink} strokeWidth="2" strokeLinecap="round" />
+              <path d="M34 34 Q37 31 40 34" fill="none" stroke={ink} strokeWidth="2" strokeLinecap="round" />
+            </>
+          ) : face.eye === "M" ? (
+            <>
+              <path d="M24 31 L27 34 L24 37" fill="none" stroke={ink} strokeWidth="2" />
+              <path d="M40 31 L37 34 L40 37" fill="none" stroke={ink} strokeWidth="2" />
+            </>
+          ) : (
+            <>
+              <circle cx="27" cy="34" r="2.2" fill={ink}>
+                {!working ? (
+                  <animate attributeName="ry" values="2.2;0.3;2.2" dur="3.2s" repeatCount="indefinite" />
+                ) : null}
+              </circle>
+              <circle cx="37" cy="34" r="2.2" fill={ink}>
+                {!working ? (
+                  <animate attributeName="ry" values="2.2;0.3;2.2" dur="3.2s" begin="0.15s" repeatCount="indefinite" />
+                ) : null}
+              </circle>
+            </>
+          )}
 
-        {/* body */}
-        <rect x="20" y="49" width="24" height="8" rx="4" fill="var(--color-sunk)" stroke="var(--color-line-strong)" strokeWidth="1.6" />
-        <circle cx="32" cy="53" r="1.8" fill={working ? ink : "var(--color-line-strong)"}>
-          {working ? (
-            <animate attributeName="opacity" values="1;0.2;1" dur="1s" repeatCount="indefinite" />
-          ) : null}
-        </circle>
+          {/* mouth */}
+          {face.mouth === "smile" ? (
+            <path d="M28 39 Q32 42 36 39" fill="none" stroke={ink} strokeWidth="1.6" strokeLinecap="round" />
+          ) : face.mouth === "flat" ? (
+            <line x1="28" y1="40" x2="36" y2="40" stroke={ink} strokeWidth="1.6" strokeLinecap="round" />
+          ) : face.mouth === "dot" ? (
+            <circle cx="32" cy="39.5" r="1.4" fill={ink}>
+              <animate attributeName="opacity" values="1;0.4;1" dur="0.8s" repeatCount="indefinite" />
+            </circle>
+          ) : (
+            <ellipse cx="32" cy="39.5" rx="3" ry="1.4" fill={ink} opacity="0.7" />
+          )}
+        </g>
+
+        {/* working scan line */}
+        {working ? (
+          <rect x="22" y="30" width="20" height="2" rx="1" fill={accent} opacity="0.55">
+            <animate attributeName="y" values="30;40;30" dur="1.1s" repeatCount="indefinite" />
+          </rect>
+        ) : null}
       </svg>
-    </span>
-  );
-}
 
-/** Ring of orbiting dots — used behind a bot while a swarm is running. */
-export function OrbitRing({
-  size = 96,
-  accent = "#3b82f6",
-}: {
-  size?: number;
-  accent?: string;
-}) {
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-      style={{
-        width: size,
-        height: size,
-        animation: "nx-orbit 6s linear infinite",
-      }}
-    >
-      {[0, 120, 240].map((deg) => (
-        <span
-          key={deg}
-          className="absolute h-1.5 w-1.5 rounded-full"
-          style={{
-            background: `color-mix(in oklab, ${accent}, #000 var(--tint-darken))`,
-            top: "50%",
-            left: "50%",
-            transform: `rotate(${deg}deg) translateX(${size / 2}px)`,
-            transformOrigin: "0 0",
-            opacity: 0.55,
-          }}
-        />
-      ))}
+      <style>{`
+        @keyframes tro-glow {
+          0%, 100% { transform: scale(0.92); opacity: 0.45; }
+          50% { transform: scale(1.08); opacity: 0.85; }
+        }
+      `}</style>
     </span>
   );
 }
