@@ -65,16 +65,19 @@ export default async function ShellLayout({
         <Backdrop />
         <CommandPalette recents={recents} />
         <SettingsHost user={user} balance={balance} />
-        <div className="flex h-dvh overflow-hidden">
+        {/*
+          Fixed viewport shell: sidebar stays put; only the main column scrolls.
+          Split top chrome from the scrollport so long pages never get clipped.
+        */}
+        <div className="flex h-dvh max-h-dvh overflow-hidden">
           <Sidebar user={user} balance={balance} isAdmin={isAdminEmail(user?.email)} />
-          {/* children are NOT wrapped in a re-keying client component: combined
-              with the loading.tsx Suspense boundary that left page content
-              server-rendered but never hydrated, so nothing was clickable. */}
-          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <AnnouncementBanner />
-            {children}
-          </main>
+            <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain">
+              {children}
+            </main>
+          </div>
         </div>
       </ToastProvider>
     </NavProvider>
