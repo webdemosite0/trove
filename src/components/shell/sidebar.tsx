@@ -80,9 +80,7 @@ function NavRow({
           aria-current={active ? "page" : undefined}
           className={cn(
             "grid h-9 w-9 place-items-center rounded-lg transition-colors",
-            active
-              ? "bg-hover text-ink"
-              : "text-ink-3 hover:bg-hover hover:text-ink",
+            active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
           <Ico icon={item.icon} motion={item.motion} size={17} active={active} />
@@ -115,6 +113,96 @@ function NavRow({
   );
 }
 
+function ReferralPromoSurface({ mode }: { mode: "light" | "dark" }) {
+  const dark = mode === "dark";
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-[15px] px-3 py-3 backdrop-blur-sm",
+        dark
+          ? "bg-[#0f1017] text-white ring-1 ring-white/10"
+          : "bg-white text-slate-950 ring-1 ring-black/[0.04]",
+      )}
+    >
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -right-4 -top-4 size-16 rounded-full blur-2xl",
+          dark ? "opacity-55" : "opacity-25",
+        )}
+        style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -bottom-6 -left-5 size-14 rounded-full blur-2xl",
+          dark ? "opacity-35" : "opacity-15",
+        )}
+        style={{ background: "linear-gradient(135deg,#a78bfa,#fbbf24)" }}
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0",
+          dark
+            ? "bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-sky-500/[0.10]"
+            : "bg-gradient-to-br from-fuchsia-50/70 via-transparent to-sky-50/70",
+        )}
+      />
+      <div className="relative">
+        <p
+          className={cn(
+            "text-[10px] font-bold uppercase tracking-[0.14em]",
+            dark ? "text-fuchsia-300" : "text-fuchsia-600",
+          )}
+        >
+          Refer &amp; earn
+        </p>
+        <p
+          className={cn(
+            "mt-1 text-[13px] font-semibold leading-snug",
+            dark ? "text-white" : "text-slate-950",
+          )}
+        >
+          Share Trove · get credits
+        </p>
+        <p className={cn("mt-0.5 text-[11px]", dark ? "text-zinc-400" : "text-slate-600")}>
+          100 qualified paid → $200
+        </p>
+        <span
+          className={cn(
+            "mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold",
+            dark ? "text-sky-300" : "text-blue-600",
+          )}
+        >
+          Open affiliates
+          <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <Link
+      href="/affiliates"
+      onClick={onNavigate}
+      className="group relative block overflow-hidden rounded-2xl p-[1px] transition hover:scale-[1.02]"
+      style={{
+        background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
+      }}
+    >
+      <div className="block dark:hidden">
+        <ReferralPromoSurface mode="light" />
+      </div>
+      <div className="hidden dark:block">
+        <ReferralPromoSurface mode="dark" />
+      </div>
+    </Link>
+  );
+}
+
 function UserMenu({
   user,
   isAdmin = false,
@@ -124,24 +212,24 @@ function UserMenu({
   isAdmin?: boolean;
   onNavigate?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!menuOpen) return;
     const onDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      if (!ref.current?.contains(e.target as Node)) setMenuOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
+  }, [menuOpen]);
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
+        onClick={() => setMenuOpen((v) => !v)}
+        aria-expanded={menuOpen}
         aria-haspopup="menu"
         className="group flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-hover"
       >
@@ -156,11 +244,11 @@ function UserMenu({
         </span>
         <FiChevronRight
           size={14}
-          className={cn("shrink-0 text-ink-3 transition-transform", open && "rotate-90")}
+          className={cn("shrink-0 text-ink-3 transition-transform", menuOpen && "rotate-90")}
         />
       </button>
 
-      {open ? (
+      {menuOpen ? (
         <div
           role="menu"
           className="absolute bottom-full left-0 z-50 mb-1.5 w-full min-w-[200px] overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]"
@@ -169,7 +257,7 @@ function UserMenu({
             href="/settings"
             role="menuitem"
             onClick={() => {
-              setOpen(false);
+              setMenuOpen(false);
               onNavigate?.();
             }}
             className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover"
@@ -180,7 +268,7 @@ function UserMenu({
             href="/settings/billing"
             role="menuitem"
             onClick={() => {
-              setOpen(false);
+              setMenuOpen(false);
               onNavigate?.();
             }}
             className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover"
@@ -191,7 +279,7 @@ function UserMenu({
             href="/settings/account"
             role="menuitem"
             onClick={() => {
-              setOpen(false);
+              setMenuOpen(false);
               onNavigate?.();
             }}
             className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover"
@@ -203,7 +291,7 @@ function UserMenu({
               href="/admin"
               role="menuitem"
               onClick={() => {
-                setOpen(false);
+                setMenuOpen(false);
                 onNavigate?.();
               }}
               className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover"
@@ -237,7 +325,7 @@ export function Sidebar({
   isAdmin?: boolean;
 }) {
   const pathname = usePathname() || "/";
-  const { collapsed, setCollapsed, open, setOpen } = useNav();
+  const { open, setOpen, collapsed, setCollapsed } = useNav();
   const closeMobile = () => setOpen(false);
 
   useEffect(() => {
@@ -245,7 +333,11 @@ export function Sidebar({
   }, [pathname, setOpen]);
 
   const showTeam =
-    Boolean(user?.teamMember) || Boolean(user?.teamPlanActive) || isAdmin;
+    Boolean(user?.teamMember) ||
+    Boolean(user?.teamPlanActive) ||
+    user?.effectivePlan === "team" ||
+    user?.plan === "team" ||
+    isAdmin;
 
   const items = PRIMARY.filter((item) => !item.teamOnly || showTeam);
 
@@ -304,34 +396,21 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="shrink-0 space-y-2 border-t border-line p-2">
+      <div className="shrink-0 space-y-2 border-t border-line p-2.5">
         {!collapsed ? (
-          <Link
-            href="/refer"
-            onClick={closeMobile}
-            className="flex items-center gap-2 rounded-xl border border-line bg-sunk/60 px-3 py-2.5 transition hover:bg-hover"
-          >
-            <span className="grid size-8 place-items-center rounded-lg bg-accent/15 text-accent">
-              <TbHelpCircle size={16} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[12.5px] font-semibold text-ink">Refer &amp; earn</span>
-              <span className="block text-[11px] text-ink-3">Share Trove, get credits</span>
-            </span>
-          </Link>
-        ) : null}
-
-        <div className={cn("flex items-center gap-1", collapsed && "flex-col")}>
-          {!collapsed ? <ThemeToggle /> : null}
-          <Link
-            href="/help"
-            onClick={closeMobile}
-            className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
-            aria-label="Help"
-          >
-            <TbHelpCircle size={17} />
-          </Link>
-        </div>
+          <ReferralPromo onNavigate={closeMobile} />
+        ) : (
+          <Tooltip label="Refer & earn" side="right">
+            <Link
+              href="/affiliates"
+              onClick={closeMobile}
+              title="Refer & earn"
+              className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-[11px] font-bold text-white shadow-md"
+            >
+              $
+            </Link>
+          </Tooltip>
+        )}
 
         {user ? (
           collapsed ? (
@@ -351,16 +430,55 @@ export function Sidebar({
           <Link
             href="/login"
             onClick={closeMobile}
-            className="flex items-center justify-center rounded-xl border border-line px-3 py-2 text-[13px] font-medium text-ink transition hover:bg-hover"
+            className="btn-grad flex h-9 w-full items-center justify-center rounded-full text-[13px] font-semibold text-white"
           >
-            Sign in
+            Log in
           </Link>
         )}
 
+        <div className="flex items-center gap-1 pt-1">
+          {!collapsed ? (
+            <>
+              <Tooltip label="Settings" side="top">
+                <Link
+                  href="/settings"
+                  onClick={closeMobile}
+                  aria-label="Settings"
+                  className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                >
+                  <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
+                </Link>
+              </Tooltip>
+              <Tooltip label="Plan" side="top">
+                <Link
+                  href="/plans"
+                  onClick={closeMobile}
+                  aria-label="Plan"
+                  className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                >
+                  <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
+                </Link>
+              </Tooltip>
+              <Tooltip label="Help" side="top">
+                <Link
+                  href="/settings/support"
+                  onClick={closeMobile}
+                  aria-label="Help & support"
+                  className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover"
+                >
+                  <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
+                </Link>
+              </Tooltip>
+              <span className="flex-1" />
+              <ThemeToggle />
+            </>
+          ) : (
+            <ThemeToggle className="mx-auto" />
+          )}
+        </div>
+
         {balance && !collapsed ? (
-          <p className="px-2 text-[11px] text-ink-4">
-            {balance.remaining} credits left
-          </p>
+          <p className="px-1 text-[11px] text-ink-4">{balance.remaining} credits left</p>
         ) : null}
       </div>
     </div>
@@ -371,7 +489,7 @@ export function Sidebar({
       <aside
         className={cn(
           "hidden h-dvh shrink-0 border-r border-line bg-rail transition-[width] duration-200 lg:flex lg:flex-col",
-          collapsed ? "w-[68px]" : "w-[248px]",
+          collapsed ? "w-[64px]" : "w-[240px]",
         )}
       >
         {body}
