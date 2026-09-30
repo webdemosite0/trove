@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { withConnectorChips } from "@/components/chat/connector-chip";
 
 const URL_RE =
-  /https?:\\/\\/[^\\s<>\\[\\]()"]+|www\\.[^\\s<>\\[\\]()"]+/gi;
+  /https?:\/\/[^\s<>\[\]()"]+|www\.[^\s<>\[\]()"]+/gi;
 
 function trimUrl(raw: string): { href: string; display: string } {
   let display = raw;
