@@ -20,12 +20,14 @@ export async function POST(req: NextRequest) {
   let turns: Turn[] = [];
   let attachments: Attachment[] = [];
   let timeZone = "UTC";
+  let browser: { sessionId?: string; pageUrl?: string | null; title?: string | null } | null = null;
   try {
     const body = await req.json();
     agentId = String(body?.agentId ?? "");
     turns = Array.isArray(body?.messages) ? body.messages : [];
     attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     timeZone = safeTimeZone(body?.timeZone);
+    browser = body?.browser && typeof body.browser === "object" ? body.browser : null;
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -60,36 +62,42 @@ export async function POST(req: NextRequest) {
   const lastUser = [...turns].reverse().find((turn) => turn.role === "user")?.text ?? "";
   const connectorContext = await buildChatConnectorContext(lastUser);
 
-  const system = `You are ${agent.name}, a specialist agent on a Trove engineering team.
+  const browserNote = browser?.sessionId
+    ? `CLOUD COMPUTER is connected.\nCurrent page: ${browser.pageUrl || "about:blank"}${browser.title ? ` (“${browser.title}”)` : ""}.\nWhen the user asks you to browse, research, or open a site, assume the computer can navigate. Reference what is on screen when useful.`
+    : `CLOUD COMPUTER starts automatically in this workspace. When the user shares a URL or asks to research the web, treat browsing as available.`;
+
+  const system = `You are ${agent.name}, a Tro specialist on Trove — a premium AI workspace.
 
 Your role: ${agent.role}
 
 Your operating instructions:
 ${agent.instructions}
 
-${tools.length ? `Agent-specific capabilities configured: ${tools.join(", ")}.` : ""}
+${tools.length ? `Configured tools: ${tools.join(", ")}.` : ""}
 
-IMAGE & UI/UX VISUALS
-When the user asks you to generate, draw, design, or mock up an image, logo, icon,
-UI screen, UX wireframe, dashboard, or product interface, respond as if you can
-produce that visual. Prefer concise captions and describe the composition clearly
-so the workspace image pipeline can render it. Do not refuse image or UI/UX visual
-requests — treat them as in-scope for this agent.
+CAPABILITIES (always in scope for a Tro)
+1. Documents — draft full docs, memos, briefs, and reports in clean Markdown with headings, lists, and tables. Suggest saving to Trove Docs when done.
+2. Spreadsheets — produce structured tables (CSV-ready or Markdown tables) for budgets, trackers, and analysis. Suggest Trove Sheets when useful.
+3. Slides / decks — outline slide decks with title + bullets per slide; describe layouts for Design/Decks.
+4. Web research — search and reason about public knowledge; when a URL is present, use the cloud computer context.
+5. Cloud computer — browse pages, read what’s on screen, and guide next actions.
+6. Images & UI — when asked for visuals, describe composition clearly for the image pipeline.
+
+${browserNote}
 
 TROVE CONNECTOR BRIDGE
 Connected integrations may be selected with @mentions. When LIVE connector data
 is supplied below, use it as ground truth. Never claim a connected integration
-is unavailable merely because you cannot see it from the model itself. If a
-specific connector action lacks an adapter or permission, explain that exact
-limitation and do not invent data.
+is unavailable merely because you cannot see it from the model itself.
 ${connectorContext.connectedNote}
 ${connectorContext.liveContext}
 
 Stay in role. Be concrete and brief. Never invent results you did not compute.
+Prefer polished, structured output suitable for a product team.
 
 ${OBEY_FORMAT}
 
-${situation({ timeZone, canSearch: false })}`;
+${situation({ timeZone, canSearch: true })}`;
 
   let account: Awaited<ReturnType<typeof requireCredits>> = null;
   try {
