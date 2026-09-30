@@ -151,7 +151,7 @@ function ReferralPromoSurface({ mode }: { mode: "light" | "dark" }) {
       />
       <div className="relative">
         <p className={cn("text-[10px] font-bold uppercase tracking-[0.14em]", dark ? "text-fuchsia-300" : "text-fuchsia-600")}>
-          Refer &amp; earn
+          Refer & earn
         </p>
         <p className={cn("mt-1 text-[13px] font-semibold leading-snug", dark ? "text-white" : "text-slate-950")}>
           Share Trove · get credits
@@ -173,7 +173,7 @@ function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
     <Link
       href="/affiliates"
       onClick={onNavigate}
-      className="group relative block overflow-hidden rounded-2xl p-[1px] transition hover:scale-[1.02]"
+      className="group relative block overflow-hidden rounded-2xl p-[1px] transition-opacity hover:opacity-95"
       style={{ background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)" }}
     >
       <div className="block dark:hidden">
@@ -287,18 +287,18 @@ export function Sidebar({
           <FiSidebar size={16} />
         </button>
       </div>
-      <div className="px-3 pb-3">
+      <div className="shrink-0 px-3 pb-3">
         <Link href="/chat" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white", collapsed && "px-0")}>
           <FiPlus size={15} />
           {!collapsed ? <span>New chat</span> : null}
         </Link>
       </div>
-      <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
+      <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 pb-2">
         {items.map((item) => (
           <NavRow key={item.href} item={item} pathname={pathname} onNavigate={closeMobile} compact={collapsed} />
         ))}
       </nav>
-      <div className="shrink-0 space-y-2 border-t border-line p-2.5">
+      <div className="relative z-10 shrink-0 space-y-2 border-t border-line bg-rail p-2.5">
         {!collapsed ? (
           <ReferralPromo onNavigate={closeMobile} />
         ) : (
@@ -349,20 +349,22 @@ export function Sidebar({
           )}
         </div>
         {balance && !collapsed ? (
-          <p className="px-1 text-[11px] text-ink-4">{balance.remaining} credits left</p>
+          <p className="truncate px-1 text-[11px] tabular-nums text-ink-4">
+            {Number(balance.remaining).toLocaleString()} credits left
+          </p>
         ) : null}
       </div>
     </div>
   );
   return (
     <>
-      <aside className={cn("hidden h-dvh shrink-0 border-r border-line bg-rail transition-[width] duration-200 lg:flex lg:flex-col", collapsed ? "w-[64px]" : "w-[240px]")}>
+      <aside className={cn("sticky top-0 hidden h-dvh shrink-0 overflow-hidden border-r border-line bg-rail transition-[width] duration-200 lg:flex lg:flex-col", collapsed ? "w-[64px]" : "w-[240px]")}>
         {body}
       </aside>
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close menu" onClick={closeMobile} />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,280px)] flex-col border-r border-line bg-rail shadow-[var(--elev-lift)]">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,280px)] flex-col overflow-hidden border-r border-line bg-rail shadow-[var(--elev-lift)]">
             {body}
           </aside>
         </div>
