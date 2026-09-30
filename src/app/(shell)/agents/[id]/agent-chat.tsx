@@ -142,7 +142,9 @@ export function AgentChat({
           sessionId: data.sessionId ?? (action === "stop" ? null : prev.sessionId),
           liveUrl: data.liveUrl ?? (action === "stop" ? null : prev.liveUrl),
         }));
-        if (!res.ok) throw new Error(data.error || `Browser ${res.status}`);
+        if (!res.ok || data.status === "error" || data.error) {
+          throw new Error(data.error || `Browser ${res.status}`);
+        }
         return data;
       } finally {
         setComputerBusy(false);
@@ -458,16 +460,13 @@ export function AgentChat({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tasks</p>
           {activity.length === 0 ? (
-            <p className="mt-2 text-[12px] leading-relaxed text-ink-4">Tasks appear here as {agent.name} works.</p>
+            <p className="mt-3 text-[12px] text-ink-4">Activity shows up here while the Tro works.</p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {activity.map((item) => (
-                <li key={item.id} className="rounded-xl border border-line bg-canvas/50 px-2.5 py-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-[12px] font-medium text-ink">{item.label}</p>
-                    <span className={cn("mt-1 size-1.5 shrink-0 rounded-full", item.tone === "ok" ? "bg-positive" : item.tone === "warn" ? "bg-critical" : item.tone === "run" ? "bg-accent" : "bg-ink-4")} />
-                  </div>
-                  {item.detail ? <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-3">{item.detail}</p> : null}
+              {activity.map((a) => (
+                <li key={a.id} className="rounded-xl border border-line bg-canvas/50 px-3 py-2">
+                  <p className="text-[12px] font-medium text-ink">{a.label}</p>
+                  {a.detail ? <p className="mt-0.5 truncate text-[11px] text-ink-3">{a.detail}</p> : null}
                 </li>
               ))}
             </ul>
