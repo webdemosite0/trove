@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiPlus, FiTrash2, FiAlertCircle, FiLoader, FiArrowRight } from "@/components/ui/icons";
-import { Bot, speciesFromSeed } from "@/components/agents/bot";
+import { Bot, SPECIES, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import {
   createAgent,
   deleteAgent,
@@ -15,7 +15,7 @@ import { Ico } from "@/components/ui/ico";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 
-const ACCENTS = ["#6366f1", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24", "#f472b6"];
+const ACCENTS = ["#6366f1", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24", "#f472b6", "#fb923c", "#2dd4bf", "#e879f9", "#60a5fa"];
 
 const TOOLS = [
   "Search the web",
@@ -54,18 +54,21 @@ export function TrosView({
 
   if (!signedIn) {
     return (
-      <div className="relative mx-auto flex min-h-[70vh] max-w-[560px] flex-col items-center justify-center px-6 py-16 text-center">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_20%,color-mix(in_oklab,var(--color-accent)_18%,transparent),transparent_55%)]" />
-        <Bot size={88} state="idle" seed="trove-hero" />
-        <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-500">Tros</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-tight text-ink">Your AI team</h1>
+      <div className="relative mx-auto flex min-h-[70vh] max-w-[640px] flex-col items-center justify-center px-6 py-16 text-center">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_15%,rgba(139,92,246,0.22),transparent_55%)]" />
+        <div className="flex items-end justify-center gap-[-8px]">
+          {SPECIES.slice(0, 5).map((s, i) => (
+            <div key={s} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 5 - i }}>
+              <Bot size={i === 2 ? 88 : 64} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
+            </div>
+          ))}
+        </div>
+        <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.22em] text-violet-500">Tros</p>
+        <h1 className="mt-2 text-[30px] font-semibold tracking-tight text-ink">Meet your specialists</h1>
         <p className="mt-3 max-w-[42ch] text-[15px] leading-relaxed text-ink-3">
-          Specialists with their own brief, tools, and personality. Log in to build your first Tro.
+          Twelve unique mascots. Each Tro gets a personality, brief, and toolkit — built like a real team.
         </p>
-        <Link
-          href="/login"
-          className="mt-8 rounded-full btn-grad px-6 py-2.5 text-[14px] font-semibold shadow-lg shadow-accent/20 transition hover:scale-[1.03]"
-        >
+        <Link href="/login" className="mt-8 rounded-full btn-grad px-6 py-2.5 text-[14px] font-semibold shadow-lg shadow-violet-500/25 transition hover:scale-[1.03]">
           Log in to continue
         </Link>
       </div>
@@ -73,36 +76,62 @@ export function TrosView({
   }
 
   return (
-    <div className="relative mx-auto min-h-0 max-w-[1120px] px-5 py-10 lg:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 bg-[radial-gradient(ellipse_at_30%_0%,color-mix(in_oklab,#8b5cf6_16%,transparent),transparent_60%)]" />
+    <div className="relative mx-auto min-h-0 max-w-[1180px] px-5 py-10 lg:px-8">
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_25%_0%,rgba(139,92,246,0.18),transparent_55%),radial-gradient(ellipse_at_80%_10%,rgba(56,189,248,0.10),transparent_45%)]" />
 
-      <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-500">Tros product</p>
-          <h1 className="mt-1 text-[30px] font-semibold tracking-tight text-ink">Your specialists</h1>
-          <p className="mt-2 max-w-[48ch] text-[14.5px] leading-relaxed text-ink-3">
-            A separate space from the main workspace — each Tro has a splashy, brief, tools, and optional cloud computer.
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-500">Tros product</p>
+          <h1 className="mt-1 text-[32px] font-semibold tracking-tight text-ink">Your team of specialists</h1>
+          <p className="mt-2 max-w-[50ch] text-[14.5px] leading-relaxed text-ink-3">
+            Soft animated mascots with real jobs — research, code, design, writing, and more. Each Tro keeps a stable brief.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-semibold shadow-md shadow-accent/15 transition hover:scale-[1.03]"
+          className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-semibold shadow-md shadow-violet-500/20 transition hover:scale-[1.03]"
         >
           <Ico icon={FiPlus} motion="open" size={16} /> New Tro
         </button>
       </header>
 
+      {/* Species parade */}
+      <section className="mb-10 overflow-hidden rounded-[28px] border border-line/80 bg-raised/50 px-4 py-5 backdrop-blur-sm">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Mascot species</p>
+          <p className="text-[11px] text-ink-4">{SPECIES.length} unique looks</p>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {SPECIES.map((s) => (
+            <div
+              key={s}
+              className="flex w-[92px] shrink-0 flex-col items-center rounded-2xl border border-transparent bg-canvas/40 px-2 py-3 transition hover:border-violet-500/25 hover:bg-canvas/80"
+            >
+              <Bot size={56} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
+              <p className="mt-2 text-[11px] font-semibold text-ink">{SPECIES_META[s].label}</p>
+              <p className="text-[10px] text-ink-4">{SPECIES_META[s].vibe}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {agents.length === 0 ? (
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="group flex w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-line-strong bg-raised/40 px-6 py-20 text-center transition hover:border-violet-500/40 hover:bg-raised/70"
+          className="group relative flex w-full flex-col items-center justify-center overflow-hidden rounded-[28px] border border-dashed border-line-strong bg-raised/40 px-6 py-20 text-center transition hover:border-violet-500/40 hover:bg-raised/70"
         >
-          <Bot size={72} seed="empty" state="idle" />
-          <h2 className="mt-5 text-[18px] font-semibold text-ink">Create your first Tro</h2>
-          <p className="mt-2 max-w-[40ch] text-[13.5px] text-ink-3">
-            Give it a role and clear instructions. It becomes a specialist you can brief anytime.
+          <div className="flex items-end">
+            {SPECIES.slice(0, 4).map((s, i) => (
+              <div key={s} style={{ marginLeft: i ? -14 : 0, zIndex: 4 - i }}>
+                <Bot size={i === 1 ? 80 : 64} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
+              </div>
+            ))}
+          </div>
+          <h2 className="mt-6 text-[20px] font-semibold text-ink">Create your first Tro</h2>
+          <p className="mt-2 max-w-[42ch] text-[13.5px] text-ink-3">
+            Pick a role and brief — we assign a unique animated mascot automatically.
           </p>
           <span className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-violet-500">
             New Tro <FiArrowRight size={14} className="transition group-hover:translate-x-0.5" />
@@ -112,29 +141,37 @@ export function TrosView({
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {agents.map((a) => {
             const species = speciesFromSeed(a.id || a.name);
+            const meta = SPECIES_META[species];
             return (
               <div
                 key={a.id}
-                className="group relative flex min-h-[220px] flex-col rounded-[24px] border border-line bg-raised/80 p-5 shadow-sm transition hover:border-violet-500/30 hover:shadow-md"
+                className="group relative flex min-h-[260px] flex-col overflow-hidden rounded-[26px] border border-line bg-raised/85 p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_20px_50px_-28px_rgba(139,92,246,0.45)]"
               >
-                <Link href={`/tros/${a.id}`} className="flex flex-1 flex-col outline-none">
+                <div
+                  className="pointer-events-none absolute -right-8 -top-10 size-36 rounded-full opacity-40 blur-3xl transition group-hover:opacity-70"
+                  style={{ background: a.accent || meta.defaultAccent }}
+                />
+                <Link href={`/tros/${a.id}`} className="relative flex flex-1 flex-col outline-none">
                   <div className="flex items-start gap-3">
-                    <Bot size={52} accent={a.accent} seed={a.id} state="idle" />
-                    <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-[16px] font-semibold text-ink">{a.name}</h2>
+                    <span className="relative">
+                      <Bot size={64} accent={a.accent} seed={a.id} state="idle" />
+                      <span className="pointer-events-none absolute -inset-1 rounded-full opacity-0 ring-2 ring-violet-400/40 transition group-hover:opacity-100" />
+                    </span>
+                    <div className="min-w-0 flex-1 pt-1">
+                      <h2 className="truncate text-[16.5px] font-semibold tracking-tight text-ink">{a.name}</h2>
                       <p className="mt-0.5 truncate text-[12.5px] text-ink-3">{a.role}</p>
-                      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-4">
-                        {species}
+                      <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-500">
+                        {meta.label}
                       </p>
                     </div>
                   </div>
-                  <p className="mt-4 line-clamp-3 flex-1 text-[13px] leading-relaxed text-ink-3">
+                  <p className="relative mt-4 line-clamp-3 flex-1 text-[13px] leading-relaxed text-ink-3">
                     {a.instructions || "No instructions yet."}
                   </p>
-                  <div className="mt-5 flex items-center justify-between">
+                  <div className="relative mt-5 flex items-center justify-between">
                     <span className="text-[12px] font-medium text-ink-4">Open workspace</span>
-                    <span className="grid size-8 place-items-center rounded-full bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
-                      <FiArrowRight size={14} />
+                    <span className="grid size-9 place-items-center rounded-full bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
+                      <FiArrowRight size={15} />
                     </span>
                   </div>
                 </Link>
@@ -153,10 +190,10 @@ export function TrosView({
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="flex min-h-[220px] flex-col items-center justify-center rounded-[24px] border border-dashed border-line-strong bg-transparent text-ink-3 transition hover:border-violet-500/40 hover:bg-raised/50 hover:text-ink"
+            className="flex min-h-[260px] flex-col items-center justify-center rounded-[26px] border border-dashed border-line-strong bg-transparent text-ink-3 transition hover:border-violet-500/40 hover:bg-raised/50 hover:text-ink"
           >
-            <span className="grid size-12 place-items-center rounded-2xl bg-sunk">
-              <FiPlus size={20} />
+            <span className="grid size-14 place-items-center rounded-2xl bg-sunk">
+              <Bot size={40} seed="new-tro" state="idle" accent="#a78bfa" />
             </span>
             <span className="mt-3 text-[13.5px] font-semibold">Add Tro</span>
           </button>
@@ -193,11 +230,11 @@ function CreateModal({ onClose }: { onClose: () => void }) {
   const [state, action, pending] = useActionState<AgentFormState, FormData>(createAgent, {});
   const [accent, setAccent] = useState(ACCENTS[0]!);
   const [tools, setTools] = useState<string[]>(["Search the web"]);
+  const [name, setName] = useState("");
+  const previewSpecies = speciesFromSeed(name || "preview");
 
   useEffect(() => {
-    if (state?.id) {
-      router.push(`/tros/${state.id}`);
-    }
+    if (state?.id) router.push(`/tros/${state.id}`);
   }, [state?.id, router]);
 
   function toggleTool(tool: string) {
@@ -205,13 +242,21 @@ function CreateModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal open onClose={onClose} title="New Tro" description="Name the specialist and set its brief.">
+    <Modal open onClose={onClose} title="New Tro" description="Name the specialist — a mascot is assigned automatically.">
       <form action={action} className="mt-4 space-y-4">
+        <div className="flex items-center gap-4 rounded-2xl border border-line bg-sunk/50 px-4 py-3">
+          <Bot size={56} species={previewSpecies} accent={accent} state={pending ? "working" : "idle"} />
+          <div>
+            <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-ink-4">Preview mascot</p>
+            <p className="text-[14px] font-semibold text-ink">{SPECIES_META[previewSpecies].label}</p>
+            <p className="text-[12px] text-ink-3">{SPECIES_META[previewSpecies].vibe}</p>
+          </div>
+        </div>
         <input type="hidden" name="accent" value={accent} />
         <input type="hidden" name="tools" value={JSON.stringify(tools)} />
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Name</span>
-          <input name="name" required placeholder="e.g. Research lead" className={field} />
+          <input name="name" required placeholder="e.g. Research lead" className={field} value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Role</span>
@@ -219,13 +264,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
         </label>
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Instructions</span>
-          <textarea
-            name="instructions"
-            required
-            rows={4}
-            placeholder="How this Tro should work, tone, constraints…"
-            className={cn(field, "resize-y")}
-          />
+          <textarea name="instructions" required rows={4} placeholder="How this Tro should work, tone, constraints…" className={cn(field, "resize-y")} />
         </label>
         <div>
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Accent</span>
