@@ -14,7 +14,7 @@ import {
   FiUsers,
   FiX,
 } from "@/components/ui/icons";
-import { withLinkedText } from "@/components/chat/message";
+import { withLinkedText } from "@/components/chat/linked-text";
 import type { TeamChatMessage } from "@/lib/team-chat";
 import { cn } from "@/lib/utils";
 
