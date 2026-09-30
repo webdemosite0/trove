@@ -212,24 +212,6 @@ export function AgentChat({
   }, [agent.id]);
 
   useEffect(() => {
-    const onScroll = () => {
-      const el = bottom.current;
-      if (!el) return;
-      let node: HTMLElement | null = el.parentElement;
-      while (node && node !== document.body) {
-        const style = getComputedStyle(node);
-        if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
-          stickToBottom.current = node.scrollHeight - node.scrollTop - node.clientHeight < 120;
-          return;
-        }
-        node = node.parentElement;
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
-    return () => window.removeEventListener("scroll", onScroll, true);
-  }, []);
-
-  useEffect(() => {
     if (!stickToBottom.current) return;
     const el = bottom.current;
     if (!el) return;
@@ -255,7 +237,6 @@ export function AgentChat({
       if (!text || busy) return;
       stickToBottom.current = true;
       pushActivity("New task", text.slice(0, 80), "run");
-
       const browseUrl = extractBrowseUrl(text);
       if (browseUrl) {
         try {
@@ -264,14 +245,12 @@ export function AgentChat({
           pushActivity("Browse skipped", e instanceof Error ? e.message : "Could not open URL", "warn");
         }
       }
-
       const history = [...(base ?? turns), { id: nextId.current++, role: "user" as const, text }];
       setTurns(history);
       setBusy(true);
       setError(null);
       const replyId = nextId.current++;
       setTurns((t) => [...t, { id: replyId, role: "model", text: "" }]);
-
       try {
         if (isImagePrompt(text) && !(attachments && attachments.length)) {
           pushActivity("Generating image", undefined, "run");
@@ -292,7 +271,6 @@ export function AgentChat({
           pushActivity("Image ready", caption, "ok");
           return;
         }
-
         pushActivity("Thinking", agent.role, "run");
         const held = computerRef.current;
         const res = await fetch("/api/agent", {
@@ -370,23 +348,16 @@ export function AgentChat({
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
-      {/* Chat — primary column */}
       <div className="order-first flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="shrink-0 border-b border-line/80 bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
           <div className="flex h-14 items-center gap-3">
-            <Link
-              href="/agents"
-              aria-label="Back to Tros"
-              className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink"
-            >
+            <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink">
               <Ico icon={FiArrowLeft} motion="nudge" size={17} />
             </Link>
             <Bot size={36} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-[15px] font-semibold tracking-tight text-ink">{agent.name}</h1>
-              <p className="truncate text-[12px] text-ink-3">
-                {busy ? "Working on your task…" : agent.role}
-              </p>
+              <p className="truncate text-[12px] text-ink-3">{busy ? "Working on your task…" : agent.role}</p>
             </div>
             {turns.length > 0 ? (
               <button
@@ -405,51 +376,31 @@ export function AgentChat({
             ) : null}
           </div>
         </header>
-
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-6 lg:px-10">
           <div className="mx-auto max-w-[720px] space-y-6">
             {turns.length === 0 ? (
               <div className="py-10 text-center">
                 <Bot size={80} accent={agent.accent} seed={agent.id} state="idle" />
-                <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">
-                  Chat with {agent.name.split(" ")[0]}
-                </h2>
-                <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">
-                  {agent.instructions}
-                </p>
-                <Recents
-                  className="mx-auto mt-10 max-w-[520px] text-left"
-                  label="Earlier sessions"
-                  items={recents}
-                />
+                <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">Chat with {agent.name.split(" ")[0]}</h2>
+                <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">{agent.instructions}</p>
+                <Recents className="mx-auto mt-10 max-w-[520px] text-left" label="Earlier sessions" items={recents} />
               </div>
             ) : (
               turns.map((t, i) => (
-                <Message
-                  key={t.id}
-                  role={t.role}
-                  text={t.text}
-                  pending={busy && i === turns.length - 1 && t.role === "model"}
-                />
+                <Message key={t.id} role={t.role} text={t.text} pending={busy && i === turns.length - 1 && t.role === "model"} />
               ))
             )}
             {error ? <FailureNote error={error} onRetry={retry} /> : null}
             <div ref={bottom} />
           </div>
         </div>
-
         <div className="relative z-20 shrink-0 border-t border-line/50 bg-canvas/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:px-10">
           <div className="mx-auto max-w-[720px]">
-            <Composer
-              onSend={send}
-              disabled={busy}
-              placeholder={busy ? "Working…" : `Message ${agent.name}…`}
-            />
+            <Composer onSend={send} disabled={busy} placeholder={busy ? "Working…" : `Message ${agent.name}…`} />
           </div>
         </div>
       </div>
 
-      {/* Right rail — computer + tasks */}
       <aside className="order-last hidden w-[300px] shrink-0 flex-col border-l border-line bg-rail xl:flex xl:w-[340px]">
         <div className="flex items-center gap-3 border-b border-line px-4 py-4">
           <Bot size={44} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
@@ -458,16 +409,10 @@ export function AgentChat({
             <p className="truncate text-[11.5px] text-ink-3">{agent.role}</p>
           </div>
         </div>
-
         <div className="border-b border-line px-4 py-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Computer</p>
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
-                computerConnected ? "bg-positive/15 text-positive" : "bg-ink/10 text-ink-4",
-              )}
-            >
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", computerConnected ? "bg-positive/15 text-positive" : "bg-ink/10 text-ink-4")}>
               {computerLabel}
             </span>
           </div>
@@ -475,11 +420,7 @@ export function AgentChat({
             <div className="relative aspect-[16/10] bg-sunk">
               {computer.screenshotBase64 ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`data:image/jpeg;base64,${computer.screenshotBase64}`}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover object-top"
-                />
+                <img src={`data:image/jpeg;base64,${computer.screenshotBase64}`} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
               ) : (
                 <div className="flex h-full items-center justify-center px-3 text-center text-[11px] text-ink-4">
                   {computer.error || (computerConnected ? "Ready — paste a URL in chat" : "Start computer to browse")}
@@ -488,33 +429,21 @@ export function AgentChat({
             </div>
             <div className="flex flex-wrap gap-1.5 border-t border-line px-2.5 py-2">
               {!computerConnected ? (
-                <button
-                  type="button"
-                  disabled={computerBusy}
-                  onClick={() => void startComputer().catch(() => undefined)}
-                  className="rounded-lg bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent disabled:opacity-50"
-                >
+                <button type="button" disabled={computerBusy} onClick={() => void startComputer().catch(() => undefined)} className="rounded-lg bg-accent/15 px-2.5 py-1 text-[11px] font-semibold text-accent disabled:opacity-50">
                   {computerBusy ? "Starting…" : "Start"}
                 </button>
               ) : (
                 <>
                   {computer.liveUrl ? (
-                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover">
-                      Live
-                    </a>
+                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover">Live</a>
                   ) : null}
-                  <button type="button" disabled={computerBusy} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50">
-                    Snap
-                  </button>
-                  <button type="button" disabled={computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50">
-                    Stop
-                  </button>
+                  <button type="button" disabled={computerBusy} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50">Snap</button>
+                  <button type="button" disabled={computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-50">Stop</button>
                 </>
               )}
             </div>
           </div>
         </div>
-
         <div className="border-b border-line px-4 py-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tools</p>
           <ul className="mt-2 space-y-1">
@@ -526,38 +455,19 @@ export function AgentChat({
             ))}
           </ul>
         </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tasks</p>
           {activity.length === 0 ? (
-            <p className="mt-2 text-[12px] leading-relaxed text-ink-4">
-              Tasks appear here as {agent.name} works — newest first.
-            </p>
+            <p className="mt-2 text-[12px] leading-relaxed text-ink-4">Tasks appear here as {agent.name} works.</p>
           ) : (
             <ul className="mt-2 space-y-2">
               {activity.map((item) => (
-                <li
-                  key={item.id}
-                  className="rounded-xl border border-line bg-canvas/50 px-2.5 py-2 transition animate-in fade-in slide-in-from-right-2 duration-300"
-                >
+                <li key={item.id} className="rounded-xl border border-line bg-canvas/50 px-2.5 py-2">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-[12px] font-medium text-ink">{item.label}</p>
-                    <span
-                      className={cn(
-                        "mt-1 size-1.5 shrink-0 rounded-full",
-                        item.tone === "ok"
-                          ? "bg-positive"
-                          : item.tone === "warn"
-                            ? "bg-critical"
-                            : item.tone === "run"
-                              ? "bg-accent"
-                              : "bg-ink-4",
-                      )}
-                    />
+                    <span className={cn("mt-1 size-1.5 shrink-0 rounded-full", item.tone === "ok" ? "bg-positive" : item.tone === "warn" ? "bg-critical" : item.tone === "run" ? "bg-accent" : "bg-ink-4")} />
                   </div>
-                  {item.detail ? (
-                    <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-3">{item.detail}</p>
-                  ) : null}
+                  {item.detail ? <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-3">{item.detail}</p> : null}
                 </li>
               ))}
             </ul>
