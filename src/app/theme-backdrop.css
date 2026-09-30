@@ -15,27 +15,13 @@
   backface-visibility: hidden;
 }
 
-.nx-photo-bg::after {
-  content: none;
-}
+.nx-photo-bg::after { content: none; }
 
-.nx-bg-light {
-  opacity: 1;
-  visibility: visible;
-}
-.nx-bg-dark {
-  opacity: 0;
-  visibility: hidden;
-}
+.nx-bg-light { opacity: 1; visibility: visible; }
+.nx-bg-dark { opacity: 0; visibility: hidden; }
 
-:root[data-theme="dark"] .nx-bg-light {
-  opacity: 0;
-  visibility: hidden;
-}
-:root[data-theme="dark"] .nx-bg-dark {
-  opacity: 1;
-  visibility: visible;
-}
+:root[data-theme="dark"] .nx-bg-light { opacity: 0; visibility: hidden; }
+:root[data-theme="dark"] .nx-bg-dark { opacity: 1; visibility: visible; }
 
 /* Dark mode — flat neutral (ChatGPT / Grok style) */
 :root[data-theme="dark"] .nx-photo-bg,

@@ -1,4 +1,5 @@
-/* Tokens live on :root / data-theme. Utilities map to CSS variables so Tailwind purge cannot drop them. */
+@import "tailwindcss";
+@import "./stream-anim.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -30,12 +31,9 @@
   --btn-glow: rgb(138 180 248 / 0.25);
   --focus-ring: rgb(138 180 248 / 0.28);
   --focus-line: rgb(138 180 248 / 0.7);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display-face), var(--font-sans);
-  --font-mono: var(--font-mono-code), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --r-chip: 10px;
-  --r-control: 12px;
-  --elev-lift: 0 12px 40px -16px rgb(0 0 0 / 0.45);
+  --font-mono: var(--font-mono-code), ui-monospace, monospace;
   color-scheme: dark;
 }
 
@@ -101,9 +99,7 @@
 }
 
 @layer base {
-  * {
-    border-color: var(--color-line);
-  }
+  * { border-color: var(--color-line); }
 }
 
 html {
@@ -133,22 +129,19 @@ body {
 .text-critical { color: var(--color-critical); }
 .border-line { border-color: var(--color-line); }
 .border-line-strong { border-color: var(--color-line-strong); }
-.bg-positive\/15 { background-color: color-mix(in oklab, var(--color-positive) 15%, transparent); }
-.bg-critical\/10 { background-color: color-mix(in oklab, var(--color-critical) 10%, transparent); }
-.bg-accent\/15 { background-color: color-mix(in oklab, var(--color-accent) 15%, transparent); }
 
 .btn-grad {
   background-color: var(--btn-a);
   background-image: linear-gradient(135deg, var(--btn-a), var(--btn-b));
   color: var(--btn-ink);
 }
-.btn-grad:hover { filter: brightness(1.06); }
+.btn-grad:hover { filter: brightness(1.05); }
 .btn-grad:disabled { opacity: 0.6; }
 .btn-grad,
 .btn-grad * { color: var(--btn-ink); }
 
 .wordmark-gradient {
-  background-image: linear-gradient(90deg, var(--color-ink) 0%, var(--color-ink-3) 100%);
+  background-image: linear-gradient(90deg, var(--color-ink), var(--color-ink-3));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -165,6 +158,5 @@ body {
   font-size: 12.5px;
   font-weight: 500;
   color: var(--color-ink);
-  transition: background 0.15s ease;
 }
 .chip:hover { background: var(--color-hover); }
