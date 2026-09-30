@@ -23,7 +23,6 @@ export async function listAgents(): Promise<AgentRow[]> {
     [user.id],
   )) as unknown as AgentRow[];
 
-  // Client components need plain objects.
   return rows.map((r) => ({
     id: String(r.id),
     name: String(r.name),
@@ -40,12 +39,73 @@ export interface AgentFormState {
   ok?: boolean;
 }
 
+const DEFAULT_TRO_TOOLS = [
+  "Search the web",
+  "Read repository",
+  "Send email",
+  "Query database",
+];
+
+/** Create a business-default Tro after onboarding analysis. Idempotent per user+name. */
+export async function ensureDefaultTroForBusiness(input: {
+  userId: string;
+  businessName: string;
+  industry?: string;
+  instructions: string;
+  accent?: string;
+}): Promise<{ id: string; created: boolean } | null> {
+  const name = "Tros";
+  const role =
+    input.industry?.trim()
+      ? `${input.businessName} · ${input.industry.trim()}`
+      : `${input.businessName} operations assistant`;
+
+  const existing = (await all(
+    `SELECT id FROM agents WHERE user_id = ? AND lower(name) = lower(?) LIMIT 1`,
+    [input.userId, name],
+  )) as { id: string }[];
+
+  if (existing[0]?.id) {
+    await run(
+      `UPDATE agents SET role = ?, instructions = ?, tools = ?, accent = ? WHERE id = ? AND user_id = ?`,
+      [
+        role,
+        input.instructions.slice(0, 4000),
+        JSON.stringify(DEFAULT_TRO_TOOLS),
+        input.accent || "#3b82f6",
+        existing[0].id,
+        input.userId,
+      ],
+    );
+    revalidatePath("/agents");
+    return { id: String(existing[0].id), created: false };
+  }
+
+  const id = uid("agt");
+  await run(
+    `INSERT INTO agents (id, user_id, name, role, instructions, tools, accent, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      input.userId,
+      name,
+      role,
+      input.instructions.slice(0, 4000),
+      JSON.stringify(DEFAULT_TRO_TOOLS),
+      input.accent || "#3b82f6",
+      Date.now(),
+    ],
+  );
+  revalidatePath("/agents");
+  return { id, created: true };
+}
+
 export async function createAgent(
   _prev: AgentFormState,
   form: FormData,
 ): Promise<AgentFormState> {
   const user = await currentUser();
-  if (!user) return { error: "Log in to create an agent." };
+  if (!user) return { error: "Log in to create a Tro." };
 
   const name = String(form.get("name") ?? "").trim();
   const role = String(form.get("role") ?? "").trim();
@@ -53,8 +113,8 @@ export async function createAgent(
   const accent = String(form.get("accent") ?? "#3b82f6");
   const tools = form.getAll("tools").map(String);
 
-  if (name.length < 2) return { error: "Give the agent a name." };
-  if (role.length < 2) return { error: "Describe the agent's role." };
+  if (name.length < 2) return { error: "Give the Tro a name." };
+  if (role.length < 2) return { error: "Describe the Tro's role." };
   if (instructions.length < 20) {
     return { error: "Instructions need at least 20 characters — be specific." };
   }
