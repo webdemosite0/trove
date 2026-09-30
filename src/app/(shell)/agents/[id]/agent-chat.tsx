@@ -407,12 +407,8 @@ export function AgentChat({
             {turns.length === 0 ? (
               <div className="py-10 text-center">
                 <Bot size={88} accent={agent.accent} seed={agent.id} state="idle" />
-                <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">
-                  Chat with {agent.name.split(" ")[0]}
-                </h2>
-                <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">
-                  {agent.instructions}
-                </p>
+                <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">Chat with {agent.name.split(" ")[0]}</h2>
+                <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">{agent.instructions}</p>
                 <Recents className="mx-auto mt-10 max-w-[520px] text-left" label="Earlier sessions" items={recents} />
               </div>
             ) : (
@@ -422,6 +418,9 @@ export function AgentChat({
                   role={t.role}
                   text={t.text}
                   pending={busy && i === turns.length - 1 && t.role === "model"}
+                  assistantName={agent.name}
+                  assistantSeed={agent.id}
+                  assistantAccent={agent.accent}
                 />
               ))
             )}
@@ -432,11 +431,7 @@ export function AgentChat({
 
         <div className="relative z-20 shrink-0 border-t border-line/50 bg-canvas/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:px-10">
           <div className="mx-auto max-w-[720px]">
-            <Composer
-              onSend={send}
-              disabled={busy}
-              placeholder={busy ? "Working…" : `Message ${agent.name}…`}
-            />
+            <Composer onSend={send} disabled={busy} placeholder={busy ? "Working…" : `Message ${agent.name}…`} />
           </div>
         </div>
       </div>
@@ -463,12 +458,7 @@ export function AgentChat({
             <p className="truncate text-[14px] font-semibold text-ink">{agent.name}</p>
             <p className="truncate text-[11.5px] text-ink-3">{agent.role}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setPanelOpen(false)}
-            aria-label="Close task panel"
-            className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
-          >
+          <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink">
             <FiX size={16} />
           </button>
         </div>
@@ -477,23 +467,13 @@ export function AgentChat({
           <section className="border-b border-line px-4 py-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Computer</p>
-              <button
-                type="button"
-                disabled={busy || computerBusy}
-                onClick={() => setBrowserExpanded((v) => !v)}
-                className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40"
-              >
+              <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
                 {browserExpanded ? "Shrink" : "Expand"}
               </button>
             </div>
             <div className={cn("space-y-1.5", busy && "pointer-events-none opacity-55")}>
               <div className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas/60 px-2.5 py-2">
-                <span
-                  className={cn(
-                    "grid size-8 shrink-0 place-items-center rounded-lg",
-                    computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3",
-                  )}
-                >
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3")}>
                   <FiMonitor size={15} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -503,31 +483,15 @@ export function AgentChat({
                     {computer.pageUrl ? ` · ${computer.title || computer.pageUrl}` : ""}
                   </p>
                 </div>
-                {computer.screenshotBase64 ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`data:image/jpeg;base64,${computer.screenshotBase64}`}
-                    alt=""
-                    className="h-9 w-12 shrink-0 rounded-md border border-line object-cover"
-                  />
-                ) : null}
               </div>
-
-              <div className={cn("overflow-hidden rounded-xl border border-line bg-canvas/40 transition-all duration-300", browserExpanded && "ring-1 ring-violet-500/20")}>
+              <div className={cn("overflow-hidden rounded-xl border border-line bg-canvas/40 transition-all duration-300", browserExpanded && "ring-1 ring-white/10")}>
                 <div className={cn("relative bg-sunk transition-all duration-300", browserExpanded ? "aspect-[16/11] min-h-[200px]" : "aspect-[16/9]")}>
                   {computer.screenshotBase64 ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={`data:image/jpeg;base64,${computer.screenshotBase64}`}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover object-top"
-                    />
+                    <img src={`data:image/jpeg;base64,${computer.screenshotBase64}`} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
                   ) : (
                     <div className="flex h-full items-center justify-center px-3 text-center text-[11px] text-ink-4">
-                      {computer.error ||
-                        (computerConnected
-                          ? "Ready — paste a URL or ask to research"
-                          : "Connecting cloud browser…")}
+                      {computer.error || (computerConnected ? "Ready — paste a URL or ask to research" : "Connecting cloud browser…")}
                     </div>
                   )}
                   {busy ? (
@@ -538,41 +502,18 @@ export function AgentChat({
                 </div>
                 <div className="flex flex-wrap gap-1.5 border-t border-line px-2.5 py-2">
                   {computer.liveUrl ? (
-                    <a
-                      href={computer.liveUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={cn(
-                        "rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover",
-                        (busy || computerBusy) && "pointer-events-none opacity-40",
-                      )}
-                    >
+                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className={cn("rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover", (busy || computerBusy) && "pointer-events-none opacity-40")}>
                       Live
                     </a>
                   ) : null}
-                  <button
-                    type="button"
-                    disabled={busy || computerBusy || !computerConnected}
-                    onClick={() => void browserAction("screenshot").catch(() => undefined)}
-                    className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40"
-                  >
+                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
                     Snap
                   </button>
-                  <button
-                    type="button"
-                    disabled={busy || computerBusy}
-                    onClick={() => setBrowserExpanded((v) => !v)}
-                    className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40"
-                  >
+                  <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
                     {browserExpanded ? "Shrink" : "Expand"}
                   </button>
                   {computerConnected ? (
-                    <button
-                      type="button"
-                      disabled={busy || computerBusy}
-                      onClick={() => void stopComputer()}
-                      className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40"
-                    >
+                    <button type="button" disabled={busy || computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
                       Stop
                     </button>
                   ) : null}
@@ -588,19 +529,8 @@ export function AgentChat({
             ) : (
               <ul className="space-y-1">
                 {activity.map((a) => (
-                  <li key={a.id} className="flex items-start gap-2 rounded-lg px-1.5 py-1.5 transition hover:bg-hover/60">
-                    <span
-                      className={cn(
-                        "mt-1.5 size-1.5 shrink-0 rounded-full",
-                        a.tone === "ok"
-                          ? "bg-positive"
-                          : a.tone === "warn"
-                            ? "bg-critical"
-                            : a.tone === "run"
-                              ? "bg-accent animate-pulse"
-                              : "bg-ink-4",
-                      )}
-                    />
+                  <li key={a.id} className="flex items-start gap-2 rounded-lg px-1.5 py-1.5">
+                    <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[12.5px] font-medium text-ink">{a.label}</span>
                       {a.detail ? <span className="block truncate text-[11px] text-ink-3">{a.detail}</span> : null}
