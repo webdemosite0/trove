@@ -103,7 +103,12 @@ function NavRow({
           : "text-ink-3 hover:bg-hover hover:text-ink",
       )}
     >
-      <Ico icon={item.icon} motion={item.motion} size={17} className={active ? "text-accent" : undefined} />
+      <Ico
+        icon={item.icon}
+        motion={item.motion}
+        size={17}
+        className={active ? "text-accent" : undefined}
+      />
       <span className="truncate">{item.label}</span>
     </Link>
   );
@@ -112,18 +117,20 @@ function NavRow({
 export function Sidebar({
   user,
   balance,
+  isAdmin = false,
 }: {
   user: User | null;
   balance?: Balance | null;
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname() || "/";
-  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useNav();
+  const { collapsed, setCollapsed, open, setOpen, setSettingsOpen } = useNav();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname, setMobileOpen]);
+    setOpen(false);
+  }, [pathname, setOpen]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -134,19 +141,33 @@ export function Sidebar({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [menuOpen]);
 
-  const items = PRIMARY.filter((item) => !item.teamOnly || user?.accountType === "business");
+  const showTeam =
+    Boolean(user?.teamMember) ||
+    Boolean(user?.teamPlanActive) ||
+    isAdmin;
+
+  const items = PRIMARY.filter((item) => !item.teamOnly || showTeam);
+
+  const creditsLabel =
+    balance && typeof balance.remaining === "number"
+      ? `${balance.remaining} credits`
+      : user?.email || "";
 
   const body = (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-14 shrink-0 items-center gap-2 px-3">
-        <Link href="/dashboard" className="flex min-w-0 items-center gap-2" onClick={() => setMobileOpen(false)}>
+        <Link
+          href="/dashboard"
+          className="flex min-w-0 items-center gap-2"
+          onClick={() => setOpen(false)}
+        >
           <TroveOrb size={26} />
           {!collapsed ? <Wordmark size={18} /> : null}
         </Link>
         <button
           type="button"
           className="ml-auto grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-hover hover:text-ink lg:hidden"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => setOpen(false)}
           aria-label="Close menu"
         >
           <FiX size={18} />
@@ -164,7 +185,7 @@ export function Sidebar({
       <div className="px-3 pb-2">
         <Link
           href="/chat"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => setOpen(false)}
           className={cn(
             "btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold",
             collapsed && "px-0",
@@ -181,7 +202,7 @@ export function Sidebar({
             key={item.href}
             item={item}
             pathname={pathname}
-            onNavigate={() => setMobileOpen(false)}
+            onNavigate={() => setOpen(false)}
             compact={collapsed}
           />
         ))}
@@ -219,7 +240,7 @@ export function Sidebar({
                       {user.name || "Account"}
                     </span>
                     <span className="block truncate text-[11px] text-ink-4">
-                      {balance != null ? `${balance.remaining ?? balance} credits` : user.email}
+                      {creditsLabel}
                     </span>
                   </span>
                   <FiChevronRight size={14} className="text-ink-4" />
@@ -228,13 +249,16 @@ export function Sidebar({
             </button>
             {menuOpen ? (
               <div className="absolute bottom-full left-0 z-50 mb-1 w-full min-w-[200px] overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]">
-                <Link
-                  href="/settings"
-                  className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover"
-                  onClick={() => setMenuOpen(false)}
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-ink-2 hover:bg-hover"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setSettingsOpen(true);
+                  }}
                 >
                   <FiSettings size={14} /> Settings
-                </Link>
+                </button>
                 <Link
                   href="/settings/billing"
                   className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover"
@@ -283,13 +307,13 @@ export function Sidebar({
         {body}
       </aside>
 
-      {mobileOpen ? (
+      {open ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
             aria-label="Close menu"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => setOpen(false)}
           />
           <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,280px)] flex-col border-r border-line bg-rail shadow-[var(--elev-lift)]">
             {body}
