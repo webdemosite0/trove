@@ -37,6 +37,7 @@ export async function listAgents(): Promise<AgentRow[]> {
 export interface AgentFormState {
   error?: string;
   ok?: boolean;
+  id?: string;
 }
 
 const DEFAULT_TRO_TOOLS = [
@@ -112,7 +113,16 @@ export async function createAgent(
   const role = String(form.get("role") ?? "").trim();
   const instructions = String(form.get("instructions") ?? "").trim();
   const accent = String(form.get("accent") ?? "#3b82f6");
-  const tools = form.getAll("tools").map(String);
+  const rawTools = form.getAll("tools").map(String);
+  let tools = rawTools;
+  if (rawTools.length === 1 && rawTools[0]?.trim().startsWith("[")) {
+    try {
+      const parsed = JSON.parse(rawTools[0]);
+      if (Array.isArray(parsed)) tools = parsed.map(String);
+    } catch {
+      tools = [];
+    }
+  }
 
   if (name.length < 2) return { error: "Give the Tro a name." };
   if (role.length < 2) return { error: "Describe the Tro's role." };
@@ -120,11 +130,12 @@ export async function createAgent(
     return { error: "Instructions need at least 20 characters — be specific." };
   }
 
+  const id = uid("agt");
   await run(
     `INSERT INTO agents (id, user_id, name, role, instructions, tools, accent, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      uid("agt"),
+      id,
       user.id,
       name,
       role,
@@ -137,7 +148,7 @@ export async function createAgent(
 
   revalidatePath("/agents");
   revalidatePath("/tros");
-  return { ok: true };
+  return { ok: true, id };
 }
 
 export async function deleteAgent(id: string) {
