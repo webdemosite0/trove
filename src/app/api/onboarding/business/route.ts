@@ -6,6 +6,7 @@ import { generateText } from "@/lib/ai";
 import { getInstructions, setInstructions } from "@/lib/user-prefs";
 import { updateBusinessProfile } from "@/lib/business-profile";
 import { setAccountTypeForUser } from "@/lib/account-type";
+import { ensureDefaultTroForBusiness } from "@/app/actions/agents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,8 +32,7 @@ function privateAddress(address: string) {
 
 async function assertPublicUrl(raw: string) {
   const url = new URL(normalizeUrl(raw));
-  if (!["http:", "https:"].includes(url.protocol)) throw new Error("Only public http/https URLs are supported.");
-  if (url.username || url.password) throw new Error("Business URLs cannot contain credentials.");
+  if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Use an http(s) business URL.");
   const host = url.hostname.toLowerCase();
   if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) throw new Error("Use a public business URL.");
   if (isIP(host) && privateAddress(host)) throw new Error("Use a public business URL.");
@@ -98,30 +98,25 @@ function withoutBusinessBlock(text: string) {
   const start = text.indexOf(START);
   const end = text.indexOf(END);
   if (start === -1 || end === -1 || end < start) return text.trim();
-  return (text.slice(0, start) + text.slice(end + END.length)).trim();
+  return `${text.slice(0, start).trim()}\n\n${text.slice(end + END.length).trim()}`.trim();
 }
 
 export async function POST(req: NextRequest) {
   const user = await currentUser();
-  if (!user) return NextResponse.json({ error: "Sign in to personalize Trove." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
 
   try {
     const form = await req.formData();
-    const businessName = String(form.get("businessName") || "").trim().slice(0, 120);
-    const businessUrl = String(form.get("businessUrl") || "").trim().slice(0, 500);
+    const businessName = String(form.get("businessName") || "").trim();
+    const businessUrl = String(form.get("businessUrl") || "").trim();
     const profile = form.get("profile");
-    const promoteBusinessAccount =
-      String(form.get("promoteBusinessAccount") || "") === "1";
+    const promoteBusinessAccount = String(form.get("promoteBusinessAccount") || "") === "1";
 
-    if (businessName.length < 2) {
-      return NextResponse.json({ error: "Add your business name first." }, { status: 400 });
+    if (!businessName) {
+      return NextResponse.json({ error: "Business name is required." }, { status: 400 });
     }
 
-    const site = await fetchBusinessSite(businessUrl).catch((error) => ({
-      url: normalizeUrl(businessUrl),
-      text: `[Website could not be fetched: ${error instanceof Error ? error.message : "unknown error"}]`,
-    }));
-
+    const site = await fetchBusinessSite(businessUrl);
     let profileText = "";
     const extraParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
 
@@ -195,6 +190,19 @@ Return ONLY valid JSON with keys: summary, industry, audience, voice, instructio
       await setAccountTypeForUser(user.id, "business");
     }
 
+    let troId: string | null = null;
+    try {
+      const tro = await ensureDefaultTroForBusiness({
+        userId: user.id,
+        businessName,
+        industry: String(analysis.industry || "").slice(0, 120),
+        instructions,
+      });
+      troId = tro?.id ?? null;
+    } catch {
+      /* non-fatal — profile still saved */
+    }
+
     return NextResponse.json({
       ok: true,
       businessName,
@@ -204,6 +212,7 @@ Return ONLY valid JSON with keys: summary, industry, audience, voice, instructio
       audience: String(analysis.audience || "").slice(0, 300),
       voice: String(analysis.voice || "").slice(0, 220),
       instructions,
+      troId,
     });
   } catch (error) {
     return NextResponse.json(
