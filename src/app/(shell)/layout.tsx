@@ -65,12 +65,12 @@ export default async function ShellLayout({
         <Backdrop />
         <CommandPalette recents={recents} />
         <SettingsHost user={user} balance={balance} />
-        <div className="flex min-h-screen">
+        <div className="flex h-dvh overflow-hidden">
           <Sidebar user={user} balance={balance} isAdmin={isAdminEmail(user?.email)} />
           {/* children are NOT wrapped in a re-keying client component: combined
               with the loading.tsx Suspense boundary that left page content
               server-rendered but never hydrated, so nothing was clickable. */}
-          <main className="flex min-w-0 flex-1 flex-col">
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <AnnouncementBanner />
             {children}
