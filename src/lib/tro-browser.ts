@@ -9,6 +9,7 @@ export type TroBrowserStatus = "idle" | "starting" | "ready" | "working" | "erro
 export type TroBrowserSnapshot = {
   configured: boolean;
   sessionId: string | null;
+  connectUrl: string | null;
   status: TroBrowserStatus;
   liveUrl: string | null;
   pageUrl: string | null;
@@ -29,15 +30,19 @@ export function troBrowserConfigured() {
   return Boolean(apiKey());
 }
 
+export function troBrowserSetupHint() {
+  return "Add BROWSERBASE_API_KEY (and optional BROWSERBASE_PROJECT_ID) in Vercel → Settings → Environment Variables, then redeploy.";
+}
+
 async function bb<T>(
   path: string,
   init?: RequestInit & { json?: unknown },
 ): Promise<T> {
   const key = apiKey();
-  if (!key) throw new Error("BROWSERBASE_API_KEY is not configured.");
+  if (!key) throw new Error(troBrowserSetupHint());
 
   const headers: Record<string, string> = {
-    "X-BB-API-Key": key,
+    "x-bb-api-key": key,
     ...(init?.headers as Record<string, string> | undefined),
   };
   let body = init?.body;
@@ -53,7 +58,14 @@ async function bb<T>(
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(text || `Browserbase ${res.status}`);
+    let detail = text || `Browserbase ${res.status}`;
+    try {
+      const parsed = JSON.parse(text) as { message?: string; error?: string };
+      detail = parsed.message || parsed.error || detail;
+    } catch {
+      /* keep text */
+    }
+    throw new Error(detail);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
@@ -72,23 +84,35 @@ export async function createBrowserSession(): Promise<{
 
   const session = await bb<{
     id: string;
-    connectUrl: string;
+    connectUrl?: string;
+    connect_url?: string;
   }>("/sessions", { method: "POST", json: payload });
+
+  const connectUrl = session.connectUrl || session.connect_url || "";
+  if (!connectUrl) {
+    throw new Error("Browserbase did not return a connect URL.");
+  }
 
   let liveUrl: string | null = null;
   try {
     const debug = await bb<{
       debuggerFullscreenUrl?: string;
       debuggerUrl?: string;
+      pages?: Array<{ debuggerFullscreenUrl?: string; debuggerUrl?: string }>;
     }>(`/sessions/${session.id}/debug`);
-    liveUrl = debug.debuggerFullscreenUrl || debug.debuggerUrl || null;
+    liveUrl =
+      debug.debuggerFullscreenUrl ||
+      debug.debuggerUrl ||
+      debug.pages?.[0]?.debuggerFullscreenUrl ||
+      debug.pages?.[0]?.debuggerUrl ||
+      null;
   } catch {
     liveUrl = `https://www.browserbase.com/sessions/${session.id}`;
   }
 
   return {
     sessionId: session.id,
-    connectUrl: session.connectUrl,
+    connectUrl,
     liveUrl,
   };
 }
@@ -108,7 +132,10 @@ async function connectPage(connectUrl: string): Promise<{
   browser: Browser;
   page: Page;
 }> {
-  const browser = await chromium.connectOverCDP(connectUrl);
+  if (!connectUrl?.startsWith("ws")) {
+    throw new Error("Missing or invalid browser connect URL. Start the computer again.");
+  }
+  const browser = await chromium.connectOverCDP(connectUrl, { timeout: 30_000 });
   const context = browser.contexts()[0] || (await browser.newContext());
   const page = context.pages()[0] || (await context.newPage());
   return { browser, page };
@@ -212,5 +239,6 @@ export function extractBrowseUrl(text: string): string | null {
   if (!bare) return null;
   const host = bare[1].toLowerCase();
   if (host.includes("@") || /^\d+$/.test(host)) return null;
+  if (!host.includes(".")) return null;
   return `https://${bare[0]}`;
 }
