@@ -66,7 +66,6 @@ export function Bot({
       data-species={kind}
       data-state={state}
     >
-      {/* ambient glow */}
       <span
         className={cn(
           "pointer-events-none absolute inset-[-12%] rounded-full opacity-0 blur-xl transition-opacity duration-500",
@@ -95,12 +94,10 @@ export function Bot({
           </clipPath>
         </defs>
 
-        {/* species body */}
         {kind === "muse" ? (
           <>
             <ellipse cx="32" cy="38" rx="18" ry="16" fill={`url(#g-${uid})`} opacity="0.92" />
             <circle cx="32" cy="26" r="14" fill={`url(#g-${uid})`} />
-            {/* ear tufts */}
             <path d="M20 18 L16 8 L24 16 Z" fill={ink} opacity="0.9" />
             <path d="M44 18 L48 8 L40 16 Z" fill={ink} opacity="0.9" />
           </>
@@ -184,7 +181,6 @@ export function Bot({
           </>
         ) : null}
 
-        {/* visor / face plate */}
         <g clipPath={kind === "orb" ? `url(#c-${uid})` : undefined}>
           <rect
             x="20"
@@ -195,7 +191,6 @@ export function Bot({
             fill="var(--color-canvas)"
             opacity="0.92"
           />
-          {/* eyes */}
           {face.eye === "focus" ? (
             <>
               <rect x="25" y="32" width="5" height="2.5" rx="1" fill={ink}>
@@ -230,7 +225,6 @@ export function Bot({
             </>
           )}
 
-          {/* mouth */}
           {face.mouth === "smile" ? (
             <path d="M28 39 Q32 42 36 39" fill="none" stroke={ink} strokeWidth="1.6" strokeLinecap="round" />
           ) : face.mouth === "flat" ? (
@@ -244,7 +238,6 @@ export function Bot({
           )}
         </g>
 
-        {/* working scan line */}
         {working ? (
           <rect x="22" y="30" width="20" height="2" rx="1" fill={accent} opacity="0.55">
             <animate attributeName="y" values="30;40;30" dur="1.1s" repeatCount="indefinite" />
@@ -258,6 +251,42 @@ export function Bot({
           50% { transform: scale(1.08); opacity: 0.85; }
         }
       `}</style>
+    </span>
+  );
+}
+
+/** Decorative orbit dots used around team bots while a run is active. */
+export function OrbitRing({
+  size = 96,
+  accent = "#3b82f6",
+}: {
+  size?: number;
+  accent?: string;
+}) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      style={{
+        width: size,
+        height: size,
+        animation: "nx-orbit 6s linear infinite",
+      }}
+    >
+      {[0, 120, 240].map((deg) => (
+        <span
+          key={deg}
+          className="absolute h-1.5 w-1.5 rounded-full"
+          style={{
+            background: `color-mix(in oklab, ${accent}, #000 var(--tint-darken, 0%))`,
+            top: "50%",
+            left: "50%",
+            transform: `rotate(${deg}deg) translateX(${size / 2}px)`,
+            transformOrigin: "0 0",
+            opacity: 0.55,
+          }}
+        />
+      ))}
     </span>
   );
 }
