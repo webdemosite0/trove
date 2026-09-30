@@ -4,13 +4,11 @@ import { chromium, type Browser, type Page } from "playwright-core";
 
 const BB_API = "https://api.browserbase.com/v1";
 
-export type TroBrowserStatus = "idle" | "starting" | "ready" | "working" | "error";
-
 export type TroBrowserSnapshot = {
   configured: boolean;
   sessionId: string | null;
   connectUrl: string | null;
-  status: TroBrowserStatus;
+  status: "idle" | "ready" | "error" | "starting" | "working";
   liveUrl: string | null;
   pageUrl: string | null;
   title: string | null;
@@ -27,11 +25,17 @@ function projectId() {
 }
 
 export function troBrowserConfigured() {
-  return Boolean(apiKey());
+  return Boolean(apiKey() && projectId());
 }
 
 export function troBrowserSetupHint() {
-  return "Add BROWSERBASE_API_KEY (and optional BROWSERBASE_PROJECT_ID) in Vercel → Settings → Environment Variables, then redeploy.";
+  const missing: string[] = [];
+  if (!apiKey()) missing.push("BROWSERBASE_API_KEY");
+  if (!projectId()) missing.push("BROWSERBASE_PROJECT_ID");
+  if (missing.length === 0) {
+    return "Browser computer is configured. If sessions fail, check the Browserbase dashboard and Vercel logs.";
+  }
+  return `Add ${missing.join(" and ")} in Vercel → Settings → Environment Variables, then redeploy. Get both from browserbase.com → Overview.`;
 }
 
 async function bb<T>(
@@ -65,6 +69,16 @@ async function bb<T>(
     } catch {
       /* keep text */
     }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(
+        `Browserbase auth failed (${res.status}). Check BROWSERBASE_API_KEY. ${detail}`,
+      );
+    }
+    if (res.status === 400 && /project/i.test(detail)) {
+      throw new Error(
+        `Browserbase project issue. Check BROWSERBASE_PROJECT_ID. ${detail}`,
+      );
+    }
     throw new Error(detail);
   }
   if (res.status === 204) return undefined as T;
@@ -76,11 +90,14 @@ export async function createBrowserSession(): Promise<{
   connectUrl: string;
   liveUrl: string | null;
 }> {
+  if (!troBrowserConfigured()) {
+    throw new Error(troBrowserSetupHint());
+  }
+
   const payload: Record<string, unknown> = {
+    projectId: projectId(),
     keepAlive: true,
   };
-  const pid = projectId();
-  if (pid) payload.projectId = pid;
 
   const session = await bb<{
     id: string;
@@ -90,7 +107,7 @@ export async function createBrowserSession(): Promise<{
 
   const connectUrl = session.connectUrl || session.connect_url || "";
   if (!connectUrl) {
-    throw new Error("Browserbase did not return a connect URL.");
+    throw new Error("Browserbase did not return a connect URL. Try again or check the project.");
   }
 
   let liveUrl: string | null = null;
@@ -135,10 +152,17 @@ async function connectPage(connectUrl: string): Promise<{
   if (!connectUrl?.startsWith("ws")) {
     throw new Error("Missing or invalid browser connect URL. Start the computer again.");
   }
-  const browser = await chromium.connectOverCDP(connectUrl, { timeout: 30_000 });
-  const context = browser.contexts()[0] || (await browser.newContext());
-  const page = context.pages()[0] || (await context.newPage());
-  return { browser, page };
+  try {
+    const browser = await chromium.connectOverCDP(connectUrl, { timeout: 30_000 });
+    const context = browser.contexts()[0] || (await browser.newContext());
+    const page = context.pages()[0] || (await context.newPage());
+    return { browser, page };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(
+      `Could not attach to cloud browser (${msg}). Stop and Start computer again.`,
+    );
+  }
 }
 
 function assertSafeUrl(raw: string) {
