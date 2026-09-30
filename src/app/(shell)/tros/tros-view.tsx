@@ -19,11 +19,12 @@ const ACCENTS = ["#6366f1", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24", "#f472b6
 
 const TOOLS = [
   "Search the web",
+  "Cloud computer",
+  "Documents",
+  "Spreadsheets",
+  "Slides",
   "Read repository",
   "Write code",
-  "Send email",
-  "Query database",
-  "Deploy",
   "Generate images",
   "UI/UX mockups",
 ];
@@ -56,7 +57,7 @@ export function TrosView({
     return (
       <div className="relative mx-auto flex min-h-[70vh] max-w-[640px] flex-col items-center justify-center px-6 py-16 text-center">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_15%,rgba(139,92,246,0.22),transparent_55%)]" />
-        <div className="flex items-end justify-center gap-[-8px]">
+        <div className="flex items-end justify-center">
           {SPECIES.slice(0, 5).map((s, i) => (
             <div key={s} style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 5 - i }}>
               <Bot size={i === 2 ? 88 : 64} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
@@ -96,7 +97,6 @@ export function TrosView({
         </button>
       </header>
 
-      {/* Species parade */}
       <section className="mb-10 overflow-hidden rounded-[28px] border border-line/80 bg-raised/50 px-4 py-5 backdrop-blur-sm">
         <div className="mb-3 flex items-center justify-between px-1">
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Mascot species</p>
@@ -153,10 +153,7 @@ export function TrosView({
                 />
                 <Link href={`/tros/${a.id}`} className="relative flex flex-1 flex-col outline-none">
                   <div className="flex items-start gap-3">
-                    <span className="relative">
-                      <Bot size={64} accent={a.accent} seed={a.id} state="idle" />
-                      <span className="pointer-events-none absolute -inset-1 rounded-full opacity-0 ring-2 ring-violet-400/40 transition group-hover:opacity-100" />
-                    </span>
+                    <Bot size={64} accent={a.accent} seed={a.id} state="idle" />
                     <div className="min-w-0 flex-1 pt-1">
                       <h2 className="truncate text-[16.5px] font-semibold tracking-tight text-ink">{a.name}</h2>
                       <p className="mt-0.5 truncate text-[12.5px] text-ink-3">{a.role}</p>
@@ -229,7 +226,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [state, action, pending] = useActionState<AgentFormState, FormData>(createAgent, {});
   const [accent, setAccent] = useState(ACCENTS[0]!);
-  const [tools, setTools] = useState<string[]>(["Search the web"]);
+  const [tools, setTools] = useState<string[]>(["Search the web", "Cloud computer", "Documents"]);
   const [name, setName] = useState("");
   const previewSpecies = speciesFromSeed(name || "preview");
 
