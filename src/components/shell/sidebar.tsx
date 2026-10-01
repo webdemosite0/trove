@@ -90,7 +90,7 @@ function NavRow({
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "grid h-9 w-9 place-items-center rounded-xl transition-colors",
+            "mx-auto grid h-9 w-9 place-items-center rounded-xl transition-colors",
             active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
@@ -206,43 +206,55 @@ export function Sidebar({
   useEffect(() => { setOpen(false); }, [pathname, setOpen]);
   const isTros = useIsTrosProduct(pathname);
   const items = isTros ? TROS_NAV : TROVE_NAV;
-  const body = (
+  const renderBody = (c: boolean) => (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-14 shrink-0 items-center gap-1.5 px-2.5">
-        <ProductSwitcher collapsed={collapsed} onNavigate={closeMobile} />
+      <div className={cn("flex shrink-0 gap-1.5 px-2.5", c ? "flex-col items-center py-3" : "h-14 flex-row items-center")}>
+        <ProductSwitcher collapsed={c} onNavigate={closeMobile} />
         <button type="button" className="grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden" onClick={closeMobile} aria-label="Close menu">
           <FiX size={18} />
         </button>
-        <button type="button" className="hidden size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:grid" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
-          <FiSidebar size={16} />
+        <button type="button" className="grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink max-lg:hidden" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          <Ico icon={FiSidebar} motion="panel" size={16} />
         </button>
       </div>
       <div className="shrink-0 px-3 pb-3">
-        {isTros ? (
-          <Link href="/tros?new=1" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold", collapsed && "px-0")}>
-            <FiPlus size={15} />
-            {!collapsed ? <span>New Tro</span> : null}
-          </Link>
-        ) : (
-          <Link href="/chat" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold", collapsed && "px-0")}>
-            <FiPlus size={15} />
-            {!collapsed ? <span>New chat</span> : null}
-          </Link>
-        )}
+        {(() => {
+          const btn = (
+            <Link
+              href={isTros ? "/tros?new=1" : "/chat"}
+              onClick={closeMobile}
+              aria-label={isTros ? "New Tro" : "New chat"}
+              className={cn(
+                "btn-grad flex items-center justify-center gap-1.5 text-[13px] font-semibold",
+                c ? "mx-auto size-10 rounded-full" : "h-9 w-full rounded-full",
+              )}
+            >
+              <FiPlus size={16} />
+              {!c ? <span>{isTros ? "New Tro" : "New chat"}</span> : null}
+            </Link>
+          );
+          return c ? (
+            <Tooltip label={isTros ? "New Tro" : "New chat"} side="right">
+              {btn}
+            </Tooltip>
+          ) : (
+            btn
+          );
+        })()}
       </div>
-      {!collapsed ? (
+      {!c ? (
         <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
           {isTros ? "Tros" : "Workspace"}
         </p>
       ) : null}
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 pb-2">
         {items.map((item) => (
-          <NavRow key={item.href + item.label} item={item} pathname={pathname} onNavigate={closeMobile} compact={collapsed} />
+          <NavRow key={item.href + item.label} item={item} pathname={pathname} onNavigate={closeMobile} compact={c} />
         ))}
       </nav>
       <div className="relative z-10 shrink-0 space-y-2 border-t border-line bg-rail p-2.5">
         {user ? (
-          collapsed ? (
+          c ? (
             <Tooltip label={user.name} side="right">
               <Link href="/settings" onClick={closeMobile} className="mx-auto grid size-9 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
                 {user.name.slice(0, 1).toUpperCase()}
@@ -256,8 +268,8 @@ export function Sidebar({
             Log in
           </Link>
         )}
-        <div className="flex items-center gap-1 pt-1">
-          {!collapsed ? (
+        <div className={cn("flex items-center gap-1 pt-1", c && "justify-center")}>
+          {!c ? (
             <>
               <Tooltip label="Settings" side="top">
                 <Link href="/settings" onClick={closeMobile} aria-label="Settings" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
@@ -278,10 +290,10 @@ export function Sidebar({
               <ThemeToggle />
             </>
           ) : (
-            <ThemeToggle className="mx-auto" />
+            <ThemeToggle />
           )}
         </div>
-        {balance && !collapsed ? (
+        {balance && !c ? (
           <div className="mx-0.5 flex items-center justify-between rounded-xl bg-sunk px-2.5 py-1.5">
             <span className="text-[11px] text-ink-4">Credits</span>
             <span className="text-[11px] font-semibold tabular-nums text-ink">
@@ -300,13 +312,13 @@ export function Sidebar({
           collapsed ? "w-[68px]" : "w-[248px]",
         )}
       >
-        {body}
+        {renderBody(collapsed)}
       </aside>
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close menu" onClick={closeMobile} />
           <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,280px)] flex-col overflow-hidden rounded-r-3xl border-r border-line bg-rail shadow-[var(--elev-lift)]">
-            {body}
+            {renderBody(false)}
           </aside>
         </div>
       ) : null}
