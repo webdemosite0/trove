@@ -123,11 +123,9 @@ function NavRow({
 
 function UserMenu({
   user,
-  isAdmin = false,
   onNavigate,
 }: {
   user: User;
-  isAdmin?: boolean;
   onNavigate?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -171,11 +169,6 @@ function UserMenu({
           <Link href="/settings/account" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); }} className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
             <FiUser size={14} /> Account
           </Link>
-          {isAdmin ? (
-            <Link href="/admin" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); }} className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
-              <FiSettings size={14} /> Admin
-            </Link>
-          ) : null}
           <div className="my-1 border-t border-line" />
           <form action={logOut}>
             <button type="submit" role="menuitem" className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-critical hover:bg-hover">
@@ -191,11 +184,9 @@ function UserMenu({
 export function Sidebar({
   user,
   balance,
-  isAdmin = false,
 }: {
   user: User | null;
   balance?: Balance | null;
-  isAdmin?: boolean;
 }) {
   const pathname = usePathname() || "/";
   const { open, setOpen, collapsed, setCollapsed } = useNav();
@@ -258,7 +249,7 @@ export function Sidebar({
               </Link>
             </Tooltip>
           ) : (
-            <UserMenu user={user} isAdmin={isAdmin} onNavigate={closeMobile} />
+            <UserMenu user={user} onNavigate={closeMobile} />
           )
         ) : (
           <Link href="/login" onClick={closeMobile} className="btn-grad flex h-9 w-full items-center justify-center rounded-full text-[13px] font-semibold">

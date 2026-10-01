@@ -13,12 +13,10 @@ import type { Recent } from "@/lib/recents";
 export function AppChrome({
   user,
   balance,
-  isAdmin: _isAdmin,
   children,
 }: {
   user: User;
   balance: Balance | null;
-  isAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
