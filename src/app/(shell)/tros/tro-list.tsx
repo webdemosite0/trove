@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import Link from "next/link";
 import { FiPlus, FiSearch, FiTrash2, FiX } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
@@ -31,15 +31,20 @@ export function TroListPanel({
   activeId,
   onNew,
   onDelete,
+  onHoverAgent,
+  searchRef,
   className,
 }: {
   agents: AgentRow[];
   activeId?: string;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onHoverAgent?: (a: AgentRow | null) => void;
+  searchRef?: RefObject<HTMLInputElement | null>;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
+  const [hoverId, setHoverId] = useState<string | null>(null);
   const q = query.trim().toLowerCase();
   const filtered = q
     ? agents.filter((a) => `${a.name} ${a.role} ${a.instructions}`.toLowerCase().includes(q))
@@ -60,11 +65,12 @@ export function TroListPanel({
             <Ico icon={FiSearch} size={14} />
           </span>
           <input
+            ref={searchRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search Tros"
             aria-label="Search Tros"
-            className="w-full rounded-xl border border-transparent bg-sunk/70 py-2 pl-9 pr-8 text-[13px] text-ink outline-none transition placeholder:text-ink-4 focus:border-line-strong focus:bg-sunk"
+            className="w-full rounded-xl border border-transparent bg-sunk/70 py-2 pl-9 pr-9 text-[13px] text-ink outline-none transition placeholder:text-ink-4 focus:border-line-strong focus:bg-sunk"
           />
           {query ? (
             <button
@@ -75,7 +81,14 @@ export function TroListPanel({
             >
               <Ico icon={FiX} size={13} />
             </button>
-          ) : null}
+          ) : (
+            <kbd
+              aria-hidden
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-line bg-raised px-1.5 py-0.5 text-[10px] font-semibold text-ink-4"
+            >
+              /
+            </kbd>
+          )}
         </div>
       </div>
 
@@ -92,7 +105,18 @@ export function TroListPanel({
           filtered.map((a) => {
             const active = a.id === activeId;
             return (
-              <div key={a.id} className="group relative">
+              <div
+                key={a.id}
+                className="group relative"
+                onMouseEnter={() => {
+                  setHoverId(a.id);
+                  onHoverAgent?.(a);
+                }}
+                onMouseLeave={() => {
+                  setHoverId(null);
+                  onHoverAgent?.(null);
+                }}
+              >
                 <Link
                   href={`/tros/${a.id}`}
                   aria-current={active ? "page" : undefined}
@@ -103,7 +127,7 @@ export function TroListPanel({
                       : "hover:bg-hover/60 hover:translate-x-px",
                   )}
                 >
-                  <Bot size={38} seed={a.id} accent={a.accent} state="idle" />
+                  <Bot size={38} seed={a.id} accent={a.accent} state={hoverId === a.id || active ? "working" : "idle"} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className="truncate text-[13.5px] font-semibold text-ink">{a.name}</span>

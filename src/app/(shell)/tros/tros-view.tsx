@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,6 +13,7 @@ import {
   FiCode,
   FiEdit2,
   FiMessageSquare,
+  FiZap,
 } from "@/components/ui/icons";
 import { Bot, SPECIES, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import {
@@ -46,10 +47,11 @@ const field =
 type Draft = { name: string; role: string; instructions: string };
 const BLANK_DRAFT: Draft = { name: "", role: "", instructions: "" };
 
-const STARTERS: { icon: typeof FiSearch; title: string; desc: string; draft: Draft }[] = [
+const STARTERS: { icon: typeof FiSearch; title: string; desc: string; tone: string; draft: Draft }[] = [
   {
     icon: FiSearch,
     title: "Researcher",
+    tone: "#38bdf8",
     desc: "Deep dives, summaries, sources",
     draft: {
       name: "",
@@ -61,6 +63,7 @@ const STARTERS: { icon: typeof FiSearch; title: string; desc: string; draft: Dra
   {
     icon: FiCode,
     title: "Engineer",
+    tone: "#a78bfa",
     desc: "Write, review and debug code",
     draft: {
       name: "",
@@ -72,6 +75,7 @@ const STARTERS: { icon: typeof FiSearch; title: string; desc: string; draft: Dra
   {
     icon: FiEdit2,
     title: "Writer",
+    tone: "#f472b6",
     desc: "Drafts, edits and sharp copy",
     draft: {
       name: "",
@@ -83,6 +87,7 @@ const STARTERS: { icon: typeof FiSearch; title: string; desc: string; draft: Dra
   {
     icon: FiMessageSquare,
     title: "Strategist",
+    tone: "#fbbf24",
     desc: "Plans, priorities, decisions",
     draft: {
       name: "",
@@ -93,16 +98,28 @@ const STARTERS: { icon: typeof FiSearch; title: string; desc: string; draft: Dra
   },
 ];
 
+function greetingFor(name?: string | null): string {
+  const h = new Date().getHours();
+  const part = h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : "evening";
+  const first = name?.trim().split(" ")[0];
+  return `Good ${part}${first ? `, ${first}` : ""}`;
+}
+
 export function TrosView({
   agents,
   signedIn,
+  userName,
 }: {
   agents: AgentRow[];
   signedIn: boolean;
+  userName?: string | null;
 }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const [glow, setGlow] = useState<string | null>(null);
+  const [brief, setBrief] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const deleting = agents.find((a) => a.id === deletingId) ?? null;
   const router = useRouter();
 
@@ -114,6 +131,24 @@ export function TrosView({
       router.replace("/tros", { scroll: false });
     }
   }, [router]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || draft) return;
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || t?.isContentEditable) return;
+      if (e.key === "/") {
+        e.preventDefault();
+        searchRef.current?.focus();
+      } else if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        setDraft(BLANK_DRAFT);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [draft]);
 
   if (!signedIn) {
     return (
@@ -139,13 +174,27 @@ export function TrosView({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 bg-canvas">
+    <div
+      className="relative flex h-full min-h-0 bg-canvas"
+      style={glow ? ({ ["--tro-glow" as string]: glow } as CSSProperties) : undefined}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 transition-all duration-700"
+        style={{
+          background:
+            "radial-gradient(ellipse 55% 38% at 50% -4%, color-mix(in srgb, var(--tro-glow, #8b5cf6) 13%, transparent), transparent 70%)",
+          opacity: glow ? 1 : 0.55,
+        }}
+      />
       {/* Tro list — desktop */}
       <aside className="hidden w-[300px] shrink-0 border-r border-line/70 lg:block">
         <TroListPanel
           agents={agents}
           onNew={() => setDraft(BLANK_DRAFT)}
           onDelete={setDeletingId}
+          onHoverAgent={(a) => setGlow(a?.accent ?? null)}
+          searchRef={searchRef}
           className="h-full"
         />
       </aside>
@@ -209,19 +258,48 @@ export function TrosView({
               ))}
             </div>
 
-            <h1 className="app-title-in mt-7 text-center text-[26px] font-semibold tracking-tight text-ink sm:text-[30px]">
-              What should your specialists do today?
+            <h1 className="app-title-in mt-7 text-center text-[26px] font-semibold tracking-tight text-ink sm:text-[32px]">
+              {greetingFor(userName)}.
             </h1>
             <p className="app-sub-in mt-2.5 max-w-[52ch] text-center text-[14px] leading-relaxed text-ink-3">
-              Hire a Tro for any job — research, code, design, writing. Each one keeps a stable brief and its own workspace.
+              Who&apos;s joining the crew today? Describe the job, or pick a specialist below.
             </p>
 
-            <div className="app-stagger mt-8 grid w-full max-w-[600px] gap-2.5 sm:grid-cols-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (brief.trim()) setDraft({ name: "", role: "", instructions: brief.trim() });
+              }}
+              className="app-block-in mt-6 flex w-full max-w-[560px] items-center gap-2 rounded-2xl border border-line bg-raised/85 p-2 pl-4 shadow-[0_20px_50px_-24px_rgba(139,92,246,0.45)] backdrop-blur transition focus-within:border-violet-500/55 focus-within:shadow-[0_24px_60px_-20px_rgba(139,92,246,0.6)]"
+              style={{ ["--app-delay" as string]: "140ms" }}
+            >
+              <Ico icon={FiZap} motion="sparkle" size={17} className="shrink-0 text-violet-500" />
+              <input
+                value={brief}
+                onChange={(e) => setBrief(e.target.value)}
+                placeholder="Describe the job — e.g. “track competitor pricing every week”…"
+                aria-label="Describe the job to hire a Tro"
+                className="min-w-0 flex-1 bg-transparent py-2 text-[14px] text-ink outline-none placeholder:text-ink-4"
+              />
+              <button
+                type="submit"
+                disabled={!brief.trim()}
+                className="btn-grad shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
+              >
+                Hire
+              </button>
+            </form>
+
+            <div className="app-stagger mt-6 grid w-full max-w-[600px] gap-2.5 sm:grid-cols-2">
               {STARTERS.map((s) => (
                 <button
                   key={s.title}
                   type="button"
                   onClick={() => setDraft(s.draft)}
+                  onMouseEnter={() => setGlow(s.tone)}
+                  onMouseLeave={() => setGlow(null)}
+                  onFocus={() => setGlow(s.tone)}
+                  onBlur={() => setGlow(null)}
                   className="group flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-4 py-3.5 text-left transition duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:bg-raised hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
                 >
                   <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
@@ -247,6 +325,10 @@ export function TrosView({
                     key={s}
                     type="button"
                     onClick={() => setDraft(BLANK_DRAFT)}
+                    onMouseEnter={() => setGlow(SPECIES_META[s].defaultAccent)}
+                    onMouseLeave={() => setGlow(null)}
+                    onFocus={() => setGlow(SPECIES_META[s].defaultAccent)}
+                    onBlur={() => setGlow(null)}
                     title={`Hire a Tro — ${SPECIES_META[s].label}`}
                     className="flex w-[104px] shrink-0 flex-col items-center rounded-2xl border border-line/70 bg-raised/50 px-2 py-3.5 transition duration-300 hover:-translate-y-1 hover:border-violet-500/35 hover:bg-raised hover:shadow-[0_16px_36px_-20px_rgba(139,92,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
                   >

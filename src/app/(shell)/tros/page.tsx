@@ -18,7 +18,7 @@ export default async function TrosPage() {
   const agents = await listAgents();
   return (
     <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-      <TrosView agents={agents} signedIn={Boolean(user)} />
+      <TrosView agents={agents} signedIn={Boolean(user)} userName={user?.name ?? null} />
     </div>
   );
 }

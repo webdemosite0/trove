@@ -5,7 +5,7 @@ import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, TbPlugConnected } from "@/components/ui/icons";
-import { Bot } from "@/components/agents/bot";
+import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
 import { Ico } from "@/components/ui/ico";
@@ -431,7 +431,12 @@ export function AgentChat({
             </Link>
             <Bot size={36} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-[15px] font-semibold tracking-tight text-ink">{agent.name}</h1>
+              <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-ink">
+                <span className="truncate">{agent.name}</span>
+                <span className="shrink-0 rounded-full bg-violet-500/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-violet-500">
+                  {SPECIES_META[speciesFromSeed(agent.id)].label}
+                </span>
+              </h1>
               <p className="truncate text-[12px] text-ink-3">
                 {busy ? (
                   <span className="inline-flex items-center gap-1.5">
