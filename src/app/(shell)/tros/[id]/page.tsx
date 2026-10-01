@@ -5,6 +5,8 @@ import { one, str, num } from "@/lib/db";
 import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { listAgents, type AgentRow } from "@/app/actions/agents";
+import { isMobile } from "@/lib/device";
+import { TrosDesktopOnly } from "../desktop-only";
 
 export const metadata = { title: "Tro" };
 
@@ -26,6 +28,8 @@ export default async function TroPage({
   searchParams: Promise<{ c?: string }>;
 }) {
   const [{ id }, { c }] = await Promise.all([params, searchParams]);
+
+  if (await isMobile()) return <TrosDesktopOnly />;
 
   const user = await currentUser();
   if (!user) notFound();

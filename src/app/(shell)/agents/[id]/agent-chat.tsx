@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, TbPlugConnected } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -12,6 +12,8 @@ import { Ico } from "@/components/ui/ico";
 import { FailureNote } from "@/components/ui/failure-note";
 import { Modal } from "@/components/ui/modal";
 import { TroListPanel } from "../../tros/tro-list";
+import { ApprovalPrompt } from "@/components/agents/approval-prompt";
+import { extractAskBlocks, stripAskBlocks, type AskBlock } from "@/lib/ask-block";
 import { strip, type Attachment } from "@/lib/attachments";
 import { useSaved } from "@/lib/use-saved";
 import { deleteAgent, type AgentRow } from "@/app/actions/agents";
@@ -85,6 +87,8 @@ export function AgentChat({
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const deleting = agents.find((a) => a.id === deletingId) ?? null;
+  const [answeredAsks, setAnsweredAsks] = useState<Set<string>>(() => new Set());
+  const [connectors, setConnectors] = useState<{ service: string; label: string; account: string | null }[] | null>(null);
   const { save, reset } = useSaved("agent", restored?.id ?? null);
   const [turns, setTurns] = useState<Turn[]>(() =>
     (restored?.messages ?? []).map((m, i) => ({ id: i, role: m.role, text: m.text })),
@@ -232,6 +236,21 @@ export function AgentChat({
   }, [agent.id, browserAction]);
 
   useEffect(() => {
+    let cancelled = false;
+    fetch("/api/tro/connectors")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setConnectors(Array.isArray(d?.connectors) ? d.connectors : []);
+      })
+      .catch(() => {
+        if (!cancelled) setConnectors([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!stickToBottom.current) return;
     const el = bottom.current;
     if (!el) return;
@@ -350,6 +369,30 @@ export function AgentChat({
     [agent.id, agent.name, agent.role, busy, navigateComputer, panelOpen, pushActivity, save, turns],
   );
 
+  const markAskAnswered = useCallback((key: string) => {
+    setAnsweredAsks((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
+
+  const answerAsk = useCallback(
+    (turnId: number, askIdx: number, block: AskBlock) =>
+      (answers: Record<number, number[]>, custom: Record<number, string>) => {
+        markAskAnswered(`${turnId}:${askIdx}`);
+        const lines = block.questions.map((q, qi) => {
+          const picked = (answers[qi] ?? []).map((oi) => q.options[oi]).filter(Boolean);
+          const extra = custom[qi]?.trim();
+          if (extra) picked.push(extra);
+          return `${qi + 1}. ${q.q}\n→ ${picked.join("; ") || "(skipped)"}`;
+        });
+        void send(`My answers${block.title ? ` (${block.title})` : ""}:\n${lines.join("\n")}`);
+      },
+    [markAskAnswered, send],
+  );
+
   const retry = useCallback(() => {
     const lastUser = [...turns].reverse().find((t) => t.role === "user");
     if (!lastUser) return;
@@ -389,7 +432,20 @@ export function AgentChat({
             <Bot size={36} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-[15px] font-semibold tracking-tight text-ink">{agent.name}</h1>
-              <p className="truncate text-[12px] text-ink-3">{busy ? "Working on your task…" : agent.role}</p>
+              <p className="truncate text-[12px] text-ink-3">
+                {busy ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    Working
+                    <span className="inline-flex items-center gap-[3px]" aria-hidden>
+                      <span className="size-1 animate-bounce rounded-full bg-ink-3" />
+                      <span className="size-1 animate-bounce rounded-full bg-ink-3 [animation-delay:150ms]" />
+                      <span className="size-1 animate-bounce rounded-full bg-ink-3 [animation-delay:300ms]" />
+                    </span>
+                  </span>
+                ) : (
+                  agent.role
+                )}
+              </p>
             </div>
             {turns.length > 0 ? (
               <button
@@ -443,18 +499,34 @@ export function AgentChat({
                 <Recents className="mx-auto mt-10 max-w-[520px] text-left" label="Earlier sessions" items={recents} />
               </div>
             ) : (
-              turns.map((t, i) => (
-                <Message
-                  key={t.id}
-                  role={t.role}
-                  text={t.text}
-                  pending={busy && i === turns.length - 1 && t.role === "model"}
-                  onRegenerate={t.role === "model" ? retry : undefined}
-                  assistantName={agent.name}
-                  assistantSeed={agent.id}
-                  assistantAccent={agent.accent}
-                />
-              ))
+              turns.map((t, i) => {
+                const asks = t.role === "model" && !busy ? extractAskBlocks(t.text) : [];
+                const text = asks.length ? stripAskBlocks(t.text) : t.text;
+                return (
+                  <div key={t.id}>
+                    <Message
+                      role={t.role}
+                      text={text}
+                      pending={busy && i === turns.length - 1 && t.role === "model"}
+                      onRegenerate={t.role === "model" ? retry : undefined}
+                      assistantName={agent.name}
+                      assistantSeed={agent.id}
+                      assistantAccent={agent.accent}
+                    />
+                    {asks.map((a, ai) =>
+                      answeredAsks.has(`${t.id}:${ai}`) ? null : (
+                        <ApprovalPrompt
+                          key={ai}
+                          title={a.block.title}
+                          questions={a.block.questions}
+                          onApprove={answerAsk(t.id, ai, a.block)}
+                          onSkip={() => markAskAnswered(`${t.id}:${ai}`)}
+                        />
+                      ),
+                    )}
+                  </div>
+                );
+              })
             )}
             {error ? <FailureNote error={error} onRetry={retry} /> : null}
             <div ref={bottom} />
@@ -583,6 +655,46 @@ export function AgentChat({
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="border-t border-line px-4 py-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Connectors</p>
+              <Link href="/integrations" className="text-[10px] font-semibold text-ink-3 transition hover:text-ink">
+                Manage
+              </Link>
+            </div>
+            {connectors === null ? (
+              <p className="text-[12px] text-ink-4">Checking connected apps…</p>
+            ) : connectors.length === 0 ? (
+              <p className="text-[12px] leading-relaxed text-ink-4">
+                Nothing connected yet.{" "}
+                <Link href="/integrations" className="font-medium text-ink-2 underline decoration-ink-4 underline-offset-2 hover:text-ink">
+                  Connect an app
+                </Link>{" "}
+                and {agent.name.split(" ")[0]} can use it.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {connectors.map((c) => (
+                  <li key={c.service} className="flex items-center gap-2 rounded-lg px-1.5 py-1.5">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-positive/15 text-positive">
+                      <Ico icon={TbPlugConnected} size={13} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[12.5px] font-medium text-ink">{c.label}</span>
+                      {c.account ? <span className="block truncate text-[11px] text-ink-3">{c.account}</span> : null}
+                    </span>
+                    <span className="size-1.5 shrink-0 rounded-full bg-positive" aria-label="Connected" />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-2 text-[11px] leading-relaxed text-ink-4">
+              Mention <span className="font-semibold text-ink-3">@slack</span> or{" "}
+              <span className="font-semibold text-ink-3">@github</span> in chat and {agent.name.split(" ")[0]} pulls
+              live data.
+            </p>
           </section>
         </div>
       </aside>
