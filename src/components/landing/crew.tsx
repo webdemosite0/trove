@@ -6,16 +6,16 @@ import { SectionHead } from "./sections";
 import { FiArrowRight } from "@/components/ui/icons";
 
 const CREW = [
-  { name: "Atlas", role: "Chief of Staff", img: "atlas" },
+  { name: "Atlas", role: "Planning", img: "atlas" },
   { name: "Scout", role: "Research", img: "scout" },
-  { name: "Milo", role: "Growth", img: "milo" },
-  { name: "Nova", role: "Operations", img: "nova" },
-  { name: "Leo", role: "Sales", img: "leo" },
-  { name: "Iris", role: "Support", img: "iris" },
-  { name: "Zara", role: "Finance", img: "zara" },
-  { name: "Kael", role: "Product", img: "kael" },
-  { name: "Luna", role: "Design", img: "luna" },
-  { name: "Echo", role: "Content", img: "echo" },
+  { name: "Milo", role: "Writing", img: "milo" },
+  { name: "Nova", role: "Building", img: "nova" },
+  { name: "Leo", role: "Data", img: "leo" },
+  { name: "Iris", role: "Design", img: "iris" },
+  { name: "Zara", role: "Operations", img: "zara" },
+  { name: "Kael", role: "Engineering", img: "kael" },
+  { name: "Luna", role: "Analysis", img: "luna" },
+  { name: "Echo", role: "Communication", img: "echo" },
 ];
 
 const imgUrl = (n: string) => `/api/mascots/${n}`;

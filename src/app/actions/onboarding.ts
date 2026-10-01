@@ -20,8 +20,11 @@ export type OnboardingPayload = {
   businessAnalysis?: string;
 };
 
-function withReferralWelcome(path: string) {
-  return `${path}${path.includes("?") ? "&" : "?"}welcome=referral`;
+function withReferralWelcome(path: string, idea?: string) {
+  const q = idea?.trim()
+    ? `${path.includes("?") ? "&" : "?"}q=${encodeURIComponent(idea.trim().slice(0, 500))}`
+    : "";
+  return `${path}${q}${q ? "&" : "?"}welcome=referral`;
 }
 
 export async function finishOnboarding(payload: OnboardingPayload) {
@@ -63,13 +66,14 @@ export async function finishOnboarding(payload: OnboardingPayload) {
   });
 
   const goal = payload.goal || "explore";
+  const idea = payload.firstIdea || "";
   if (goal === "website") {
     // Web builder disabled — send website-intent users to chat for now.
-    redirect(withReferralWelcome("/chat"));
+    redirect(withReferralWelcome("/chat", idea));
   }
-  if (goal === "documents") redirect(withReferralWelcome("/documents"));
-  if (goal === "spreadsheets") redirect(withReferralWelcome("/spreadsheets"));
-  if (goal === "agents") redirect(withReferralWelcome("/agents"));
-  if (goal === "code") redirect(withReferralWelcome("/code"));
-  redirect(withReferralWelcome("/chat"));
+  if (goal === "documents") redirect(withReferralWelcome("/documents", idea));
+  if (goal === "spreadsheets") redirect(withReferralWelcome("/spreadsheets", idea));
+  if (goal === "agents") redirect(withReferralWelcome("/agents", idea));
+  if (goal === "code") redirect(withReferralWelcome("/code", idea));
+  redirect(withReferralWelcome("/chat", idea));
 }

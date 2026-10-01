@@ -133,10 +133,10 @@ export function Architecture() {
 
 const WORKFLOW: { name: string; role: string; mascot: string; accent: string; task: string }[] = [
   { name: "Scout", role: "Research", mascot: "scout", accent: "#34d399", task: "Researched 14 competitors and pricing" },
-  { name: "Echo", role: "Content", mascot: "echo", accent: "#a78bfa", task: "Drafted the launch narrative" },
-  { name: "Kael", role: "Product", mascot: "kael", accent: "#64748b", task: "Built the landing page" },
-  { name: "Luna", role: "Design", mascot: "luna", accent: "#e879f9", task: "Refined the design system" },
-  { name: "Atlas", role: "Chief of Staff", mascot: "atlas", accent: "#fbbf24", task: "Coordinated and shipped it" },
+  { name: "Milo", role: "Writing", mascot: "milo", accent: "#f472b6", task: "Drafted the launch narrative" },
+  { name: "Nova", role: "Building", mascot: "nova", accent: "#fbbf24", task: "Built the landing page" },
+  { name: "Iris", role: "Design", mascot: "iris", accent: "#2dd4bf", task: "Refined the design system" },
+  { name: "Atlas", role: "Planning", mascot: "atlas", accent: "#a78bfa", task: "Planned the rollout and shipped it" },
 ];
 
 export function TrosWorkflow() {
