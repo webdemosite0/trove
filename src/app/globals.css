@@ -4,17 +4,17 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
-  --color-canvas: #212121;
-  --color-rail: #171717;
-  --color-sunk: #2a2a2a;
-  --color-raised: #2f2f2f;
-  --color-hover: #3a3a3a;
-  --color-ink: #ececec;
-  --color-ink-2: #ececec;
-  --color-ink-3: #b4b4b4;
-  --color-ink-4: #8e8e8e;
-  --color-line: #3a3a3a;
-  --color-line-strong: #4a4a4a;
+  --color-canvas: #1e1e20;
+  --color-rail: #171719;
+  --color-sunk: #26262b;
+  --color-raised: #2a2a2f;
+  --color-hover: #34343a;
+  --color-ink: #f2f2f5;
+  --color-ink-2: #f2f2f5;
+  --color-ink-3: #b0b0b8;
+  --color-ink-4: #8a8a93;
+  --color-line: #34343a;
+  --color-line-strong: #44444c;
   --color-accent: #8ab4f8;
   --color-accent-soft: #1a2332;
   --color-violet: #a0a0a0;
@@ -71,17 +71,17 @@
 }
 
 :root[data-theme="dark"] {
-  --color-canvas: #212121;
-  --color-rail: #171717;
-  --color-sunk: #2a2a2a;
-  --color-raised: #2f2f2f;
-  --color-hover: #3a3a3a;
-  --color-ink: #ececec;
-  --color-ink-2: #ececec;
-  --color-ink-3: #b4b4b4;
-  --color-ink-4: #8e8e8e;
-  --color-line: #3a3a3a;
-  --color-line-strong: #4a4a4a;
+  --color-canvas: #1e1e20;
+  --color-rail: #171719;
+  --color-sunk: #26262b;
+  --color-raised: #2a2a2f;
+  --color-hover: #34343a;
+  --color-ink: #f2f2f5;
+  --color-ink-2: #f2f2f5;
+  --color-ink-3: #b0b0b8;
+  --color-ink-4: #8a8a93;
+  --color-line: #34343a;
+  --color-line-strong: #44444c;
   --color-accent: #8ab4f8;
   --color-accent-soft: #1a2332;
   --color-violet: #a0a0a0;
