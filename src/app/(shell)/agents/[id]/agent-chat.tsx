@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, TbPlugConnected } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiFileText, FiGrid, FiLayers, FiEdit2, FiCode, FiDownload, FiTrash2, TbPlugConnected } from "@/components/ui/icons";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -14,6 +14,15 @@ import { Modal } from "@/components/ui/modal";
 import { TroListPanel } from "../../tros/tro-list";
 import { ApprovalPrompt } from "@/components/agents/approval-prompt";
 import { extractAskBlocks, stripAskBlocks, type AskBlock } from "@/lib/ask-block";
+import {
+  extractArtifactBlocks,
+  stripArtifactBlocks,
+  artifactFingerprint,
+  type ArtifactBlock,
+  type ArtifactKind,
+  type SavedArtifact,
+} from "@/lib/artifact-block";
+import { StreamingText } from "@/components/chat/streaming-text";
 import { strip, type Attachment } from "@/lib/attachments";
 import { useSaved } from "@/lib/use-saved";
 import { deleteAgent, type AgentRow } from "@/app/actions/agents";
@@ -47,6 +56,92 @@ type ComputerState = {
   error: string | null;
   screenshotBase64: string | null;
 };
+
+const ARTIFACT_ICON: Record<ArtifactKind, typeof FiFileText> = {
+  doc: FiFileText,
+  sheet: FiGrid,
+  deck: FiLayers,
+  note: FiEdit2,
+  code: FiCode,
+};
+
+const ARTIFACT_LABEL: Record<ArtifactKind, string> = {
+  doc: "Document",
+  sheet: "Spreadsheet",
+  deck: "Deck",
+  note: "Note",
+  code: "Code",
+};
+
+const ARTIFACT_EXT: Record<ArtifactKind, string> = {
+  doc: "md",
+  sheet: "md",
+  deck: "md",
+  note: "md",
+  code: "txt",
+};
+
+/** Card rendered under a chat turn for an artifact the Tro produced. */
+function ArtifactCard({
+  block,
+  saved,
+  onOpen,
+  onDownload,
+  onDelete,
+}: {
+  block: ArtifactBlock;
+  saved: SavedArtifact | null;
+  onOpen: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+}) {
+  const Icon = ARTIFACT_ICON[block.kind];
+  return (
+    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-3 py-2.5 transition hover:border-line-strong">
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
+        <Icon size={16} />
+      </span>
+      <button
+        type="button"
+        onClick={onOpen}
+        disabled={!saved}
+        className="min-w-0 flex-1 text-left disabled:cursor-default"
+      >
+        <span className="block truncate text-[13px] font-semibold text-ink">{block.title}</span>
+        <span className="block text-[11px] text-ink-4">
+          {ARTIFACT_LABEL[block.kind]} · {saved ? "Saved to library" : "Saving…"}
+        </span>
+      </button>
+      {saved ? (
+        <span className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={onDownload}
+            aria-label="Download artifact"
+            title="Download"
+            className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+          >
+            <FiDownload size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="Delete artifact"
+            title="Delete"
+            className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-critical/10 hover:text-critical"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        </span>
+      ) : (
+        <span
+          className="size-4 shrink-0 animate-spin rounded-full border-2 border-line-strong border-t-accent"
+          aria-label="Saving artifact"
+        />
+      )}
+    </div>
+  );
+}
 
 const IDLE_COMPUTER: ComputerState = {
   configured: true,
@@ -118,6 +213,130 @@ export function AgentChat({
     document
       .getElementById(`ask-${turnId}-${askIdx}`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  const [artifacts, setArtifacts] = useState<SavedArtifact[]>([]);
+  const [artifactsLoaded, setArtifactsLoaded] = useState(false);
+  const [viewer, setViewer] = useState<SavedArtifact | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const savedPrints = useRef<Set<string>>(new Set());
+  const inflightPrints = useRef<Set<string>>(new Set());
+
+  // The Tro's library — real artifacts it has saved.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/tro/artifacts?agentId=${encodeURIComponent(agent.id)}`,
+        );
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (res.ok && Array.isArray(data?.artifacts)) {
+          const list = data.artifacts as SavedArtifact[];
+          setArtifacts(list);
+          for (const a of list) savedPrints.current.add(artifactFingerprint(a));
+        }
+      } catch {
+        /* library stays empty */
+      } finally {
+        if (!cancelled) setArtifactsLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [agent.id]);
+
+  // Persist artifact blocks the Tro emits, exactly once each. A block is only
+  // marked saved after the POST succeeds, so failures retry on the next turn.
+  useEffect(() => {
+    if (busy || !artifactsLoaded) return;
+    const fresh: { fp: string; block: ArtifactBlock }[] = [];
+    for (const t of turns) {
+      if (t.role !== "model") continue;
+      for (const p of extractArtifactBlocks(t.text)) {
+        const fp = artifactFingerprint(p.block);
+        if (!savedPrints.current.has(fp) && !inflightPrints.current.has(fp)) {
+          inflightPrints.current.add(fp);
+          fresh.push({ fp, block: p.block });
+        }
+      }
+    }
+    if (!fresh.length) return;
+    (async () => {
+      for (const { fp, block: b } of fresh) {
+        try {
+          const res = await fetch("/api/tro/artifacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              agentId: agent.id,
+              kind: b.kind,
+              title: b.title,
+              content: b.content,
+            }),
+          });
+          const data = await res.json().catch(() => null);
+          if (res.ok && data?.artifact) {
+            const saved = data.artifact as SavedArtifact;
+            savedPrints.current.add(fp);
+            setArtifacts((prev) =>
+              prev.some((a) => a.id === saved.id) ? prev : [saved, ...prev],
+            );
+          }
+        } catch {
+          /* network failed — stays unmarked so the next turn retries */
+        } finally {
+          inflightPrints.current.delete(fp);
+        }
+      }
+    })();
+  }, [turns, busy, artifactsLoaded, agent.id]);
+
+  async function deleteArtifact(id: string) {
+    setArtifacts((prev) => prev.filter((a) => a.id !== id));
+    if (viewer?.id === id) setViewer(null);
+    try {
+      await fetch(`/api/tro/artifacts/${encodeURIComponent(id)}`, { method: "DELETE" });
+    } catch {
+      /* already removed locally */
+    }
+  }
+
+  function downloadArtifact(a: SavedArtifact) {
+    const blob = new Blob([a.content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const el = document.createElement("a");
+    el.href = url;
+    el.download = `${a.title.replace(/[^a-z0-9-_]+/gi, "-").slice(0, 60) || "artifact"}.${ARTIFACT_EXT[a.kind]}`;
+    document.body.appendChild(el);
+    el.click();
+    el.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  function openArtifact(a: SavedArtifact) {
+    setEditing(false);
+    setViewer(a);
+  }
+
+  async function saveArtifactEdit() {
+    if (!viewer) return;
+    const content = editText;
+    setArtifacts((prev) => prev.map((a) => (a.id === viewer.id ? { ...a, content, updatedAt: Date.now() } : a)));
+    setViewer((v) => (v ? { ...v, content, updatedAt: Date.now() } : v));
+    setEditing(false);
+    try {
+      await fetch(`/api/tro/artifacts/${encodeURIComponent(viewer.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+    } catch {
+      /* optimistic update stands */
+    }
   }
 
   const autoStarted = useRef(false);
@@ -530,7 +749,8 @@ export function AgentChat({
             ) : (
               turns.map((t, i) => {
                 const asks = t.role === "model" && !busy ? extractAskBlocks(t.text) : [];
-                const text = asks.length ? stripAskBlocks(t.text) : t.text;
+                const artBlocks = t.role === "model" ? extractArtifactBlocks(t.text) : [];
+                const text = stripArtifactBlocks(asks.length ? stripAskBlocks(t.text) : t.text);
                 return (
                   <div key={t.id}>
                     <Message
@@ -554,6 +774,26 @@ export function AgentChat({
                         </div>
                       ),
                     )}
+                    {artBlocks.map((p, pi) => {
+                      const fp = artifactFingerprint(p.block);
+                      const saved = artifacts.find((a) => artifactFingerprint(a) === fp) ?? null;
+                      return (
+                        <ArtifactCard
+                          key={`art-${pi}`}
+                          block={p.block}
+                          saved={saved}
+                          onOpen={() => {
+                            if (saved) openArtifact(saved);
+                          }}
+                          onDownload={() => {
+                            if (saved) downloadArtifact(saved);
+                          }}
+                          onDelete={() => {
+                            if (saved) void deleteArtifact(saved.id);
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })
@@ -698,6 +938,80 @@ export function AgentChat({
             )}
           </section>
 
+          <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Library</p>
+              {artifacts.length > 0 ? (
+                <span className="rounded-full bg-accent/12 px-2 py-0.5 text-[10px] font-bold text-accent">
+                  {artifacts.length}
+                </span>
+              ) : null}
+            </div>
+            {!artifactsLoaded ? (
+              <div className="space-y-1.5">
+                {[0, 1].map((i) => (
+                  <div key={i} className="h-11 animate-pulse rounded-xl bg-sunk" />
+                ))}
+              </div>
+            ) : artifacts.length === 0 ? (
+              <p className="text-[12px] leading-relaxed text-ink-4">
+                Nothing saved yet. Ask {agent.name.split(" ")[0]} to draft a doc, plan, or snippet —
+                it lands here as a real file.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {artifacts.map((a) => {
+                  const Icon = ARTIFACT_ICON[a.kind];
+                  return (
+                    <li key={a.id}>
+                      <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-hover">
+                        <button
+                          type="button"
+                          onClick={() => openArtifact(a)}
+                          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                        >
+                          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
+                            <Icon size={14} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[12.5px] font-medium text-ink">{a.title}</span>
+                            <span className="block text-[11px] text-ink-4">
+                              {ARTIFACT_LABEL[a.kind]} ·{" "}
+                              {new Date(a.createdAt).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </span>
+                        </button>
+                        <span className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => downloadArtifact(a)}
+                            aria-label={`Download ${a.title}`}
+                            title="Download"
+                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-canvas hover:text-ink"
+                          >
+                            <FiDownload size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void deleteArtifact(a.id)}
+                            aria-label={`Delete ${a.title}`}
+                            title="Delete"
+                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-critical/10 hover:text-critical"
+                          >
+                            <FiTrash2 size={13} />
+                          </button>
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
           <section className="app-block-in px-4 py-3" style={{ ["--app-delay" as string]: "180ms" }}>
             <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
               Tools
@@ -782,6 +1096,85 @@ export function AgentChat({
             </form>
           ) : null}
         </div>
+      </Modal>
+
+      <Modal
+        open={viewer !== null}
+        onClose={() => setViewer(null)}
+        title={viewer?.title ?? "Artifact"}
+        description={
+          viewer ? `${ARTIFACT_LABEL[viewer.kind]} · saved by ${agent.name.split(" ")[0]}` : undefined
+        }
+        size="lg"
+        footer={
+          viewer ? (
+            <div className="flex w-full items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => void deleteArtifact(viewer.id)}
+                className="rounded-full px-4 py-2 text-[13px] font-medium text-critical transition hover:bg-critical/10"
+              >
+                Delete
+              </button>
+              <div className="flex items-center gap-2">
+                {editing ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(false)}
+                      className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void saveArtifactEdit()}
+                      className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-canvas"
+                    >
+                      Save
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditText(viewer.content);
+                        setEditing(true);
+                      }}
+                      className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => downloadArtifact(viewer)}
+                      className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-canvas"
+                    >
+                      Download
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : undefined
+        }
+      >
+        {viewer ? (
+          editing ? (
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={18}
+              spellCheck={false}
+              className="mt-4 w-full resize-y rounded-2xl border border-line bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none focus:border-accent/50"
+            />
+          ) : (
+            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 px-5 py-4">
+              <StreamingText text={viewer.content} live={false} />
+            </div>
+          )
+        ) : null}
       </Modal>
     </div>
   );
