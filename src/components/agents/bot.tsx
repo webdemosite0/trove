@@ -35,19 +35,20 @@ export const SPECIES_META: Record<
   SplashySpecies,
   { label: string; vibe: string; defaultAccent: string; image?: string }
 > = {
-  // Real mascot artwork is hosted in the onecrew-landing repo (public/crew/<name>.jpg).
-  // Remote URLs are used so no binary assets need to live in this repo.
+  // Transparent mascot artwork, cut out from the OneCrew crew portraits and
+  // embedded as base64 in src/lib/mascot-images.ts (binary uploads corrupt via
+  // the file APIs here), served from /api/mascots/<name>.
   // Every species has artwork; the animated blob below remains as a safety net.
-  muse: { label: "Muse", vibe: "Creative spark", defaultAccent: "#a78bfa", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/echo.jpg" },
-  pulse: { label: "Pulse", vibe: "Fast & curious", defaultAccent: "#38bdf8", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/leo.jpg" },
-  orb: { label: "Orb", vibe: "Calm focus", defaultAccent: "#34d399", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/scout.jpg" },
-  spark: { label: "Spark", vibe: "Playful energy", defaultAccent: "#f472b6", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/milo.jpg" },
-  nova: { label: "Nova", vibe: "Bright ideas", defaultAccent: "#fbbf24", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/atlas.jpg" },
-  drift: { label: "Drift", vibe: "Soft explorer", defaultAccent: "#fb923c", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/zara.jpg" },
-  lead: { label: "Lead", vibe: "Steady captain", defaultAccent: "#6366f1", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/nova.jpg" },
-  guide: { label: "Guide", vibe: "Warm coach", defaultAccent: "#2dd4bf", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/iris.jpg" },
-  bloom: { label: "Bloom", vibe: "Design eye", defaultAccent: "#e879f9", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/luna.jpg" },
-  byte: { label: "Byte", vibe: "Code craftsman", defaultAccent: "#64748b", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/kael.jpg" },
+  muse: { label: "Muse", vibe: "Creative spark", defaultAccent: "#a78bfa", image: "/api/mascots/echo" },
+  pulse: { label: "Pulse", vibe: "Fast & curious", defaultAccent: "#38bdf8", image: "/api/mascots/leo" },
+  orb: { label: "Orb", vibe: "Calm focus", defaultAccent: "#34d399", image: "/api/mascots/scout" },
+  spark: { label: "Spark", vibe: "Playful energy", defaultAccent: "#f472b6", image: "/api/mascots/milo" },
+  nova: { label: "Nova", vibe: "Bright ideas", defaultAccent: "#fbbf24", image: "/api/mascots/atlas" },
+  drift: { label: "Drift", vibe: "Soft explorer", defaultAccent: "#fb923c", image: "/api/mascots/zara" },
+  lead: { label: "Lead", vibe: "Steady captain", defaultAccent: "#6366f1", image: "/api/mascots/nova" },
+  guide: { label: "Guide", vibe: "Warm coach", defaultAccent: "#2dd4bf", image: "/api/mascots/iris" },
+  bloom: { label: "Bloom", vibe: "Design eye", defaultAccent: "#e879f9", image: "/api/mascots/luna" },
+  byte: { label: "Byte", vibe: "Code craftsman", defaultAccent: "#64748b", image: "/api/mascots/kael" },
 };
 
 type RetiredSpecies = "quill" | "aegis";
@@ -129,13 +130,12 @@ export function Bot({
             width={size}
             height={size}
             draggable={false}
-            className="relative z-[1] select-none rounded-full object-cover"
+            className="relative z-[1] select-none"
             style={{
               width: size,
               height: size,
-              // Artwork is a square JPEG with black corners; clip tight to the
-              // painted mascot circle (same 41.5% crop as the OneCrew v2 cards).
-              clipPath: "circle(41.5% at 50% 50%)",
+              // Transparent PNG — no clip needed; soft shadow grounds the mascot.
+              filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.28))",
               animation: working
                 ? "tro-work 0.9s ease-in-out infinite"
                 : "tro-float 3.6s ease-in-out infinite",

@@ -18,8 +18,7 @@ const CREW = [
   { name: "Echo", role: "Content", img: "echo" },
 ];
 
-const imgUrl = (n: string) =>
-  `https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/${n}.jpg`;
+const imgUrl = (n: string) => `/api/mascots/${n}`;
 
 export function CrewSection() {
   return (
@@ -48,7 +47,8 @@ export function CrewSection() {
                     src={imgUrl(m.img)}
                     alt={`${m.name} the Tro`}
                     loading="lazy"
-                    className="relative size-20 rounded-full object-cover ring-1 ring-line transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 sm:size-24"
+                    className="relative size-20 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 sm:size-24"
+                    style={{ filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.3))" }}
                   />
                 </span>
                 <span className="mt-4 text-[15px] font-semibold text-ink">{m.name}</span>
