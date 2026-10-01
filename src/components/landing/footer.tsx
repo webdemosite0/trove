@@ -56,6 +56,14 @@ export function Footer() {
                 </li>
                 <li>
                   <Link
+                    href="/templates"
+                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Templates
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/about"
                     className="text-[13px] text-ink-2 transition-colors hover:text-ink"
                   >

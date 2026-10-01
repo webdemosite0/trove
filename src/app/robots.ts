@@ -35,6 +35,7 @@ const publicRule = {
     "/",
     "/about",
     "/pricing",
+    "/templates",
     "/privacy",
     "/terms",
     "/features/",
