@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { FiCopy, FiCheck, FiRefreshCw, FiThumbsUp, FiThumbsDown, FiFile } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
-import { StreamingText } from "@/components/chat/streaming-text";
+import { Markdown } from "@/components/chat/markdown";
 import { withLinkedText } from "@/components/chat/linked-text";
 import { TroveOrb } from "@/components/brand/orb";
 import { Bot } from "@/components/agents/bot";
@@ -169,7 +169,13 @@ export function Message({
       </div>
       {text ? (
         <div className="text-[15px] leading-relaxed text-ink">
-          <StreamingText text={text} live={Boolean(pending)} />
+          <Markdown text={text} />
+          {pending ? (
+            <span
+              className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 rounded-full bg-ink"
+              style={{ animation: "fade-in 150ms ease-out both" }}
+            />
+          ) : null}
         </div>
       ) : (
         <div className="rounded-2xl border border-line bg-raised/60 p-4">

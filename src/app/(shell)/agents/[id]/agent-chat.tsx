@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, TbPlugConnected } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu } from "@/components/ui/icons";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -24,7 +24,7 @@ import {
   type ArtifactKind,
   type SavedArtifact,
 } from "@/lib/artifact-block";
-import { StreamingText } from "@/components/chat/streaming-text";
+import { Markdown } from "@/components/chat/markdown";
 import { strip, type Attachment } from "@/lib/attachments";
 import { useSaved } from "@/lib/use-saved";
 import { deleteAgent, type AgentRow } from "@/app/actions/agents";
@@ -821,15 +821,69 @@ export function AgentChat({
           panelOpen ? "translate-x-0" : "translate-x-full lg:hidden",
         )}
       >
-        <div className="flex items-center gap-3 border-b border-line bg-canvas/60 px-4 py-3.5">
-          <Bot size={40} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] font-semibold text-ink">{agent.name}</p>
-            <p className="truncate text-[11.5px] text-ink-3">{agent.role}</p>
+        {/* Panel header — Tro identity, live status, quick actions */}
+        <div className="relative shrink-0 border-b border-line px-4 pb-3.5 pt-4">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-20"
+            style={{
+              background: `linear-gradient(to bottom, color-mix(in oklab, ${agent.accent} 14%, transparent), transparent)`,
+            }}
+          />
+          <div className="relative flex items-center gap-3">
+            <Bot size={44} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-semibold tracking-tight text-ink">{agent.name}</p>
+              <p className="truncate text-[11.5px] text-ink-3">{agent.role}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium">
+                <span className="relative flex size-1.5">
+                  {busy ? (
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70" />
+                  ) : null}
+                  <span className={cn("relative inline-flex size-1.5 rounded-full", busy ? "bg-accent" : "bg-positive")} />
+                </span>
+                <span className={busy ? "text-accent" : "text-positive"}>
+                  {busy ? "Working…" : "Ready"}
+                </span>
+              </p>
+            </div>
+            <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink">
+              <FiX size={16} />
+            </button>
           </div>
-          <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink">
-            <FiX size={16} />
-          </button>
+          <div className="relative mt-3 flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setTurns([]);
+                setError(null);
+                setActivity([]);
+                reset();
+                nextId.current = 0;
+              }}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+            >
+              <Ico icon={FiPlus} motion="open" size={13} /> New chat
+            </button>
+            <button
+              type="button"
+              onClick={() => document.getElementById("panel-library")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+            >
+              <Ico icon={FiBookOpen} motion="lift" size={13} /> Library
+              {artifacts.length > 0 ? (
+                <span className="rounded-full bg-accent/15 px-1.5 text-[10px] font-bold text-accent">
+                  {artifacts.length}
+                </span>
+              ) : null}
+            </button>
+            <Link
+              href="/integrations"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+            >
+              <Ico icon={TbPlugConnected} motion="pop" size={13} /> Connect
+            </Link>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -858,7 +912,9 @@ export function AgentChat({
           ) : null}
           <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Desktop</p>
+              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                <Ico icon={FiMonitor} size={11} className="text-ink-3" /> Desktop
+              </p>
               <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
                 {browserExpanded ? "Shrink" : "Expand"}
               </button>
@@ -915,14 +971,16 @@ export function AgentChat({
           </section>
 
           <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Recent activity</p>
+            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+              <Ico icon={FiActivity} size={11} className="text-ink-3" /> Activity
+            </p>
             {activity.length === 0 ? (
-              <p className="text-[12px] text-ink-4">Tasks appear here as the Tro works.</p>
+              <p className="text-[12px] text-ink-4">Tasks appear here as {agent.name.split(" ")[0]} works.</p>
             ) : (
-              <ul className="space-y-1">
-                {activity.map((a) => (
-                  <li key={a.id} className="flex items-start gap-2 rounded-lg px-1.5 py-1.5">
-                    <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
+              <ul className="relative space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-line">
+                {activity.slice(-6).map((a) => (
+                  <li key={a.id} className="relative flex items-start gap-2.5 rounded-lg py-1.5 pl-1">
+                    <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-raised", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[12.5px] font-medium text-ink">{a.label}</span>
                       {a.detail ? <span className="block truncate text-[11px] text-ink-3">{a.detail}</span> : null}
@@ -933,9 +991,11 @@ export function AgentChat({
             )}
           </section>
 
-          <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
+          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Library</p>
+              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                <Ico icon={FiFolder} size={11} className="text-ink-3" /> Library
+              </p>
               {artifacts.length > 0 ? (
                 <span className="rounded-full bg-accent/12 px-2 py-0.5 text-[10px] font-bold text-accent">
                   {artifacts.length}
@@ -1006,27 +1066,15 @@ export function AgentChat({
             )}
           </section>
 
-          <section className="app-block-in px-4 py-3" style={{ ["--app-delay" as string]: "180ms" }}>
-            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-              Tools
-              <span className="relative flex size-1.5" title="Live">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
-              </span>
-            </p>
-            <ul className="space-y-1">
-              {["Cloud browser", "Web search", "Documents", "Spreadsheets", "Slides", ...tools.slice(0, 3)].map((tool) => (
-                <li key={tool} className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[12px] text-ink-2">
-                  <span className="size-1.5 rounded-full" style={{ background: agent.accent }} />
-                  {tool}
-                </li>
-              ))}
-            </ul>
-          </section>
-
           <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Connectors</p>
+              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                <Ico icon={TbPlugConnected} size={11} className="text-ink-3" /> Connectors
+                <span className="relative flex size-1.5" title="Live">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
+                </span>
+              </p>
               <Link href="/integrations" className="text-[10px] font-semibold text-ink-3 transition hover:text-ink">
                 Manage
               </Link>
@@ -1063,6 +1111,13 @@ export function AgentChat({
               live data.
             </p>
           </section>
+
+          <p className="flex items-center gap-1.5 px-4 py-3 text-[10.5px] leading-relaxed text-ink-4">
+            <Ico icon={FiCpu} size={11} className="shrink-0" />
+            <span className="truncate">
+              {["Cloud browser", "Web search", "Documents", "Spreadsheets", "Slides", ...tools.slice(0, 3)].join(" · ")}
+            </span>
+          </p>
         </div>
       </aside>
 
@@ -1165,7 +1220,7 @@ export function AgentChat({
             />
           ) : (
             <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 px-5 py-4">
-              <StreamingText text={viewer.content} live={false} />
+              <Markdown text={viewer.content} compact />
             </div>
           )
         ) : null}

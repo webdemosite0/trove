@@ -214,13 +214,6 @@ export async function buildChatConnectorContext(
 ): Promise<ChatConnectorContext> {
   const requested = requestedServices(lastUserText);
 
-  // Most chat turns do not ask for an integration. Avoid an auth + database
-  // lookup on every normal message just to discover connected apps that will
-  // not be used.
-  if (!requested.length) {
-    return { connectedNote: "", liveContext: "", requested: [] };
-  }
-
   let connections: Connection[] = [];
   try {
     connections = await listConnections();
@@ -230,9 +223,17 @@ export async function buildChatConnectorContext(
 
   const connectedSet = new Set(connections.map((connection) => connection.service));
 
+  // The Tro always knows what's connected so it can suggest using apps
+  // proactively. Live data is only fetched when the user @mentions a service.
   const connectedNote = connections.length
-    ? "\n\nCONNECTED APPS: " + connections.map(connectionLabel).join(", ") + "."
-    : "\n\nCONNECTED APPS: none.";
+    ? "\n\nCONNECTED APPS: " +
+      connections.map(connectionLabel).join(", ") +
+      ". Mention them with @name in chat to pull live data (e.g. @slack, @github)."
+    : "\n\nCONNECTED APPS: none. If the user wants app data, point them to /integrations.";
+
+  if (!requested.length) {
+    return { connectedNote, liveContext: "", requested: [] };
+  }
 
   const liveParts: string[] = [];
 
@@ -252,8 +253,9 @@ export async function buildChatConnectorContext(
         liveParts.push(
           "CONNECTED CONNECTOR REQUEST — " +
             (meta?.name ?? service) +
-            ": this app is connected. The chat bridge does not yet have a direct live-read adapter for this specific service. " +
-            "Do not say integrations in general are unavailable; say only that this connector/action is not implemented yet.",
+            ": this app is connected, but the Tro can't pull its live data directly yet (only Slack and GitHub have live readers). " +
+            "Be honest about that limit, offer what you CAN do (draft the message, plan the workflow, prep the content), " +
+            "and never claim integrations in general are unavailable.",
         );
       } else {
         const meta = SERVICES.find((item) => item.id === service);
