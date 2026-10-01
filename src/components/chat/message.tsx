@@ -167,9 +167,27 @@ export function Message({
         <BrandMark state={pending ? "working" : "idle"} />
         <span className="text-[12.5px] font-medium text-ink-3">{brand}</span>
       </div>
-      <div className="text-[15px] leading-relaxed text-ink">
-        <StreamingText text={text} live={Boolean(pending)} />
-      </div>
+      {text ? (
+        <div className="text-[15px] leading-relaxed text-ink">
+          <StreamingText text={text} live={Boolean(pending)} />
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-line bg-raised/60 p-4">
+          <p className="text-[14px] text-ink-3">
+            That didn&apos;t come back with a reply — likely a hiccup on our side.
+          </p>
+          {onRegenerate ? (
+            <button
+              type="button"
+              onClick={onRegenerate}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-raised px-4 py-2 text-[13px] font-medium text-ink transition hover:bg-hover"
+            >
+              <Ico icon={FiRefreshCw} motion="spin" size={14} />
+              Try again
+            </button>
+          ) : null}
+        </div>
+      )}
       {!pending ? (
         <div className="mt-2 flex items-center gap-0.5 opacity-0 transition group-hover/msg:opacity-100">
           <Action icon={copied ? FiCheck : FiCopy} label="Copy" motion="pop" onClick={() => void copy()} />

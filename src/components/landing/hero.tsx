@@ -82,7 +82,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
       <div className="relative mx-auto max-w-[960px] text-center">
         <div className="lp-hero-in mb-2.5 hidden items-center rounded-full border border-line bg-raised/80 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-2 shadow-sm backdrop-blur-md sm:mb-5 sm:inline-flex">
-          AI WORKSPACE · CHAT · BUILD · EXPORT
+          THE AI WORKSPACE FOR PEOPLE WHO SHIP
         </div>
 
         <h1
@@ -100,9 +100,10 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           className="lp-hero-in mx-auto mt-2.5 max-w-[50ch] text-[13px] leading-5 text-ink-3 sm:mt-4 sm:text-[16px] sm:leading-relaxed lg:text-[17px]"
           style={{ animationDelay: "120ms" }}
         >
-          <span className="sm:hidden">Websites, docs, sheets, decks — one workspace.</span>
+          <span className="sm:hidden">For founders & small teams — describe it, Trove builds it.</span>
           <span className="hidden sm:inline">
-            Websites, documents, spreadsheets, presentations, research, and agents — in one workspace. Refine in chat, or export when you need the file.
+            For founders, freelancers, and small teams: describe the website, document,
+            spreadsheet, or deck you need — Trove builds it as real work you keep, refine, and publish.
           </span>
         </p>
 
@@ -130,7 +131,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                 </span>
               )}
               <div className="mt-auto flex items-center justify-between gap-2 pt-2 sm:pt-3">
-                <p className="hidden text-[11.5px] text-ink-4 sm:block">Enter to build · Free account required · Shift+Enter for new line</p>
+                <p className="text-[11.5px] text-ink-4 sm:block">Enter to build · Free account required · Shift+Enter for new line</p>
                 <span className="sm:hidden" />
                 <button
                   type="button"

@@ -73,14 +73,14 @@ export function ProductProof() {
       <div className="mx-auto max-w-[1100px]">
         <div className="mx-auto max-w-[52ch] text-center">
           <p className="mb-2.5 text-[9.5px] font-semibold uppercase tracking-[0.14em] text-ink-4 sm:mb-3 sm:text-[11px]">
-            From prompt to finished work
+            Real prompts, real outputs
           </p>
           <h2 className="text-[clamp(1.6rem,1.25rem+1.4vw,2.5rem)] font-semibold leading-[1.08] tracking-tight text-ink">
-            Describe the work. Trove builds it.
+            One sentence in. Finished work out.
           </h2>
           <p className="mt-3 text-[13px] leading-6 text-ink-3 sm:mt-3.5 sm:text-[16px] sm:leading-relaxed">
-            Not another chat that vanishes. Work lives in projects you can refine,
-            publish, and come back to — with export when you need a file outside Trove.
+            Every example below started as the prompt shown — built in Trove, kept as a
+            project, ready to refine or export. No mockups, no stock.
           </p>
         </div>
 
@@ -111,9 +111,10 @@ function ProofCard({ ex }: { ex: (typeof EXAMPLES)[number] }) {
           {ex.file}
         </span>
       </div>
-      <p className="mt-3.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-4 sm:mt-4 sm:text-[11.5px]">{ex.type}</p>
+      <p className="mt-3.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-4 sm:mt-4 sm:text-[11.5px]">You say</p>
       <p className="mt-1.5 text-[13px] font-medium leading-snug text-ink sm:text-[14.5px]">&ldquo;{ex.prompt}&rdquo;</p>
-      <p className="mt-2 flex-1 text-[11.5px] leading-5 text-ink-3 sm:text-[13.5px] sm:leading-relaxed">{ex.result}</p>
+      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-emerald-600 sm:text-[11.5px]">You get</p>
+      <p className="mt-1.5 flex-1 text-[11.5px] leading-5 text-ink-3 sm:text-[13.5px] sm:leading-relaxed">{ex.result}</p>
       <span className="mt-3.5 inline-flex items-center gap-1 text-[11.5px] font-medium text-ink transition group-hover:gap-1.5 sm:mt-4 sm:text-[13px]">
         Try this prompt <FiArrowRight size={13} />
       </span>

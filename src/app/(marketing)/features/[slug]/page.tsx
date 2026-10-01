@@ -8,6 +8,7 @@ import { FEATURE_EXTRAS } from "@/lib/feature-extras";
 import { site } from "@/lib/site";
 import { FeatureExample } from "@/components/landing/feature-example";
 import { FeatureWorkflow } from "@/components/landing/feature-workflow";
+import { TrosWorkflow } from "@/components/landing/architecture";
 
 /** One page per capability, built at compile time — the content is static. */
 export function generateStaticParams() {
@@ -114,6 +115,8 @@ export default async function FeaturePage({
         </header>
 
         {feature.example && <FeatureExample example={feature.example} />}
+
+        {feature.slug === "tros" && <TrosWorkflow />}
 
         {/* Example prompt + workflow */}
         {extras && (

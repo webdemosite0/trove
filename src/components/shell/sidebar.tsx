@@ -31,6 +31,7 @@ import { ThemeToggle } from "@/components/shell/theme";
 import { ProductSwitcher, useIsTrosProduct } from "@/components/shell/product-switcher";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
+import { formatCredits } from "@/lib/credits";
 import type { User, Balance } from "@/lib/types";
 import { Tooltip } from "@/components/ui/tooltip";
 
@@ -291,7 +292,7 @@ export function Sidebar({
           <div className="mx-0.5 flex items-center justify-between rounded-xl bg-sunk px-2.5 py-1.5">
             <span className="text-[11px] text-ink-4">Credits</span>
             <span className="text-[11px] font-semibold tabular-nums text-ink">
-              {Number(balance.remaining).toLocaleString()}
+              {formatCredits(Number(balance.remaining))}
             </span>
           </div>
         ) : null}

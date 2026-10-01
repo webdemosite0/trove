@@ -9,11 +9,9 @@ import { LandingScene } from "@/components/landing/scene";
 import { LiveDemo } from "@/components/landing/live-demo";
 import { PricingPreview, FinalCta, SectionHead } from "@/components/landing/sections";
 import { ProductProof } from "@/components/landing/product-proof";
-import { TrustSection } from "@/components/landing/trust";
 import { Faq } from "@/components/landing/faq";
-import { IntegrationNetwork } from "@/components/landing/integration-network";
 import { CrewSection } from "@/components/landing/crew";
-import { Architecture, TrosWorkflow } from "@/components/landing/architecture";
+import { Architecture } from "@/components/landing/architecture";
 import { PLANS } from "@/lib/credits";
 import { site } from "@/lib/site";
 import {
@@ -71,15 +69,9 @@ export default async function Landing() {
 
         <ProductProof />
 
-        <IntegrationNetwork />
-
         <Architecture />
 
         <CrewSection />
-
-        <TrosWorkflow />
-
-        <TrustSection />
 
         <div id="pricing">
           <PricingPreview plans={PLANS} />

@@ -13,6 +13,7 @@ import {
   FiZap,
 } from "@/components/ui/icons";
 import { choosePlan } from "@/app/actions/billing";
+import { formatCredits } from "@/lib/credits";
 import { Ico } from "@/components/ui/ico";
 import { FailureNote } from "@/components/ui/failure-note";
 import { cn } from "@/lib/utils";
@@ -271,9 +272,9 @@ export function PlansView({
                 This month · {balance.period}
               </p>
               <p className="mt-1.5 text-[28px] font-semibold tabular-nums text-ink">
-                {balance.remaining.toLocaleString()}
+                {formatCredits(balance.remaining)}
                 <span className="ml-1.5 text-[15px] font-normal text-ink-3">
-                  of {balance.granted.toLocaleString()} left
+                  of {formatCredits(balance.granted)} left
                 </span>
               </p>
             </div>

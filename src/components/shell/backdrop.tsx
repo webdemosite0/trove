@@ -15,24 +15,24 @@ export function Backdrop() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(155deg, #fbf7ff 0%, #f4efff 28%, #edf6ff 62%, #fff6fb 100%)",
+              "linear-gradient(155deg, #fdfdff 0%, #f8f7ff 40%, #f6f9ff 70%, #fdf9fd 100%)",
           }}
         />
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 55% 45% at 8% 18%, rgba(168,85,247,0.25), transparent 58%)," +
-              "radial-gradient(ellipse 50% 40% at 92% 12%, rgba(59,130,246,0.22), transparent 55%)," +
-              "radial-gradient(ellipse 45% 35% at 78% 88%, rgba(236,72,153,0.15), transparent 60%)," +
-              "radial-gradient(ellipse 40% 30% at 18% 85%, rgba(34,211,238,0.14), transparent 55%)",
+              "radial-gradient(ellipse 55% 45% at 8% 18%, rgba(168,85,247,0.07), transparent 58%)," +
+              "radial-gradient(ellipse 50% 40% at 92% 12%, rgba(59,130,246,0.06), transparent 55%)," +
+              "radial-gradient(ellipse 45% 35% at 78% 88%, rgba(236,72,153,0.05), transparent 60%)," +
+              "radial-gradient(ellipse 40% 30% at 18% 85%, rgba(34,211,238,0.05), transparent 55%)",
           }}
         />
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(224,231,255,0.55), transparent 60%)",
+              "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(224,231,255,0.35), transparent 60%)",
           }}
         />
       </div>

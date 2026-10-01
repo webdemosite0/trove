@@ -28,6 +28,12 @@ export const RATE_WINDOW_MS = 5 * 60 * 60 * 1000;
 /** Sentinel used in Balance when the account is unlimited (admin). */
 export const UNLIMITED = 1_000_000_000;
 
+/** Display helper: the UNLIMITED sentinel renders as "Unlimited", not "1,000,000,000". */
+export function formatCredits(remaining: number): string {
+  if (!Number.isFinite(remaining) || remaining >= UNLIMITED) return "Unlimited";
+  return Math.max(0, Math.floor(remaining)).toLocaleString();
+}
+
 export type BillingInterval = "month" | "year";
 
 export interface Plan {

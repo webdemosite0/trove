@@ -206,6 +206,42 @@ export default function PricingPage() {
         <p className="mt-4 text-[12.5px] text-ink-4">
           Credits reset monthly. Unused credits don&apos;t roll over.
         </p>
+
+        <div className="mt-8 rounded-2xl border border-line bg-raised/60 p-5 sm:p-6">
+          <h3 className="text-[15px] font-semibold text-ink">What your credits buy</h3>
+          <p className="mt-1 text-[12.5px] text-ink-4">
+            Rough estimates, measured from the real examples on this site. Longer work and
+            more refinements use more — you&apos;re metered on actual tokens, never a flat fee.
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left text-[13px]">
+              <thead>
+                <tr className="border-b border-line text-[11px] uppercase tracking-[0.08em] text-ink-4">
+                  <th className="pb-2 pr-4 font-medium">Typical build</th>
+                  <th className="pb-2 pr-4 font-medium">≈ Credits</th>
+                  <th className="pb-2 pr-4 font-medium">Free (200/mo)</th>
+                  <th className="pb-2 font-medium">Pro (5,000/mo)</th>
+                </tr>
+              </thead>
+              <tbody className="text-ink-2">
+                {[
+                  ["Landing page", "~10", "~20", "~500"],
+                  ["Investor memo", "~5", "~40", "~1,000"],
+                  ["3-slide pitch deck", "~5", "~40", "~1,000"],
+                  ["Research brief", "~5", "~40", "~1,000"],
+                  ["Pricing model", "~5", "~40", "~1,000"],
+                ].map((row) => (
+                  <tr key={row[0]} className="border-b border-line/60 last:border-0">
+                    <td className="py-2.5 pr-4 font-medium text-ink">{row[0]}</td>
+                    <td className="py-2.5 pr-4 tabular-nums">{row[1]}</td>
+                    <td className="py-2.5 pr-4 tabular-nums">{row[2]}</td>
+                    <td className="py-2.5 tabular-nums">{row[3]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <section className="mt-10 rounded-[var(--r-hero)] border border-sky-400/25 bg-gradient-to-r from-sky-500/[0.08] to-violet-500/[0.08] p-6 sm:p-8">
