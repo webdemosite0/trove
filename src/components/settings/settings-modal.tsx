@@ -17,6 +17,7 @@ import {
   FiLogOut,
   FiCheck,
   FiExternalLink,
+  FiDownload,
   TbMessageCircle,
   TbHelpCircle,
   FiSmartphone,
@@ -34,6 +35,7 @@ import { BusinessProfileForm } from "@/components/settings/business-profile-form
 import { InstructionsForm } from "@/components/settings/instructions-form";
 import { BillingPortalButton } from "@/components/settings/billing-portal-button";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
+import { DownloadApps } from "@/components/settings/download-apps";
 
 /** Everything the overlay needs that the old /settings pages used to fetch. */
 export type SettingsData = {
@@ -52,6 +54,7 @@ export type SettingsSectionId =
   | "messaging"
   | "devices"
   | "data"
+  | "download"
   | "help"
   | "legal";
 
@@ -73,6 +76,7 @@ const NAV: { id: SettingsSectionId; label: string; icon: typeof FiSettings }[] =
   { id: "messaging", label: "Messaging channels", icon: TbMessageCircle },
   { id: "devices", label: "Devices", icon: FiSmartphone },
   { id: "data", label: "Data controls", icon: FiLock },
+  { id: "download", label: "Download apps", icon: FiDownload },
   { id: "help", label: "Help & support", icon: TbHelpCircle },
   { id: "legal", label: "Legal info", icon: FiFileText },
 ];
@@ -308,6 +312,11 @@ export function SettingsModal({
             {section === "messaging" ? <MessagingPane /> : null}
             {section === "devices" ? <DevicesPane /> : null}
             {section === "data" ? <DataPane /> : null}
+            {section === "download" ? (
+              <div data-theme="dark">
+                <DownloadApps />
+              </div>
+            ) : null}
             {section === "help" ? <HelpPane /> : null}
             {section === "legal" ? <LegalPane /> : null}
           </div>

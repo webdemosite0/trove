@@ -18,7 +18,7 @@ export function TopBar({
   due?: number;
   balance?: Balance | null;
 }) {
-  const { setOpen, setSettingsOpen } = useNav();
+  const { setOpen, setSettingsOpen, openSettings } = useNav();
 
   const openPalette = () =>
     window.dispatchEvent(
@@ -54,8 +54,9 @@ export function TopBar({
 
       <span className="flex-1" />
 
-      <Link
-        href="/settings/download"
+      <button
+        type="button"
+        onClick={() => openSettings("download")}
         aria-label="Download Trove"
         title="Download Trove"
         className={cn(
@@ -68,7 +69,7 @@ export function TopBar({
         <Ico icon={FiDownload} motion="nudge" size={15} className="text-ink-3 group-hover:text-accent" />
         <span className="hidden sm:inline">Download</span>
         <span className="hidden font-semibold text-ink md:inline">Trove</span>
-      </Link>
+      </button>
 
       <NotificationsPanel due={due} />
 

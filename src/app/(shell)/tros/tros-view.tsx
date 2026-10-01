@@ -324,7 +324,7 @@ export function TrosView({
                     <Ico icon={s.icon} size={17} />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[13.5px] font-semibold text-ink">Hire a {s.title.toLowerCase()}</span>
+                    <span className="block text-[13.5px] font-semibold text-ink">Hire {/^[aeiou]/i.test(s.title) ? "an" : "a"} {s.title.toLowerCase()}</span>
                     <span className="block truncate text-[12px] text-ink-3">{s.desc}</span>
                   </span>
                   <Ico icon={FiArrowRight} size={14} className="ml-auto shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
