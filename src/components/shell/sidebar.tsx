@@ -13,8 +13,8 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
-  FiUsers,
-  FiHome,
+  FiBookOpen,
+  FiLayers,
   TbLayoutDashboard,
   TbMessageCircle,
   TbFiles,
@@ -25,7 +25,6 @@ import {
   TbFolder,
   TbHelpCircle,
   TbWorld,
-  TbSparkles,
 } from "@/components/ui/icons";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
@@ -41,27 +40,25 @@ interface Item {
   label: string;
   icon: IconType;
   motion: Motion;
-  teamOnly?: boolean;
 }
 
-/** Main Trove workspace — chat, artifacts, sites. */
 const TROVE_NAV: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
+  { href: "/library", label: "Library", icon: FiBookOpen, motion: "stack" },
+  { href: "/artifacts", label: "Artifacts", icon: FiLayers, motion: "scan" },
   { href: "/projects", label: "Projects", icon: TbFolder, motion: "stack" },
   { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
   { href: "/websites", label: "Sites", icon: TbWorld, motion: "grow" },
-  { href: "/team", label: "Team", icon: FiUsers, motion: "stack", teamOnly: true },
 ];
 
-/** Tros product area — specialists only. */
 const TROS_NAV: Item[] = [
   { href: "/tros", label: "Library", icon: TbRobot, motion: "ring" },
   { href: "/tros?new=1", label: "New Tro", icon: FiPlus, motion: "open" },
-  { href: "/team", label: "Team", icon: FiUsers, motion: "stack", teamOnly: true },
+  { href: "/artifacts", label: "Artifacts", icon: FiLayers, motion: "scan" },
 ];
 
 function NavRow({
@@ -93,7 +90,7 @@ function NavRow({
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "grid h-9 w-9 place-items-center rounded-lg transition-colors",
+            "grid h-9 w-9 place-items-center rounded-xl transition-colors",
             active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
@@ -123,79 +120,6 @@ function NavRow({
         className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
       />
       <span className="truncate">{item.label}</span>
-    </Link>
-  );
-}
-
-function ReferralPromoSurface({ mode }: { mode: "light" | "dark" }) {
-  const dark = mode === "dark";
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-[15px] px-3 py-3 backdrop-blur-sm",
-        dark
-          ? "bg-[#0f1017] text-white ring-1 ring-white/10"
-          : "bg-white text-slate-950 ring-1 ring-black/[0.04]",
-      )}
-    >
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -right-4 -top-4 size-16 rounded-full blur-2xl",
-          dark ? "opacity-55" : "opacity-25",
-        )}
-        style={{ background: "linear-gradient(135deg,#f472b6,#38bdf8)" }}
-      />
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -bottom-6 -left-5 size-14 rounded-full blur-2xl",
-          dark ? "opacity-35" : "opacity-15",
-        )}
-        style={{ background: "linear-gradient(135deg,#a78bfa,#fbbf24)" }}
-      />
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0",
-          dark
-            ? "bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-sky-500/[0.10]"
-            : "bg-gradient-to-br from-fuchsia-50/70 via-transparent to-sky-50/70",
-        )}
-      />
-      <div className="relative">
-        <p className={cn("text-[10px] font-bold uppercase tracking-[0.14em]", dark ? "text-fuchsia-300" : "text-fuchsia-600")}>
-          Refer &amp; earn
-        </p>
-        <p className={cn("mt-1 text-[13px] font-semibold leading-snug", dark ? "text-white" : "text-slate-950")}>
-          Share Trove · get credits
-        </p>
-        <p className={cn("mt-0.5 text-[11px]", dark ? "text-zinc-400" : "text-slate-600")}>
-          100 qualified paid → $200
-        </p>
-        <span className={cn("mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold", dark ? "text-sky-300" : "text-blue-600")}>
-          Open affiliates
-          <FiChevronRight size={12} className="transition group-hover:translate-x-0.5" />
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ReferralPromo({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <Link
-      href="/affiliates"
-      onClick={onNavigate}
-      className="group relative block overflow-hidden rounded-2xl p-[1px] transition-opacity hover:opacity-95"
-      style={{ background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)" }}
-    >
-      <div className="block dark:hidden">
-        <ReferralPromoSurface mode="light" />
-      </div>
-      <div className="hidden dark:block">
-        <ReferralPromoSurface mode="dark" />
-      </div>
     </Link>
   );
 }
@@ -240,7 +164,7 @@ function UserMenu({
         <FiChevronRight size={14} className={cn("shrink-0 text-ink-3 transition-transform", menuOpen && "rotate-90")} />
       </button>
       {menuOpen ? (
-        <div role="menu" className="absolute bottom-full left-0 z-50 mb-1.5 w-full min-w-[200px] overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]">
+        <div role="menu" className="absolute bottom-full left-0 z-50 mb-1.5 w-full min-w-[200px] overflow-hidden rounded-2xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]">
           <Link href="/settings" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); }} className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
             <FiSettings size={14} /> Settings
           </Link>
@@ -280,33 +204,27 @@ export function Sidebar({
   const { open, setOpen, collapsed, setCollapsed } = useNav();
   const closeMobile = () => setOpen(false);
   useEffect(() => { setOpen(false); }, [pathname, setOpen]);
-  const showTeam =
-    Boolean(user?.teamMember) ||
-    Boolean(user?.teamPlanActive) ||
-    user?.effectivePlan === "team" ||
-    user?.plan === "team" ||
-    isAdmin;
   const isTros = useIsTrosProduct(pathname);
-  const items = (isTros ? TROS_NAV : TROVE_NAV).filter((item) => !item.teamOnly || showTeam);
+  const items = isTros ? TROS_NAV : TROVE_NAV;
   const body = (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-14 shrink-0 items-center gap-1.5 px-2.5">
         <ProductSwitcher collapsed={collapsed} onNavigate={closeMobile} />
-        <button type="button" className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden" onClick={closeMobile} aria-label="Close menu">
+        <button type="button" className="grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden" onClick={closeMobile} aria-label="Close menu">
           <FiX size={18} />
         </button>
-        <button type="button" className="hidden size-8 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink lg:grid" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+        <button type="button" className="hidden size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:grid" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <FiSidebar size={16} />
         </button>
       </div>
       <div className="shrink-0 px-3 pb-3">
         {isTros ? (
-          <Link href="/tros?new=1" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white", collapsed && "px-0")}>
+          <Link href="/tros?new=1" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold", collapsed && "px-0")}>
             <FiPlus size={15} />
             {!collapsed ? <span>New Tro</span> : null}
           </Link>
         ) : (
-          <Link href="/chat" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white", collapsed && "px-0")}>
+          <Link href="/chat" onClick={closeMobile} className={cn("btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold", collapsed && "px-0")}>
             <FiPlus size={15} />
             {!collapsed ? <span>New chat</span> : null}
           </Link>
@@ -323,15 +241,6 @@ export function Sidebar({
         ))}
       </nav>
       <div className="relative z-10 shrink-0 space-y-2 border-t border-line bg-rail p-2.5">
-        {!collapsed ? (
-          <ReferralPromo onNavigate={closeMobile} />
-        ) : (
-          <Tooltip label="Refer & earn" side="right">
-            <Link href="/affiliates" onClick={closeMobile} title="Refer & earn" className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-[11px] font-bold text-white shadow-md">
-              $
-            </Link>
-          </Tooltip>
-        )}
         {user ? (
           collapsed ? (
             <Tooltip label={user.name} side="right">
@@ -343,7 +252,7 @@ export function Sidebar({
             <UserMenu user={user} isAdmin={isAdmin} onNavigate={closeMobile} />
           )
         ) : (
-          <Link href="/login" onClick={closeMobile} className="btn-grad flex h-9 w-full items-center justify-center rounded-full text-[13px] font-semibold text-white">
+          <Link href="/login" onClick={closeMobile} className="btn-grad flex h-9 w-full items-center justify-center rounded-full text-[13px] font-semibold">
             Log in
           </Link>
         )}
@@ -351,17 +260,17 @@ export function Sidebar({
           {!collapsed ? (
             <>
               <Tooltip label="Settings" side="top">
-                <Link href="/settings" onClick={closeMobile} aria-label="Settings" className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover">
+                <Link href="/settings" onClick={closeMobile} aria-label="Settings" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
                   <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
                 </Link>
               </Tooltip>
               <Tooltip label="Plan" side="top">
-                <Link href="/plans" onClick={closeMobile} aria-label="Plan" className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover">
+                <Link href="/plans" onClick={closeMobile} aria-label="Plan" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
                   <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
                 </Link>
               </Tooltip>
               <Tooltip label="Help" side="top">
-                <Link href="/settings/support" onClick={closeMobile} aria-label="Help & support" className="grid h-8 w-8 place-items-center rounded-lg text-ink transition-colors hover:bg-hover">
+                <Link href="/settings/support" onClick={closeMobile} aria-label="Help & support" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
                   <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
                 </Link>
               </Tooltip>
@@ -373,28 +282,30 @@ export function Sidebar({
           )}
         </div>
         {balance && !collapsed ? (
-          <p className="truncate px-1 text-[11px] tabular-nums text-ink-4">
-            {Number(balance.remaining).toLocaleString()} credits left
-          </p>
+          <div className="mx-0.5 flex items-center justify-between rounded-xl bg-sunk px-2.5 py-1.5">
+            <span className="text-[11px] text-ink-4">Credits</span>
+            <span className="text-[11px] font-semibold tabular-nums text-ink">
+              {Number(balance.remaining).toLocaleString()}
+            </span>
+          </div>
         ) : null}
       </div>
     </div>
   );
   return (
     <>
-      <aside className={cn(
-        "sticky top-0 hidden h-dvh shrink-0 overflow-hidden border-r transition-[width] duration-200 lg:flex lg:flex-col",
-        collapsed ? "w-[64px]" : "w-[240px]",
-        isTros
-          ? "border-violet-500/20 bg-rail shadow-[inset_3px_0_0_0_rgba(139,92,246,0.35)]"
-          : "border-line bg-rail",
-      )}>
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-dvh shrink-0 overflow-hidden border-r border-line bg-rail transition-[width] duration-200 lg:flex lg:flex-col",
+          collapsed ? "w-[68px]" : "w-[248px]",
+        )}
+      >
         {body}
       </aside>
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close menu" onClick={closeMobile} />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,280px)] flex-col overflow-hidden border-r border-line bg-rail shadow-[var(--elev-lift)]">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,280px)] flex-col overflow-hidden rounded-r-3xl border-r border-line bg-rail shadow-[var(--elev-lift)]">
             {body}
           </aside>
         </div>
