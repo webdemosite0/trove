@@ -10,10 +10,9 @@ import { createContext, useContext, useMemo, useState } from "react";
  * collapses it the moment a build starts, because at that point the preview is
  * the thing worth looking at and the nav is not.
  *
- * The rail starts expanded. Every destination reads as a word rather than a
- * glyph, which is what makes the workspace legible on the first visit; the
- * icon rail is there for anyone who wants the room back. Collapsing lasts the
- * session: this is React state, so a full page load starts expanded again.
+ * The rail starts collapsed (icons only, ChatGPT-style). Every destination
+ * reads as a glyph; expanding is one tap on the rail toggle. Collapsing lasts
+ * the session: this is React state, so a full page load starts collapsed again.
  */
 const NavContext = createContext<{
   open: boolean;
@@ -42,7 +41,8 @@ export const useNav = () => useContext(NavContext);
 
 export function NavProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  // ChatGPT-style: the rail starts collapsed (icons only). Expand is one tap away.
+  const [collapsed, setCollapsed] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | null>(null);
 

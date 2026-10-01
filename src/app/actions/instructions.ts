@@ -12,7 +12,6 @@ export async function saveInstructions(
   const text = String(form.get("instructions") ?? "");
   const result = await setManualInstructions(text);
   if ("error" in result) return { error: result.error };
-  revalidatePath("/settings/instructions");
   revalidatePath("/chat");
   return { ok: true };
 }

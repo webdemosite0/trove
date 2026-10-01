@@ -14,6 +14,10 @@ import { SettingsHost } from "@/components/settings/settings-host";
 import { listConnections } from "@/lib/connections";
 import { composioConfigured, COMPOSIO_MAP } from "@/lib/composio";
 import { connectableProviders } from "@/lib/providers";
+import { getProfile } from "@/app/actions/profile";
+import { getBusinessProfile } from "@/lib/business-profile";
+import { getManualInstructions } from "@/lib/user-prefs";
+import { subscriptionFor } from "@/lib/billing";
 
 
 export default async function ShellLayout({
@@ -51,12 +55,25 @@ export default async function ShellLayout({
     composioServices: composioConfigured() ? Object.keys(COMPOSIO_MAP) : [],
   };
 
+  // Settings overlay data — the overlay replaces the old /settings pages, so
+  // every feature those pages had (profile, business, instructions, billing)
+  // is fetched once here and handed to the modal.
+  const [profile, businessProfile, manualInstructions, subscription] = user
+    ? await Promise.all([
+        getProfile().catch(() => null),
+        getBusinessProfile(user.id).catch(() => null),
+        getManualInstructions(user.id).catch(() => ""),
+        subscriptionFor(user.id).catch(() => null),
+      ])
+    : [null, null, "", null];
+  const settingsData = { profile, businessProfile, manualInstructions, subscription };
+
   if (await isMobile()) {
     return (
       <NavProvider>
         <ToastProvider>
           <Backdrop />
-          <SettingsHost user={user} balance={balance} integrations={integrations} />
+          <SettingsHost user={user} balance={balance} integrations={integrations} settingsData={settingsData} />
           <MobileShell
             user={{ name: user.name, email: user.email }}
             balance={balance}
@@ -73,7 +90,7 @@ export default async function ShellLayout({
       <ToastProvider>
         <Backdrop />
         <CommandPalette recents={recents} />
-        <SettingsHost user={user} balance={balance} integrations={integrations} />
+        <SettingsHost user={user} balance={balance} integrations={integrations} settingsData={settingsData} />
         {/*
           Fixed viewport shell: sidebar stays put; only the main column scrolls.
           Split top chrome from the scrollport so long pages never get clipped.

@@ -14,7 +14,6 @@ import {
   FiMoon,
   FiMonitor,
   FiX,
-  FiChevronRight,
   FiLogOut,
   FiCheck,
   FiExternalLink,
@@ -27,6 +26,22 @@ import { useTheme } from "@/components/shell/theme";
 import { logOut } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
+import type { Profile } from "@/app/actions/profile";
+import type { BusinessProfile } from "@/lib/business-profile";
+import type { Subscription } from "@/lib/billing";
+import { ProfileForm } from "@/components/settings/profile-form";
+import { BusinessProfileForm } from "@/components/settings/business-profile-form";
+import { InstructionsForm } from "@/components/settings/instructions-form";
+import { BillingPortalButton } from "@/components/settings/billing-portal-button";
+import { DeleteAccountForm } from "@/components/settings/delete-account-form";
+
+/** Everything the overlay needs that the old /settings pages used to fetch. */
+export type SettingsData = {
+  profile: Profile | null;
+  businessProfile: BusinessProfile | null;
+  manualInstructions: string;
+  subscription: Subscription | null;
+};
 
 export type SettingsSectionId =
   | "general"
@@ -138,6 +153,7 @@ export function SettingsModal({
   balance,
   initialSection = "general",
   integrations,
+  settingsData,
 }: {
   open: boolean;
   onClose: () => void;
@@ -145,6 +161,7 @@ export function SettingsModal({
   balance: Balance | null;
   initialSection?: string | null;
   integrations?: IntegrationsData;
+  settingsData?: SettingsData;
 }) {
   const titleId = useId();
   const validSection = (s: string | null | undefined): SettingsSectionId =>
@@ -190,7 +207,7 @@ export function SettingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-[min(720px,calc(100dvh-3rem))] w-full max-w-[980px] overflow-hidden rounded-[20px] bg-[#1e1e20] text-[#f2f2f5] shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)] dark:bg-[#1e1e20] dark:text-[#f2f2f5]"
+        className="relative flex h-[min(720px,calc(100dvh-3rem))] w-full max-w-[980px] overflow-hidden rounded-[20px] bg-[#1b1b1e] text-[#ececec] shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)]"
         style={{ colorScheme: "dark" }}
       >
         {/* Left nav */}
@@ -255,6 +272,7 @@ export function SettingsModal({
                 granted={granted}
                 remaining={remaining}
                 onClose={onClose}
+                settingsData={settingsData}
               />
             ) : null}
 
@@ -276,14 +294,20 @@ export function SettingsModal({
             ) : null}
 
             {section === "wallet" ? (
-              <WalletPane planName={String(planName)} pct={pct} remaining={remaining} onClose={onClose} />
+              <WalletPane
+                planName={String(planName)}
+                pct={pct}
+                remaining={remaining}
+                onClose={onClose}
+                subscription={settingsData?.subscription ?? null}
+              />
             ) : null}
 
             {section === "secure" ? <SecurePane /> : null}
             {section === "permissions" ? <PermissionsPane /> : null}
             {section === "messaging" ? <MessagingPane /> : null}
             {section === "devices" ? <DevicesPane /> : null}
-            {section === "data" ? <DataPane onClose={onClose} /> : null}
+            {section === "data" ? <DataPane /> : null}
             {section === "help" ? <HelpPane /> : null}
             {section === "legal" ? <LegalPane /> : null}
           </div>
@@ -303,6 +327,7 @@ function GeneralPane({
   granted,
   remaining,
   onClose,
+  settingsData,
 }: {
   user: User | null;
   planName: string;
@@ -311,6 +336,7 @@ function GeneralPane({
   granted: number;
   remaining: number;
   onClose: () => void;
+  settingsData?: SettingsData;
 }) {
   const [theme, setTheme] = useTheme();
   const [accent, setAccent] = useAccent();
@@ -319,21 +345,35 @@ function GeneralPane({
 
   return (
     <div>
-      {/* Account card */}
-      <Link
-        href="/settings/account"
-        onClick={onClose}
-        className="flex items-center gap-4 rounded-2xl bg-white/[0.045] p-5 transition-colors hover:bg-white/[0.07]"
-      >
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/[0.07] text-[20px] font-light">
-          ∞
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-semibold">Trove Account</span>
-          <span className="block text-[13px] text-white/50">Password, security, personal details</span>
-        </span>
-        <FiExternalLink size={15} className="shrink-0 text-white/40" />
-      </Link>
+      {/* Profile — inline, replaces the old /settings/account page */}
+      <SectionLabel>Profile</SectionLabel>
+      <div data-theme="dark">
+        {settingsData?.profile ? (
+          <ProfileForm profile={settingsData.profile} />
+        ) : (
+          <Card>
+            <p className="text-[13px] text-white/50">Sign in to edit your profile.</p>
+          </Card>
+        )}
+      </div>
+
+      {/* Business — inline, replaces the old /settings/business page */}
+      <SectionLabel>Business</SectionLabel>
+      <div data-theme="dark">
+        {settingsData?.businessProfile ? (
+          <BusinessProfileForm initial={settingsData.businessProfile} />
+        ) : (
+          <Card>
+            <p className="text-[13px] text-white/50">Sign in to set your business profile.</p>
+          </Card>
+        )}
+      </div>
+
+      {/* AI instructions — inline, replaces the old /settings/instructions page */}
+      <SectionLabel>AI instructions</SectionLabel>
+      <div data-theme="dark">
+        <InstructionsForm initial={settingsData?.manualInstructions ?? ""} />
+      </div>
 
       <SectionLabel>Usage</SectionLabel>
       <Card>
@@ -428,12 +468,15 @@ function WalletPane({
   pct,
   remaining,
   onClose,
+  subscription,
 }: {
   planName: string;
   pct: number;
   remaining: number;
   onClose: () => void;
+  subscription: Subscription | null;
 }) {
+  const hasBillingProfile = Boolean(subscription?.customerId);
   return (
     <div>
       <SectionLabel>Current plan</SectionLabel>
@@ -451,28 +494,50 @@ function WalletPane({
           >
             Upgrade plan
           </Link>
-          <Link
-            href="/settings/billing"
-            onClick={onClose}
-            className="rounded-full bg-white/[0.07] px-4 py-2 text-[13.5px] font-medium text-white transition hover:bg-white/[0.12]"
-          >
-            Billing details
-          </Link>
+        </div>
+      </Card>
+
+      <SectionLabel>Billing</SectionLabel>
+      <Card>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[15px] font-semibold">Invoices & receipts</p>
+            <p className="mt-1 max-w-md text-[13px] leading-5 text-white/50">
+              {hasBillingProfile
+                ? "Billing profile connected. Open the portal to download receipts, invoices and tax documents."
+                : "No paid invoices yet. Billing history appears after your first successful checkout."}
+            </p>
+          </div>
+          {hasBillingProfile ? (
+            <BillingPortalButton className="shrink-0 rounded-full bg-white/[0.07] px-4 py-2 text-[13.5px] font-medium text-white transition hover:bg-white/[0.12]">
+              View billing history
+            </BillingPortalButton>
+          ) : (
+            <Link
+              href="/plans"
+              onClick={onClose}
+              className="shrink-0 rounded-full bg-white/[0.07] px-4 py-2 text-center text-[13.5px] font-medium text-white transition hover:bg-white/[0.12]"
+            >
+              View plans
+            </Link>
+          )}
         </div>
       </Card>
 
       <SectionLabel>Payment</SectionLabel>
-      <Link
-        href="/settings/payment-methods"
-        onClick={onClose}
-        className="flex items-center justify-between rounded-2xl bg-white/[0.045] p-5 transition-colors hover:bg-white/[0.07]"
-      >
-        <span>
-          <span className="block text-[15px] font-medium">Payment methods</span>
-          <span className="block text-[13px] text-white/50">Cards and billing info</span>
-        </span>
-        <FiChevronRight size={16} className="text-white/40" />
-      </Link>
+      <Card>
+        <p className="text-[15px] font-medium">Payment methods</p>
+        <p className="mt-1 text-[13px] leading-5 text-white/50">
+          Cards and billing info are managed securely in the customer portal.
+        </p>
+        {hasBillingProfile ? (
+          <div className="mt-3">
+            <BillingPortalButton className="rounded-full bg-white/[0.07] px-4 py-2 text-[13.5px] font-medium text-white transition hover:bg-white/[0.12]">
+              Manage payment methods
+            </BillingPortalButton>
+          </div>
+        ) : null}
+      </Card>
       <p className="mt-4 text-[12.5px] text-white/35">
         {remaining.toLocaleString()} credits remaining this period.
       </p>
@@ -577,7 +642,7 @@ function DevicesPane() {
   );
 }
 
-function DataPane({ onClose }: { onClose: () => void }) {
+function DataPane() {
   return (
     <div>
       <SectionLabel>Data controls</SectionLabel>
@@ -586,26 +651,22 @@ function DataPane({ onClose }: { onClose: () => void }) {
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">
           Download everything Trove stores about you — chats, artifacts, projects, and settings.
         </p>
-        <Link
-          href="/settings/download"
-          onClick={onClose}
-          className="mt-3 inline-block rounded-full bg-white/[0.07] px-4 py-2 text-[13px] font-medium transition hover:bg-white/[0.12]"
+        <a
+          href="/api/account/export"
+          download
+          className="mt-3 inline-block rounded-full bg-white/[0.07] px-4 py-2 text-[13px] font-medium text-white transition hover:bg-white/[0.12]"
         >
           Export data
-        </Link>
+        </a>
       </Card>
       <Card className="mt-3">
         <p className="text-[15px] font-semibold">Delete account</p>
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">
           Permanently remove your account and all associated data. This cannot be undone.
         </p>
-        <Link
-          href="/settings/account"
-          onClick={onClose}
-          className="mt-3 inline-block rounded-full bg-red-500/15 px-4 py-2 text-[13px] font-medium text-red-400 transition hover:bg-red-500/25"
-        >
-          Manage in Account
-        </Link>
+        <div data-theme="dark" className="mt-3">
+          <DeleteAccountForm />
+        </div>
       </Card>
     </div>
   );

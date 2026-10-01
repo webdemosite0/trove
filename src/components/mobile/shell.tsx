@@ -341,21 +341,21 @@ export function MobileShell({
               >
                 <Ico icon={FiCreditCard} motion="pop" size={16} className="text-ink" />
               </Link>
-              <Link
-                href="/settings/support"
-                onClick={() => setOpen(false)}
+              <button
+                type="button"
+                onClick={() => { setOpen(false); openSettings("help"); }}
                 aria-label="Help"
                 className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover hover:text-ink"
               >
                 <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
-              </Link>
-              <Link
-                href="/settings/appearance"
-                onClick={() => setOpen(false)}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOpen(false); openSettings("general"); }}
                 className="ml-auto rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-ink-3 transition hover:bg-hover hover:text-ink"
               >
                 Theme
-              </Link>
+              </button>
               <form action={logOut}>
                 <button
                   type="submit"

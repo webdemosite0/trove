@@ -27,6 +27,7 @@ import {
   type PlanCompareValue,
 } from "@/lib/plan-pricing";
 import { kindLabel } from "@/lib/kind-label";
+import { useNav } from "@/components/shell/nav-state";
 
 interface Subscription {
   customerId: string;
@@ -82,6 +83,7 @@ export function PlansView({
   teamPlanActive: boolean;
 }) {
   const router = useRouter();
+  const { openSettings } = useNav();
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -372,13 +374,14 @@ export function PlansView({
               </p>
 
               {businessOnlyLocked ? (
-                <Link
-                  href="/settings/business"
+                <button
+                  type="button"
+                  onClick={() => openSettings("general")}
                   className="mt-5 flex h-10 items-center justify-center gap-2 rounded-[var(--r-control)] border border-violet-400/30 bg-violet-500/10 px-3 text-[12.5px] font-semibold text-violet-700 transition hover:bg-violet-500/15 dark:text-violet-300"
                 >
                   Set up Business profile
                   <FiArrowRight size={14} />
-                </Link>
+                </button>
               ) : (
                 <PlanButton
                   active={active}
