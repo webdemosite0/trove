@@ -30,6 +30,20 @@ export function CrewSection() {
           lede="Ten AI specialists — planning, research, writing, building, data, design, operations, engineering, analysis, communication. Hire one and brief it like a colleague."
         />
 
+        <div className="relative mx-auto mt-8 max-w-[760px] sm:mt-10">
+          <div
+            aria-hidden
+            className="absolute inset-x-10 top-6 bottom-0 rounded-full bg-violet-500/15 blur-3xl dark:bg-violet-500/20"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/api/crew/image"
+            alt="The ten Tros — Trove's AI crew, together"
+            loading="lazy"
+            className="relative mx-auto w-full"
+          />
+        </div>
+
         <div className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
           {CREW.map((m, i) => (
             <Reveal key={m.name} delay={(i % 5) * 50} y={20}>
