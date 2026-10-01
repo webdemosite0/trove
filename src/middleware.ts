@@ -10,6 +10,7 @@ const PUBLIC_PAGES = new Set([
   "/pricing",
   "/about",
   "/features",
+  "/templates",
   "/privacy",
   "/terms",
   "/security",
