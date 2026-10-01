@@ -6,7 +6,6 @@ import { Footer } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
 import { LandingScene } from "@/components/landing/scene";
-import { WhyGallery } from "@/components/landing/showcase";
 import { DeviceShowcase } from "@/components/landing/device-showcase";
 import { PricingPreview, FinalCta, SectionHead } from "@/components/landing/sections";
 import { ProductProof } from "@/components/landing/product-proof";
@@ -146,8 +145,6 @@ export default async function Landing() {
         </section>
 
         <CrewSection />
-
-        <WhyGallery />
 
         <TrustSection />
 
