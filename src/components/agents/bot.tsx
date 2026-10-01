@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export type BotState = "idle" | "working" | "done" | "failed";
 
-/** Visual species for each Tro — 12 mascots, ChatGPT-dots energy, Trove identity. */
+/** Visual species for each Tro — 10 mascots, ChatGPT-dots energy, Trove identity. */
 export type SplashySpecies =
   | "muse"
   | "pulse"
@@ -16,9 +16,7 @@ export type SplashySpecies =
   | "lead"
   | "guide"
   | "bloom"
-  | "byte"
-  | "quill"
-  | "aegis";
+  | "byte";
 
 export const SPECIES: SplashySpecies[] = [
   "muse",
@@ -31,8 +29,6 @@ export const SPECIES: SplashySpecies[] = [
   "guide",
   "bloom",
   "byte",
-  "quill",
-  "aegis",
 ];
 
 export const SPECIES_META: Record<
@@ -41,7 +37,7 @@ export const SPECIES_META: Record<
 > = {
   // Real mascot artwork is hosted in the onecrew-landing repo (public/crew/<name>.jpg).
   // Remote URLs are used so no binary assets need to live in this repo.
-  // Species without an image fall back to the animated blob below.
+  // Every species has artwork; the animated blob below remains as a safety net.
   muse: { label: "Muse", vibe: "Creative spark", defaultAccent: "#a78bfa", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/echo.jpg" },
   pulse: { label: "Pulse", vibe: "Fast & curious", defaultAccent: "#38bdf8", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/leo.jpg" },
   orb: { label: "Orb", vibe: "Calm focus", defaultAccent: "#34d399", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/scout.jpg" },
@@ -52,15 +48,21 @@ export const SPECIES_META: Record<
   guide: { label: "Guide", vibe: "Warm coach", defaultAccent: "#2dd4bf", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/iris.jpg" },
   bloom: { label: "Bloom", vibe: "Design eye", defaultAccent: "#e879f9", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/luna.jpg" },
   byte: { label: "Byte", vibe: "Code craftsman", defaultAccent: "#64748b", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/kael.jpg" },
-  quill: { label: "Quill", vibe: "Storyteller", defaultAccent: "#f0abfc" },
-  aegis: { label: "Aegis", vibe: "Guardian", defaultAccent: "#60a5fa" },
 };
+
+type RetiredSpecies = "quill" | "aegis";
 
 export function speciesFromSeed(seed?: string | null): SplashySpecies {
   const s = String(seed || "trove");
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return SPECIES[h % SPECIES.length]!;
+  // Quill and Aegis were retired: hash over the original 12 so every existing
+  // Tro keeps its mascot, remapping only the two retired species.
+  const legacy = [...SPECIES, "quill", "aegis"] as (SplashySpecies | RetiredSpecies)[];
+  const pick = legacy[h % legacy.length]!;
+  if (pick === "quill") return "muse";
+  if (pick === "aegis") return "orb";
+  return pick;
 }
 
 /**
@@ -244,18 +246,6 @@ export function Bot({
               <>
                 <rect x="14" y="18" width="36" height="32" rx="14" fill={`url(#g-${uid})`} />
                 <path d="M22 14 L26 18 M42 14 L38 18" stroke={ink} strokeWidth="2" strokeLinecap="round" />
-              </>
-            )}
-            {kind === "quill" && (
-              <>
-                <ellipse cx="32" cy="35" rx="17" ry="16" fill={`url(#g-${uid})`} />
-                <path d="M40 14 Q46 10 48 18 Q44 20 40 18 Z" fill={ink} opacity="0.8" />
-              </>
-            )}
-            {kind === "aegis" && (
-              <>
-                <circle cx="32" cy="34" r="18" fill={`url(#g-${uid})`} />
-                <path d="M32 22 L40 26 V34 C40 40 32 44 32 44 C32 44 24 40 24 34 V26 Z" fill="white" opacity="0.22" />
               </>
             )}
 

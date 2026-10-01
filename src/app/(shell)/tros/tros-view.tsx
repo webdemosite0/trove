@@ -129,7 +129,7 @@ export function TrosView({
         <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.22em] text-violet-500">Tros</p>
         <h1 className="mt-2 text-[30px] font-semibold tracking-tight text-ink">Meet your specialists</h1>
         <p className="mt-3 max-w-[42ch] text-[15px] leading-relaxed text-ink-3">
-          Twelve unique mascots. Each Tro gets a personality, brief, and toolkit — built like a real team.
+          Ten unique mascots. Each Tro gets a personality, brief, and toolkit — built like a real team.
         </p>
         <Link href="/login" className="mt-8 rounded-full btn-grad px-6 py-2.5 text-[14px] font-semibold shadow-lg shadow-violet-500/25 transition hover:scale-[1.03]">
           Log in to continue
