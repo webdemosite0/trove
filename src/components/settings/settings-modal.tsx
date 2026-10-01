@@ -360,17 +360,6 @@ function GeneralPane({
         </div>
       </Card>
 
-      <div className="mt-4">
-        <Link
-          href="/settings/account"
-          onClick={onClose}
-          className="flex items-center justify-between rounded-2xl bg-white/[0.045] p-5 transition-colors hover:bg-white/[0.07]"
-        >
-          <span className="text-[15px] font-medium">Language</span>
-          <FiChevronRight size={16} className="text-white/40" />
-        </Link>
-      </div>
-
       <SectionLabel>Appearance</SectionLabel>
       <Card>
         <div className="flex items-center justify-between">
