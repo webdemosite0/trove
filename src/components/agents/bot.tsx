@@ -132,8 +132,8 @@ export function Bot({
               width: size,
               height: size,
               // Artwork is a square JPEG with black corners; clip tight to the
-              // painted mascot circle (same 42% crop as the OneCrew cards).
-              clipPath: "circle(42% at 50% 50%)",
+              // painted mascot circle (same 41.5% crop as the OneCrew v2 cards).
+              clipPath: "circle(41.5% at 50% 50%)",
               animation: working
                 ? "tro-work 0.9s ease-in-out infinite"
                 : "tro-float 3.6s ease-in-out infinite",
