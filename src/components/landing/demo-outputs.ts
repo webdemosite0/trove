@@ -213,7 +213,6 @@ export interface SheetRow {
   flag?: boolean;
   total?: boolean;
 }
-
 export const SHEET: { title: string; formula: string; head: string[]; rows: SheetRow[] } = {
   title: "Wholesale pricing model",
   formula: "=ROUND((D2-C2)/D2, 2)",
@@ -228,3 +227,27 @@ export const SHEET: { title: string; formula: string; head: string[]; rows: Shee
     { cells: ["Blended margin", "", "", "", "49%"], total: true },
   ],
 };
+
+/** Pure helpers for exporting the demo artifacts (client components add the DOM download). */
+
+export function memoMarkdown(): string {
+  const lines = [`# ${MEMO.title}`, ``, `_${MEMO.meta}_`, ``];
+  for (const s of MEMO.sections) {
+    if (s.heading) lines.push(`## ${s.heading}`, ``);
+    if (s.body) lines.push(s.body, ``);
+    if (s.quote) lines.push(`> ${s.quote}`, ``);
+    if (s.bullets) {
+      for (const b of s.bullets) lines.push(`- ${b}`);
+      lines.push(``);
+    }
+  }
+  return lines.join("\n");
+}
+
+export function sheetCsv(): string {
+  const rows = [
+    SHEET.head.join(","),
+    ...SHEET.rows.map((r) => r.cells.map((c) => `"${c}"`).join(",")),
+  ];
+  return rows.join("\n");
+}
