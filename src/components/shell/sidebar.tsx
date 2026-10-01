@@ -56,7 +56,7 @@ const TROVE_NAV: Item[] = [
 ];
 
 const TROS_NAV: Item[] = [
-  { href: "/tros", label: "Library", icon: TbRobot, motion: "ring" },
+  { href: "/tros", label: "Home", icon: TbRobot, motion: "ring" },
   { href: "/tros?new=1", label: "New Tro", icon: FiPlus, motion: "open" },
   { href: "/artifacts", label: "Artifacts", icon: FiLayers, motion: "scan" },
 ];

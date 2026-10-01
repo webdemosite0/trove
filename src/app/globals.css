@@ -34,6 +34,9 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display-face), var(--font-sans);
   --font-mono: var(--font-mono-code), ui-monospace, monospace;
+  --r-panel: 22px;
+  --r-control: 14px;
+  --r-chip: 999px;
   color-scheme: dark;
 }
 

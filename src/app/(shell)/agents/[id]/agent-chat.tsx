@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, TbPlugConnected } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, TbPlugConnected } from "@/components/ui/icons";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -100,6 +100,26 @@ export function AgentChat({
   const [computerBusy, setComputerBusy] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
   const [browserExpanded, setBrowserExpanded] = useState(false);
+  const pendingApprovals = useMemo(() => {
+    if (busy) return [];
+    const out: { turnId: number; askIdx: number; title: string }[] = [];
+    for (const t of turns) {
+      if (t.role !== "model") continue;
+      extractAskBlocks(t.text).forEach((a, ai) => {
+        if (!answeredAsks.has(`${t.id}:${ai}`)) {
+          out.push({ turnId: t.id, askIdx: ai, title: a.block.title || "Input needed" });
+        }
+      });
+    }
+    return out;
+  }, [turns, busy, answeredAsks]);
+
+  function scrollToApproval(turnId: number, askIdx: number) {
+    document
+      .getElementById(`ask-${turnId}-${askIdx}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   const autoStarted = useRef(false);
   const bottom = useRef<HTMLDivElement>(null);
   const nextId = useRef(restored?.messages.length ?? 0);
@@ -524,13 +544,14 @@ export function AgentChat({
                     />
                     {asks.map((a, ai) =>
                       answeredAsks.has(`${t.id}:${ai}`) ? null : (
+                        <div key={ai} id={`ask-${t.id}-${ai}`} className="scroll-mt-24">
                         <ApprovalPrompt
-                          key={ai}
                           title={a.block.title}
                           questions={a.block.questions}
                           onApprove={answerAsk(t.id, ai, a.block)}
                           onSkip={() => markAskAnswered(`${t.id}:${ai}`)}
                         />
+                        </div>
                       ),
                     )}
                   </div>
@@ -577,9 +598,32 @@ export function AgentChat({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {pendingApprovals.length > 0 ? (
+            <section className="border-b border-line px-4 py-3">
+              <button
+                type="button"
+                onClick={() => scrollToApproval(pendingApprovals[0].turnId, pendingApprovals[0].askIdx)}
+                className="flex w-full items-center gap-2.5 rounded-[var(--r-control)] border border-caution/40 bg-caution/10 px-3 py-2.5 text-left transition hover:bg-caution/15"
+              >
+                <span className="relative flex size-2 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-caution opacity-70" />
+                  <span className="relative inline-flex size-2 rounded-full bg-caution" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] font-semibold text-ink">
+                    Approval needed{pendingApprovals.length > 1 ? ` (${pendingApprovals.length})` : ""}
+                  </span>
+                  <span className="block truncate text-[11.5px] text-ink-3">
+                    {pendingApprovals[0].title} — tap to answer
+                  </span>
+                </span>
+                <FiArrowRight size={14} className="shrink-0 text-ink-3" />
+              </button>
+            </section>
+          ) : null}
           <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Computer</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Desktop</p>
               <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
                 {browserExpanded ? "Shrink" : "Expand"}
               </button>
@@ -590,7 +634,7 @@ export function AgentChat({
                   <FiMonitor size={15} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[12.5px] font-medium text-ink">{agent.name.split(" ")[0]}'s computer</p>
+                  <p className="truncate text-[12.5px] font-medium text-ink">{agent.name.split(" ")[0]}'s desktop</p>
                   <p className={cn("text-[11px]", computerConnected ? "text-positive" : "text-ink-4")}>
                     {computerBusy && !computerConnected ? "Connecting…" : computerLabel}
                     {computer.pageUrl ? ` · ${computer.title || computer.pageUrl}` : ""}

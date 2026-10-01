@@ -13,9 +13,10 @@ import { ProductProof } from "@/components/landing/product-proof";
 import { TrustSection } from "@/components/landing/trust";
 import { Faq } from "@/components/landing/faq";
 import { IntegrationNetwork } from "@/components/landing/integration-network";
+import { CrewSection } from "@/components/landing/crew";
+import { SpotCard } from "@/components/landing/spot-card";
 import { PLANS } from "@/lib/credits";
 import { site } from "@/lib/site";
-import Link from "next/link";
 import {
   FiFileText,
   FiGrid,
@@ -23,7 +24,6 @@ import {
   FiGlobe,
   FiSearch,
   FiCpu,
-  FiArrowRight,
 } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
@@ -127,42 +127,22 @@ export default async function Landing() {
               lede="Chat, websites, documents, sheets, decks, research, and Tros — on every plan. You upgrade for capacity and team collaboration, not to unlock the product."
             />
             <ul className="nx-stagger-kids mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {CREATE.map((c) => {
-                const Icon = c.Icon;
-                return (
-                  <li key={c.label}>
-                    <Link
-                      href={c.href}
-                      className="group flex h-full flex-col rounded-2xl border border-line bg-canvas p-5 transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--sh-1)]"
-                    >
-                      <span
-                        className="grid size-10 place-items-center rounded-xl"
-                        style={{
-                          background: `color-mix(in srgb, ${c.tone} 14%, transparent)`,
-                          color: c.tone,
-                        }}
-                      >
-                        <Icon size={20} aria-hidden />
-                      </span>
-                      <span className="mt-4 text-[15px] font-semibold text-ink">{c.label}</span>
-                      <span className="mt-1.5 flex-1 text-[13.5px] leading-relaxed text-ink-3">
-                        {c.body}
-                      </span>
-                      <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-accent">
-                        Explore
-                        <FiArrowRight
-                          size={14}
-                          className="transition-transform group-hover:translate-x-0.5"
-                          aria-hidden
-                        />
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
+              {CREATE.map((c) => (
+                <li key={c.label}>
+                  <SpotCard
+                    href={c.href}
+                    tone={c.tone}
+                    label={c.label}
+                    body={c.body}
+                    Icon={c.Icon}
+                  />
+                </li>
+              ))}
             </ul>
           </div>
         </section>
+
+        <CrewSection />
 
         <WhyGallery />
 
