@@ -241,11 +241,11 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
         <ThemeToggle className="shrink-0" />
       </header>
 
-      <main className="relative z-10 mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-3 pt-5 scrollbar-none sm:px-5 sm:pb-10 sm:pt-8">
+      <main className="relative z-10 mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden px-4 pb-3 pt-4 sm:px-5 sm:pb-6 sm:pt-6">
         <div
           key={step}
           className={cn(
-            "ob-panel flex min-h-full flex-col pb-4 sm:flex-1",
+            "ob-panel flex min-h-0 flex-1 flex-col overflow-hidden",
             dir === "fwd" ? "ob-in-fwd" : "ob-in-back",
           )}
         >
@@ -255,14 +255,14 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 Welcome to Trove
               </p>
-              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)]">
+              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
                 What do you want to build first?
               </h1>
-              <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
+              <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
                 Pick one — we&apos;ll open the right tool with your idea ready to go.
               </p>
 
-              <div className="mt-7 grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="What do you want to build first?">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="What do you want to build first?">
                 {GOALS.map((g, i) => {
                   const Icon = g.Icon;
                   const on = goal === g.id;
@@ -274,45 +274,45 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                       aria-checked={on}
                       onClick={() => setGoal(g.id)}
                       className={cn(
-                        "ob-card flex flex-col rounded-2xl border bg-raised p-4 text-left transition",
+                        "ob-card flex flex-col rounded-2xl border bg-raised p-3 text-left transition",
                         on
-                          ? "scale-[1.02] border-accent ring-2 ring-[var(--focus-ring)]"
-                          : "border-line hover:-translate-y-0.5 hover:border-line-strong",
+                          ? "border-accent ring-2 ring-[var(--focus-ring)]"
+                          : "border-line hover:border-line-strong",
                       )}
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <span className="flex items-center justify-between">
-                        <span className={cn("grid size-9 place-items-center rounded-xl", on ? "bg-accent text-[var(--btn-ink)]" : "bg-sunk text-ink-2")}>
-                          <Icon size={17} aria-hidden />
+                        <span className={cn("grid size-8 place-items-center rounded-xl", on ? "bg-accent text-[var(--btn-ink)]" : "bg-sunk text-ink-2")}>
+                          <Icon size={15} aria-hidden />
                         </span>
                         {on && (
                           <span className="grid size-5 place-items-center rounded-full bg-accent text-[var(--btn-ink)]">
-                            <FiCheck size={12} aria-hidden />
+                            <FiCheck size={10} aria-hidden />
                           </span>
                         )}
                       </span>
-                      <span className="mt-3 text-[14px] font-semibold text-ink">{g.title}</span>
-                      <span className="mt-0.5 text-[12px] leading-snug text-ink-3">{g.blurb}</span>
+                      <span className="mt-2 text-[13px] font-semibold text-ink">{g.title}</span>
+                      <span className="mt-0.5 hidden text-[11px] leading-snug text-ink-3 sm:block">{g.blurb}</span>
                     </button>
                   );
                 })}
               </div>
 
-              <label className="ob-rise-d2 mt-6 block">
-                <span className="mb-2 flex items-baseline justify-between text-[13px] font-medium text-ink-2">
+              <label className="ob-rise-d2 mt-4 block">
+                <span className="mb-1.5 flex items-baseline justify-between text-[12.5px] font-medium text-ink-2">
                   Describe it in a sentence
-                  <span className="text-[11px] font-normal text-ink-4">Optional</span>
+                  <span className="text-[10.5px] font-normal text-ink-4">Optional</span>
                 </span>
                 <textarea
                   value={idea}
                   onChange={(e) => setIdea(e.target.value)}
-                  rows={3}
+                  rows={2}
                   placeholder={
                     goal === "website"
                       ? "e.g. A calm clinic site with services, doctors, and a booking button…"
                       : "e.g. A one-page pitch outline for our seed round…"
                   }
-                  className="w-full resize-none rounded-2xl border border-line-strong bg-raised p-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+                  className="w-full resize-none rounded-2xl border border-line-strong bg-raised p-3 text-[14px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
                 />
               </label>
             </>
@@ -324,30 +324,29 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 About you
               </p>
-              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)]">
+              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
                 A little about you.
               </h1>
-              <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
-                Signed in as <span className="font-medium text-ink-2">{email}</span> — this tunes
-                examples and defaults. Nothing permanent.
+              <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
+                <span className="font-medium text-ink-2">{email}</span> — tunes examples and defaults. Nothing permanent.
               </p>
 
-              <label className="ob-rise-d2 mt-7 block">
-                <span className="mb-2 block text-[13px] font-medium text-ink-2">Your name</span>
+              <label className="ob-rise-d2 mt-4 block">
+                <span className="mb-1.5 block text-[12.5px] font-medium text-ink-2">Your name</span>
                 <input
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   autoFocus
-                  className="h-12 w-full rounded-2xl border border-line-strong bg-raised px-4 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+                  className="h-11 w-full rounded-2xl border border-line-strong bg-raised px-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
                   placeholder="Alex Rivera"
                 />
               </label>
 
-              <div className="ob-rise-d2 mt-6">
-                <span className="mb-2 block text-[13px] font-medium text-ink-2" id="ob-role-label">
+              <div className="ob-rise-d2 mt-4">
+                <span className="mb-1.5 block text-[12.5px] font-medium text-ink-2" id="ob-role-label">
                   Which best describes you?
                 </span>
-                <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="ob-role-label">
+                <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="ob-role-label">
                   {ROLES.map((r, i) => {
                     const on = role === r;
                     return (
@@ -358,9 +357,9 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                         aria-checked={on}
                         onClick={() => setRole(r)}
                         className={cn(
-                          "ob-chip min-h-[44px] rounded-full border px-4 py-2 text-[13.5px] font-medium transition",
+                          "ob-chip min-h-[38px] rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium transition",
                           on
-                            ? "border-accent bg-accent text-[var(--btn-ink)] shadow-[0_8px_20px_-8px_var(--btn-glow)]"
+                            ? "border-accent bg-accent text-[var(--btn-ink)]"
                             : "border-line bg-raised text-ink-2 hover:border-line-strong hover:bg-hover",
                         )}
                         style={{ animationDelay: `${i * 30}ms` }}
@@ -372,11 +371,11 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                 </div>
               </div>
 
-              <div className="ob-rise-d3 mt-6">
-                <span className="mb-2 block text-[13px] font-medium text-ink-2" id="ob-acct-label">
+              <div className="ob-rise-d3 mt-4">
+                <span className="mb-1.5 block text-[12.5px] font-medium text-ink-2" id="ob-acct-label">
                   How will you use Trove?
                 </span>
-                <div className="grid gap-2" role="radiogroup" aria-labelledby="ob-acct-label">
+                <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="ob-acct-label">
                   {ACCOUNT_TYPES.map((item) => {
                     const Icon = item.Icon;
                     const on = accountType === item.id;
@@ -388,24 +387,16 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                         aria-checked={on}
                         onClick={() => setAccountType(item.id)}
                         className={cn(
-                          "flex items-center gap-3 rounded-2xl border bg-raised p-3.5 text-left transition",
+                          "flex flex-col items-center gap-1.5 rounded-2xl border bg-raised p-3 text-center transition",
                           on
                             ? "border-accent ring-2 ring-[var(--focus-ring)]"
                             : "border-line hover:border-line-strong",
                         )}
                       >
-                        <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", on ? "bg-accent text-[var(--btn-ink)]" : "bg-sunk text-ink-2")}>
-                          <Icon size={18} aria-hidden />
+                        <span className={cn("grid size-9 place-items-center rounded-xl", on ? "bg-accent text-[var(--btn-ink)]" : "bg-sunk text-ink-2")}>
+                          <Icon size={16} aria-hidden />
                         </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[14px] font-semibold text-ink">{item.title}</span>
-                          <span className="block text-[12px] text-ink-3">{item.blurb}</span>
-                        </span>
-                        {on && (
-                          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-[var(--btn-ink)]">
-                            <FiCheck size={13} aria-hidden />
-                          </span>
-                        )}
+                        <span className="text-[12.5px] font-semibold text-ink">{item.title}</span>
                       </button>
                     );
                   })}
@@ -420,12 +411,11 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 Optional
               </p>
-              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)]">
+              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
                 Add your business?
               </h1>
-              <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
-                If you add one, Trove reads its site and writes personalized AI instructions
-                for you. Skip it and you can add one later in settings.
+              <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
+                Trove reads its site and writes personalized AI instructions. Skip it — add one later in settings.
               </p>
 
               {analysisState === "loading" ? (
@@ -478,9 +468,9 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                   </div>
                 </div>
               ) : (
-                <div className="ob-rise-d2 mt-7 space-y-4">
+                <div className="ob-rise-d2 mt-4 space-y-3">
                   <label className="block">
-                    <span className="mb-2 block text-[13px] font-medium text-ink-2">Business name</span>
+                    <span className="mb-1.5 block text-[12.5px] font-medium text-ink-2">Business name</span>
                     <input
                       value={businessName}
                       onChange={(e) => {
@@ -488,17 +478,14 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                         setAnalysisState("idle");
                         setAnalysis(null);
                       }}
-                      className="h-12 w-full rounded-2xl border border-line-strong bg-raised px-4 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+                      className="h-11 w-full rounded-2xl border border-line-strong bg-raised px-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
                       placeholder="Acme Studio"
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-2 flex items-center justify-between text-[13px] font-medium text-ink-2">
-                      <span>Business URL</span>
-                      <span className="text-[11px] font-normal text-ink-4">Optional</span>
-                    </span>
+                    <span className="mb-1.5 block text-[12.5px] font-medium text-ink-2">Business URL <span className="font-normal text-ink-4">· optional</span></span>
                     <div className="relative">
-                      <FiGlobe size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" aria-hidden />
+                      <FiGlobe size={15} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" aria-hidden />
                       <input
                         value={businessUrl}
                         onChange={(e) => {
@@ -507,49 +494,34 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                           setAnalysis(null);
                         }}
                         className={cn(
-                          "h-12 w-full rounded-2xl border bg-raised pl-11 pr-4 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]",
+                          "h-11 w-full rounded-2xl border bg-raised pl-10 pr-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]",
                           businessUrl && !validBusinessUrl(businessUrl) ? "border-critical" : "border-line-strong",
                         )}
                         placeholder="yourbusiness.com"
                       />
                     </div>
                     {businessUrl && !validBusinessUrl(businessUrl) ? (
-                      <span className="mt-1.5 block text-[11.5px] text-critical">Enter a valid public website URL.</span>
+                      <span className="mt-1 block text-[11px] text-critical">Enter a valid public website URL.</span>
                     ) : null}
                   </label>
-                  <div>
-                    <span className="mb-2 flex items-center justify-between text-[13px] font-medium text-ink-2">
-                      <span>Business profile</span>
-                      <span className="text-[11px] font-normal text-ink-4">Optional · up to 3 MB</span>
+                  <label className="flex cursor-pointer items-center gap-2.5 rounded-2xl border border-dashed border-line-strong bg-raised px-3.5 py-2.5 transition hover:border-accent">
+                    <FiFileText size={15} className="shrink-0 text-ink-3" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-2">
+                      {profileFile ? profileFile.name : "Attach a company profile (PDF, doc, image…)"}
                     </span>
-                    <label className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-raised p-3.5 transition hover:border-accent hover:bg-hover">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-sunk text-ink-2">
-                        <FiFileText size={18} aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13.5px] font-medium text-ink">
-                          {profileFile ? profileFile.name : "Attach a company profile"}
-                        </span>
-                        <span className="mt-0.5 block text-[11.5px] text-ink-4">
-                          PDF, image, TXT, Markdown, CSV, or JSON
-                        </span>
-                      </span>
-                      <span className="rounded-full border border-line bg-canvas px-3 py-1.5 text-[11.5px] font-medium text-ink-2">
-                        {profileFile ? "Change" : "Choose"}
-                      </span>
-                      <input
-                        type="file"
-                        className="sr-only"
-                        accept=".pdf,.txt,.md,.markdown,.csv,.json,image/png,image/jpeg,image/webp"
-                        onChange={(e) => chooseProfile(e.target.files?.[0] || null)}
-                      />
-                    </label>
-                    {profileError ? <span className="mt-1.5 block text-[11.5px] text-critical">{profileError}</span> : null}
-                  </div>
+                    <span className="text-[11.5px] font-medium text-accent">{profileFile ? "Change" : "Optional"}</span>
+                    <input
+                      type="file"
+                      className="sr-only"
+                      accept=".pdf,.txt,.md,.markdown,.csv,.json,image/png,image/jpeg,image/webp"
+                      onChange={(e) => chooseProfile(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  {profileError ? <span className="-mt-2 block text-[11px] text-critical">{profileError}</span> : null}
                   {analysisState === "error" ? (
-                    <div className="rounded-2xl border border-critical/25 bg-critical/10 p-4">
-                      <p className="text-[13px] font-medium text-critical">Analysis didn&apos;t finish.</p>
-                      <p className="mt-1 text-[12px] leading-5 text-ink-3">{analysisError}</p>
+                    <div className="rounded-2xl border border-critical/25 bg-critical/10 p-3.5">
+                      <p className="text-[12.5px] font-medium text-critical">Analysis didn&apos;t finish.</p>
+                      <p className="mt-0.5 text-[11.5px] leading-5 text-ink-3">{analysisError}</p>
                     </div>
                   ) : null}
                 </div>
@@ -558,7 +530,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <button
                 type="button"
                 onClick={() => go(3)}
-                className="ob-rise-d3 mt-6 w-full rounded-2xl border border-dashed border-line-strong py-3.5 text-[13.5px] font-medium text-ink-3 transition hover:border-accent hover:text-ink"
+                className="ob-rise-d3 mt-4 w-full rounded-2xl border border-dashed border-line-strong py-3 text-[13px] font-medium text-ink-3 transition hover:border-accent hover:text-ink"
               >
                 Skip for now — I&apos;ll add this later
               </button>
@@ -568,18 +540,18 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
           {/* STEP 3 — ready */}
           {step === 3 && (
             <>
-              <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
+              <p className="ob-fade text-[11.5px] font-semibold uppercase tracking-[0.14em] text-accent">
                 You&apos;re ready
               </p>
-              <h1 className="ob-rise mt-2 text-[30px] font-semibold leading-[1.06] tracking-[-0.035em] text-ink sm:text-[clamp(1.75rem,1.2rem+1.5vw,2.25rem)]">
+              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
                 {displayName ? `Let's build, ${displayName.split(" ")[0]}.` : "Let's build."}
               </h1>
-              <p className="ob-rise-d1 mt-2 text-[15px] leading-6 text-ink-3">
+              <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
                 Your workspace is set up around <strong className="font-semibold text-ink-2">{goalLabel.toLowerCase()}</strong>
                 {idea.trim() ? " — and your idea is loaded and ready." : "."}
               </p>
 
-              <ul className="ob-rise-d2 mt-7 space-y-2.5">
+              <ul className="ob-rise-d2 mt-4 space-y-2">
                 {[
                   { icon: FiZap, text: "200 free credits every month — no card" },
                   { icon: FiCheck, text: `Your first stop: ${goalLabel}` },
@@ -588,17 +560,17 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                 ].map((row) => {
                   const Icon = row.icon;
                   return (
-                    <li key={row.text} className="flex items-center gap-3 rounded-2xl border border-line bg-raised p-3.5">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-                        <Icon size={16} aria-hidden />
+                    <li key={row.text} className="flex items-center gap-2.5 rounded-2xl border border-line bg-raised p-3">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+                        <Icon size={14} aria-hidden />
                       </span>
-                      <span className="text-[13.5px] font-medium text-ink-2">{row.text}</span>
+                      <span className="text-[13px] font-medium text-ink-2">{row.text}</span>
                     </li>
                   );
                 })}
               </ul>
 
-              <div className="ob-rise-d3 mt-4 rounded-2xl bg-sunk/60 p-4 text-[12.5px] leading-relaxed text-ink-3">
+              <div className="ob-rise-d3 mt-3 rounded-2xl bg-sunk/60 p-3.5 text-[12px] leading-relaxed text-ink-3">
                 We recommend <strong className="font-semibold text-ink">{plan.label}</strong> ({plan.why}).
                 You&apos;re starting on <strong className="font-semibold text-ink">Free</strong> — upgrade
                 anytime from settings. Paid plans never activate without checkout.

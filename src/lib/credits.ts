@@ -25,14 +25,9 @@ export const TOKENS_PER_CREDIT = 1_000;
 /** Rolling burst window — same idea as Codex's 5-hour rate limit. */
 export const RATE_WINDOW_MS = 5 * 60 * 60 * 1000;
 
-/** Sentinel used in Balance when the account is unlimited (admin). */
-export const UNLIMITED = 1_000_000_000;
+import { UNLIMITED, formatCredits } from "@/lib/format-credits";
 
-/** Display helper: the UNLIMITED sentinel renders as "Unlimited", not "1,000,000,000". */
-export function formatCredits(remaining: number): string {
-  if (!Number.isFinite(remaining) || remaining >= UNLIMITED) return "Unlimited";
-  return Math.max(0, Math.floor(remaining)).toLocaleString();
-}
+export { UNLIMITED, formatCredits };
 
 export type BillingInterval = "month" | "year";
 

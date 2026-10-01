@@ -31,7 +31,7 @@ import { ThemeToggle } from "@/components/shell/theme";
 import { ProductSwitcher, useIsTrosProduct } from "@/components/shell/product-switcher";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
-import { formatCredits } from "@/lib/credits";
+import { formatCredits } from "@/lib/format-credits";
 import type { User, Balance } from "@/lib/types";
 import { Tooltip } from "@/components/ui/tooltip";
 

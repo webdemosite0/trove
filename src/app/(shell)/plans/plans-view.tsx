@@ -13,7 +13,7 @@ import {
   FiZap,
 } from "@/components/ui/icons";
 import { choosePlan } from "@/app/actions/billing";
-import { formatCredits } from "@/lib/credits";
+import { formatCredits } from "@/lib/format-credits";
 import { Ico } from "@/components/ui/ico";
 import { FailureNote } from "@/components/ui/failure-note";
 import { cn } from "@/lib/utils";
