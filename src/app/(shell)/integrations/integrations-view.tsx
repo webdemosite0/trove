@@ -37,12 +37,15 @@ export function IntegrationsView({
   signedIn,
   composioOn = false,
   composioServices = [],
+  bare = false,
 }: {
   connected: ConnectedService[];
   connectable: Record<string, { label: string; help: string; docs?: string }>;
   signedIn: boolean;
   composioOn?: boolean;
   composioServices?: string[];
+  /** Embedded in the settings overlay — skip the page header chrome. */
+  bare?: boolean;
 }) {
   const router = useRouter();
   const [opening, setOpening] = useState<string | null>(null);
@@ -198,8 +201,9 @@ export function IntegrationsView({
   }
 
   return (
-    <div className="min-h-[calc(100dvh-3.5rem)] bg-transparent text-ink">
-      <div className="mx-auto max-w-[920px] px-5 pb-16 pt-10 sm:px-8">
+    <div className={bare ? "bg-transparent text-ink" : "min-h-[calc(100dvh-3.5rem)] bg-transparent text-ink"}>
+      <div className={bare ? "" : "mx-auto max-w-[920px] px-5 pb-16 pt-10 sm:px-8"}>
+        {!bare ? (
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-ink">
@@ -222,6 +226,20 @@ export function IntegrationsView({
             />
           </label>
         </div>
+        ) : (
+        <label className="relative mb-4 block w-full">
+          <FiSearch
+            size={15}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search connectors"
+            className="h-10 w-full rounded-full border border-line bg-raised pl-10 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-4 focus:border-accent"
+          />
+        </label>
+        )}
 
         {error ? (
           <p className="mt-4 rounded-xl border border-critical/35 bg-critical-soft px-3.5 py-2.5 text-[13px] text-critical">
