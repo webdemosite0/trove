@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiFileText, FiGrid, FiLayers, FiEdit2, FiCode, FiDownload, FiTrash2, TbPlugConnected } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, TbPlugConnected } from "@/components/ui/icons";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
+import { ArtifactIcon } from "@/components/ui/artifact-icon";
 import { Ico } from "@/components/ui/ico";
+import { Tooltip } from "@/components/ui/tooltip";
 import { FailureNote } from "@/components/ui/failure-note";
 import { Modal } from "@/components/ui/modal";
 import { TroListPanel } from "../../tros/tro-list";
@@ -57,14 +59,6 @@ type ComputerState = {
   screenshotBase64: string | null;
 };
 
-const ARTIFACT_ICON: Record<ArtifactKind, typeof FiFileText> = {
-  doc: FiFileText,
-  sheet: FiGrid,
-  deck: FiLayers,
-  note: FiEdit2,
-  code: FiCode,
-};
-
 const ARTIFACT_LABEL: Record<ArtifactKind, string> = {
   doc: "Document",
   sheet: "Spreadsheet",
@@ -95,11 +89,10 @@ function ArtifactCard({
   onDownload: () => void;
   onDelete: () => void;
 }) {
-  const Icon = ARTIFACT_ICON[block.kind];
   return (
     <div className="mt-2 flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-3 py-2.5 transition hover:border-line-strong">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
-        <Icon size={16} />
+        <ArtifactIcon kind={block.kind} size={17} />
       </span>
       <button
         type="button"
@@ -114,24 +107,26 @@ function ArtifactCard({
       </button>
       {saved ? (
         <span className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={onDownload}
-            aria-label="Download artifact"
-            title="Download"
-            className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
-          >
-            <FiDownload size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="Delete artifact"
-            title="Delete"
-            className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-critical/10 hover:text-critical"
-          >
-            <FiTrash2 size={14} />
-          </button>
+          <Tooltip label="Download artifact">
+            <button
+              type="button"
+              onClick={onDownload}
+              aria-label="Download artifact"
+              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+            >
+              <FiDownload size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip label="Delete artifact">
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label="Delete artifact"
+              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-critical/10 hover:text-critical"
+            >
+              <FiTrash2 size={14} />
+            </button>
+          </Tooltip>
         </span>
       ) : (
         <span
@@ -961,7 +956,6 @@ export function AgentChat({
             ) : (
               <ul className="space-y-1">
                 {artifacts.map((a) => {
-                  const Icon = ARTIFACT_ICON[a.kind];
                   return (
                     <li key={a.id}>
                       <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-hover">
@@ -971,7 +965,7 @@ export function AgentChat({
                           className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                         >
                           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
-                            <Icon size={14} />
+                            <ArtifactIcon kind={a.kind} size={15} />
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-[12.5px] font-medium text-ink">{a.title}</span>

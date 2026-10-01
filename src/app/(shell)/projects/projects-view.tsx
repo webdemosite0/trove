@@ -52,6 +52,13 @@ function formatWhen(ts: number) {
   }
 }
 
+/** Stable accent hue per project so cards are distinguishable at a glance. */
+function hueFor(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+}
+
 export function ProjectsView({
   projects: initial,
   signedIn,
@@ -245,8 +252,22 @@ export function ProjectsView({
               </button>
 
               <Link href={`/projects/${encodeURIComponent(p.id)}`} className="flex flex-1 flex-col">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 via-sky-500/10 to-fuchsia-500/15 ring-1 ring-line">
-                  <FiFolder size={20} className="text-ink" />
+                <div className="flex items-center justify-between">
+                  <div
+                    className="grid h-11 w-11 place-items-center rounded-xl ring-1 ring-line transition-transform duration-200 group-hover:scale-105"
+                    style={{
+                      background: `linear-gradient(135deg, hsl(${hueFor(p.name)} 65% 55% / 0.18), hsl(${(hueFor(p.name) + 40) % 360} 65% 55% / 0.08))`,
+                      color: `hsl(${hueFor(p.name)} 55% 42%)`,
+                    }}
+                  >
+                    <FiFolder size={20} />
+                  </div>
+                  {p.status === "active" ? (
+                    <span className="relative flex size-2.5" title="Active">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                      <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
+                    </span>
+                  ) : null}
                 </div>
                 <h3 className="mt-3.5 pr-8 text-[15px] font-semibold text-ink">{p.name}</h3>
                 <p className="mt-1 line-clamp-2 min-h-[2.5em] text-[13px] leading-relaxed text-ink-3">
@@ -274,6 +295,31 @@ export function ProjectsView({
 
       <Modal open={creating} onClose={() => !busy && setCreating(false)} title="New project">
         <div className="space-y-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-line bg-sunk/60 px-3.5 py-3">
+            <span
+              className="grid size-10 shrink-0 place-items-center rounded-xl ring-1 ring-line"
+              style={
+                name.trim()
+                  ? {
+                      background: `linear-gradient(135deg, hsl(${hueFor(name.trim())} 65% 55% / 0.18), hsl(${(hueFor(name.trim()) + 40) % 360} 65% 55% / 0.08))`,
+                      color: `hsl(${hueFor(name.trim())} 55% 42%)`,
+                    }
+                  : undefined
+              }
+            >
+              <FiFolder size={18} className={name.trim() ? "" : "text-ink-3"} />
+            </span>
+            <p className="text-[12.5px] leading-relaxed text-ink-3">
+              A project is a shared workspace: brief, files, and conversations in one place.
+              {name.trim() ? (
+                <>
+                  {" "}This one will be <span className="font-semibold text-ink">{name.trim()}</span>.
+                </>
+              ) : (
+                " Give it a name to see its color."
+              )}
+            </p>
+          </div>
           <div>
             <label className="mb-1.5 block text-[12.5px] font-medium text-ink-3">Name</label>
             <input

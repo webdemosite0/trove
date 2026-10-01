@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { all, str, num } from "@/lib/db";
 import { Bot } from "@/components/agents/bot";
+import { ArtifactIcon } from "@/components/ui/artifact-icon";
+import type { ArtifactKind } from "@/lib/artifact-block";
 
 export const metadata = { title: "Artifacts" };
 export const dynamic = "force-dynamic";
@@ -95,16 +97,21 @@ export default async function ArtifactsPage() {
                   <li key={a.id}>
                     <Link
                       href={`/tros/${g.id}`}
-                      className="block rounded-2xl border border-line bg-raised/60 px-4 py-3 transition hover:border-line-strong hover:bg-raised"
+                      className="flex items-center gap-3 rounded-2xl border border-line bg-raised/60 px-4 py-3 transition hover:border-line-strong hover:bg-raised"
                     >
-                      <p className="truncate text-[13.5px] font-semibold text-ink">{str(a.title)}</p>
-                      <p className="mt-0.5 text-[11.5px] text-ink-4">
-                        {KIND_LABEL[str(a.kind)] ?? "File"} ·{" "}
-                        {new Date(num(a.created_at)).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
+                        <ArtifactIcon kind={(str(a.kind) as ArtifactKind) || "doc"} size={16} />
+                      </span>
+                      <span className="min-w-0">
+                        <p className="truncate text-[13.5px] font-semibold text-ink">{str(a.title)}</p>
+                        <p className="mt-0.5 text-[11.5px] text-ink-4">
+                          {KIND_LABEL[str(a.kind)] ?? "File"} ·{" "}
+                          {new Date(num(a.created_at)).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </span>
                     </Link>
                   </li>
                 ))}

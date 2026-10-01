@@ -103,12 +103,18 @@ function NavRow({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
+        "group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
         active
           ? "rail-item-active bg-hover font-medium text-ink"
           : "text-ink-2 hover:bg-hover hover:text-ink",
       )}
     >
+      {active ? (
+        <span
+          aria-hidden
+          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-accent"
+        />
+      ) : null}
       <Ico
         icon={item.icon}
         motion={item.motion}
