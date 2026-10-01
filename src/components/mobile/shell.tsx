@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useNav } from "@/components/shell/nav-state";
 import type { IconType } from "@/components/ui/icons";
 import {
   FiPlus,
@@ -95,6 +96,7 @@ export function MobileShell({
 }) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
+  const { openSettings } = useNav();
   const [open, setOpen] = React.useState(false);
   const [liveBalance, setLiveBalance] = React.useState<Balance | null>(balance);
   const isTeam = pathname === "/team" || pathname.startsWith("/team/");
@@ -323,14 +325,14 @@ export function MobileShell({
             </div>
 
             <div className="flex items-center gap-1">
-              <Link
-                href="/settings"
-                onClick={() => setOpen(false)}
+              <button
+                type="button"
+                onClick={() => { setOpen(false); openSettings("general"); }}
                 aria-label="Settings"
                 className="grid h-9 w-9 place-items-center rounded-lg text-ink transition-colors hover:bg-hover hover:text-ink"
               >
                 <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
-              </Link>
+              </button>
               <Link
                 href="/plans"
                 onClick={() => setOpen(false)}

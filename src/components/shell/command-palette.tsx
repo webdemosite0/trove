@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useNav } from "@/components/shell/nav-state";
 import type { IconType } from "@/components/ui/icons";
 import {
   TbMessageCircle,
@@ -31,6 +32,8 @@ interface Command {
   icon: IconType;
   tone: string;
   href: string;
+  /** Opens the settings overlay at this section instead of navigating. */
+  overlay?: string;
   keys?: string;
   group: "Create" | "Navigate";
 }
@@ -52,9 +55,9 @@ const COMMANDS: Command[] = [
   { id: "nav-team", label: "Team", hint: "Four specialists, one task", icon: TbUsers, tone: "#f59e0b", href: "/team", group: "Navigate" },
   { id: "nav-home", label: "Home", hint: "Your workspace", icon: TbLayoutDashboard, tone: "#64748b", href: "/dashboard", group: "Navigate" },
   { id: "nav-reminders", label: "Alerts", hint: "Notify me later", icon: TbBell, tone: "#f43f5e", href: "/reminders", group: "Navigate" },
-  { id: "nav-integrations", label: "Apps", hint: "Connect a service", icon: TbPlugConnected, tone: "#0284c7", href: "/integrations", group: "Navigate" },
+  { id: "nav-integrations", label: "Apps", hint: "Connect a service", icon: TbPlugConnected, tone: "#0284c7", href: "/integrations", group: "Navigate", overlay: "integrations" },
   { id: "nav-plans", label: "Plan", hint: "Credits and limits", icon: TbCreditCard, tone: "#8b5cf6", href: "/plans", group: "Navigate" },
-  { id: "nav-settings", label: "Settings", hint: "Account and appearance", icon: TbSettings, tone: "#64748b", href: "/settings", group: "Navigate" },
+  { id: "nav-settings", label: "Settings", hint: "Account and appearance", icon: TbSettings, tone: "#64748b", href: "/settings", group: "Navigate", overlay: "general" },
 ];
 
 interface Recent {
@@ -132,6 +135,7 @@ function Row({
 
 export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
   const router = useRouter();
+  const { openSettings } = useNav();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
@@ -156,8 +160,12 @@ export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
 
   const total = recentItems.length + flat.length;
 
-  function go(href: string) {
+  function go(href: string, overlay?: string) {
     setOpen(false);
+    if (overlay) {
+      openSettings(overlay);
+      return;
+    }
     router.push(href);
   }
 
@@ -168,7 +176,7 @@ export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
       return;
     }
     const hit = flat[i - recentItems.length];
-    if (hit) go(hit.href);
+    if (hit) go(hit.href, hit.overlay);
   }
 
   useEffect(() => {

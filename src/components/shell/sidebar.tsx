@@ -136,6 +136,7 @@ function UserMenu({
   onNavigate?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { openSettings } = useNav();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!menuOpen) return;
@@ -167,15 +168,15 @@ function UserMenu({
       </button>
       {menuOpen ? (
         <div role="menu" className="absolute bottom-full left-0 z-50 mb-1.5 w-full min-w-[200px] overflow-hidden rounded-2xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]">
-          <Link href="/settings" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); }} className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
+          <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); openSettings("general"); }} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
             <FiSettings size={14} /> Settings
-          </Link>
-          <Link href="/settings/billing" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); }} className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
+          </button>
+          <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); openSettings("wallet"); }} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
             <FiCreditCard size={14} /> Billing
-          </Link>
-          <Link href="/settings/account" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); }} className="flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
+          </button>
+          <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onNavigate?.(); openSettings("general"); }} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover">
             <FiUser size={14} /> Account
-          </Link>
+          </button>
           <div className="my-1 border-t border-line" />
           <form action={logOut}>
             <button type="submit" role="menuitem" className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-critical hover:bg-hover">
@@ -196,7 +197,7 @@ export function Sidebar({
   balance?: Balance | null;
 }) {
   const pathname = usePathname() || "/";
-  const { open, setOpen, collapsed, setCollapsed } = useNav();
+  const { open, setOpen, collapsed, setCollapsed, openSettings } = useNav();
   const closeMobile = () => setOpen(false);
   useEffect(() => { setOpen(false); }, [pathname, setOpen]);
   const isTros = useIsTrosProduct(pathname);
@@ -251,9 +252,9 @@ export function Sidebar({
         {user ? (
           c ? (
             <Tooltip label={user.name} side="right">
-              <Link href="/settings" onClick={closeMobile} className="mx-auto grid size-9 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
+              <button type="button" onClick={() => { closeMobile(); openSettings("general"); }} aria-label="Open settings" className="mx-auto grid size-9 place-items-center rounded-full bg-raised text-[12px] font-semibold text-ink ring-1 ring-line">
                 {user.name.slice(0, 1).toUpperCase()}
-              </Link>
+              </button>
             </Tooltip>
           ) : (
             <UserMenu user={user} onNavigate={closeMobile} />
@@ -267,9 +268,9 @@ export function Sidebar({
           {!c ? (
             <>
               <Tooltip label="Settings" side="top">
-                <Link href="/settings" onClick={closeMobile} aria-label="Settings" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
+                <button type="button" onClick={() => { closeMobile(); openSettings("general"); }} aria-label="Settings" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
                   <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
-                </Link>
+                </button>
               </Tooltip>
               <Tooltip label="Plan" side="top">
                 <Link href="/plans" onClick={closeMobile} aria-label="Plan" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
@@ -277,9 +278,9 @@ export function Sidebar({
                 </Link>
               </Tooltip>
               <Tooltip label="Help" side="top">
-                <Link href="/settings/support" onClick={closeMobile} aria-label="Help & support" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
+                <button type="button" onClick={() => { closeMobile(); openSettings("help"); }} aria-label="Help & support" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
                   <Ico icon={TbHelpCircle} motion="ring" size={16} className="text-ink" />
-                </Link>
+                </button>
               </Tooltip>
               <span className="flex-1" />
               <ThemeToggle />
