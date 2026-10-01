@@ -5,6 +5,7 @@ import { FiArrowRight, FiCheck } from "@/components/ui/icons";
 
 import { FEATURES, featureBySlug } from "@/lib/features";
 import { site } from "@/lib/site";
+import { FeatureExample } from "@/components/landing/feature-example";
 
 /** One page per capability, built at compile time — the content is static. */
 export function generateStaticParams() {
@@ -92,6 +93,8 @@ export default async function FeaturePage({
             </Link>
           </div>
         </header>
+
+        {feature.example && <FeatureExample example={feature.example} />}
 
         {/* Key capabilities */}
         <section className="mt-12 rounded-2xl border border-line bg-rail/50 p-6">

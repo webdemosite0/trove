@@ -153,6 +153,60 @@ export const MEMO: { title: string; meta: string; sections: MemoSection[] } = {
   ],
 };
 
+export interface DeckSlide {
+  kicker: string;
+  title: string;
+  body: string;
+  points?: string[];
+}
+
+export const DECK: DeckSlide[] = [
+  {
+    kicker: "Ember & Oak · Wholesale expansion",
+    title: "Wholesale is working.",
+    body: "Fourteen new café accounts in Q3 — including our first regional chain. Wholesale went from 22% to 38% of revenue in one quarter.",
+  },
+  {
+    kicker: "The numbers",
+    title: "$81k wholesale revenue, up 3×.",
+    body: "The roastery ran at 81% capacity in September without a missed roast day. Demand is outpacing our single 12kg roaster.",
+    points: ["14 new accounts signed", "38% of revenue from wholesale", "81% capacity utilization"],
+  },
+  {
+    kicker: "The ask",
+    title: "One roaster. One reprice. One holiday set.",
+    body: "Commission the second roaster by December, reprice 5lb bags to protect the 55% margin floor, and launch the holiday gift set November 10.",
+  },
+];
+
+export interface ResearchFinding {
+  heading: string;
+  body: string;
+  source: string;
+}
+
+export const RESEARCH: { title: string; meta: string; findings: ResearchFinding[] } = {
+  title: "Specialty coffee wholesale — market scan",
+  meta: "Prepared for Ember & Oak · October 2026 · 6 sources",
+  findings: [
+    {
+      heading: "Regional chains buy local, but audit hard",
+      body: "Chains with 8–30 locations prefer regional roasters for freshness story, but require documented QC: cupping logs, roast-date guarantees, and 48-hour fulfillment SLAs. Two of the three chains interviewed dropped a roaster over missed deliveries, not price.",
+      source: "Interviews: 3 regional café chains (OR/WA) · SCA wholesale survey 2025",
+    },
+    {
+      heading: "The pricing gap sits at 5lb",
+      body: "12oz wholesale clusters tightly at $13–15/lb with little room to move. The 5lb food-service tier is less efficient — most roasters underprice it to win accounts, then get stuck. Roasters holding a 55%+ margin on 5lb win fewer accounts but keep them longer.",
+      source: "Wholesale price sheets: 11 PNW roasters · Roast Magazine cost study 2026",
+    },
+    {
+      heading: "Inference: our edge is reliability, not price",
+      body: "Ember & Oak's 81% capacity with zero missed roast days is the actual pitch. Price 5lb at the margin floor and sell the SLA — competing on price in this tier is a losing game the data doesn't support.",
+      source: "Inference from findings 1–2 · Ember & Oak ops data Q3",
+    },
+  ],
+};
+
 export interface SheetRow {
   cells: (string | number)[];
   flag?: boolean;
