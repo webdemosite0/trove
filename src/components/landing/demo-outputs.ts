@@ -91,6 +91,7 @@ export const SITE_HTML = `<!DOCTYPE html>
 .sub-band{text-align:center;padding:20px 0 80px}.sub-band h2{font-family:Georgia,serif;font-size:30px;font-weight:400;margin-bottom:10px}
 .sub-band p{color:#6B5D4C;font-size:14.5px;max-width:480px;margin:0 auto 24px}
 footer{border-top:1px solid #E7DCCB;padding:26px 0 40px;display:flex;justify-content:space-between;font-size:12.5px;color:#8A7B6C}
+@media(max-width:640px){.hero{padding:52px 0 40px}.hero h1{font-size:36px}.grid{grid-template-columns:1fr}.story{grid-template-columns:1fr;padding:36px 28px}.nav{display:none}.top{padding:16px 0}.wrap{padding:0 20px}}
 </style></head><body>
 <div class="wrap">
 <div class="top"><div class="brand">Ember <b>&amp;</b> Oak</div>

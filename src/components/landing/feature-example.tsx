@@ -46,20 +46,20 @@ function DocExample() {
     <Frame title="q3-investor-update.md">
       <div className="max-h-[480px] overflow-y-auto bg-[#f4f1ea] p-4 sm:p-6">
         <article className="mx-auto max-w-[560px] bg-white px-6 py-8 shadow-[0_2px_16px_rgba(0,0,0,0.06)] sm:px-10">
-          <h3
+          <p
             className="text-[24px] leading-tight text-zinc-900"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             {MEMO.title}
-          </h3>
+          </p>
           <p className="mt-1.5 text-[11px] uppercase tracking-[0.08em] text-zinc-400">{MEMO.meta}</p>
           <hr className="my-5 border-zinc-200" />
           {MEMO.sections.map((s, i) => (
             <div key={i} className="mb-5">
               {s.heading && (
-                <h4 className="mb-1.5 text-[12.5px] font-bold uppercase tracking-[0.06em] text-zinc-800">
+                <p className="mb-1.5 text-[12.5px] font-bold uppercase tracking-[0.06em] text-zinc-800">
                   {s.heading}
-                </h4>
+                </p>
               )}
               {s.body && <p className="text-[13.5px] leading-relaxed text-zinc-700">{s.body}</p>}
               {s.quote && (
@@ -141,12 +141,12 @@ function DeckExample() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-400/90">
               {slide.kicker}
             </p>
-            <h3
+            <p
               className="mt-3 max-w-[16ch] text-[clamp(1.6rem,1.2rem+2vw,2.4rem)] leading-[1.1] text-white"
               style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
             >
               {slide.title}
-            </h3>
+            </p>
             <p className="mt-4 max-w-[52ch] text-[14px] leading-relaxed text-zinc-300">{slide.body}</p>
             {slide.points && (
               <ul className="mt-4 space-y-1.5">
@@ -192,12 +192,12 @@ function ResearchExample() {
   return (
     <Frame title="market-scan.md">
       <div className="max-h-[480px] overflow-y-auto bg-white p-5 sm:p-7">
-        <h3
+        <p
           className="text-[22px] leading-tight text-zinc-900"
           style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
         >
           {RESEARCH.title}
-        </h3>
+        </p>
         <p className="mt-1.5 text-[11px] uppercase tracking-[0.08em] text-zinc-400">{RESEARCH.meta}</p>
         <div className="mt-5 space-y-5">
           {RESEARCH.findings.map((f, i) => (
@@ -205,7 +205,7 @@ function ResearchExample() {
               <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-teal-700">
                 Finding {i + 1}
               </p>
-              <h4 className="mt-1 text-[14.5px] font-semibold text-zinc-900">{f.heading}</h4>
+              <p className="mt-1 text-[14.5px] font-semibold text-zinc-900">{f.heading}</p>
               <p className="mt-1.5 text-[13.5px] leading-relaxed text-zinc-600">{f.body}</p>
               <p className="mt-2 border-t border-line pt-2 text-[11.5px] text-zinc-400">
                 <span className="font-semibold text-zinc-500">Sources: </span>

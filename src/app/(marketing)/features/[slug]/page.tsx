@@ -105,10 +105,10 @@ export default async function FeaturePage({
               <FiArrowRight size={15} aria-hidden />
             </Link>
             <Link
-              href={feature.href}
+              href="/signup"
               className="inline-flex items-center rounded-full border border-line-strong px-5 py-2.5 text-[14px] font-medium text-ink-2 transition-colors hover:bg-hover hover:text-ink"
             >
-              Open in workspace
+              Start building — free
             </Link>
           </div>
         </header>

@@ -62,9 +62,9 @@ export function DeviceShowcase() {
                 ))}
               </nav>
               <div className="mt-auto border-t border-line px-3 py-3">
-                <p className="text-[11px] text-ink-4">200 / 500 credits</p>
+                <p className="text-[11px] text-ink-4">3,240 / 5,000 credits</p>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sunk">
-                  <div className="h-full w-[40%] rounded-full bg-violet-500" />
+                  <div className="h-full w-[65%] rounded-full bg-violet-500" />
                 </div>
               </div>
             </aside>

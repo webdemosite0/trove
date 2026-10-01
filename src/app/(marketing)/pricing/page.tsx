@@ -31,10 +31,14 @@ export const metadata: Metadata = {
 function CompareCell({ value }: { value: PlanCompareValue }) {
   if (typeof value === "boolean") {
     return value ? (
-      <FiCheck size={16} className="mx-auto text-positive" aria-label="Included" />
+      <span className="inline-flex justify-center">
+        <FiCheck size={16} className="text-positive" aria-hidden />
+        <span className="sr-only">Included</span>
+      </span>
     ) : (
-      <span className="text-ink-4" aria-label="Not included">
-        —
+      <span className="text-ink-4">
+        <span aria-hidden>—</span>
+        <span className="sr-only">Not included</span>
       </span>
     );
   }
@@ -152,6 +156,7 @@ export default function PricingPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left text-[13.5px]">
+            <caption className="sr-only">Plan comparison: Free, Pro, and Team</caption>
             <thead>
               <tr className="border-b border-line bg-sunk/40">
                 <th className="px-5 py-3.5 font-medium text-ink-3 sm:px-8">Feature</th>

@@ -219,7 +219,7 @@ export function TrosWorkflow() {
                   />
                   {current && (
                     <span className="absolute -right-1 -top-1 flex size-4">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: w.accent }} />
+                      <span className="absolute inline-flex h-full w-full animate-ping motion-reduce:animate-none rounded-full opacity-60" style={{ background: w.accent }} />
                       <span className="relative inline-flex size-4 rounded-full border-2 border-canvas" style={{ background: w.accent }} />
                     </span>
                   )}

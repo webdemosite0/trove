@@ -371,7 +371,7 @@ export function LiveDemo() {
             <div className="flex min-h-[380px] flex-col gap-3 border-b border-line bg-sunk/60 p-4 sm:p-5 lg:border-b-0 lg:border-r">
               <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">
                 <span className="relative flex size-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="absolute inline-flex h-full w-full animate-ping motion-reduce:animate-none rounded-full bg-emerald-400 opacity-60" />
                   <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
                 </span>
                 Trove is building

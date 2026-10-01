@@ -39,6 +39,11 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
   useEffect(() => {
     if (value) return;
+    // Respect reduced motion: show a static prompt instead of typing forever.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTyped(PROMPTS[0]);
+      return;
+    }
     const full = PROMPTS[promptIndex];
     const speed = deleting ? 22 : 38;
     const t = setTimeout(() => {
@@ -125,12 +130,12 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                 </span>
               )}
               <div className="mt-auto flex items-center justify-between gap-2 pt-2 sm:pt-3">
-                <p className="hidden text-[11.5px] text-ink-4 sm:block">Enter to build · Shift+Enter for new line</p>
+                <p className="hidden text-[11.5px] text-ink-4 sm:block">Enter to build · Free account required · Shift+Enter for new line</p>
                 <span className="sm:hidden" />
                 <button
                   type="button"
                   onClick={() => go()}
-                  className="group inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-4 text-[12.5px] font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:-translate-y-0.5 hover:from-violet-500 hover:to-indigo-500 active:scale-[0.98] sm:h-11 sm:gap-2 sm:px-5 sm:text-[14px]"
+                  className="group inline-flex h-11 items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-4 text-[12.5px] font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:-translate-y-0.5 hover:from-violet-500 hover:to-indigo-500 active:scale-[0.98] sm:gap-2 sm:px-5 sm:text-[14px]"
                 >
                   Build
                   <FiArrowRight size={14} className="transition-transform group-hover:translate-x-0.5 sm:size-[15px]" />

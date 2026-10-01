@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FiArrowRight, FiX } from "@/components/ui/icons";
 import { TEMPLATES, TEMPLATE_KINDS, type Template, type TemplateKind } from "@/lib/templates";
@@ -8,9 +8,36 @@ import { TemplatePeek, TemplateFull, TemplateKindBadge } from "./template-art";
 import { cn } from "@/lib/utils";
 
 function PreviewModal({ template, onClose }: { template: Template; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    const dialog = dialogRef.current;
+    // Move focus into the modal on open.
+    const closeBtn = dialog?.querySelector<HTMLButtonElement>("[data-autofocus]");
+    closeBtn?.focus();
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Trap Tab inside the modal.
+      if (e.key === "Tab" && dialog) {
+        const focusables = dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        const list = Array.from(focusables).filter((el) => !el.hasAttribute("disabled"));
+        if (!list.length) return;
+        const first = list[0];
+        const last = list[list.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -21,8 +48,8 @@ function PreviewModal({ template, onClose }: { template: Template; onClose: () =
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={template.title}>
-      <button type="button" aria-label="Close preview" className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onClose} />
+    <div ref={dialogRef} className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={template.title}>
+      <button type="button" aria-label="Dismiss preview" className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onClose} tabIndex={-1} />
       <div className="relative flex max-h-[92vh] w-full max-w-[860px] flex-col overflow-hidden rounded-2xl border border-line bg-raised shadow-2xl">
         <div className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3 sm:px-5">
           <div className="min-w-0 flex-1">
@@ -34,7 +61,8 @@ function PreviewModal({ template, onClose }: { template: Template; onClose: () =
             type="button"
             onClick={onClose}
             aria-label="Close preview"
-            className="grid size-8 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-hover hover:text-ink"
+            data-autofocus
+            className="grid size-10 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-hover hover:text-ink"
           >
             <FiX size={16} />
           </button>
@@ -72,7 +100,7 @@ export function TemplatesGallery() {
             onClick={() => setFilter(k.id)}
             aria-pressed={filter === k.id}
             className={cn(
-              "rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition",
+              "min-h-[44px] rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition",
               filter === k.id
                 ? "border-violet-300 bg-violet-50 text-violet-700"
                 : "border-line bg-raised text-ink-3 hover:border-zinc-300 hover:text-ink",

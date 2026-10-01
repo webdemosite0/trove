@@ -104,9 +104,9 @@ export function AppMockup() {
             ))}
 
             <div className="mt-auto rounded-[var(--r-chip)] px-1.5 pt-2">
-              <p className="text-[8px] text-ink-3">200 / 500 credits</p>
+              <p className="text-[8px] text-ink-3">164 / 200 credits</p>
               <span className="mt-1 block h-[3px] overflow-hidden rounded-full bg-raised">
-                <span className="block h-full w-[40%] rounded-full bg-accent" />
+                <span className="block h-full w-[82%] rounded-full bg-accent" />
               </span>
             </div>
           </div>
