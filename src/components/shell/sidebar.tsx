@@ -13,7 +13,6 @@ import {
   FiChevronRight,
   FiSettings,
   FiCreditCard,
-  FiBookOpen,
   FiLayers,
   TbLayoutDashboard,
   TbMessageCircle,
@@ -45,8 +44,6 @@ interface Item {
 const TROVE_NAV: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
-  { href: "/library", label: "Library", icon: FiBookOpen, motion: "stack" },
-  { href: "/artifacts", label: "Artifacts", icon: FiLayers, motion: "scan" },
   { href: "/projects", label: "Projects", icon: TbFolder, motion: "stack" },
   { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },

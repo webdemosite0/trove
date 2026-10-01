@@ -72,6 +72,18 @@ PRAGMA journal_mode = WAL;
     );
     CREATE INDEX IF NOT EXISTS recents_lookup ON recents (user_id, kind, created_at DESC);
 
+    CREATE TABLE IF NOT EXISTS tro_artifacts (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL DEFAULT 'doc',
+      title TEXT NOT NULL DEFAULT '',
+      content TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS tro_artifacts_by_agent ON tro_artifacts (agent_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS tro_artifacts_by_user ON tro_artifacts (user_id, updated_at DESC);
     CREATE TABLE IF NOT EXISTS conversations (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -343,6 +355,9 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS team_messages_by_team ON team_messages (team_id, created_at DESC)`,
   // Team seat limits: 5 free, then paid packages / $10 per extra.
   `ALTER TABLE teams ADD COLUMN seat_limit INTEGER NOT NULL DEFAULT 5`,
+  `CREATE TABLE IF NOT EXISTS tro_artifacts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT 'doc', title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_artifacts_by_agent ON tro_artifacts (agent_id, updated_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS tro_artifacts_by_user ON tro_artifacts (user_id, updated_at DESC)`,
 ];
 
 export const REPAIRS = `

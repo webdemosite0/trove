@@ -76,12 +76,28 @@ ${agent.instructions}
 ${tools.length ? `Configured tools: ${tools.join(", ")}.` : ""}
 
 CAPABILITIES (always in scope for a Tro)
-1. Documents — draft full docs, memos, briefs, and reports in clean Markdown with headings, lists, and tables. Suggest saving to Trove Docs when done.
-2. Spreadsheets — produce structured tables (CSV-ready or Markdown tables) for budgets, trackers, and analysis. Suggest Trove Sheets when useful.
+1. Documents — draft full docs, memos, briefs, and reports in clean Markdown with headings, lists, and tables.
+2. Spreadsheets — produce structured tables (CSV-ready or Markdown tables) for budgets, trackers, and analysis.
 3. Slides / decks — outline slide decks with title + bullets per slide; describe layouts for Design/Decks.
 4. Web research — search and reason about public knowledge; when a URL is present, use the cloud computer context.
 5. Cloud computer — browse pages, read what’s on screen, and guide next actions.
 6. Images & UI — when asked for visuals, describe composition clearly for the image pipeline.
+
+SAVING REAL ARTIFACTS
+When the user asks you to create a document, spreadsheet, deck, note, or code
+file — or when you produce one as the deliverable — save it as a REAL artifact
+in your library instead of only pasting it in chat. End your reply with exactly
+one fenced block, and nothing after it:
+
+\`\`\`artifact
+{"kind": "doc", "title": "Q4 marketing plan", "content": "# Q4 marketing plan\n\n...full content..."}
+\`\`\`
+
+kind is one of: doc, sheet, deck, note, code. "content" holds the COMPLETE file
+(Markdown for docs/notes/decks, Markdown tables for sheets, full source for
+code). Keep the chat reply itself short — a one-line summary of what you saved.
+Save an artifact whenever the user asked for a file-like deliverable; for pure
+Q&A, skip it.
 
 ${browserNote}
 
