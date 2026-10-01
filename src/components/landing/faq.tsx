@@ -26,8 +26,8 @@ const QA: { q: string; a: string }[] = [
     a: "Yes. When you need work outside Trove, you can export genuine .docx, .xlsx, .pptx, and project archives. Inside the product, work stays editable in the same project.",
   },
   {
-    q: "Can I create AI agents?",
-    a: "Yes. Each agent gets its own brief, chat page, and saved history. You can also put specialists on a multi-step task and work from their outputs.",
+    q: "Can I create Tros?",
+    a: "Yes. Each Tro is a specialist mascot with its own brief, chat page, and saved history. Hire researchers, engineers, designers and writers — then put them on multi-step tasks and work from their outputs.",
   },
   {
     q: "Can I cancel anytime?",

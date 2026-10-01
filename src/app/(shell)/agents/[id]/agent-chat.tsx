@@ -556,7 +556,7 @@ export function AgentChat({
           panelOpen ? "translate-x-0" : "translate-x-full lg:hidden",
         )}
       >
-        <div className="flex items-center gap-3 border-b border-line px-4 py-3.5">
+        <div className="flex items-center gap-3 border-b border-line bg-canvas/60 px-4 py-3.5">
           <Bot size={40} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] font-semibold text-ink">{agent.name}</p>
@@ -568,7 +568,7 @@ export function AgentChat({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <section className="border-b border-line px-4 py-3">
+          <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Computer</p>
               <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
@@ -626,7 +626,7 @@ export function AgentChat({
             </div>
           </section>
 
-          <section className="border-b border-line px-4 py-3">
+          <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Recent activity</p>
             {activity.length === 0 ? (
               <p className="text-[12px] text-ink-4">Tasks appear here as the Tro works.</p>
@@ -645,7 +645,7 @@ export function AgentChat({
             )}
           </section>
 
-          <section className="px-4 py-3">
+          <section className="app-block-in px-4 py-3" style={{ ["--app-delay" as string]: "180ms" }}>
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tools</p>
             <ul className="space-y-1">
               {["Cloud browser", "Web search", "Documents", "Spreadsheets", "Slides", ...tools.slice(0, 3)].map((tool) => (
@@ -657,7 +657,7 @@ export function AgentChat({
             </ul>
           </section>
 
-          <section className="border-t border-line px-4 py-3">
+          <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Connectors</p>
               <Link href="/integrations" className="text-[10px] font-semibold text-ink-3 transition hover:text-ink">

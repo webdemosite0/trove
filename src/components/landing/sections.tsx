@@ -171,7 +171,7 @@ export function Files() {
 const USES = [
   { label: "Build a website", href: "/websites" },
   { label: "Research a market", href: "/research" },
-  { label: "Create an AI agent", href: "/agents" },
+  { label: "Hire a Tro", href: "/tros" },
   { label: "Analyse data", href: "/spreadsheets" },
   { label: "Write a proposal", href: "/documents" },
   { label: "Build a prototype", href: "/code" },

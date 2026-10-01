@@ -51,7 +51,7 @@ export function TroListPanel({
         <button
           type="button"
           onClick={onNew}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2.5 text-[13.5px] font-semibold text-ink shadow-sm transition hover:border-violet-500/40 hover:bg-hover"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2.5 text-[13.5px] font-semibold text-ink shadow-sm transition duration-200 hover:-translate-y-px hover:border-violet-500/40 hover:bg-hover hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
         >
           <Ico icon={FiPlus} motion="open" size={15} /> New Tro
         </button>
@@ -79,7 +79,7 @@ export function TroListPanel({
         </div>
       </div>
 
-      <div className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-3">
+      <div className="app-stagger mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-3">
         {filtered.length === 0 ? (
           <p className="px-3 py-8 text-center text-[12.5px] leading-relaxed text-ink-4">
             {q ? (
@@ -97,8 +97,10 @@ export function TroListPanel({
                   href={`/tros/${a.id}`}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition",
-                    active ? "bg-hover" : "hover:bg-hover/60",
+                    "flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50",
+                    active
+                      ? "bg-hover shadow-[inset_2px_0_0_0_#8b5cf6]"
+                      : "hover:bg-hover/60 hover:translate-x-px",
                   )}
                 >
                   <Bot size={38} seed={a.id} accent={a.accent} state="idle" />

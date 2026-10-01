@@ -29,10 +29,10 @@ const SAMPLES = [
     result: "Excel workbook, charts included",
   },
   {
-    kind: "Agent",
-    prompt: "Create an agent that answers questions about our pricing using the public FAQ.",
-    href: "/agents",
-    result: "Saved agent with its own chat",
+    kind: "Tro",
+    prompt: "Hire a Tro that answers questions about our pricing using the public FAQ.",
+    href: "/tros",
+    result: "Saved Tro with its own chat",
   },
 ];
 

@@ -70,9 +70,9 @@ const CREATE = [
     tone: "#0d9488",
   },
   {
-    label: "AI agents",
-    body: "Specialists with a brief, tools, and their own saved history.",
-    href: "/agents",
+    label: "Tros",
+    body: "Hire specialist mascots with real briefs — research, code, design, writing. Each Tro keeps its own workspace.",
+    href: "/tros",
     Icon: FiCpu,
     tone: "#7c3aed",
   },
@@ -124,7 +124,7 @@ export default async function Landing() {
             <SectionHead
               eyebrow="What you can create"
               title="One workspace for the work you actually ship."
-              lede="Chat, websites, documents, sheets, decks, research, and agents — on every plan. You upgrade for capacity and team collaboration, not to unlock the product."
+              lede="Chat, websites, documents, sheets, decks, research, and Tros — on every plan. You upgrade for capacity and team collaboration, not to unlock the product."
             />
             <ul className="nx-stagger-kids mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {CREATE.map((c) => {

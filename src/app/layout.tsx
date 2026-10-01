@@ -8,6 +8,7 @@ import "./globals.css";
 import "./stream-anim.css";
 import "./mobile-shell.css";
 import "./icon-weight.css";
+import "./icon-motion.css";
 import "./landing-motion.css";
 import "./builder-motion.css";
 import "./theme-backdrop.css";

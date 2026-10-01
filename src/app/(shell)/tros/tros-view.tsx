@@ -200,8 +200,8 @@ export function TrosView({
 
         <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_50%_0%,rgba(139,92,246,0.14),transparent_55%)]" />
-          <div className="relative mx-auto flex min-h-full w-full max-w-[780px] flex-col items-center justify-center px-6 py-12">
-            <div className="flex items-end justify-center" aria-hidden>
+          <div className="app-page-in relative mx-auto flex min-h-full w-full max-w-[780px] flex-col items-center justify-center px-6 py-12">
+            <div className="app-block-in flex items-end justify-center" style={{ ["--app-delay" as string]: "40ms" }} aria-hidden>
               {SPECIES.slice(0, 5).map((s, i) => (
                 <div key={s} style={{ marginLeft: i === 0 ? 0 : -14, zIndex: 5 - i }}>
                   <Bot size={i === 2 ? 84 : 60} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
@@ -209,20 +209,20 @@ export function TrosView({
               ))}
             </div>
 
-            <h1 className="mt-7 text-center text-[26px] font-semibold tracking-tight text-ink sm:text-[30px]">
+            <h1 className="app-title-in mt-7 text-center text-[26px] font-semibold tracking-tight text-ink sm:text-[30px]">
               What should your specialists do today?
             </h1>
-            <p className="mt-2.5 max-w-[52ch] text-center text-[14px] leading-relaxed text-ink-3">
+            <p className="app-sub-in mt-2.5 max-w-[52ch] text-center text-[14px] leading-relaxed text-ink-3">
               Hire a Tro for any job — research, code, design, writing. Each one keeps a stable brief and its own workspace.
             </p>
 
-            <div className="mt-8 grid w-full max-w-[600px] gap-2.5 sm:grid-cols-2">
+            <div className="app-stagger mt-8 grid w-full max-w-[600px] gap-2.5 sm:grid-cols-2">
               {STARTERS.map((s) => (
                 <button
                   key={s.title}
                   type="button"
                   onClick={() => setDraft(s.draft)}
-                  className="group flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-4 py-3.5 text-left transition hover:-translate-y-px hover:border-violet-500/35 hover:bg-raised hover:shadow-[0_14px_36px_-20px_rgba(139,92,246,0.5)]"
+                  className="group flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-4 py-3.5 text-left transition duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:bg-raised hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
                 >
                   <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
                     <Ico icon={s.icon} size={17} />
@@ -236,7 +236,7 @@ export function TrosView({
               ))}
             </div>
 
-            <div className="mt-10 w-full">
+            <div className="app-block-in mt-10 w-full" style={{ ["--app-delay" as string]: "220ms" }}>
               <div className="mb-3 flex items-center justify-between px-1">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">The specialists</p>
                 <p className="text-[11px] text-ink-4">{SPECIES.length} unique looks</p>
@@ -248,7 +248,7 @@ export function TrosView({
                     type="button"
                     onClick={() => setDraft(BLANK_DRAFT)}
                     title={`Hire a Tro — ${SPECIES_META[s].label}`}
-                    className="flex w-[104px] shrink-0 flex-col items-center rounded-2xl border border-line/70 bg-raised/50 px-2 py-3.5 transition hover:-translate-y-px hover:border-violet-500/30 hover:bg-raised"
+                    className="flex w-[104px] shrink-0 flex-col items-center rounded-2xl border border-line/70 bg-raised/50 px-2 py-3.5 transition duration-300 hover:-translate-y-1 hover:border-violet-500/35 hover:bg-raised hover:shadow-[0_16px_36px_-20px_rgba(139,92,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
                   >
                     <Bot size={52} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
                     <span className="mt-2 text-[11.5px] font-semibold text-ink">{SPECIES_META[s].label}</span>

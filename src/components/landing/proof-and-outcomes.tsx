@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 const CAPS: { icon: IconType; label: string; sub: string; href: string }[] = [
   { icon: TbWorld, label: "Websites", sub: "Launch complete sites", href: "/websites" },
-  { icon: TbRobot, label: "AI Agents", sub: "Automate any task", href: "/agents" },
+  { icon: TbRobot, label: "Tros", sub: "Hire specialist mascots", href: "/tros" },
   { icon: TbFileText, label: "Documents", sub: "Professionally written", href: "/documents" },
   { icon: TbTable, label: "Spreadsheets", sub: "Analyse and visualise", href: "/spreadsheets" },
   { icon: TbCode, label: "Code", sub: "Production ready", href: "/code" },
@@ -128,7 +128,7 @@ function Plate({ kind }: { kind: string }) {
 
 const OUTCOMES = [
   { kind: "website", name: "Website", copy: "A complete, responsive website in seconds.", href: "/websites", tone: "#7c3aed" },
-  { kind: "agent", name: "AI Agent", copy: "An agent that thinks, acts and gets things done.", href: "/agents", tone: "#6d28d9" },
+  { kind: "agent", name: "Tro", copy: "A specialist Tro that thinks, acts and gets things done.", href: "/tros", tone: "#6d28d9" },
   { kind: "sheet", name: "Spreadsheet", copy: "Clean, structured data ready to analyse.", href: "/spreadsheets", tone: "#15803d" },
   { kind: "doc", name: "Document", copy: "Polished documents ready to share.", href: "/documents", tone: "#334155" },
   { kind: "code", name: "Code", copy: "Clean, production-ready code.", href: "/code", tone: "#0f172a" },

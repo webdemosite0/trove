@@ -1,0 +1,130 @@
+/* ============================================================
+   Icon motion — hover / active / live animations for the Ico
+   vocabulary (ico-spin, ico-ring, ...). Triggered by hovering
+   the parent link/button (or .group), so sidebar icons feel
+   alive without ever distracting.
+   ============================================================ */
+
+.ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ico > svg {
+  display: block;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+  transform-origin: center;
+}
+
+/* Keyframes */
+@keyframes ico-spin { to { transform: rotate(360deg); } }
+@keyframes ico-ring {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(18deg); }
+  40% { transform: rotate(-14deg); }
+  60% { transform: rotate(9deg); }
+  80% { transform: rotate(-5deg); }
+}
+@keyframes ico-tilt { to { transform: rotate(-10deg) scale(1.08); } }
+@keyframes ico-lift { to { transform: translateY(-2.5px); } }
+@keyframes ico-grow { to { transform: scale(1.2); } }
+@keyframes ico-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.28); }
+  100% { transform: scale(1.08); }
+}
+@keyframes ico-hue { to { transform: scale(1.12); filter: hue-rotate(28deg) saturate(1.4); } }
+@keyframes ico-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2.5px); }
+  75% { transform: translateX(2.5px); }
+}
+@keyframes ico-nudge { to { transform: translateX(3px); } }
+@keyframes ico-back { to { transform: translateX(-3px); } }
+@keyframes ico-down { to { transform: translateY(3px); } }
+@keyframes ico-send {
+  0% { transform: translate(0, 0); opacity: 1; }
+  45% { transform: translate(4px, -4px); opacity: 0; }
+  55% { transform: translate(-3px, 3px); opacity: 0; }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+@keyframes ico-exit { to { transform: translateX(4px); opacity: 0.55; } }
+@keyframes ico-launch { to { transform: translate(3px, -3px) scale(1.12); } }
+@keyframes ico-panel { to { transform: translateX(2px) scaleX(1.12); } }
+@keyframes ico-open { to { transform: rotate(90deg) scale(1.1); } }
+@keyframes ico-close { to { transform: rotate(90deg); } }
+@keyframes ico-copy { to { transform: translateY(-2px) scale(1.08); } }
+@keyframes ico-lock { to { transform: translateY(1.5px); } }
+@keyframes ico-check { to { transform: scale(1.22); } }
+@keyframes ico-menu { to { transform: scaleY(1.18); } }
+@keyframes ico-fit { to { transform: scale(1.14); } }
+@keyframes ico-type {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes ico-scan { to { transform: translateY(2.5px); } }
+@keyframes ico-tick { to { transform: scale(1.2) rotate(-8deg); } }
+@keyframes ico-stack { to { transform: translateY(-2px) scale(1.06); } }
+@keyframes ico-mail { to { transform: rotate(-8deg) translateY(-1px); } }
+@keyframes ico-alert {
+  0%, 100% { transform: rotate(0); }
+  30% { transform: rotate(-10deg); }
+  70% { transform: rotate(10deg); }
+}
+@keyframes ico-sparkle {
+  0% { transform: scale(1) rotate(0); opacity: 1; }
+  50% { transform: scale(1.25) rotate(14deg); opacity: 0.85; }
+  100% { transform: scale(1.06) rotate(0); opacity: 1; }
+}
+
+/* Hover triggers — any interactive ancestor */
+:is(a, button, [role="button"], .group):hover .ico-spin > svg { animation: ico-spin 0.65s cubic-bezier(0.22, 1, 0.36, 1); }
+
+:is(a, button, [role="button"], .group):hover .ico-ring > svg { animation: ico-ring 0.7s ease; transform-origin: top center; }
+:is(a, button, [role="button"], .group):hover .ico-tilt > svg { animation: ico-tilt 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-lift > svg { animation: ico-lift 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-grow > svg { animation: ico-grow 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-pop > svg { animation: ico-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+:is(a, button, [role="button"], .group):hover .ico-hue > svg { animation: ico-hue 0.35s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-shake > svg { animation: ico-shake 0.45s ease; }
+:is(a, button, [role="button"], .group):hover .ico-nudge > svg { animation: ico-nudge 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-back > svg { animation: ico-back 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-down > svg { animation: ico-down 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-send > svg { animation: ico-send 0.55s ease; }
+:is(a, button, [role="button"], .group):hover .ico-exit > svg { animation: ico-exit 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-launch > svg { animation: ico-launch 0.35s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-panel > svg { animation: ico-panel 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-open > svg { animation: ico-open 0.35s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-close > svg { animation: ico-close 0.35s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-copy > svg { animation: ico-copy 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-lock > svg { animation: ico-lock 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-check > svg { animation: ico-check 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-menu > svg { animation: ico-menu 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-fit > svg { animation: ico-fit 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-type > svg { animation: ico-type 0.9s ease infinite; }
+:is(a, button, [role="button"], .group):hover .ico-scan > svg { animation: ico-scan 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-tick > svg { animation: ico-tick 0.35s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-stack > svg { animation: ico-stack 0.3s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-mail > svg { animation: ico-mail 0.35s ease forwards; }
+:is(a, button, [role="button"], .group):hover .ico-alert > svg { animation: ico-alert 0.5s ease; }
+:is(a, button, [role="button"], .group):hover .ico-sparkle > svg { animation: ico-sparkle 0.6s ease; }
+
+/* Live = continuous gentle motion (e.g. working states) */
+.ico-live.ico-spin > svg { animation: ico-spin 1.6s linear infinite; }
+.ico-live.ico-ring > svg { animation: ico-ring 1.8s ease infinite; transform-origin: top center; }
+.ico-live.ico-type > svg { animation: ico-type 1.1s ease infinite; }
+.ico-live.ico-sparkle > svg { animation: ico-sparkle 1.8s ease infinite; }
+.ico-live > svg { animation: ico-pop 1.8s ease infinite; }
+
+/* Active = current nav item gets a settled emphasis */
+.ico-active > svg { transform: scale(1.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ico > svg,
+  :is(a, button, [role="button"], .group):hover .ico > svg,
+  .ico-live > svg {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
