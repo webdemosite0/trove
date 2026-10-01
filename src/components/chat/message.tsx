@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useState } from "react";
 import { FiCopy, FiCheck, FiRefreshCw, FiThumbsUp, FiThumbsDown, FiFile } from "@/components/ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { StreamingText } from "@/components/chat/streaming-text";
@@ -9,6 +9,9 @@ import { TroveOrb } from "@/components/brand/orb";
 import { Bot } from "@/components/agents/bot";
 import { cn } from "@/lib/utils";
 import type { Attachment } from "@/lib/attachments";
+
+// Re-export for legacy imports (team panel, tools, etc.)
+export { withLinkedText } from "@/components/chat/linked-text";
 
 function humanSize(n: number) {
   if (n < 1024) return `${n} B`;
@@ -53,12 +56,6 @@ export function Message({
   generatingImage,
   imageCaption,
   onRegenerate,
-  thinkMs,
-  searchQuery,
-  searchSources,
-  thinkVariant,
-  followUps,
-  onFollowUp,
   assistantName,
   assistantSeed,
   assistantAccent,
@@ -98,17 +95,17 @@ export function Message({
             {files.map((f, i) => (
               <span
                 key={`${f.name}-${i}`}
-                className="flex items-center gap-2 rounded-[var(--r-control)] border border-line bg-raised py-1.5 pl-1.5 pr-2.5 shadow-sm"
+                className="flex items-center gap-2 rounded-2xl border border-line bg-raised py-1.5 pl-1.5 pr-2.5 shadow-sm"
               >
                 {f.kind === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`data:${f.mimeType};base64,${f.data}`}
                     alt={f.name}
-                    className="h-9 w-9 rounded-[var(--r-chip)] object-cover"
+                    className="h-9 w-9 rounded-xl object-cover"
                   />
                 ) : (
-                  <span className="grid h-9 w-9 place-items-center rounded-[var(--r-chip)] bg-sunk text-ink-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-sunk text-ink-3">
                     <Ico icon={FiFile} motion="lift" size={14} />
                   </span>
                 )}
@@ -175,12 +172,7 @@ export function Message({
       </div>
       {!pending ? (
         <div className="mt-2 flex items-center gap-0.5 opacity-0 transition group-hover/msg:opacity-100">
-          <Action
-            icon={copied ? FiCheck : FiCopy}
-            label="Copy"
-            motion="pop"
-            onClick={() => void copy()}
-          />
+          <Action icon={copied ? FiCheck : FiCopy} label="Copy" motion="pop" onClick={() => void copy()} />
           {onRegenerate ? (
             <Action icon={FiRefreshCw} label="Regenerate" motion="spin" onClick={onRegenerate} />
           ) : null}
