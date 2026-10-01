@@ -3,15 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
 import { Ico } from "@/components/ui/ico";
 import { FailureNote } from "@/components/ui/failure-note";
+import { Modal } from "@/components/ui/modal";
+import { TroListPanel } from "../../tros/tro-list";
 import { strip, type Attachment } from "@/lib/attachments";
 import { useSaved } from "@/lib/use-saved";
-import type { AgentRow } from "@/app/actions/agents";
+import { deleteAgent, type AgentRow } from "@/app/actions/agents";
 import type { Recent } from "@/lib/recents";
 import { Recents } from "@/components/ui/recents";
 import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
@@ -70,13 +73,18 @@ function extractBrowseUrl(text: string): string | null {
 
 export function AgentChat({
   agent,
+  agents = [],
   recents,
   restored,
 }: {
   agent: AgentRow;
+  agents?: AgentRow[];
   recents: Recent[];
   restored: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
 }) {
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deleting = agents.find((a) => a.id === deletingId) ?? null;
   const { save, reset } = useSaved("agent", restored?.id ?? null);
   const [turns, setTurns] = useState<Turn[]>(() =>
     (restored?.messages ?? []).map((m, i) => ({ id: i, role: m.role, text: m.text })),
@@ -361,6 +369,17 @@ export function AgentChat({
 
   return (
     <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
+      {agents.length > 0 ? (
+        <div className="hidden w-[272px] shrink-0 border-r border-line/70 xl:block">
+          <TroListPanel
+            agents={agents}
+            activeId={agent.id}
+            onNew={() => router.push("/tros?new=1")}
+            onDelete={setDeletingId}
+            className="h-full"
+          />
+        </div>
+      ) : null}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="shrink-0 border-b border-line/80 bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
           <div className="flex h-14 items-center gap-3">
@@ -409,6 +428,18 @@ export function AgentChat({
                 <Bot size={88} accent={agent.accent} seed={agent.id} state="idle" />
                 <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">Chat with {agent.name.split(" ")[0]}</h2>
                 <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">{agent.instructions}</p>
+                <div className="mx-auto mt-6 flex max-w-[520px] flex-wrap justify-center gap-2">
+                  {["What can you help me with?", "Help me plan this week", "Draft something for me"].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => void send(s)}
+                      className="rounded-full border border-line bg-raised/60 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-violet-500/40 hover:text-ink"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
                 <Recents className="mx-auto mt-10 max-w-[520px] text-left" label="Earlier sessions" items={recents} />
               </div>
             ) : (
@@ -418,6 +449,7 @@ export function AgentChat({
                   role={t.role}
                   text={t.text}
                   pending={busy && i === turns.length - 1 && t.role === "model"}
+                  onRegenerate={t.role === "model" ? retry : undefined}
                   assistantName={agent.name}
                   assistantSeed={agent.id}
                   assistantAccent={agent.accent}
@@ -554,6 +586,32 @@ export function AgentChat({
           </section>
         </div>
       </aside>
+
+      <Modal
+        open={Boolean(deleting)}
+        onClose={() => setDeletingId(null)}
+        title={deleting ? `Delete ${deleting.name}?` : "Delete Tro?"}
+        description="This removes the Tro and its instructions. Past conversations are kept."
+      >
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" onClick={() => setDeletingId(null)} className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover">
+            Cancel
+          </button>
+          {deleting ? (
+            <form
+              action={async () => {
+                await deleteAgent(deleting.id);
+                if (deleting.id === agent.id) router.push("/tros");
+                else setDeletingId(null);
+              }}
+            >
+              <button type="submit" className="rounded-full bg-critical px-4 py-2 text-[13px] font-semibold text-white">
+                Delete Tro
+              </button>
+            </form>
+          ) : null}
+        </div>
+      </Modal>
     </div>
   );
 }

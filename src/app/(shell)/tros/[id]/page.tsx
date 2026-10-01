@@ -4,7 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { one, str, num } from "@/lib/db";
 import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
-import type { AgentRow } from "@/app/actions/agents";
+import { listAgents, type AgentRow } from "@/app/actions/agents";
 
 export const metadata = { title: "Tro" };
 
@@ -60,9 +60,12 @@ export default async function TroPage({
     if (cid) saved = await loadConversation(cid);
   }
 
+  const agents = await listAgents();
+
   return (
     <AgentChat
       agent={agent}
+      agents={agents}
       recents={forAgent}
       restored={saved ? { id: saved.id, messages: saved.messages } : null}
       key={saved?.id ?? "new"}
