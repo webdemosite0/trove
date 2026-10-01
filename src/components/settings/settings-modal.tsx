@@ -15,6 +15,7 @@ import {
   TbHelpCircle,
 } from "@/components/ui/icons";
 import { ThemePicker } from "@/components/settings/theme-picker";
+import { IntegrationsView } from "@/app/(shell)/integrations/integrations-view";
 import { logOut } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
@@ -28,6 +29,15 @@ export type SettingsSectionId =
   | "account"
   | "help";
 
+/** Data for the inline Connectors section (fetched server-side in the shell layout). */
+export interface IntegrationsData {
+  signedIn: boolean;
+  connected: { service: string; account: string; hint: string }[];
+  connectable: Record<string, { label: string; help: string; docs?: string }>;
+  composioOn: boolean;
+  composioServices: string[];
+}
+
 const NAV: {
   id: SettingsSectionId;
   label: string;
@@ -39,29 +49,35 @@ const NAV: {
   { id: "appearance", label: "Appearance", icon: FiSun },
   { id: "usage", label: "Usage", icon: FiActivity },
   { id: "plan", label: "Plan & billing", icon: FiCreditCard, external: "/plans" },
-  { id: "integrations", label: "Connectors", icon: FiGrid, external: "/integrations" },
+  { id: "integrations", label: "Connectors", icon: FiGrid },
   { id: "help", label: "Help & support", icon: TbHelpCircle, external: "/settings/support" },
 ];
 
-/** Floating settings dialog — Meta-style overlay, not a separate page. */
+/** Floating settings dialog — overlay, not a separate page. */
 export function SettingsModal({
   open,
   onClose,
   user,
   balance,
   initialSection = "general",
+  integrations,
 }: {
   open: boolean;
   onClose: () => void;
   user: User | null;
   balance: Balance | null;
-  initialSection?: SettingsSectionId;
+  initialSection?: string | null;
+  integrations?: IntegrationsData;
 }) {
   const titleId = useId();
-  const [section, setSection] = useState<SettingsSectionId>(initialSection);
+  const validSection = (s: string | null | undefined): SettingsSectionId =>
+    s === "general" || s === "account" || s === "appearance" || s === "usage" || s === "integrations"
+      ? s
+      : "general";
+  const [section, setSection] = useState<SettingsSectionId>(validSection(initialSection));
 
   useEffect(() => {
-    if (open) setSection(initialSection);
+    if (open) setSection(validSection(initialSection));
   }, [open, initialSection]);
 
   useEffect(() => {
@@ -200,6 +216,22 @@ export function SettingsModal({
                 remaining={remaining}
                 onClose={onClose}
               />
+            ) : null}
+            {section === "integrations" ? (
+              <div className="pr-1">
+                <h3 className="mb-4 text-[16px] font-semibold text-ink">Connectors</h3>
+                {integrations ? (
+                  <IntegrationsView
+                    signedIn={integrations.signedIn}
+                    connected={integrations.connected}
+                    connectable={integrations.connectable}
+                    composioOn={integrations.composioOn}
+                    composioServices={integrations.composioServices}
+                  />
+                ) : (
+                  <p className="text-[13px] text-ink-3">Loading connectors…</p>
+                )}
+              </div>
             ) : null}
           </div>
         </div>

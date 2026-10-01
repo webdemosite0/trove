@@ -1,6 +1,6 @@
 "use client";
 
-import { SettingsModal } from "@/components/settings/settings-modal";
+import { SettingsModal, type IntegrationsData } from "@/components/settings/settings-modal";
 import { useNav } from "@/components/shell/nav-state";
 import type { User, Balance } from "@/lib/types";
 
@@ -8,17 +8,21 @@ import type { User, Balance } from "@/lib/types";
 export function SettingsHost({
   user,
   balance,
+  integrations,
 }: {
   user: User | null;
   balance: Balance | null;
+  integrations?: IntegrationsData;
 }) {
-  const { settingsOpen, setSettingsOpen } = useNav();
+  const { settingsOpen, setSettingsOpen, settingsSection } = useNav();
   return (
     <SettingsModal
       open={settingsOpen}
       onClose={() => setSettingsOpen(false)}
       user={user}
       balance={balance}
+      initialSection={settingsSection}
+      integrations={integrations}
     />
   );
 }

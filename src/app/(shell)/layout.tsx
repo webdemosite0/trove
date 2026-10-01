@@ -11,6 +11,9 @@ import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
 import { AnnouncementBanner } from "@/components/shell/announcement-banner";
 import { SettingsHost } from "@/components/settings/settings-host";
+import { listConnections } from "@/lib/connections";
+import { composioConfigured, COMPOSIO_MAP } from "@/lib/composio";
+import { connectableProviders } from "@/lib/providers";
 
 
 export default async function ShellLayout({
@@ -35,12 +38,25 @@ export default async function ShellLayout({
   // Two separate UIs, not one that reflows. The phone gets its own chrome —
   // tab bar, sheets, no rail — and never renders the desktop tree, so nothing
   // here can regress the desktop layout.
+  const connections = user ? await listConnections().catch(() => []) : [];
+  const integrations = {
+    signedIn: Boolean(user),
+    connected: connections.map((c) => ({
+      service: c.service,
+      account: c.account ?? "",
+      hint: c.hint ?? "",
+    })),
+    connectable: connectableProviders(),
+    composioOn: composioConfigured(),
+    composioServices: composioConfigured() ? Object.keys(COMPOSIO_MAP) : [],
+  };
+
   if (await isMobile()) {
     return (
       <NavProvider>
         <ToastProvider>
           <Backdrop />
-          <SettingsHost user={user} balance={balance} />
+          <SettingsHost user={user} balance={balance} integrations={integrations} />
           <MobileShell
             user={{ name: user.name, email: user.email }}
             balance={balance}
@@ -57,7 +73,7 @@ export default async function ShellLayout({
       <ToastProvider>
         <Backdrop />
         <CommandPalette recents={recents} />
-        <SettingsHost user={user} balance={balance} />
+        <SettingsHost user={user} balance={balance} integrations={integrations} />
         {/*
           Fixed viewport shell: sidebar stays put; only the main column scrolls.
           Split top chrome from the scrollport so long pages never get clipped.

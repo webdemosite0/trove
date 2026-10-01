@@ -23,6 +23,10 @@ const NavContext = createContext<{
   /** Settings as an overlay dialog (not a full-page route). */
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean) => void;
+  /** Which settings section the overlay opens to. */
+  settingsSection: string | null;
+  /** Open the settings overlay, optionally at a section ("integrations", "appearance", …). */
+  openSettings: (section?: string) => void;
 }>({
   open: false,
   setOpen: () => {},
@@ -30,6 +34,8 @@ const NavContext = createContext<{
   setCollapsed: () => {},
   settingsOpen: false,
   setSettingsOpen: () => {},
+  settingsSection: null,
+  openSettings: () => {},
 });
 
 export const useNav = () => useContext(NavContext);
@@ -38,6 +44,12 @@ export function NavProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<string | null>(null);
+
+  const openSettings = (section?: string) => {
+    setSettingsSection(section ?? null);
+    setSettingsOpen(true);
+  };
 
   const value = useMemo(
     () => ({
@@ -47,8 +59,10 @@ export function NavProvider({ children }: { children: React.ReactNode }) {
       setCollapsed,
       settingsOpen,
       setSettingsOpen,
+      settingsSection,
+      openSettings,
     }),
-    [open, collapsed, settingsOpen],
+    [open, collapsed, settingsOpen, settingsSection],
   );
 
   return <NavContext.Provider value={value}>{children}</NavContext.Provider>;

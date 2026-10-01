@@ -14,6 +14,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { FailureNote } from "@/components/ui/failure-note";
 import { Modal } from "@/components/ui/modal";
 import { TroListPanel } from "../../tros/tro-list";
+import { useNav } from "@/components/shell/nav-state";
 import { ApprovalPrompt } from "@/components/agents/approval-prompt";
 import { extractAskBlocks, stripAskBlocks, type AskBlock } from "@/lib/ask-block";
 import {
@@ -189,6 +190,7 @@ export function AgentChat({
   const [computer, setComputer] = useState<ComputerState>(IDLE_COMPUTER);
   const [computerBusy, setComputerBusy] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
+  const { openSettings } = useNav();
   const [browserExpanded, setBrowserExpanded] = useState(false);
   const pendingApprovals = useMemo(() => {
     if (busy) return [];
@@ -877,12 +879,13 @@ export function AgentChat({
                 </span>
               ) : null}
             </button>
-            <Link
-              href="/integrations"
+            <button
+              type="button"
+              onClick={() => openSettings("integrations")}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
             >
               <Ico icon={TbPlugConnected} motion="pop" size={13} /> Connect
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -1075,18 +1078,26 @@ export function AgentChat({
                   <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
                 </span>
               </p>
-              <Link href="/integrations" className="text-[10px] font-semibold text-ink-3 transition hover:text-ink">
+              <button
+                type="button"
+                onClick={() => openSettings("integrations")}
+                className="text-[10px] font-semibold text-ink-3 transition hover:text-ink"
+              >
                 Manage
-              </Link>
+              </button>
             </div>
             {connectors === null ? (
               <p className="text-[12px] text-ink-4">Checking connected apps…</p>
             ) : connectors.length === 0 ? (
               <p className="text-[12px] leading-relaxed text-ink-4">
                 Nothing connected yet.{" "}
-                <Link href="/integrations" className="font-medium text-ink-2 underline decoration-ink-4 underline-offset-2 hover:text-ink">
+                <button
+                  type="button"
+                  onClick={() => openSettings("integrations")}
+                  className="font-medium text-ink-2 underline decoration-ink-4 underline-offset-2 hover:text-ink"
+                >
                   Connect an app
-                </Link>{" "}
+                </button>{" "}
                 and {agent.name.split(" ")[0]} can use it.
               </p>
             ) : (
