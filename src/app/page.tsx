@@ -127,17 +127,20 @@ export default async function Landing() {
               lede="Chat, websites, documents, sheets, decks, research, and Tros — on every plan. You upgrade for capacity and team collaboration, not to unlock the product."
             />
             <ul className="nx-stagger-kids mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {CREATE.map((c) => (
-                <li key={c.label}>
-                  <SpotCard
-                    href={c.href}
-                    tone={c.tone}
-                    label={c.label}
-                    body={c.body}
-                    Icon={c.Icon}
-                  />
-                </li>
-              ))}
+              {CREATE.map((c) => {
+                const Icon = c.Icon;
+                return (
+                  <li key={c.label}>
+                    <SpotCard
+                      href={c.href}
+                      tone={c.tone}
+                      label={c.label}
+                      body={c.body}
+                      icon={<Icon size={20} aria-hidden />}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </section>

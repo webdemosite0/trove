@@ -13,13 +13,13 @@ export function SpotCard({
   tone,
   label,
   body,
-  Icon,
+  icon,
 }: {
   href: string;
   tone: string;
   label: string;
   body: string;
-  Icon: (props: { size?: number; "aria-hidden"?: boolean | "true" | "false" }) => React.ReactNode;
+  icon: React.ReactNode;
 }) {
   const ref = useRef<HTMLAnchorElement>(null);
 
@@ -53,7 +53,7 @@ export function SpotCard({
           color: tone,
         }}
       >
-        <Icon size={20} aria-hidden />
+        {icon}
       </span>
       <span className="relative mt-4 text-[15px] font-semibold text-ink">{label}</span>
       <span className="relative mt-1.5 flex-1 text-[13.5px] leading-relaxed text-ink-3">
