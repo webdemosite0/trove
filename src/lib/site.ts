@@ -73,3 +73,10 @@ export const publicRoutes = [
 ];
 
 export const privateRoutes = ["/settings", "/dashboard", "/api/"];
+
+/**
+ * True on the production deployment. Vercel sets VERCEL_ENV=production only
+ * there; previews and local dev must never look indexable.
+ */
+export const isProductionDeploy =
+  (process.env.VERCEL_ENV ?? "production") === "production";

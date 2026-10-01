@@ -168,7 +168,7 @@ export async function compatGenerate(opts: {
       Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
       ...(provider.id === "openrouter"
         ? {
-            "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://trove.ai",
+            "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://troveai.site",
             "X-Title": process.env.OPENROUTER_APP_NAME?.trim() || "Trove",
           }
         : {}),
@@ -218,7 +218,7 @@ export async function compatStream(opts: {
         Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
         ...(provider.id === "openrouter"
           ? {
-              "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://trove.ai",
+              "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://troveai.site",
               "X-Title": process.env.OPENROUTER_APP_NAME?.trim() || "Trove",
             }
           : {}),

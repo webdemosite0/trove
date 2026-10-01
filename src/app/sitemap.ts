@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { FEATURES } from "@/lib/features";
-import { publicRoutes, site } from "@/lib/site";
+import { isProductionDeploy, publicRoutes, site } from "@/lib/site";
 
 /**
  * Only canonical, indexable marketing URLs belong in the sitemap. Auth,
@@ -10,6 +10,9 @@ import { publicRoutes, site } from "@/lib/site";
  * newly-added public capabilities automatically become discoverable.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
+  // No sitemap on preview / staging deployments.
+  if (!isProductionDeploy) return [];
+
   const generatedAt = new Date();
 
   const marketing: MetadataRoute.Sitemap = publicRoutes.map((route) => ({

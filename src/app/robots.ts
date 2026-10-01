@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { privateRoutes, site } from "@/lib/site";
+import { isProductionDeploy, privateRoutes, site } from "@/lib/site";
 
 /**
  * Public marketing pages stay crawlable by search engines and AI discovery
@@ -46,6 +46,10 @@ const publicRule = {
 };
 
 export default function robots(): MetadataRoute.Robots {
+  // Preview / staging deployments must never be crawled.
+  if (!isProductionDeploy) {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
+  }
   return {
     rules: [
       { userAgent: "*", ...publicRule },

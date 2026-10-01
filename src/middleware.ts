@@ -47,6 +47,10 @@ function isPublic(pathname: string) {
 function secureAppResponse(res: NextResponse): NextResponse {
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  // Preview / staging deployments must never be indexed.
+  if ((process.env.VERCEL_ENV ?? "production") !== "production") {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   res.headers.set(

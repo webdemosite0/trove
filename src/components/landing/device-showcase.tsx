@@ -22,7 +22,7 @@ export function DeviceShowcase() {
               <span className="size-2.5 rounded-full bg-zinc-400/55" />
             </span>
             <div className="flex h-6 min-w-0 flex-1 items-center justify-center rounded-md border border-line bg-sunk px-3">
-              <span className="truncate text-[11px] text-ink-4">app.trove.ai / dashboard</span>
+              <span className="truncate text-[11px] text-ink-4">troveai.site / dashboard</span>
             </div>
           </div>
 
@@ -73,7 +73,7 @@ export function DeviceShowcase() {
             <div className="min-w-0 flex-1 bg-canvas">
               <div className="flex h-11 items-center justify-between border-b border-line px-5">
                 <span className="text-[13px] font-semibold text-ink">Home</span>
-                <span className="text-[12px] text-ink-4">you@trove.app</span>
+                <span className="text-[12px] text-ink-4">you@troveai.site</span>
               </div>
 
               <div className="px-6 py-6 lg:px-10 lg:py-8">
