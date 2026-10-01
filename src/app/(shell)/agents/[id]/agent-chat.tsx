@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, TbPlugConnected } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, TbPlugConnected } from "@/components/ui/icons";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -482,13 +482,17 @@ export function AgentChat({
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-6 lg:px-10">
+        <div className="app-page-in min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-6 lg:px-10">
           <div className="mx-auto max-w-[720px] space-y-6">
             {turns.length === 0 ? (
               <div className="py-10 text-center">
                 <Bot size={88} accent={agent.accent} seed={agent.id} state="idle" />
                 <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">Chat with {agent.name.split(" ")[0]}</h2>
                 <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">{agent.instructions}</p>
+                <p className="mx-auto mt-4 flex max-w-[46ch] items-center justify-center gap-1.5 text-[11.5px] text-ink-4">
+                  <Ico icon={FiMessageSquare} size={12} className="shrink-0 text-violet-500" />
+                  <span>{agent.name.split(" ")[0]} asks you questions when it needs input — just answer and it carries on.</span>
+                </p>
                 <div className="mx-auto mt-6 flex max-w-[520px] flex-wrap justify-center gap-2">
                   {["What can you help me with?", "Help me plan this week", "Draft something for me"].map((s) => (
                     <button
@@ -651,7 +655,13 @@ export function AgentChat({
           </section>
 
           <section className="app-block-in px-4 py-3" style={{ ["--app-delay" as string]: "180ms" }}>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">Tools</p>
+            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+              Tools
+              <span className="relative flex size-1.5" title="Live">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
+              </span>
+            </p>
             <ul className="space-y-1">
               {["Cloud browser", "Web search", "Documents", "Spreadsheets", "Slides", ...tools.slice(0, 3)].map((tool) => (
                 <li key={tool} className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[12px] text-ink-2">

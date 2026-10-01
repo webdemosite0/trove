@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useOptimistic, useState, useTransition } from "react";
+import { useEffect, useMemo, useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiSearch, FiPlus, FiCheck, FiExternalLink } from "@/components/ui/icons";
@@ -8,6 +8,7 @@ import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
 import { SERVICES } from "@/lib/services";
 import { ServiceMark } from "@/components/integrations/service-mark";
+import { serviceForComposioToolkit } from "@/lib/composio-map";
 
 export interface ConnectedService {
   service: string;
@@ -80,6 +81,65 @@ export function IntegrationsView({
         s.category.toLowerCase().includes(q),
     ).slice(0, 40);
   }, [query]);
+
+  interface CatalogApp {
+    slug: string;
+    name: string;
+    logo?: string;
+    description?: string;
+    categories: string[];
+    toolsCount?: number;
+  }
+
+  const [catalog, setCatalog] = useState<CatalogApp[] | null>(null);
+  const [catalogTotal, setCatalogTotal] = useState(0);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [shownCount, setShownCount] = useState(48);
+
+  useEffect(() => {
+    if (!composioOn) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/integrations/catalog");
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (res.ok && Array.isArray(data?.apps) && data.apps.length > 0) {
+          setCatalog(data.apps);
+          setCatalogTotal(data.total ?? data.apps.length);
+        } else {
+          setCatalogError("The full app directory is unavailable right now.");
+        }
+      } catch {
+        if (!cancelled) setCatalogError("The full app directory is unavailable right now.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [composioOn]);
+
+  const serviceNames = useMemo(
+    () => new Set(SERVICES.map((x) => x.name.toLowerCase())),
+    [],
+  );
+
+  const allApps = useMemo(() => {
+    if (!catalog) return [];
+    const q = query.trim().toLowerCase();
+    return catalog.filter((a) => {
+      // skip apps already listed above (curated entries)
+      if (serviceForComposioToolkit(a.slug)) return false;
+      if (serviceNames.has(a.name.toLowerCase())) return false;
+      if (!q) return true;
+      return (
+        a.name.toLowerCase().includes(q) ||
+        a.slug.includes(q) ||
+        (a.description ?? "").toLowerCase().includes(q) ||
+        a.categories.some((c) => c.toLowerCase().includes(q))
+      );
+    });
+  }, [catalog, query, serviceNames]);
 
   function remove(id: string) {
     startTransition(async () => {
@@ -252,6 +312,106 @@ export function IntegrationsView({
             })}
           </ul>
         </section>
+
+        {composioOn ? (
+          <section className="mt-12">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="text-[13px] font-medium text-ink-3">
+                All apps
+                <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                  {catalogTotal > 0 ? `${catalogTotal.toLocaleString()}+` : "4,000+"}
+                </span>
+              </h2>
+              {catalog ? (
+                <p className="shrink-0 text-[12px] text-ink-4">
+                  {Math.min(shownCount, allApps.length).toLocaleString()} of{" "}
+                  {allApps.length.toLocaleString()}
+                </p>
+              ) : null}
+            </div>
+            <p className="mt-1.5 max-w-[60ch] text-[12.5px] leading-relaxed text-ink-4">
+              The full Composio directory — one-click OAuth for every app, and your
+              Tros can use any of them once connected.
+            </p>
+
+            {catalog === null && !catalogError ? (
+              <div className="mt-4 grid gap-1 sm:grid-cols-2" aria-label="Loading apps">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 rounded-2xl px-3 py-3">
+                    <div className="size-[54px] shrink-0 animate-pulse rounded-2xl bg-sunk" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 w-2/5 animate-pulse rounded-md bg-sunk" />
+                      <div className="h-3 w-3/5 animate-pulse rounded-md bg-sunk" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : catalogError ? (
+              <p className="mt-4 text-[13px] text-ink-4">{catalogError}</p>
+            ) : allApps.length === 0 ? (
+              <p className="mt-4 text-[13px] text-ink-4">
+                No apps match “{query.trim()}”. Try another search.
+              </p>
+            ) : (
+              <>
+                <ul className="mt-4 grid gap-1 sm:grid-cols-2">
+                  {allApps.slice(0, shownCount).map((a) => (
+                    <li key={a.slug}>
+                      <div className="group flex items-center gap-4 rounded-2xl px-3 py-3 transition hover:bg-hover/70">
+                        <span className="grid size-[54px] shrink-0 place-items-center overflow-hidden rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line transition group-hover:scale-[1.04]">
+                          {a.logo ? (
+                            <img
+                              src={a.logo}
+                              alt=""
+                              loading="lazy"
+                              className="size-[36px] object-contain"
+                            />
+                          ) : (
+                            <span className="text-[18px] font-bold text-ink-3">
+                              {a.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[14.5px] font-medium text-ink">
+                            {a.name}
+                          </p>
+                          <p className="truncate text-[12.5px] text-ink-4">
+                            {a.categories[0] ?? "App"}
+                            {a.toolsCount ? ` · ${a.toolsCount} tools` : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!signedIn || busy !== null}
+                          onClick={() => void connectComposio(a.slug)}
+                          className="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-accent/50 hover:bg-hover hover:text-ink disabled:opacity-40"
+                          aria-label={`Connect ${a.name}`}
+                          title={`Connect ${a.name}`}
+                        >
+                          {busy === a.slug ? (
+                            <span className="text-[12px]">…</span>
+                          ) : (
+                            <FiPlus size={18} />
+                          )}
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {allApps.length > shownCount ? (
+                  <button
+                    type="button"
+                    onClick={() => setShownCount((c) => c + 48)}
+                    className="mt-4 w-full rounded-2xl border border-line bg-raised py-3 text-[13px] font-medium text-ink-3 shadow-[var(--sh-1)] transition hover:border-line-strong hover:text-ink"
+                  >
+                    Show more apps
+                  </button>
+                ) : null}
+              </>
+            )}
+          </section>
+        ) : null}
 
         {composioOn ? (
           <p className="mt-10 flex items-center gap-1.5 text-[12.5px] text-ink-4">

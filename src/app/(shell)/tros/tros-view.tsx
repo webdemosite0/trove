@@ -98,6 +98,15 @@ const STARTERS: { icon: typeof FiSearch; title: string; desc: string; tone: stri
   },
 ];
 
+const BRIEF_EXAMPLES = [
+  "track competitor pricing every week",
+  "draft my product launch announcement",
+  "research EV incentives in Karachi",
+  "summarize this week's sales numbers",
+  "plan an October content calendar",
+  "design a pricing page that converts",
+];
+
 function greetingFor(name?: string | null): string {
   const h = new Date().getHours();
   const part = h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : "evening";
@@ -119,6 +128,7 @@ export function TrosView({
   const [navOpen, setNavOpen] = useState(false);
   const [glow, setGlow] = useState<string | null>(null);
   const [brief, setBrief] = useState("");
+  const [phIdx, setPhIdx] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const deleting = agents.find((a) => a.id === deletingId) ?? null;
   const router = useRouter();
@@ -131,6 +141,14 @@ export function TrosView({
       router.replace("/tros", { scroll: false });
     }
   }, [router]);
+
+  useEffect(() => {
+    const t = setInterval(
+      () => setPhIdx((i) => (i + 1) % BRIEF_EXAMPLES.length),
+      3600,
+    );
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -277,7 +295,8 @@ export function TrosView({
               <input
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
-                placeholder="Describe the job — e.g. “track competitor pricing every week”…"
+                key={phIdx}
+                placeholder={`Describe the job — e.g. “${BRIEF_EXAMPLES[phIdx]}”…`}
                 aria-label="Describe the job to hire a Tro"
                 className="min-w-0 flex-1 bg-transparent py-2 text-[14px] text-ink outline-none placeholder:text-ink-4"
               />
@@ -319,7 +338,15 @@ export function TrosView({
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">The specialists</p>
                 <p className="text-[11px] text-ink-4">{SPECIES.length} unique looks</p>
               </div>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div
+                className="flex gap-2.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                style={{
+                  maskImage:
+                    "linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)",
+                  WebkitMaskImage:
+                    "linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)",
+                }}
+              >
                 {SPECIES.map((s) => (
                   <button
                     key={s}

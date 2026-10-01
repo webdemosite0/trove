@@ -34,58 +34,18 @@ export function composio(): Composio {
   return client;
 }
 
-/**
- * Trove service id → Composio toolkit slug.
- * Only include toolkits that work with Composio managed auth by default.
- * Toolkits that require custom auth_configs (e.g. twitter) are omitted until
- * you create an auth config in the Composio dashboard and pass it explicitly.
- */
-export const COMPOSIO_MAP: Record<string, string> = {
-  gmail: "gmail",
-  "google-calendar": "googlecalendar",
-  "google-drive": "googledrive",
-  outlook: "outlook",
-  slack: "slack",
-  github: "github",
-  gitlab: "gitlab",
-  linear: "linear",
-  notion: "notion",
-  jira: "jira",
-  asana: "asana",
-  trello: "trello",
-  clickup: "clickup",
-  dropbox: "dropbox",
-  onedrive: "one_drive",
-  confluence: "confluence",
-  airtable: "airtable",
-  box: "box",
-  figma: "figma",
-  hubspot: "hubspot",
-  salesforce: "salesforce",
-  stripe: "stripe",
-  intercom: "intercom",
-  zendesk: "zendesk",
-  discord: "discord",
-  zoom: "zoom",
-  "microsoft-teams": "microsoft_teams",
-  linkedin: "linkedin",
-  // twitter / X requires a custom auth config in Composio — not auto-created
+import {
+  COMPOSIO_MAP,
+  COMPOSIO_REQUIRES_AUTH_CONFIG,
+  composioToolkitFor,
+  serviceForComposioToolkit,
+} from "./composio-map";
+export {
+  COMPOSIO_MAP,
+  COMPOSIO_REQUIRES_AUTH_CONFIG,
+  composioToolkitFor,
+  serviceForComposioToolkit,
 };
-
-/** Toolkits that cannot use managed auth without an auth_config id. */
-export const COMPOSIO_REQUIRES_AUTH_CONFIG = new Set(["twitter", "x"]);
-
-export function composioToolkitFor(service: string): string | null {
-  return COMPOSIO_MAP[service] ?? null;
-}
-
-export function serviceForComposioToolkit(toolkit: string): string | null {
-  const t = toolkit.toLowerCase().replace(/_/g, "");
-  for (const [service, slug] of Object.entries(COMPOSIO_MAP)) {
-    if (slug.toLowerCase().replace(/_/g, "") === t) return service;
-  }
-  return null;
-}
 
 export const DEFAULT_TOOLKITS = [
   "gmail",
@@ -336,4 +296,83 @@ export async function syncComposioConnections(): Promise<{ synced: string[] }> {
   }
 
   return { synced };
+}
+
+/* ------------------------------------------------------------------ */
+/* Live toolkit catalog — the full Composio app directory (4,000+).    */
+/* Fetched from the Composio Platform API and cached in memory for     */
+/* 24h so the integrations page can browse every connectable app.     */
+/* ------------------------------------------------------------------ */
+
+export interface CatalogApp {
+  slug: string;
+  name: string;
+  logo?: string;
+  description?: string;
+  categories: string[];
+  toolsCount?: number;
+}
+
+let catalogCache: { at: number; apps: CatalogApp[] } | null = null;
+const CATALOG_TTL_MS = 24 * 60 * 60 * 1000;
+
+export async function listComposioCatalog(): Promise<CatalogApp[]> {
+  if (catalogCache && Date.now() - catalogCache.at < CATALOG_TTL_MS) {
+    return catalogCache.apps;
+  }
+  const apiKey = process.env.COMPOSIO_API_KEY?.trim();
+  if (!apiKey) throw new Error("COMPOSIO_API_KEY is not set.");
+
+  const apps: CatalogApp[] = [];
+  const seen = new Set<string>();
+  let cursor: string | null = null;
+  let pages = 0;
+
+  do {
+    const url = new URL("https://backend.composio.dev/api/v3/toolkits");
+    url.searchParams.set("limit", "100");
+    url.searchParams.set("sort_by", "usage");
+    if (cursor) url.searchParams.set("cursor", cursor);
+
+    const res = await fetch(url.toString(), {
+      headers: { "x-api-key": apiKey, accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      throw new Error(`Composio catalog request failed (${res.status}).`);
+    }
+    const data: any = await res.json().catch(() => null);
+    const items: any[] = Array.isArray(data)
+      ? data
+      : data?.items ?? data?.toolkits ?? [];
+
+    for (const t of items) {
+      const slug = String(t?.slug ?? "").trim();
+      if (!slug || seen.has(slug)) continue;
+      seen.add(slug);
+      const meta = t?.meta ?? {};
+      const cats = Array.isArray(meta.categories)
+        ? meta.categories
+            .map((c: any) => String(c?.name ?? c?.slug ?? c ?? "").trim())
+            .filter(Boolean)
+        : [];
+      apps.push({
+        slug,
+        name: String(t?.name ?? slug),
+        logo: meta.logo ?? t?.logo ?? undefined,
+        description: meta.description ?? t?.description ?? undefined,
+        categories: cats.slice(0, 3),
+        toolsCount: meta.tools_count ?? meta.toolsCount ?? undefined,
+      });
+    }
+
+    cursor =
+      data && !Array.isArray(data)
+        ? (data.next_cursor ?? data.nextCursor ?? data.cursor ?? null)
+        : null;
+    pages += 1;
+  } while (cursor && pages < 60);
+
+  catalogCache = { at: Date.now(), apps };
+  return apps;
 }

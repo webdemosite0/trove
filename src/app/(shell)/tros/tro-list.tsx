@@ -56,6 +56,7 @@ export function TroListPanel({
         <button
           type="button"
           onClick={onNew}
+          title="New Tro (N)"
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2.5 text-[13.5px] font-semibold text-ink shadow-sm transition duration-200 hover:-translate-y-px hover:border-violet-500/40 hover:bg-hover hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
         >
           <Ico icon={FiPlus} motion="open" size={15} /> New Tro
