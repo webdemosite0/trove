@@ -39,18 +39,19 @@ export const SPECIES_META: Record<
   SplashySpecies,
   { label: string; vibe: string; defaultAccent: string; image?: string }
 > = {
-  // Real mascot artwork lives in public/mascots/<species>.jpg.
+  // Real mascot artwork is hosted in the onecrew-landing repo (public/crew/<name>.jpg).
+  // Remote URLs are used so no binary assets need to live in this repo.
   // Species without an image fall back to the animated blob below.
-  muse: { label: "Muse", vibe: "Creative spark", defaultAccent: "#a78bfa", image: "/mascots/muse.jpg" },
-  pulse: { label: "Pulse", vibe: "Fast & curious", defaultAccent: "#38bdf8", image: "/mascots/pulse.jpg" },
-  orb: { label: "Orb", vibe: "Calm focus", defaultAccent: "#34d399", image: "/mascots/orb.jpg" },
-  spark: { label: "Spark", vibe: "Playful energy", defaultAccent: "#f472b6", image: "/mascots/spark.jpg" },
-  nova: { label: "Nova", vibe: "Bright ideas", defaultAccent: "#fbbf24", image: "/mascots/nova.jpg" },
-  drift: { label: "Drift", vibe: "Soft explorer", defaultAccent: "#fb923c", image: "/mascots/drift.jpg" },
-  lead: { label: "Lead", vibe: "Steady captain", defaultAccent: "#6366f1", image: "/mascots/lead.jpg" },
-  guide: { label: "Guide", vibe: "Warm coach", defaultAccent: "#2dd4bf", image: "/mascots/guide.jpg" },
-  bloom: { label: "Bloom", vibe: "Design eye", defaultAccent: "#e879f9", image: "/mascots/bloom.jpg" },
-  byte: { label: "Byte", vibe: "Code craftsman", defaultAccent: "#64748b", image: "/mascots/byte.jpg" },
+  muse: { label: "Muse", vibe: "Creative spark", defaultAccent: "#a78bfa", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/echo.jpg" },
+  pulse: { label: "Pulse", vibe: "Fast & curious", defaultAccent: "#38bdf8", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/leo.jpg" },
+  orb: { label: "Orb", vibe: "Calm focus", defaultAccent: "#34d399", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/scout.jpg" },
+  spark: { label: "Spark", vibe: "Playful energy", defaultAccent: "#f472b6", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/milo.jpg" },
+  nova: { label: "Nova", vibe: "Bright ideas", defaultAccent: "#fbbf24", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/atlas.jpg" },
+  drift: { label: "Drift", vibe: "Soft explorer", defaultAccent: "#fb923c", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/zara.jpg" },
+  lead: { label: "Lead", vibe: "Steady captain", defaultAccent: "#6366f1", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/nova.jpg" },
+  guide: { label: "Guide", vibe: "Warm coach", defaultAccent: "#2dd4bf", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/iris.jpg" },
+  bloom: { label: "Bloom", vibe: "Design eye", defaultAccent: "#e879f9", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/luna.jpg" },
+  byte: { label: "Byte", vibe: "Code craftsman", defaultAccent: "#64748b", image: "https://raw.githubusercontent.com/webdemosite0/onecrew-landing/main/public/crew/kael.jpg" },
   quill: { label: "Quill", vibe: "Storyteller", defaultAccent: "#f0abfc" },
   aegis: { label: "Aegis", vibe: "Guardian", defaultAccent: "#60a5fa" },
 };
