@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Reveal } from "./reveal";
 import { SectionHead } from "./sections";
@@ -19,6 +20,36 @@ const CREW = [
 ];
 
 const imgUrl = (n: string) => `/api/mascots/${n}`;
+
+const WORK_VIDEOS = [
+  { name: "Atlas", role: "Planning", src: "/tros/atlas-working.mp4" },
+  { name: "Milo", role: "Writing", src: "/tros/milo-working.mp4" },
+  { name: "Iris", role: "Design", src: "/tros/iris-working.mp4" },
+];
+
+/** Working footage card — hides itself if the video file isn't available yet. */
+function WorkVideo({ name, role, src }: { name: string; role: string; src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <figure className="overflow-hidden rounded-2xl border border-line bg-black">
+      <video
+        src={src}
+        autoPlay
+        muted
+        loop
+        playsInline
+        onError={() => setFailed(true)}
+        className="aspect-video w-full object-cover"
+        aria-label={`${name} working`}
+      />
+      <figcaption className="flex items-baseline justify-between bg-canvas px-3.5 py-2.5">
+        <span className="text-[13px] font-semibold text-ink">{name}</span>
+        <span className="text-[11px] text-ink-3">{role} · at work</span>
+      </figcaption>
+    </figure>
+  );
+}
 
 export function CrewSection() {
   return (
@@ -42,6 +73,17 @@ export function CrewSection() {
             loading="lazy"
             className="relative mx-auto w-full"
           />
+        </div>
+
+        <div className="mt-8 sm:mt-10">
+          <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-4 sm:text-[11px]">
+            Watch them work
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {WORK_VIDEOS.map((v) => (
+              <WorkVideo key={v.src} {...v} />
+            ))}
+          </div>
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-5">

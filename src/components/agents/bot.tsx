@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type BotState = "idle" | "working" | "done" | "failed";
@@ -53,6 +53,17 @@ export const SPECIES_META: Record<
 
 type RetiredSpecies = "quill" | "aegis";
 
+/**
+ * Real working footage per species — shown while the Tro is working.
+ * Served from /tros/*.mp4 (public/). If a file is missing, the Bot falls
+ * back to the animated mascot automatically.
+ */
+export const WORKING_VIDEO: Partial<Record<SplashySpecies, string>> = {
+  spark: "/tros/milo-working.mp4",
+  nova: "/tros/atlas-working.mp4",
+  guide: "/tros/iris-working.mp4",
+};
+
 export function speciesFromSeed(seed?: string | null): SplashySpecies {
   const s = String(seed || "trove");
   let h = 0;
@@ -94,6 +105,22 @@ export function Bot({
   const working = state === "working";
   const done = state === "done";
   const failed = state === "failed";
+  // Working footage for this species (falls back to the animated mascot
+  // if the video file isn't available).
+  const [videoFailed, setVideoFailed] = useState(false);
+  const workingVideo = working && !videoFailed ? WORKING_VIDEO[kind] : undefined;
+  // A different species gets a fresh attempt at its own footage.
+  useEffect(() => {
+    setVideoFailed(false);
+  }, [kind]);
+  // Deterministic per-instance phase so a grid of mascots doesn't pulse in sync.
+  const phase = ((size * 13 + kind.length * 7) % 10) * 0.42;
+
+  const sparkles = [
+    { left: "84%", top: "4%", s: 0.9, delay: 0 },
+    { left: "2%", top: "54%", s: 0.62, delay: 1.7 },
+    { left: "66%", top: "90%", s: 0.74, delay: 3.2 },
+  ];
 
   const face = useMemo(() => {
     if (failed) return { eye: "x" as const, mouth: "flat" as const };
@@ -104,7 +131,7 @@ export function Bot({
 
   return (
     <span
-      className={cn("relative inline-flex shrink-0 flex-col items-center", className)}
+      className={cn("relative inline-flex shrink-0 flex-col items-center tro-motion", className)}
       style={{ width: size }}
       aria-hidden
       data-species={kind}
@@ -123,25 +150,93 @@ export function Bot({
           }}
         />
 
-        {meta.image ? (
-          <img
-            src={meta.image}
-            alt=""
-            width={size}
-            height={size}
-            draggable={false}
-            className="relative z-[1] select-none"
+        {workingVideo ? (
+          /* Real working footage — circular crop hides the 16:9 frame. */
+          <video
+            src={workingVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            onError={() => setVideoFailed(true)}
+            className="relative z-[1] select-none rounded-full object-cover ring-1 ring-white/25"
             style={{
               width: size,
               height: size,
-              // Transparent PNG — no clip needed; soft shadow grounds the mascot.
               filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.28))",
-              animation: working
-                ? "tro-work 0.9s ease-in-out infinite"
-                : "tro-float 3.6s ease-in-out infinite",
-              animationDelay: `${(size % 9) * 0.08}s`,
             }}
           />
+        ) : meta.image ? (
+          <>
+            <img
+              src={meta.image}
+              alt=""
+              width={size}
+              height={size}
+              draggable={false}
+              className="relative z-[1] select-none"
+              style={{
+                width: size,
+                height: size,
+                // Transparent PNG — no clip needed; soft shadow grounds the mascot.
+                filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.28))",
+                animation: working
+                  ? "tro-work 0.9s ease-in-out infinite"
+                  : "tro-float 5s ease-in-out infinite",
+                animationDelay: `${(size % 9) * 0.08}s`,
+              }}
+            />
+            {/* Muse-style light sweep — diagonal highlight masked to the
+                mascot silhouette so the shine only plays across the blob. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[2]"
+              style={{
+                background:
+                  "linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.55) 50%, transparent 62%)",
+                backgroundSize: "280% 100%",
+                WebkitMaskImage: `url(${meta.image})`,
+                maskImage: `url(${meta.image})`,
+                WebkitMaskSize: "contain",
+                maskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                animation: working
+                  ? "tro-shimmer 1.9s linear infinite"
+                  : "tro-shimmer 5.2s linear infinite",
+                animationDelay: `${phase}s`,
+              }}
+            />
+            {/* Sparkle glints — tiny 4-point stars that pop in and out,
+                staggered around the mascot like Muse's sparkles. */}
+            {sparkles.map((sp, i) => (
+              <svg
+                key={i}
+                aria-hidden
+                viewBox="0 0 24 24"
+                className="pointer-events-none absolute z-[3]"
+                style={{
+                  left: sp.left,
+                  top: sp.top,
+                  width: Math.max(10, size * 0.22 * sp.s),
+                  height: Math.max(10, size * 0.22 * sp.s),
+                  filter: "drop-shadow(0 0 5px rgba(255,255,255,0.9))",
+                  animation: working
+                    ? "tro-sparkle 2.2s ease-in-out infinite"
+                    : "tro-sparkle 4.8s ease-in-out infinite",
+                  animationDelay: `${phase + sp.delay}s`,
+                }}
+              >
+                <path
+                  d="M12 1 C13.2 7.5 15.5 10.6 22 12 C15.5 13.4 13.2 16.5 12 23 C10.8 16.5 8.5 13.4 2 12 C8.5 10.6 10.8 7.5 12 1 Z"
+                  fill="#fff"
+                  opacity="0.95"
+                />
+              </svg>
+            ))}
+          </>
         ) : (
           <svg
             viewBox="0 0 64 64"
@@ -151,7 +246,7 @@ export function Bot({
             style={{
               animation: working
                 ? "tro-work 0.9s ease-in-out infinite"
-                : "tro-float 3.6s ease-in-out infinite",
+                : "tro-float 5s ease-in-out infinite",
               animationDelay: `${(size % 9) * 0.08}s`,
             }}
           >
@@ -322,8 +417,8 @@ export function Bot({
 
       <style>{`
         @keyframes tro-float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-4%); }
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-4%) rotate(1.2deg); }
         }
         @keyframes tro-work {
           0%, 100% { transform: translateY(0) scale(1); }
@@ -336,6 +431,23 @@ export function Bot({
         @keyframes tro-breathe {
           0%, 100% { transform: scale(0.96); opacity: 0.35; }
           50% { transform: scale(1.05); opacity: 0.55; }
+        }
+        /* Muse-style light sweep: the bright band crosses the silhouette in
+           the first quarter of the cycle, then rests invisible. */
+        @keyframes tro-shimmer {
+          0% { background-position: 130% 0; opacity: 0; }
+          5% { opacity: 1; }
+          24% { background-position: -30% 0; opacity: 1; }
+          32%, 100% { background-position: -30% 0; opacity: 0; }
+        }
+        /* Sparkle glint: pops in, twinkles, fades — staggered per sparkle. */
+        @keyframes tro-sparkle {
+          0%, 100% { opacity: 0; transform: scale(0.25) rotate(0deg); }
+          12% { opacity: 1; transform: scale(1) rotate(20deg); }
+          28% { opacity: 0; transform: scale(0.55) rotate(55deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .tro-motion, .tro-motion * { animation: none !important; }
         }
       `}</style>
     </span>

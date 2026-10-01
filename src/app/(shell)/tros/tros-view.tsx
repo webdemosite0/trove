@@ -295,7 +295,6 @@ export function TrosView({
               <input
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
-                key={phIdx}
                 placeholder={`Describe the job — e.g. “${BRIEF_EXAMPLES[phIdx]}”…`}
                 aria-label="Describe the job to hire a Tro"
                 className="min-w-0 flex-1 bg-transparent py-2 text-[14px] text-ink outline-none placeholder:text-ink-4"
