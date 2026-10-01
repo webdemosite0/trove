@@ -11,6 +11,7 @@ const PUBLIC_PAGES = new Set([
   "/about",
   "/features",
   "/templates",
+  "/changelog",
   "/ai-website-builder",
   "/ai-presentation-maker",
   "/ai-document-generator",

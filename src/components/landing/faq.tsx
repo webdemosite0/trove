@@ -15,7 +15,7 @@ const QA: { q: string; a: string }[] = [
   },
   {
     q: "Do I need an account?",
-    a: "You can try without one. An account is what makes projects and conversations persist across devices and browsers.",
+    a: "Explore Trove without one — the examples, templates, and feature pages are all public. Create a free account when you're ready to start building and save your work; generating, saving, publishing, and exporting need an account.",
   },
   {
     q: "How do credits work?",

@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/agents", destination: "/tros", permanent: true },
       { source: "/agents/:id", destination: "/tros/:id", permanent: true },
+      { source: "/features/decks", destination: "/features/presentations", permanent: true },
+      { source: "/features/ai-agents", destination: "/features/agents", permanent: true },
     ];
   },
   async headers() {

@@ -70,7 +70,7 @@ export const PLANS: Plan[] = [
     windowLimit: 40,
     price: 0,
     priceYearly: 0,
-    blurb: "Solo workspace to try every tool and ship something real.",
+    blurb: "Try Trove and create real work — the full toolkit, free.",
     features: [
       "200 credits / month (~200k tokens)",
       "40 credits per 5-hour window",
@@ -86,7 +86,7 @@ export const PLANS: Plan[] = [
     windowLimit: 500,
     price: 19,
     priceYearly: 200,
-    blurb: "Daily capacity for individuals who live in the workspace.",
+    blurb: "For people using Trove regularly — more capacity, same toolkit.",
     features: [
       "5,000 credits / month (~5M tokens)",
       "500 credits per 5-hour window",
@@ -102,7 +102,7 @@ export const PLANS: Plan[] = [
     windowLimit: 2_000,
     price: 99,
     priceYearly: 1_100,
-    blurb: "One workspace for the whole group: roles, projects, shared credits.",
+    blurb: "For teams collaborating in one AI workspace — roles, shared projects, one credit pool.",
     features: [
       "20,000 shared credits / month (~20M tokens)",
       "2,000 shared credits per 5-hour window",

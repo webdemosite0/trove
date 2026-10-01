@@ -37,8 +37,9 @@ export default function AboutPage() {
         <p>
           We are a small studio. There is no enterprise sales team and no
           invented customer wall. The free plan is the whole product — 200
-          credits a month, every tool, no card. Paid plans add capacity, not
-          features.
+          credits a month, every tool, no card. Free and Pro include the
+          complete solo creation toolkit. Pro adds more capacity. Team adds
+          collaboration and company workspace features.
         </p>
         <p>
           If something is broken, missing, or a job you wish it could do, write

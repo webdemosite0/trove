@@ -34,6 +34,26 @@ const PRACTICES: { heading: string; body: string }[] = [
     heading: "Staging never leaks into search",
     body: "Preview deployments are served with noindex directives across robots, sitemap, metadata, and headers — only the production site is crawlable.",
   },
+  {
+    heading: "Payments never touch our servers",
+    body: "Checkout and card handling run entirely through Lemon Squeezy. We see plan status, never card numbers.",
+  },
+  {
+    heading: "AI providers see prompts, not your account",
+    body: "Generating your work means sending prompts to third-party AI providers. They receive the text needed for the task — not your password, sessions, or other projects.",
+  },
+  {
+    heading: "Connected apps act only with approval",
+    body: "An integration can read your data automatically, but sending, posting, or filing anything needs your explicit tap on an approval card first.",
+  },
+  {
+    heading: "Your data is portable — and deletable",
+    body: "Export your workspace data anytime from account settings. To delete your account entirely, write to official@troveai.site and a person handles it.",
+  },
+  {
+    heading: "Encrypted at rest",
+    body: "Production data lives on managed database infrastructure with encryption at rest, and every connection to it is encrypted in transit.",
+  },
 ];
 
 export default function SecurityPage() {

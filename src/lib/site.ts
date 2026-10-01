@@ -68,6 +68,7 @@ export const publicRoutes = [
   { path: "/", priority: 1.0, changeFrequency: "weekly" as const },
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/templates", priority: 0.8, changeFrequency: "weekly" as const },
+  { path: "/changelog", priority: 0.5, changeFrequency: "monthly" as const },
   { path: "/ai-website-builder", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/ai-presentation-maker", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/ai-document-generator", priority: 0.9, changeFrequency: "monthly" as const },

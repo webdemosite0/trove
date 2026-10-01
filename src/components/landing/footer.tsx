@@ -145,6 +145,30 @@ export function Footer() {
               </ul>
             </nav>
 
+            <nav aria-label="Resources">
+              <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
+                Resources
+              </h2>
+              <ul className="space-y-2">
+                {[
+                  { label: "Examples", href: "/templates" },
+                  { label: "Changelog", href: "/changelog" },
+                  { label: "Docs", href: "https://docs.troveai.site" },
+                  { label: "About", href: "/about" },
+                ].map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      {...(l.href.startsWith("http") ? { target: "_blank", rel: "noopener" } : {})}
+                      className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
             <div>
               <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                 Contact

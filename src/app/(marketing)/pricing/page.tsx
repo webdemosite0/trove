@@ -169,6 +169,40 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section className="mt-14">
+        <h2 className="text-[22px] font-semibold tracking-tight text-ink">How credits work</h2>
+        <p className="mt-2 max-w-[64ch] text-[14.5px] leading-relaxed text-ink-3">
+          Credits represent AI compute used to create and refine your work.{" "}
+          <strong className="font-semibold text-ink">1 credit = 1,000 tokens</strong> of
+          model input and output, metered on actual usage — never a flat fee per artifact.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-line bg-raised/60 p-5">
+            <p className="text-[13px] font-bold text-ink">Short answers</p>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
+              A quick reply or small edit costs <strong className="font-semibold text-ink">1–2 credits</strong>.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-line bg-raised/60 p-5">
+            <p className="text-[13px] font-bold text-ink">Real artifacts</p>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
+              Documents, decks, and sites cost proportionally more — longer work uses
+              more tokens. You&apos;re metered on what the models actually generate.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-line bg-raised/60 p-5">
+            <p className="text-[13px] font-bold text-ink">Always visible</p>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
+              Your remaining balance — e.g. <span className="font-mono text-[12.5px]">164 / 200</span> — and
+              reset date are shown in the workspace, so there are no surprises.
+            </p>
+          </div>
+        </div>
+        <p className="mt-4 text-[12.5px] text-ink-4">
+          Credits reset monthly. Unused credits don&apos;t roll over.
+        </p>
+      </section>
+
       <section className="mt-10 rounded-[var(--r-hero)] border border-sky-400/25 bg-gradient-to-r from-sky-500/[0.08] to-violet-500/[0.08] p-6 sm:p-8">
         <h2 className="text-[18px] font-semibold text-ink">Why Team exists</h2>
         <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed text-ink-2">
