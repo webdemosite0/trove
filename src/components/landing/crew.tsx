@@ -30,6 +30,21 @@ export function CrewSection() {
           lede="Ten specialists with real faces and real briefs. Hover to say hi — click to hire one and put it to work."
         />
 
+        <Reveal className="relative mx-auto mt-10 max-w-[820px]" y={28}>
+          <span
+            aria-hidden
+            className="absolute inset-x-8 top-8 bottom-0 rounded-[48px] bg-violet-500/15 blur-3xl"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/api/crew/image"
+            alt="The ten Tros mascots together"
+            loading="lazy"
+            className="relative w-full"
+            style={{ filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.25))" }}
+          />
+        </Reveal>
+
         <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {CREW.map((m, i) => (
             <Reveal key={m.name} delay={(i % 5) * 70} y={24}>

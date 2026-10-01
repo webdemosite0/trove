@@ -25,6 +25,7 @@ const PUBLIC_PREFIXES = [
   "/api/billing/webhook",
   "/api/site/",
   "/api/mascots/",
+  "/api/crew/",
   "/r/",
   "/s/",
 ];
