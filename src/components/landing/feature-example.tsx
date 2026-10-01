@@ -233,6 +233,50 @@ function CrewExample() {
   );
 }
 
+const INTEGRATION_APPS: { name: string; tone: string }[] = [
+  { name: "Gmail", tone: "#ea4335" },
+  { name: "Drive", tone: "#0f9d58" },
+  { name: "Slack", tone: "#611f69" },
+  { name: "GitHub", tone: "#24292f" },
+  { name: "Notion", tone: "#000000" },
+  { name: "Linear", tone: "#5e6ad2" },
+  { name: "Figma", tone: "#a259ff" },
+  { name: "Stripe", tone: "#635bff" },
+  { name: "HubSpot", tone: "#ff7a59" },
+  { name: "Calendar", tone: "#4285f4" },
+  { name: "Dropbox", tone: "#0061ff" },
+  { name: "Zendesk", tone: "#03363d" },
+];
+
+function IntegrationsExample() {
+  return (
+    <Frame title="connected-apps">
+      <div className="bg-white p-5 sm:p-7">
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+          {INTEGRATION_APPS.map((a) => (
+            <div
+              key={a.name}
+              className="flex items-center gap-2.5 rounded-xl border border-line bg-raised/60 p-3"
+            >
+              <span
+                className="grid size-9 shrink-0 place-items-center rounded-lg text-[13px] font-bold text-white"
+                style={{ background: a.tone }}
+                aria-hidden
+              >
+                {a.name.slice(0, 1)}
+              </span>
+              <span className="truncate text-[12.5px] font-medium text-ink">{a.name}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-center text-[12.5px] text-ink-4">
+          + 4,000 more — connected over OAuth, revoked in one click.
+        </p>
+      </div>
+    </Frame>
+  );
+}
+
 export function FeatureExample({ example }: { example: Example }) {
   return (
     <figure className="mt-10">
@@ -242,6 +286,7 @@ export function FeatureExample({ example }: { example: Example }) {
       {example.kind === "deck" && <DeckExample />}
       {example.kind === "research" && <ResearchExample />}
       {example.kind === "crew" && <CrewExample />}
+      {example.kind === "integrations" && <IntegrationsExample />}
       <figcaption className="mx-auto mt-4 max-w-[62ch] text-center">
         <p className="text-[13px] font-medium text-ink-2">{example.title}</p>
         <p className="mt-1 text-[12.5px] leading-relaxed text-ink-4">{example.caption}</p>

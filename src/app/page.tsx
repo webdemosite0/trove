@@ -13,7 +13,7 @@ import { TrustSection } from "@/components/landing/trust";
 import { Faq } from "@/components/landing/faq";
 import { IntegrationNetwork } from "@/components/landing/integration-network";
 import { CrewSection } from "@/components/landing/crew";
-import { SpotCard } from "@/components/landing/spot-card";
+import { Architecture, TrosWorkflow } from "@/components/landing/architecture";
 import { PLANS } from "@/lib/credits";
 import { site } from "@/lib/site";
 import {
@@ -31,51 +31,6 @@ export const metadata: Metadata = {
   description:
     "AI workspace for websites, documents, spreadsheets, presentations, research, code, and agents. Describe the work, refine in chat, publish or export when ready.",
 };
-
-const CREATE = [
-  {
-    label: "Documents",
-    body: "Reports, proposals, and briefs you can keep editing in the project.",
-    href: "/features/documents",
-    Icon: FiFileText,
-    tone: "#8b5cf6",
-  },
-  {
-    label: "Spreadsheets",
-    body: "Budgets and trackers with real tables — export to Excel when you need to.",
-    href: "/features/spreadsheets",
-    Icon: FiGrid,
-    tone: "#d97706",
-  },
-  {
-    label: "Presentations",
-    body: "Pitch decks and slide structures you refine slide by slide in chat.",
-    href: "/features/decks",
-    Icon: FiLayers,
-    tone: "#e11d48",
-  },
-  {
-    label: "Websites",
-    body: "Sites with a live preview — publish on *.troveai.site or keep iterating.",
-    href: "/features/websites",
-    Icon: FiGlobe,
-    tone: "#0284c7",
-  },
-  {
-    label: "Research",
-    body: "Structured write-ups you can build on in later conversations.",
-    href: "/features/research",
-    Icon: FiSearch,
-    tone: "#0d9488",
-  },
-  {
-    label: "Tros",
-    body: "Hire specialist mascots with real briefs — research, code, design, writing. Each Tro keeps its own workspace.",
-    href: "/features/tros",
-    Icon: FiCpu,
-    tone: "#7c3aed",
-  },
-];
 
 export default async function Landing() {
   const jar = await cookies();
@@ -118,33 +73,11 @@ export default async function Landing() {
 
         <IntegrationNetwork />
 
-        <section id="capabilities" className="scroll-mt-20 border-y border-line bg-rail/30 px-5 py-20 lg:py-24">
-          <div className="mx-auto max-w-[1100px]">
-            <SectionHead
-              eyebrow="What you can create"
-              title="One workspace for the work you actually ship."
-              lede="Chat, websites, documents, sheets, decks, research, and Tros — on every plan. You upgrade for capacity and team collaboration, not to unlock the product."
-            />
-            <ul className="nx-stagger-kids mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {CREATE.map((c) => {
-                const Icon = c.Icon;
-                return (
-                  <li key={c.label}>
-                    <SpotCard
-                      href={c.href}
-                      tone={c.tone}
-                      label={c.label}
-                      body={c.body}
-                      icon={<Icon size={20} aria-hidden />}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </section>
+        <Architecture />
 
         <CrewSection />
+
+        <TrosWorkflow />
 
         <TrustSection />
 

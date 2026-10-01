@@ -1,8 +1,8 @@
 import type { IconType } from "@/components/ui/icons";
-import { TbWorld, TbRobot, TbMicroscope, TbFileText, TbTable, TbPresentation, TbUsers, TbPalette } from "@/components/ui/icons";
+import { TbWorld, TbRobot, TbMicroscope, TbFileText, TbTable, TbPresentation, TbUsers, TbPalette, TbPlugConnected } from "@/components/ui/icons";
 
 export interface FeatureExample {
-  kind: "site" | "doc" | "sheet" | "deck" | "research" | "crew";
+  kind: "site" | "doc" | "sheet" | "deck" | "research" | "crew" | "integrations";
   title: string;
   caption: string;
 }
@@ -20,6 +20,9 @@ export interface Feature {
   facts: string[];
   href: string;
   example?: FeatureExample;
+  prompt?: string;
+  workflow?: { label: string; detail: string }[];
+  faqs?: { q: string; a: string }[];
 }
 
 /** Product surface copy for marketing feature pages. */
@@ -310,6 +313,115 @@ export const FEATURES: Feature[] = [
       kind: "crew",
       title: "Meet the Tros",
       caption: "Ten specialists, one workspace. Hire one from the Tros home and brief it like a colleague.",
+    },
+  },
+  {
+    slug: "presentations",
+    label: "Presentations",
+    title: "AI presentation maker",
+    description:
+      "Build pitch decks and presentations with Trove — narrative-first slides, one idea per slide, refined slide by slide. Export to PPTX.",
+    icon: TbPresentation,
+    tone: "#f97316",
+    headline: "Presentations with a point of view.",
+    standfirst:
+      "Trove builds presentations around your argument — problem, proof, ask — then designs one focused slide at a time. Refine the weak slides in chat until every slide earns its place.",
+    sections: [
+      {
+        heading: "Story before slides",
+        body: "Every presentation starts with the narrative arc, so the slides argue something instead of decorating a topic.",
+      },
+      {
+        heading: "One idea per slide",
+        body: "A headline that makes the point, supporting detail underneath, speaker notes for what the slide can't say.",
+      },
+      {
+        heading: "Surgical revisions",
+        body: "Point at the slide that's weak and say what's wrong. The rest of the deck stays exactly as you liked it.",
+      },
+    ],
+    facts: [
+      "Narrative-first structure",
+      "One idea per slide with speaker notes",
+      "Slide-by-slide refinement in chat",
+      "Export to PPTX",
+    ],
+    href: "/slides",
+    example: {
+      kind: "deck",
+      title: "Wholesale expansion pitch — Ember & Oak",
+      caption: "Built from one line: “Three-slide pitch for our wholesale expansion — the win, the numbers, the ask.”",
+    },
+  },
+  {
+    slug: "agents",
+    label: "Agents",
+    title: "AI agents for real work",
+    description:
+      "Create reusable AI agents with roles, instructions, and tools. Brief them in plain language and put them to work across your workspace.",
+    icon: TbRobot,
+    tone: "#f43f5e",
+    headline: "Agents that hold the brief.",
+    standfirst:
+      "An agent is a specialist you define once: a role, instructions it always follows, and the tools it's allowed to use. Brief it in plain language, and it works the job — asking approval before judgment calls.",
+    sections: [
+      {
+        heading: "Define once, reuse forever",
+        body: "The role and instructions belong to the agent, not the conversation. Reopen it next week and it still knows exactly how you like the work done.",
+      },
+      {
+        heading: "Approval before action",
+        body: "Agents pause at judgment calls with approval cards. You stay in charge; the agent does the legwork.",
+      },
+      {
+        heading: "Tools, not just words",
+        body: "Connect your apps and agents work with real data — drafting from your inbox, filing to your drive, checking your calendar.",
+      },
+    ],
+    facts: [
+      "Custom roles and persistent instructions",
+      "Approval cards for judgment calls",
+      "4,000+ connected apps",
+      "Real artifacts saved to your workspace",
+    ],
+    href: "/agents",
+  },
+  {
+    slug: "integrations",
+    label: "Integrations",
+    title: "Connect your work — 4,000+ integrations",
+    description:
+      "Connect Gmail, Drive, Slack, GitHub, Notion, and 4,000+ more apps. Your Tros and agents work with real data, not just chat.",
+    icon: TbPlugConnected,
+    tone: "#0284c7",
+    headline: "Your tools, connected to your AI.",
+    standfirst:
+      "Trove connects to 4,000+ apps over OAuth — Gmail, Drive, Slack, GitHub, Notion, Linear, and more. Your agents draft from your inbox, file to your drive, and post where your team already looks.",
+    sections: [
+      {
+        heading: "OAuth, never passwords",
+        body: "Connections use each provider's official OAuth flow. You grant scoped access and can revoke it anytime from the integrations page.",
+      },
+      {
+        heading: "Agents use real data",
+        body: "A connected agent doesn't guess — it reads your calendar before proposing a time, and checks the drive before summarizing the doc.",
+      },
+      {
+        heading: "Approval-gated actions",
+        body: "Reading is automatic; acting needs your approval. Sending, posting, or filing happens through approval cards you tap.",
+      },
+    ],
+    facts: [
+      "4,000+ apps via Composio",
+      "Official OAuth flows, scoped access",
+      "Revoke anytime from one page",
+      "Reads automatic, actions need approval",
+    ],
+    href: "/integrations",
+    example: {
+      kind: "integrations",
+      title: "4,000+ connected apps",
+      caption: "Gmail, Drive, Slack, GitHub, Notion, and thousands more — connected over OAuth, revoked in one click.",
     },
   },
 ];

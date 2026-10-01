@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import { FiArrowRight, FiCheck } from "@/components/ui/icons";
 
 import { FEATURES, featureBySlug } from "@/lib/features";
+import { FEATURE_EXTRAS } from "@/lib/feature-extras";
 import { site } from "@/lib/site";
 import { FeatureExample } from "@/components/landing/feature-example";
+import { FeatureWorkflow } from "@/components/landing/feature-workflow";
 
 /** One page per capability, built at compile time — the content is static. */
 export function generateStaticParams() {
@@ -51,9 +53,26 @@ export default async function FeaturePage({
 
   const others = FEATURES.filter((f) => f.slug !== feature.slug).slice(0, 4);
   const Icon = feature.icon;
+  const extras = FEATURE_EXTRAS[feature.slug];
 
   return (
     <div className="mx-auto max-w-[920px] px-5 pb-24 pt-14 lg:px-8 lg:pt-20">
+      {extras && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: extras.faqs.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            }),
+          }}
+        />
+      )}
       <article>
         {/* Hero */}
         <header className="max-w-[640px]">
@@ -96,6 +115,19 @@ export default async function FeaturePage({
 
         {feature.example && <FeatureExample example={feature.example} />}
 
+        {/* Example prompt + workflow */}
+        {extras && (
+          <section className="mt-12">
+            <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+              From one prompt
+            </h2>
+            <blockquote className="mt-3 rounded-2xl border border-line bg-sunk/60 px-5 py-4 text-[15px] font-medium leading-relaxed text-ink">
+              {extras.prompt}
+            </blockquote>
+            <FeatureWorkflow steps={extras.workflow} tone={feature.tone} />
+          </section>
+        )}
+
         {/* Key capabilities */}
         <section className="mt-12 rounded-2xl border border-line bg-rail/50 p-6">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-4">
@@ -132,6 +164,26 @@ export default async function FeaturePage({
             </section>
           ))}
         </div>
+
+        {/* FAQ */}
+        {extras && (
+          <section className="mt-14">
+            <h2 className="text-[19px] font-semibold text-ink">Frequently asked</h2>
+            <div className="mt-4 divide-y divide-line rounded-2xl border border-line bg-raised/40">
+              {extras.faqs.map((f) => (
+                <details key={f.q} className="group px-5 py-4">
+                  <summary className="cursor-pointer list-none text-[14.5px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center justify-between gap-4">
+                      {f.q}
+                      <span aria-hidden className="text-ink-4 transition-transform group-open:rotate-45">+</span>
+                    </span>
+                  </summary>
+                  <p className="pt-2 text-[14px] leading-relaxed text-ink-3">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Related */}
         {others.length ? (
