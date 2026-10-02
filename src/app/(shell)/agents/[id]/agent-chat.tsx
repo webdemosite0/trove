@@ -32,6 +32,8 @@ import { deleteAgent, type AgentRow } from "@/app/actions/agents";
 import type { Recent } from "@/lib/recents";
 import { Recents } from "@/components/ui/recents";
 import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
+import { parseTeamBlocks, shortTask } from "@/lib/team-block";
+import { useTroPresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
 
 interface Turn {
@@ -486,9 +488,31 @@ export function AgentChat({
     };
   }, []);
 
+  // Live "working" presence — powers the blue dot above this Tro everywhere.
   useEffect(() => {
-    if (!stickToBottom.current) return;
-    const el = bottom.current;
+    if (!busy) return;
+    const beat = () => {
+      fetch("/api/tro/presence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: agent.id }),
+      }).catch(() => {});
+    };
+    beat();
+    const iv = setInterval(beat, 20000);
+    return () => {
+      clearInterval(iv);
+      fetch(`/api/tro/presence?agentId=${encodeURIComponent(agent.id)}`, {
+        method: "DELETE",
+      }).catch(() => {});
+    };
+  }, [busy, agent.id]);
+
+  // Presence of the whole team, for the workspace sidebar.
+  const teamPresence = useTroPresence(true);
+
+  useEffect(() => {
+    if (!stickToBottom.current) return;    const el = bottom.current;
     if (!el) return;
     cancelAnimationFrame(scrollRaf.current);
     scrollRaf.current = requestAnimationFrame(() => {
@@ -548,50 +572,142 @@ export function AgentChat({
           return;
         }
         pushActivity("Thinking", agent.role, "run");
-        const held = computerRef.current;
-        const res = await fetch("/api/agent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            agentId: agent.id,
-            messages: history.map(({ role, text: body }) => ({ role, text: body })),
-            timeZone: localTimeZone(),
-            attachments: strip(attachments),
-            browser: held.sessionId
-              ? { sessionId: held.sessionId, pageUrl: held.pageUrl, title: held.title }
-              : null,
-          }),
-        });
-        if (!res.ok || !res.body) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? "Request failed.");
-        }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let full = "";
-        let buffered = "";
-        let raf = 0;
-        const flush = () => {
-          raf = 0;
-          if (!buffered) return;
-          const chunk = buffered;
-          buffered = "";
-          setTurns((t) => t.map((x) => (x.id === replyId ? { ...x, text: x.text + chunk } : x)));
+        // Stream one assistant turn into `rid`, returning the full text.
+        const streamTurn = async (
+          msgs: { role: "user" | "model"; text: string }[],
+          rid: number,
+          withAttachments?: Attachment[],
+        ): Promise<string> => {
+          const held = computerRef.current;
+          const res = await fetch("/api/agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              agentId: agent.id,
+              messages: msgs,
+              timeZone: localTimeZone(),
+              attachments: strip(withAttachments),
+              browser: held.sessionId
+                ? { sessionId: held.sessionId, pageUrl: held.pageUrl, title: held.title }
+                : null,
+            }),
+          });
+          if (!res.ok || !res.body) {
+            const data = await res.json().catch(() => null);
+            throw new Error(data?.error ?? "Request failed.");
+          }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let out = "";
+          let buffered = "";
+          let raf = 0;
+          const flush = () => {
+            raf = 0;
+            if (!buffered) return;
+            const chunk = buffered;
+            buffered = "";
+            setTurns((t) => t.map((x) => (x.id === rid ? { ...x, text: x.text + chunk } : x)));
+          };
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const piece = decoder.decode(value, { stream: true });
+            out += piece;
+            buffered += piece;
+            if (!raf) raf = requestAnimationFrame(flush);
+          }
+          if (raf) cancelAnimationFrame(raf);
+          flush();
+          return out;
         };
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const piece = decoder.decode(value, { stream: true });
-          full += piece;
-          buffered += piece;
-          if (!raf) raf = requestAnimationFrame(flush);
+
+        let full = await streamTurn(
+          history.map(({ role, text: body }) => ({ role, text: body })),
+          replyId,
+          attachments,
+        );
+
+        // Team orchestration: this Tro may have delegated work to teammates
+        // or hired new Tros. Run those blocks, then have the manager
+        // summarize the results for the user.
+        const team = parseTeamBlocks(full);
+        if (team.delegations.length > 0 || team.hires.length > 0) {
+          let shown = team.text;
+          setTurns((t) => t.map((x) => (x.id === replyId ? { ...x, text: shown } : x)));
+          const outcomes: string[] = [];
+
+          for (const h of team.hires.slice(0, 3)) {
+            pushActivity(`Hiring ${h.name}`, h.role, "run");
+            try {
+              const r = await fetch("/api/tro/team/hire", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ byId: agent.id, name: h.name, role: h.role, instructions: h.instructions }),
+              });
+              const d = await r.json().catch(() => null);
+              if (r.ok && d?.ok) {
+                outcomes.push(`Hired **${d.tro.name}** (${d.tro.role}) — they report to ${agent.name}.`);
+                pushActivity(`Hired ${d.tro.name}`, `Reports to ${agent.name}`, "ok");
+              } else {
+                outcomes.push(`Couldn't hire "${h.name}": ${d?.error ?? "request failed"}.`);
+                pushActivity("Hire failed", d?.error ?? "Error", "warn");
+              }
+            } catch {
+              outcomes.push(`Couldn't hire "${h.name}": network error.`);
+              pushActivity("Hire failed", "Network error", "warn");
+            }
+          }
+
+          for (const dg of team.delegations.slice(0, 3)) {
+            pushActivity(`Delegating to ${dg.to}`, shortTask(dg.task), "run");
+            try {
+              const r = await fetch("/api/tro/team/delegate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fromId: agent.id, to: dg.to, task: dg.task }),
+              });
+              const d = await r.json().catch(() => null);
+              if (r.ok && d?.ok && typeof d.reply === "string") {
+                outcomes.push(`**${d.target.name}** finished "${shortTask(dg.task)}":\n\n${d.reply}`);
+                pushActivity(`${d.target.name} replied`, undefined, "ok");
+              } else {
+                outcomes.push(`**${dg.to}** couldn't do it: ${d?.error ?? "request failed"}.`);
+                pushActivity("Delegation failed", d?.error ?? "Error", "warn");
+              }
+            } catch {
+              outcomes.push(`**${dg.to}** couldn't do it: network error.`);
+              pushActivity("Delegation failed", "Network error", "warn");
+            }
+          }
+
+          if (!shown.trim()) {
+            shown = `On it — I've put ${[...team.hires.map((h) => h.name), ...team.delegations.map((d) => d.to)].join(", ")} on this.`;
+            setTurns((t) => t.map((x) => (x.id === replyId ? { ...x, text: shown } : x)));
+          }
+
+          // The manager summarizes teammate results for the user.
+          const followUp =
+            `Team update — fold this into your reply to the user:\n\n${outcomes.join("\n\n---\n\n")}\n\n` +
+            `Relay the outcome concisely in your own voice. Summarize what got done; don't paste raw teammate replies verbatim. Never mention delegation blocks or protocols.`;
+          const summaryId = nextId.current++;
+          setTurns((t) => [...t, { id: summaryId, role: "model" as const, text: "" }]);
+          pushActivity("Wrapping up", "Summarizing teammate results", "run");
+          const summaryMsgs = [
+            ...history.map(({ role, text: body }) => ({ role, text: body })),
+            { role: "model" as const, text: shown },
+            { role: "user" as const, text: followUp },
+          ];
+          // One delegation round per user message — strip any further blocks.
+          full = parseTeamBlocks(await streamTurn(summaryMsgs, summaryId)).text;
+          setTurns((t) => t.map((x) => (x.id === summaryId ? { ...x, text: full } : x)));
         }
-        if (raf) cancelAnimationFrame(raf);
-        flush();
+
         setTurns((t) => {
-          const next = t.map((x) => (x.id === replyId ? { ...x, text: full } : x));
-          void save(next.map(({ role, text: body }) => ({ role, text: body })), agent.name + ": " + (history[0]?.text ?? "chat"));
-          return next;
+          void save(
+            t.map(({ role, text: body }) => ({ role, text: body })),
+            agent.name + ": " + (history[0]?.text ?? "chat"),
+          );
+          return t;
         });
         pushActivity("Task complete", undefined, "ok");
       } catch (e) {
@@ -655,6 +771,7 @@ export function AgentChat({
             activeId={agent.id}
             onNew={() => router.push("/tros?new=1")}
             onDelete={setDeletingId}
+            workingIds={teamPresence}
             className="h-full"
           />
         </div>
@@ -665,7 +782,17 @@ export function AgentChat({
             <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink">
               <Ico icon={FiArrowLeft} motion="nudge" size={17} />
             </Link>
-            <Bot size={36} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
+            <span className="relative shrink-0 pt-1">
+              {busy ? (
+                <span className="absolute -top-[2px] left-1/2 z-10 -translate-x-1/2" role="status" aria-label={`${agent.name} is working`}>
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.7)]" />
+                  </span>
+                </span>
+              ) : null}
+              <Bot size={36} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
+            </span>
             <div className="min-w-0 flex-1">
               <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-ink">
                 <span className="truncate">{agent.name}</span>
