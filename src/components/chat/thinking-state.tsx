@@ -176,7 +176,7 @@ export function ThinkingState({
       <button
         type="button"
         aria-expanded={expanded}
-        onClick={() => setManualExpanded((current) => !(current ?? autoExpanded))}
+        onClick={() => v.rows.length && setManualExpanded((current) => !(current ?? autoExpanded))}
         className="-mx-1.5 flex w-fit items-center gap-2 rounded-[var(--r-control)] px-1.5 py-1 transition-colors duration-100 hover:bg-hover"
       >
         {icon ? (
@@ -230,7 +230,10 @@ export function ThinkingState({
           strokeLinecap="round"
           strokeLinejoin="round"
           className="transition-transform duration-300"
-          style={{ transform: expanded ? "rotate(180deg)" : "rotate(0)" }}
+          style={{
+            transform: expanded ? "rotate(180deg)" : "rotate(0)",
+            display: v.rows.length ? undefined : "none",
+          }}
         >
           <path d="M6 9l6 6 6-6" />
         </svg>

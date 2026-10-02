@@ -13,6 +13,7 @@ import { Markdown } from "@/components/chat/markdown";
 import { withLinkedText } from "@/components/chat/linked-text";
 import { TroveOrb } from "@/components/brand/orb";
 import { Bot } from "@/components/agents/bot";
+import { ThinkingState } from "@/components/chat/thinking-state";
 import { cn } from "@/lib/utils";
 import type { Attachment } from "@/lib/attachments";
 
@@ -36,6 +37,7 @@ export function Message({
   assistantName,
   assistantSeed,
   assistantAccent,
+  thinkMs,
 }: {
   role: "user" | "model";
   text: string;
@@ -115,15 +117,7 @@ export function Message({
     }
     return (
       <div className="nx-in group/msg">
-        <div className="mb-2 flex items-center gap-2">
-          <BrandMark state="working" />
-          <span className="text-[12.5px] font-medium text-ink-3">{brand}</span>
-        </div>
-        <div className="flex items-center gap-1.5 py-1">
-          <span className="size-1.5 animate-pulse rounded-full bg-ink-4" />
-          <span className="size-1.5 animate-pulse rounded-full bg-ink-4 [animation-delay:120ms]" />
-          <span className="size-1.5 animate-pulse rounded-full bg-ink-4 [animation-delay:240ms]" />
-        </div>
+        <ThinkingState variant="Steps" />
       </div>
     );
   }
@@ -144,6 +138,11 @@ export function Message({
         <BrandMark state={pending ? "working" : "idle"} />
         <span className="text-[12.5px] font-medium text-ink-3">{brand}</span>
       </div>
+      {!pending && thinkMs != null && thinkMs > 0 ? (
+        <div className="mb-1.5">
+          <ThinkingState variant="Steps" settled durationSec={thinkMs / 1000} rows={[]} />
+        </div>
+      ) : null}
       {text ? (
         <div className="max-w-none text-[15px] leading-[1.75] text-ink">
           <Markdown text={text} />
