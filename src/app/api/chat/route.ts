@@ -265,7 +265,12 @@ async function handle(req: NextRequest) {
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const modelTurns = compactConversation(turns);
-  const connectorContext = await buildChatConnectorContext(lastUser, {
+  // Scan recent history for @mentions so follow-ups keep integration tools.
+  const mentionScope = turns
+    .slice(-6)
+    .map((t) => (typeof t.text === "string" ? t.text : ""))
+    .join("\n");
+  const connectorContext = await buildChatConnectorContext(mentionScope, {
     connectorTools: true,
   });
   // @mentioned, connected integrations become callable tools for this turn

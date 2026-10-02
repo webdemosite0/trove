@@ -211,10 +211,14 @@ async function githubContext(connected: boolean) {
 }
 
 export async function buildChatConnectorContext(
-  lastUserText: string,
+  mentionScopeText: string,
   opts?: { connectorTools?: boolean },
 ): Promise<ChatConnectorContext> {
-  const requested = requestedServices(lastUserText);
+  // mentionScopeText should cover recent conversation history, not just the
+  // latest message — otherwise follow-ups like "again send" lose the tools
+  // for the @mentioned integration mid-conversation and the model fakes the
+  // action (e.g. saving a library note titled "Email to X" instead of sending).
+  const requested = requestedServices(mentionScopeText);
 
   let connections: Connection[] = [];
   try {
@@ -242,7 +246,7 @@ export async function buildChatConnectorContext(
   for (const service of requested) {
     try {
       if (service === "slack") {
-        liveParts.push(await slackContext(lastUserText, connectedSet.has("slack")));
+        liveParts.push(await slackContext(mentionScopeText, connectedSet.has("slack")));
         continue;
       }
       if (service === "github") {

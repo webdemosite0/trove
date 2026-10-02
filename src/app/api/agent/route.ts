@@ -62,7 +62,13 @@ export async function POST(req: NextRequest) {
   }
 
   const lastUser = [...turns].reverse().find((turn) => turn.role === "user")?.text ?? "";
-  const connectorContext = await buildChatConnectorContext(lastUser, {
+  // Scan recent history for @mentions so follow-up messages ("again send",
+  // "no one") keep the integration tools from earlier in the conversation.
+  const mentionScope = turns
+    .slice(-6)
+    .map((t) => (typeof t.text === "string" ? t.text : ""))
+    .join("\n");
+  const connectorContext = await buildChatConnectorContext(mentionScope, {
     connectorTools: true,
   });
   // @mentioned, connected integrations become callable tools for this turn.

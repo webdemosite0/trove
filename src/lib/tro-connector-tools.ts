@@ -420,6 +420,7 @@ Rules:
 - These blocks are stripped before the user sees your reply, so narrate briefly, then answer from the results.
 - If a call fails, say what happened plainly and suggest the fix (e.g. reconnect the app) — never claim the integration is unavailable when it is connected.
 - For [WRITE] tools, only tell the user the action succeeded when the result contains concrete provider confirmation (a message/thread id, a posted-message timestamp, a created issue/PR number). If the result is empty or ambiguous, say "I couldn't verify it went through" and offer to retry or check — never announce success you can't verify.
+- NEVER substitute a saved note, document, or any library artifact for a connector action. A note titled "Email to X" does NOT send an email. A note titled "Calendar Event" does NOT create or reschedule a calendar event. If you tell the user you are sending, posting, creating, or scheduling something through a connected integration, you MUST emit the connector-tool block in the same reply — narration without the block means nothing happened.
 `;
 }
 
