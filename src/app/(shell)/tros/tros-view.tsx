@@ -30,6 +30,7 @@ import { Ico } from "@/components/ui/ico";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 import { TroListPanel } from "./tro-list";
+import { useTroPresence } from "@/lib/use-presence";
 
 const ACCENTS = ["#6366f1", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24", "#f472b6", "#fb923c", "#2dd4bf", "#e879f9", "#60a5fa"];
 
@@ -185,6 +186,18 @@ function greetingFor(name?: string | null): string {
   return `Good ${part}${first ? `, ${first}` : ""}`;
 }
 
+/** Pulsing blue dot shown above a Tro's avatar while it is working. */
+function BlueDot({ label }: { label: string }) {
+  return (
+    <span className="absolute -top-[2px] left-1/2 z-10 -translate-x-1/2" role="status" aria-label={label}>
+      <span className="relative flex size-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+        <span className="relative inline-flex size-2 rounded-full bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.7)]" />
+      </span>
+    </span>
+  );
+}
+
 export function TrosView({
   agents,
   signedIn,
@@ -203,6 +216,13 @@ export function TrosView({
   const searchRef = useRef<HTMLInputElement>(null);
   const deleting = agents.find((a) => a.id === deletingId) ?? null;
   const router = useRouter();
+  const presence = useTroPresence(true);
+
+  // Org chart: managers (Tros with hires) and their reports.
+  const teams = agents
+    .filter((a) => agents.some((c) => c.parent_id === a.id))
+    .map((m) => ({ lead: m, reports: agents.filter((c) => c.parent_id === m.id) }));
+  const workingCount = agents.filter((a) => presence.has(a.id)).length;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -284,6 +304,7 @@ export function TrosView({
           onDelete={setDeletingId}
           onHoverAgent={(a) => setGlow(a?.accent ?? null)}
           searchRef={searchRef}
+          workingIds={presence}
           className="h-full"
         />
       </aside>
@@ -311,6 +332,7 @@ export function TrosView({
             setDraft(BLANK_DRAFT);
           }}
           onDelete={setDeletingId}
+          workingIds={presence}
           className="h-full"
         />
       </aside>
@@ -354,6 +376,28 @@ export function TrosView({
               Who&apos;s joining the crew today? Describe the job, or pick a specialist below.
             </p>
 
+            {agents.length > 0 ? (
+              <div className="app-block-in mt-4 flex flex-wrap items-center justify-center gap-2" style={{ ["--app-delay" as string]: "100ms" }}>
+                <span className="rounded-full border border-line bg-raised/70 px-3 py-1 text-[11.5px] font-semibold text-ink-2">
+                  {agents.length} Tro{agents.length === 1 ? "" : "s"}
+                </span>
+                {workingCount > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[11.5px] font-semibold text-blue-500">
+                    <span className="relative flex size-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+                      <span className="relative inline-flex size-1.5 rounded-full bg-blue-500" />
+                    </span>
+                    {workingCount} working
+                  </span>
+                ) : null}
+                {teams.length > 0 ? (
+                  <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-[11.5px] font-semibold text-violet-500">
+                    {teams.length} team{teams.length === 1 ? "" : "s"}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -378,6 +422,59 @@ export function TrosView({
                 Hire
               </button>
             </form>
+
+            {teams.length > 0 ? (
+              <div className="app-block-in mt-10 w-full max-w-[600px]" style={{ ["--app-delay" as string]: "170ms" }}>
+                <div className="mb-3 px-1">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Your team</p>
+                  <p className="mt-1 text-[12.5px] text-ink-3">
+                    Tros leading Tros. Tell any of them to hire or delegate — they run their own crew.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {teams.map(({ lead, reports }) => (
+                    <div
+                      key={lead.id}
+                      className="rounded-2xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+                    >
+                      <Link href={`/tros/${lead.id}`} className="group flex items-center gap-3">
+                        <span className="relative shrink-0 pt-1">
+                          {presence.has(lead.id) ? <BlueDot label={`${lead.name} is working`} /> : null}
+                          <Bot size={44} seed={lead.id} accent={lead.accent} state={presence.has(lead.id) ? "working" : "idle"} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[14px] font-semibold text-ink">{lead.name}</span>
+                          <span className="block truncate text-[12px] text-ink-3">{lead.role}</span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-blue-500/12 px-2 py-0.5 text-[10.5px] font-bold text-blue-500">
+                          Leads {reports.length}
+                        </span>
+                        <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+                      </Link>
+                      <div className="ml-[27px] mt-3 space-y-1 border-l-2 border-violet-500/25 pl-3">
+                        {reports.map((r) => (
+                          <Link
+                            key={r.id}
+                            href={`/tros/${r.id}`}
+                            className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-hover"
+                          >
+                            <span className="relative shrink-0 pt-0.5">
+                              {presence.has(r.id) ? <BlueDot label={`${r.name} is working`} /> : null}
+                              <Bot size={32} seed={r.id} accent={r.accent} state={presence.has(r.id) ? "working" : "idle"} />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[13px] font-semibold text-ink">{r.name}</span>
+                              <span className="block truncate text-[11.5px] text-ink-3">{r.role}</span>
+                            </span>
+                            <span className="shrink-0 text-[10.5px] text-ink-4">↳ {lead.name.split(" ")[0]}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="app-stagger mt-6 grid w-full max-w-[600px] gap-2.5 sm:grid-cols-2">
               {STARTERS.map((s) => (

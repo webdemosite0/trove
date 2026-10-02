@@ -47,6 +47,7 @@ export default async function TroPage({
     instructions: str(row.instructions),
     tools: str(row.tools),
     accent: str(row.accent),
+    parent_id: row.parent_id == null ? null : str(row.parent_id),
     created_at: num(row.created_at),
   };
 

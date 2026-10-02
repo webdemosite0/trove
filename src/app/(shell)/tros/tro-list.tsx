@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type RefObject } from "react";
+import { Fragment, useMemo, useState, type RefObject } from "react";
 import Link from "next/link";
 import { FiPlus, FiSearch, FiTrash2, FiX } from "@/components/ui/icons";
 import { Bot } from "@/components/agents/bot";
@@ -25,6 +25,10 @@ export function timeAgo(ts: number): string {
  * Muse-style conversation list, but for Tros: mascot avatar, name,
  * role snippet, recency, hover delete. Shared by the Tros home and
  * the Tro workspace so the list persists like a chat sidebar.
+ *
+ * Renders the team as an org tree: Tros hired by another Tro nest under
+ * their manager. `workingIds` marks Tros that are really working right now
+ * with a blue dot above their avatar.
  */
 export function TroListPanel({
   agents,
@@ -34,6 +38,7 @@ export function TroListPanel({
   onHoverAgent,
   searchRef,
   className,
+  workingIds,
 }: {
   agents: AgentRow[];
   activeId?: string;
@@ -42,13 +47,114 @@ export function TroListPanel({
   onHoverAgent?: (a: AgentRow | null) => void;
   searchRef?: RefObject<HTMLInputElement | null>;
   className?: string;
+  workingIds?: Set<string> | string[];
 }) {
   const [query, setQuery] = useState("");
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const working = useMemo(
+    () => (workingIds instanceof Set ? workingIds : new Set(workingIds ?? [])),
+    [workingIds],
+  );
   const q = query.trim().toLowerCase();
   const filtered = q
     ? agents.filter((a) => `${a.name} ${a.role} ${a.instructions}`.toLowerCase().includes(q))
     : agents;
+
+  const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
+  const childrenOf = useMemo(() => {
+    const m = new Map<string, AgentRow[]>();
+    for (const a of agents) {
+      if (a.parent_id && byId.has(a.parent_id)) {
+        const list = m.get(a.parent_id) ?? [];
+        list.push(a);
+        m.set(a.parent_id, list);
+      }
+    }
+    return m;
+  }, [agents, byId]);
+  // Roots: no manager, or manager no longer exists.
+  const roots = useMemo(
+    () => agents.filter((a) => !a.parent_id || !byId.has(a.parent_id)),
+    [agents, byId],
+  );
+
+  const renderRow = (a: AgentRow, depth: number) => {
+    const active = a.id === activeId;
+    const isWorking = working.has(a.id);
+    const manager = a.parent_id ? byId.get(a.parent_id) : null;
+    return (
+      <div
+        key={a.id}
+        className="group relative"
+        onMouseEnter={() => {
+          setHoverId(a.id);
+          onHoverAgent?.(a);
+        }}
+        onMouseLeave={() => {
+          setHoverId(null);
+          onHoverAgent?.(null);
+        }}
+      >
+        <Link
+          href={`/tros/${a.id}`}
+          aria-current={active ? "page" : undefined}
+          title={manager ? `${a.name} — reports to ${manager.name}` : a.name}
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50",
+            active
+              ? "bg-hover shadow-[inset_2px_0_0_0_#8b5cf6]"
+              : "hover:bg-hover/60 hover:translate-x-px",
+            depth > 0 && "ml-7 border-l-2 border-violet-500/25 pl-2.5",
+          )}
+        >
+          <span className="relative shrink-0 pt-1">
+            {isWorking ? (
+              <span className="absolute -top-[3px] left-1/2 z-10 -translate-x-1/2" role="status" aria-label={`${a.name} is working`}>
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.7)]" />
+                </span>
+              </span>
+            ) : null}
+            <Bot size={38} seed={a.id} accent={a.accent} state={isWorking || hoverId === a.id || active ? "working" : "idle"} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-baseline justify-between gap-2">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-[13.5px] font-semibold text-ink">{a.name}</span>
+                {depth > 0 ? (
+                  <span className="shrink-0 rounded-full bg-violet-500/12 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                    Team
+                  </span>
+                ) : (childrenOf.get(a.id)?.length ?? 0) > 0 ? (
+                  <span className="shrink-0 rounded-full bg-blue-500/12 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.1em] text-blue-500">
+                    Leads {childrenOf.get(a.id)!.length}
+                  </span>
+                ) : null}
+              </span>
+              <span className="shrink-0 text-[10.5px] tabular-nums text-ink-4">{timeAgo(a.created_at)}</span>
+            </span>
+            <span className="mt-0.5 block truncate text-[12px] text-ink-3">
+              {a.role || a.instructions || "Specialist"}
+            </span>
+            {manager ? (
+              <span className="mt-0.5 block truncate text-[10.5px] text-ink-4">
+                ↳ reports to {manager.name}
+              </span>
+            ) : null}
+          </span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => onDelete(a.id)}
+          aria-label={`Delete ${a.name}`}
+          className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-ink-4 opacity-0 transition hover:bg-critical/10 hover:text-critical focus:opacity-100 group-hover:opacity-100"
+        >
+          <Ico icon={FiTrash2} size={14} />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className={cn("flex min-h-0 flex-col bg-canvas", className)}>
@@ -102,54 +208,17 @@ export function TroListPanel({
               <>No Tros yet. Create one to start building your team.</>
             )}
           </p>
+        ) : q ? (
+          // Searching: flat results across the whole team.
+          filtered.map((a) => renderRow(a, 0))
         ) : (
-          filtered.map((a) => {
-            const active = a.id === activeId;
-            return (
-              <div
-                key={a.id}
-                className="group relative"
-                onMouseEnter={() => {
-                  setHoverId(a.id);
-                  onHoverAgent?.(a);
-                }}
-                onMouseLeave={() => {
-                  setHoverId(null);
-                  onHoverAgent?.(null);
-                }}
-              >
-                <Link
-                  href={`/tros/${a.id}`}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50",
-                    active
-                      ? "bg-hover shadow-[inset_2px_0_0_0_#8b5cf6]"
-                      : "hover:bg-hover/60 hover:translate-x-px",
-                  )}
-                >
-                  <Bot size={38} seed={a.id} accent={a.accent} state={hoverId === a.id || active ? "working" : "idle"} />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-[13.5px] font-semibold text-ink">{a.name}</span>
-                      <span className="shrink-0 text-[10.5px] tabular-nums text-ink-4">{timeAgo(a.created_at)}</span>
-                    </span>
-                    <span className="mt-0.5 block truncate text-[12px] text-ink-3">
-                      {a.role || a.instructions || "Specialist"}
-                    </span>
-                  </span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => onDelete(a.id)}
-                  aria-label={`Delete ${a.name}`}
-                  className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-ink-4 opacity-0 transition hover:bg-critical/10 hover:text-critical focus:opacity-100 group-hover:opacity-100"
-                >
-                  <Ico icon={FiTrash2} size={14} />
-                </button>
-              </div>
-            );
-          })
+          // Team org tree: managers first, their hires nested beneath.
+          roots.map((r) => (
+            <Fragment key={r.id}>
+              {renderRow(r, 0)}
+              {(childrenOf.get(r.id) ?? []).map((c) => renderRow(c, 1))}
+            </Fragment>
+          ))
         )}
       </div>
     </div>
