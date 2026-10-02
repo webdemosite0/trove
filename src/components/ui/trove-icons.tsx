@@ -58,61 +58,50 @@ export const TroveHomeIcon = defineIcon("TroveHomeIcon", <>
   <circle cx="15.3" cy="13.2" r="0.9" fill="currentColor" stroke="none" />
 </>);
 
-/** Chat — speech bubble with a tail and a spark. */
+/** Chat — clean speech bubble with a tail. */
 export const TroveChatIcon = defineIcon("TroveChatIcon", <>
-  <rect x="3.5" y="4.5" width="14" height="10.5" rx="5" />
-  <path d="M8 14.5 6.5 19 11 15" />
-  <path
-    d="M18.6 15.2l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"
-    fill="currentColor"
-    stroke="none"
-  />
+  <rect x="3.5" y="4" width="17" height="11.5" rx="5.75" />
+  <path d="M8.2 15.3 6.8 19.6l4.9-4.1" />
 </>);
 
-/** Projects — folder with a notched tab, spine, and tab dot. */
+/** Projects — folder with a notched tab and lid line. */
 export const TroveProjectsIcon = defineIcon("TroveProjectsIcon", <>
   <path d="M3.5 7.2A2.2 2.2 0 0 1 5.7 5h4l2.2 2.6h6.4a2.2 2.2 0 0 1 2.2 2.2v7a2.2 2.2 0 0 1-2.2 2.2H5.7a2.2 2.2 0 0 1-2.2-2.2z" />
   <path d="M3.5 10.4h17" />
-  <circle cx="12.6" cy="6.3" r="0.9" fill="currentColor" stroke="none" />
 </>);
 
-/** Docs — page with folded corner and a bookmark tail. */
+/** Docs — page with folded corner and text lines. */
 export const TroveDocsIcon = defineIcon("TroveDocsIcon", <>
-  <path d="M6.5 3.5h7l4 4V17.5L12 14.6l-5.5 2.9z" />
+  <path d="M6.5 3.5h7l4 4v13h-11z" />
   <path d="M13.5 3.5V8h4" />
-  <path d="M9.3 11h4.2" />
+  <path d="M9.3 11.5h5.4 M9.3 14.8h5.4" />
 </>);
 
-/** Sheets — grid with one highlighted cell. */
+/** Sheets — grid with a header row and one softly highlighted cell. */
 export const TroveSheetsIcon = defineIcon("TroveSheetsIcon", <>
   <rect x="4" y="4.5" width="16" height="15" rx="2.5" />
-  <path d="M4 9.7h16 M4 14.9h16 M9.3 9.7v9.8 M14.6 9.7v9.8" />
-  <rect x="10.1" y="10.5" width="3.7" height="3.6" rx="1" fill="currentColor" stroke="none" opacity="0.85" />
+  <path d="M4 9.5h16 M9.3 9.5V19.5 M14.7 9.5V19.5" />
+  <rect x="10" y="10.2" width="4" height="3.2" rx="1" fill="currentColor" stroke="none" opacity="0.28" />
 </>);
 
-/** Decks — fanned slides with a play mark. */
+/** Decks — stacked slides with a play mark. */
 export const TroveDecksIcon = defineIcon("TroveDecksIcon", <>
-  <path d="M8 4h8.5A2.5 2.5 0 0 1 19 6.5V16" />
-  <rect x="5" y="7.5" width="12" height="10" rx="2" />
-  <path d="M10.2 11.2l3.4 2-3.4 2z" fill="currentColor" stroke="none" />
+  <path d="M7.5 3.5H16a3 3 0 0 1 3 3v9.5" />
+  <rect x="4.5" y="7.5" width="12.5" height="13" rx="2.5" />
+  <path d="M9.7 11.6l4 2.7-4 2.7z" fill="currentColor" stroke="none" />
 </>);
 
-/** Design — bezier pen with anchors and handles. */
+/** Design — classic pen nib, diagonal. */
 export const TroveDesignIcon = defineIcon("TroveDesignIcon", <>
-  <path d="M5 19C9 19 10 14.5 12 12.5s5-2 7-7" />
-  <path d="M5 19v-4.2 M19 5.5h-4.2" />
-  <circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none" />
-  <circle cx="19" cy="5.5" r="1.4" fill="currentColor" stroke="none" />
-  <circle cx="5" cy="14.8" r="1" />
-  <circle cx="14.8" cy="5.5" r="1" />
+  <path d="M4 20l1.1-4.1L16.6 4.4a2.12 2.12 0 0 1 3 3L8.1 18.9z" />
+  <path d="M14.6 6.4l3 3" />
 </>);
 
-/** Sites — globe with an orbit dot. */
+/** Sites — clean globe: meridian ellipse and two latitude lines. */
 export const TroveSitesIcon = defineIcon("TroveSitesIcon", <>
-  <circle cx="12" cy="12" r="7.5" />
-  <ellipse cx="12" cy="12" rx="3.6" ry="7.5" />
-  <path d="M4.9 9.3h14.2 M4.9 14.7h14.2" />
-  <circle cx="17.8" cy="5.2" r="1.3" fill="currentColor" stroke="none" />
+  <circle cx="12" cy="12" r="8" />
+  <ellipse cx="12" cy="12" rx="3.8" ry="8" />
+  <path d="M4.2 9.5h15.6 M4.2 14.5h15.6" />
 </>);
 
 /** Tros — spark bot head with antenna. */
