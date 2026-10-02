@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/icons";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
-import { PanelLeftOpenIcon, PanelLeftCloseIcon, SettingsIcon, CirclePlusIcon } from "@/components/animate-ui/icons";
+import { PanelLeftOpenIcon, PanelLeftCloseIcon, SettingsIcon, CirclePlusIcon, MessageCircleIcon, LayersIcon, BotIcon } from "@/components/animate-ui/icons";
 import { ThemeToggle } from "@/components/shell/theme";
 import { ProductSwitcher, useIsTrosProduct } from "@/components/shell/product-switcher";
 import { Ico, type Motion } from "@/components/ui/ico";
@@ -39,13 +40,14 @@ import { Tooltip } from "@/components/ui/tooltip";
 interface Item {
   href: string;
   label: string;
-  icon: IconType;
-  motion: Motion;
+  icon: IconType | React.ComponentType<{ size?: number; className?: string }>;
+  motion?: Motion;
+  animated?: boolean;
 }
 
 const TROVE_NAV: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
-  { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
+  { href: "/chat", label: "Chat", icon: MessageCircleIcon, animated: true },
   { href: "/projects", label: "Projects", icon: TbFolder, motion: "stack" },
   { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
@@ -55,9 +57,9 @@ const TROVE_NAV: Item[] = [
 ];
 
 const TROS_NAV: Item[] = [
-  { href: "/tros", label: "Home", icon: TbRobot, motion: "ring" },
+  { href: "/tros", label: "Home", icon: BotIcon, animated: true },
   { href: "/tros?new=1", label: "New Tro", icon: FiPlus, motion: "open" },
-  { href: "/artifacts", label: "Artifacts", icon: FiLayers, motion: "scan" },
+  { href: "/artifacts", label: "Artifacts", icon: LayersIcon, animated: true },
 ];
 
 function NavRow({
@@ -82,6 +84,7 @@ function NavRow({
       !item.href.includes("new=1"));
 
   if (compact) {
+    const Icon = item.icon as React.ComponentType<{ size?: number; className?: string }>;
     return (
       <Tooltip label={item.label} side="right">
         <Link
@@ -93,7 +96,11 @@ function NavRow({
             active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
-          <Ico icon={item.icon} motion={item.motion} size={17} active={active} />
+          {item.animated ? (
+            <Icon size={17} className="shrink-0" />
+          ) : (
+            <Ico icon={item.icon as IconType} motion={item.motion} size={17} active={active} />
+          )}
         </Link>
       </Tooltip>
     );
@@ -117,13 +124,17 @@ function NavRow({
           className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-accent"
         />
       ) : null}
-      <Ico
-        icon={item.icon}
-        motion={item.motion}
-        size={17}
-        active={active}
-        className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
-      />
+      {item.animated ? (
+        <item.icon size={17} className={cn("shrink-0", active ? "text-ink" : "text-ink-3")} />
+      ) : (
+        <Ico
+          icon={item.icon as IconType}
+          motion={item.motion}
+          size={17}
+          active={active}
+          className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
+        />
+      )}
       <span className="truncate">{item.label}</span>
     </Link>
   );

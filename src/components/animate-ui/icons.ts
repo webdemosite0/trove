@@ -20,3 +20,6 @@ export { Pause as PauseIcon } from "@/components/animate-ui/icons/pause";
 export { Pin as PinIcon } from "@/components/animate-ui/icons/pin";
 export { PinOff as PinOffIcon } from "@/components/animate-ui/icons/pin-off";
 export { Loader as LoaderIcon } from "@/components/animate-ui/icons/loader";
+export { MessageCircle as MessageCircleIcon } from "@/components/animate-ui/icons/message-circle";
+export { Layers as LayersIcon } from "@/components/animate-ui/icons/layers";
+export { Bot as BotIcon } from "@/components/animate-ui/icons/bot";
