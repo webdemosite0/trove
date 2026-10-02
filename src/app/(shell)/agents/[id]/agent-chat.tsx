@@ -803,12 +803,8 @@ export function AgentChat({
               <p className="truncate text-[12px] text-ink-3">
                 {busy ? (
                   <span className="inline-flex items-center gap-1.5">
-                    Working
-                    <span className="inline-flex items-center gap-[3px]" aria-hidden>
-                      <span className="size-1 animate-bounce rounded-full bg-ink-3" />
-                      <span className="size-1 animate-bounce rounded-full bg-ink-3 [animation-delay:150ms]" />
-                      <span className="size-1 animate-bounce rounded-full bg-ink-3 [animation-delay:300ms]" />
-                    </span>
+                    <span aria-hidden className="muse-thinking-dot size-1.5 rounded-full bg-ink-3" />
+                    <span className="muse-thinking-label">Working</span>
                   </span>
                 ) : (
                   agent.role
