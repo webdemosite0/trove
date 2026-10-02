@@ -11,6 +11,7 @@ export interface AgentRow {
   instructions: string;
   tools: string;
   accent: string;
+  parent_id: string | null;
   created_at: number;
 }
 
@@ -30,6 +31,7 @@ export async function listAgents(): Promise<AgentRow[]> {
     instructions: String(r.instructions),
     tools: String(r.tools),
     accent: String(r.accent),
+    parent_id: r.parent_id == null ? null : String(r.parent_id),
     created_at: Number(r.created_at),
   }));
 }
@@ -154,7 +156,10 @@ export async function createAgent(
 export async function deleteAgent(id: string) {
   const user = await currentUser();
   if (!user) return;
+  // Orphan subordinates so the tree stays intact.
+  await run(`UPDATE agents SET parent_id = NULL WHERE parent_id = ? AND user_id = ?`, [id, user.id]);
   await run(`DELETE FROM agents WHERE id = ? AND user_id = ?`, [id, user.id]);
+  await run(`DELETE FROM tro_presence WHERE agent_id = ? AND user_id = ?`, [id, user.id]);
   revalidatePath("/agents");
   revalidatePath("/tros");
 }

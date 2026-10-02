@@ -39,6 +39,7 @@ PRAGMA journal_mode = WAL;
       instructions TEXT NOT NULL,
       tools TEXT NOT NULL DEFAULT '[]',
       accent TEXT NOT NULL DEFAULT '#3b82f6',
+      parent_id TEXT,
       created_at INTEGER NOT NULL
     );
 
@@ -358,6 +359,11 @@ export const MIGRATIONS: string[] = [
   `CREATE TABLE IF NOT EXISTS tro_artifacts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT 'doc', title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS tro_artifacts_by_agent ON tro_artifacts (agent_id, updated_at DESC)`,
   `CREATE INDEX IF NOT EXISTS tro_artifacts_by_user ON tro_artifacts (user_id, updated_at DESC)`,
+  // Tro teams: hierarchy + live working presence.
+  `ALTER TABLE agents ADD COLUMN parent_id TEXT`,
+  `CREATE INDEX IF NOT EXISTS agents_by_parent ON agents (user_id, parent_id)`,
+  `CREATE TABLE IF NOT EXISTS tro_presence (agent_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_presence_by_user ON tro_presence (user_id, updated_at DESC)`,
 ];
 
 export const REPAIRS = `
