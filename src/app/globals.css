@@ -3,6 +3,32 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* Register theme colors with Tailwind so utilities — including opacity
+ * modifiers like bg-raised/90 — are actually generated. The values below
+ * are the dark defaults; [data-theme="light"] overrides keep working
+ * because utilities reference var(--color-*) at runtime. */
+@theme {
+  --color-canvas: #1b1b1e;
+  --color-rail: #131316;
+  --color-sunk: #232327;
+  --color-raised: #26262b;
+  --color-hover: #303036;
+  --color-ink: #ececec;
+  --color-ink-2: #ececec;
+  --color-ink-3: #a1a1aa;
+  --color-ink-4: #71717a;
+  --color-line: #2e2e34;
+  --color-line-strong: #3f3f46;
+  --color-accent: #8ab4f8;
+  --color-accent-soft: #1a2332;
+  --color-violet: #a0a0a0;
+  --color-positive: #81c995;
+  --color-positive-soft: #1a2a1f;
+  --color-caution: #fdd663;
+  --color-critical: #f28b82;
+  --color-critical-soft: #2a1a1a;
+}
+
 :root {
   --color-canvas: #1b1b1e;
   --color-rail: #131316;
