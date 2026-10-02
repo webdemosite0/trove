@@ -1,13 +1,16 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-/**
- * Shell navigation state.
- *
- * `open` is the mobile drawer. `collapsed` is the desktop rail.
- * Collapse choice persists in localStorage.
- */
+const STORAGE_KEY = "trove-sidebar-collapsed";
+
 const NavContext = createContext<{
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -33,29 +36,29 @@ const NavContext = createContext<{
 export const useNav = () => useContext(NavContext);
 
 export function NavProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpenState] = useState(false);
-  const [collapsed, setCollapsedState] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    try {
-      const saved = window.localStorage.getItem("trove-sidebar-collapsed");
-      return saved === null ? true : saved === "1";
-    } catch {
-      return true;
-    }
-  });
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsSection, setSettingsSection] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  // Always start expanded on the server so SSR matches the first client paint.
+  // After mount, restore the saved preference.
+  const [collapsed, setCollapsedState] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  const setOpen = useCallback((v: boolean) => {
-    setOpenState(v);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved === "1") setCollapsedState(true);
+      if (saved === "0") setCollapsedState(false);
+    } catch {
+      /* ignore */
+    }
+    setReady(true);
   }, []);
 
   const setCollapsed = useCallback((v: boolean) => {
     setCollapsedState(v);
     try {
-      window.localStorage.setItem("trove-sidebar-collapsed", v ? "1" : "0");
+      window.localStorage.setItem(STORAGE_KEY, v ? "1" : "0");
     } catch {
-      /* storage unavailable */
+      /* ignore */
     }
   }, []);
 
@@ -63,13 +66,16 @@ export function NavProvider({ children }: { children: React.ReactNode }) {
     setCollapsedState((prev) => {
       const next = !prev;
       try {
-        window.localStorage.setItem("trove-sidebar-collapsed", next ? "1" : "0");
+        window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
       } catch {
-        /* storage unavailable */
+        /* ignore */
       }
       return next;
     });
   }, []);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<string | null>(null);
 
   const openSettings = useCallback((section?: string) => {
     setSettingsSection(section ?? null);
@@ -80,7 +86,7 @@ export function NavProvider({ children }: { children: React.ReactNode }) {
     () => ({
       open,
       setOpen,
-      collapsed,
+      collapsed: ready ? collapsed : false,
       setCollapsed,
       toggleCollapsed,
       settingsOpen,
@@ -88,7 +94,16 @@ export function NavProvider({ children }: { children: React.ReactNode }) {
       settingsSection,
       openSettings,
     }),
-    [open, setOpen, collapsed, setCollapsed, toggleCollapsed, settingsOpen, settingsSection, openSettings],
+    [
+      open,
+      collapsed,
+      ready,
+      setCollapsed,
+      toggleCollapsed,
+      settingsOpen,
+      settingsSection,
+      openSettings,
+    ],
   );
 
   return <NavContext.Provider value={value}>{children}</NavContext.Provider>;
