@@ -428,6 +428,30 @@ Rules:
 
 const MAX_ARGS_CHARS = 4096;
 const MAX_RESULT_CHARS = 15000;
+/** Hard ceiling for any single connector call — a hung provider must never
+ *  pause the chat forever. */
+const TOOL_CALL_TIMEOUT_MS = 60_000;
+
+/** Reject if `promise` doesn't settle within `ms`. The underlying operation
+ *  keeps running, but the chat moves on instead of pausing forever. */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${Math.round(ms / 1000)}s.`)),
+      ms,
+    );
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 function sanitizeArgs(
   raw: unknown,
@@ -650,11 +674,25 @@ export async function executeConnectorTool(
   try {
     // Session path first (same as /api/composio/execute) — falls back to
     // direct tools.execute, which resolves the user's connected account.
+    // Both are time-boxed: a hung provider must surface as a failed tool,
+    // never as a permanently paused chat.
     try {
-      const created = await createUserSession(userId, { toolkits: [toolkit] });
-      raw = await executeOnSession(created.session, toolSlug, sanitized.args);
+      const created = await withTimeout(
+        createUserSession(userId, { toolkits: [toolkit] }),
+        TOOL_CALL_TIMEOUT_MS,
+        "Connector session",
+      );
+      raw = await withTimeout(
+        executeOnSession(created.session, toolSlug, sanitized.args),
+        TOOL_CALL_TIMEOUT_MS,
+        "Connector tool",
+      );
     } catch {
-      raw = await executeTool(userId, toolSlug, sanitized.args);
+      raw = await withTimeout(
+        executeTool(userId, toolSlug, sanitized.args),
+        TOOL_CALL_TIMEOUT_MS,
+        "Connector tool",
+      );
     }
   } catch (e) {
     const message = e instanceof Error ? e.message : "Tool execution failed.";

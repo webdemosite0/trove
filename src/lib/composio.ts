@@ -440,6 +440,9 @@ export async function listToolkitTools(
   const res = await fetch(url.toString(), {
     headers: { "x-api-key": apiKey, accept: "application/json" },
     cache: "no-store",
+    // Time-boxed: this runs before the chat starts streaming, so a hung
+    // Composio API must fall back to the curated registry, never stall the turn.
+    signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     throw new Error(`Composio tools request failed (${res.status}).`);

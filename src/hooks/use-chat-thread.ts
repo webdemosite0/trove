@@ -256,7 +256,11 @@ export function useChatThread({
                   action: call.action,
                   args: call.args,
                 }),
-                signal: ac.signal,
+                // Respect the user's stop button, but never hang forever.
+                signal: AbortSignal.any([
+                  ac.signal,
+                  AbortSignal.timeout(90_000),
+                ]),
               });
               const d = await r.json().catch(() => null);
               outcomes.push(

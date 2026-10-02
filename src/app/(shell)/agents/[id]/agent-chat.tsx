@@ -660,6 +660,8 @@ export function AgentChat({
                     action: call.action,
                     args: call.args,
                   }),
+                  // A hung tool call must fail loudly, never pause the chat.
+                  signal: AbortSignal.timeout(90_000),
                 });
                 const d = await r.json().catch(() => null);
                 if (r.ok && d?.ok) {
