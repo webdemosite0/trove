@@ -102,8 +102,8 @@ export function ConnectorMentionMenu({
       className={cn(
         "absolute z-40 overflow-hidden rounded-2xl border border-line bg-raised/98 shadow-[0_18px_50px_rgba(0,0,0,.16)] backdrop-blur-xl",
         compact
-          ? "bottom-[54px] left-2 right-2"
-          : "bottom-[72px] left-3 w-[min(340px,calc(100%-24px))]",
+          ? "bottom-full mb-2 left-2 right-2"
+          : "bottom-full mb-2 left-3 w-[min(340px,calc(100%-24px))]",
         className,
       )}
       onPointerDown={(event) => event.preventDefault()}
