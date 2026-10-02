@@ -222,27 +222,63 @@ export function Sidebar({
   balance?: Balance | null;
 }) {
   const pathname = usePathname() || "/";
-  const { open, setOpen, collapsed, setCollapsed, openSettings } = useNav();
+  const { open, setOpen, collapsed, toggleCollapsed, openSettings } = useNav();
   const closeMobile = () => setOpen(false);
-  useEffect(() => { setOpen(false); }, [pathname, setOpen]);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname, setOpen]);
+
+  // Escape + body scroll lock while mobile drawer is open
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, setOpen]);
+
   const isTros = useIsTrosProduct(pathname);
 
   const renderBody = (c: boolean) => (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Header */}
       <div className={cn("flex shrink-0 items-center gap-2 px-3", c ? "flex-col py-4" : "h-16")}>
         <ProductSwitcher collapsed={c} onNavigate={closeMobile} />
         <div className={cn("flex items-center gap-1", c ? "flex-col" : "ml-auto")}>
-          <button type="button" className="grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden" onClick={closeMobile} aria-label="Close menu">
+          <button
+            type="button"
+            className="grid size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              closeMobile();
+            }}
+            aria-label="Close menu"
+          >
             <FiX size={18} />
           </button>
-          <button type="button" className="hover-glow grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink max-lg:hidden" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          <button
+            type="button"
+            className="hover-glow hidden size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:grid"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleCollapsed();
+            }}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
             {collapsed ? <PanelLeftOpenIcon size={16} /> : <PanelLeftCloseIcon size={16} />}
           </button>
         </div>
       </div>
 
-      {/* New action */}
       <div className="shrink-0 px-3 pb-2">
         {(() => {
           const btn = (
@@ -267,7 +303,6 @@ export function Sidebar({
         })()}
       </div>
 
-      {/* Nav */}
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2.5 pb-3">
         {isTros ? (
           <>
@@ -290,7 +325,6 @@ export function Sidebar({
         )}
       </nav>
 
-      {/* Footer */}
       <div className="relative z-10 shrink-0 space-y-2.5 border-t border-line bg-rail/80 p-3 backdrop-blur-sm">
         {user ? (
           c ? (
@@ -355,9 +389,20 @@ export function Sidebar({
         {renderBody(collapsed)}
       </aside>
       {open ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" aria-label="Close menu" onClick={closeMobile} />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,300px)] flex-col overflow-hidden rounded-r-[24px] border-r border-line bg-rail shadow-[0_24px_64px_-16px_rgb(0_0_0/0.4)]">
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+            aria-label="Close menu"
+            onClick={(e) => {
+              e.preventDefault();
+              closeMobile();
+            }}
+          />
+          <aside
+            className="absolute inset-y-0 left-0 flex w-[min(88vw,300px)] flex-col overflow-hidden rounded-r-[24px] border-r border-line bg-rail shadow-[0_24px_64px_-16px_rgb(0_0_0/0.4)]"
+            onClick={(e) => e.stopPropagation()}
+          >
             {renderBody(false)}
           </aside>
         </div>
