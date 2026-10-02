@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/icons";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
+import { PanelLeftOpenIcon, PanelLeftCloseIcon, SettingsIcon, CirclePlusIcon } from "@/components/animate-ui/icons";
 import { ThemeToggle } from "@/components/shell/theme";
 import { ProductSwitcher, useIsTrosProduct } from "@/components/shell/product-switcher";
 import { Ico, type Motion } from "@/components/ui/ico";
@@ -210,7 +211,11 @@ export function Sidebar({
           <FiX size={18} />
         </button>
         <button type="button" className="grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink max-lg:hidden" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
-          <Ico icon={FiSidebar} motion="panel" size={16} />
+          {collapsed ? (
+            <PanelLeftOpenIcon size={16} />
+          ) : (
+            <PanelLeftCloseIcon size={16} />
+          )}
         </button>
       </div>
       <div className="shrink-0 px-3 pb-3">
@@ -225,7 +230,7 @@ export function Sidebar({
                 c ? "mx-auto size-10 rounded-full" : "h-9 w-full rounded-full",
               )}
             >
-              <FiPlus size={16} />
+              <CirclePlusIcon size={16} />
               {!c ? <span>{isTros ? "New Tro" : "New chat"}</span> : null}
             </Link>
           );
@@ -269,7 +274,7 @@ export function Sidebar({
             <>
               <Tooltip label="Settings" side="top">
                 <button type="button" onClick={() => { closeMobile(); openSettings("general"); }} aria-label="Settings" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
-                  <Ico icon={FiSettings} motion="spin" size={16} className="text-ink" />
+                  <SettingsIcon size={16} />
                 </button>
               </Tooltip>
               <Tooltip label="Plan" side="top">

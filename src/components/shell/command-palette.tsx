@@ -23,6 +23,7 @@ import {
   FiClock,
   FiPlus,
 } from "@/components/ui/icons";
+import { SearchIcon } from "@/components/animate-ui/icons";
 import { cn } from "@/lib/utils";
 
 interface Command {
@@ -214,7 +215,7 @@ export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
       />
       <div className="relative w-full max-w-[580px] overflow-hidden rounded-2xl border border-line bg-raised shadow-2xl">
         <div className="flex items-center gap-2 border-b border-line px-4">
-          <TbSearch size={16} className="shrink-0 text-ink-4" aria-hidden />
+          <SearchIcon size={16} className="shrink-0 text-ink-4" aria-hidden />
           <input
             ref={inputRef}
             value={q}

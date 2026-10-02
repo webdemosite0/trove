@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { FiCopy, FiCheck, FiRefreshCw, FiThumbsUp, FiThumbsDown, FiFile } from "@/components/ui/icons";
+import { FiCheck, FiFile } from "@/components/ui/icons";
+import {
+  ClipboardCheckIcon,
+  RotateCcwIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+} from "@/components/animate-ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { Markdown } from "@/components/chat/markdown";
 import { withLinkedText } from "@/components/chat/linked-text";
@@ -17,35 +23,6 @@ function humanSize(n: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function Action({
-  icon,
-  label,
-  motion,
-  onClick,
-  active,
-}: {
-  icon: typeof FiCopy;
-  label: string;
-  motion?: Motion;
-  onClick?: () => void;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={cn(
-        "grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink",
-        active && "text-accent",
-      )}
-    >
-      <Ico icon={icon} motion={motion} size={15} />
-    </button>
-  );
 }
 
 export function Message({
@@ -188,7 +165,7 @@ export function Message({
               onClick={onRegenerate}
               className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-raised px-4 py-2 text-[13px] font-medium text-ink transition hover:bg-hover"
             >
-              <Ico icon={FiRefreshCw} motion="spin" size={14} />
+              <RotateCcwIcon size={14} />
               Try again
             </button>
           ) : null}
@@ -196,24 +173,50 @@ export function Message({
       )}
       {!pending ? (
         <div className="mt-2 flex items-center gap-0.5 opacity-0 transition group-hover/msg:opacity-100">
-          <Action icon={copied ? FiCheck : FiCopy} label="Copy" motion="pop" onClick={() => void copy()} />
+          <button
+            type="button"
+            onClick={() => void copy()}
+            aria-label="Copy"
+            title="Copy"
+            className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+          >
+            {copied ? <FiCheck size={15} /> : <ClipboardCheckIcon size={15} />}
+          </button>
           {onRegenerate ? (
-            <Action icon={FiRefreshCw} label="Regenerate" motion="spin" onClick={onRegenerate} />
+            <button
+              type="button"
+              onClick={onRegenerate}
+              aria-label="Regenerate"
+              title="Regenerate"
+              className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+            >
+              <RotateCcwIcon size={15} />
+            </button>
           ) : null}
-          <Action
-            icon={FiThumbsUp}
-            label="Good"
-            motion="pop"
-            active={vote === "up"}
+          <button
+            type="button"
+            aria-label="Good"
+            title="Good"
             onClick={() => setVote((v) => (v === "up" ? null : "up"))}
-          />
-          <Action
-            icon={FiThumbsDown}
-            label="Bad"
-            motion="pop"
-            active={vote === "down"}
+            className={cn(
+              "grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink",
+              vote === "up" && "text-accent",
+            )}
+          >
+            <ThumbsUpIcon size={15} />
+          </button>
+          <button
+            type="button"
+            aria-label="Bad"
+            title="Bad"
             onClick={() => setVote((v) => (v === "down" ? null : "down"))}
-          />
+            className={cn(
+              "grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink",
+              vote === "down" && "text-accent",
+            )}
+          >
+            <ThumbsDownIcon size={15} />
+          </button>
         </div>
       ) : null}
     </div>

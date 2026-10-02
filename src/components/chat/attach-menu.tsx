@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { IconType } from "@/components/ui/icons";
-import { FiPlus, TbPhoto, TbFileText, TbFileCode, TbPaperclip } from "@/components/ui/icons";
+import { TbPhoto, TbFileText, TbFileCode, TbPaperclip } from "@/components/ui/icons";
+import { CirclePlusIcon } from "@/components/animate-ui/icons";
 import { Ico, type Motion } from "@/components/ui/ico";
 import { cn } from "@/lib/utils";
 
@@ -82,9 +83,7 @@ export function AttachMenu({
           compact ? "size-7" : "size-9",
         )}
       >
-        <Ico
-          icon={FiPlus}
-          motion="open"
+        <CirclePlusIcon
           size={compact ? 15 : 17}
           className={cn("transition-transform duration-[var(--t-hover)]", open && "rotate-45")}
         />

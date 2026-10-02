@@ -13,6 +13,7 @@ import {
   FiSquare,
 } from "@/components/ui/icons";
 import { Ico } from "@/components/ui/ico";
+import { SendIcon, LoaderIcon } from "@/components/animate-ui/icons";
 import { useVoice } from "@/components/chat/use-voice";
 import { ModePicker } from "@/components/chat/mode-picker";
 import { AttachMenu } from "@/components/chat/attach-menu";
@@ -416,9 +417,9 @@ export function Composer({
             )}
           >
             {busy && !hasContent ? (
-              <FiLoader size={compact ? 14 : 16} className="animate-spin" />
+              <LoaderIcon size={compact ? 14 : 16} />
             ) : (
-              <Ico icon={FiArrowUp} motion="send" size={compact ? 15 : 17} />
+              <SendIcon size={compact ? 15 : 17} />
             )}
           </button>
         )}
