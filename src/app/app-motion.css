@@ -77,17 +77,29 @@
   }
 }
 
-/* Pixel-grid thinking loader */
-@keyframes pixel-on {
-  0%, 100% { opacity: 0.12; }
-  40% { opacity: 0.95; }
-  70% { opacity: 0.35; }
+/* Muse-style thinking — one calm breathing dot + soft label pulse. */
+@keyframes muse-think {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
 }
 
-@keyframes shimmer-text {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+@keyframes muse-think-label {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Static dot + label when motion is reduced. */
+  .muse-thinking-dot,
+  .muse-thinking-label {
+    animation: none !important;
+    opacity: 0.8 !important;
+    transform: none !important;
+  }
+}
+
+.muse-thinking-dot { animation: muse-think 2s ease-in-out infinite; }
+.muse-thinking-label { animation: muse-think-label 2s ease-in-out infinite; }
 
 @keyframes pop-in {
   from { opacity: 0; transform: scale(0.96) translateY(4px); }
