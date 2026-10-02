@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FiArrowUp, FiLoader, FiMic } from "@/components/ui/icons";
 import { useVoice } from "@/components/chat/use-voice";
+import { appendDictation } from "@/lib/dictation";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,7 +30,7 @@ export function PromptBar({
   const ref = useRef<HTMLTextAreaElement>(null);
 
   const voice = useVoice((text) =>
-    setValue((v) => (v ? `${v} ${text}` : text)),
+    setValue((v) => appendDictation(v, text)),
   );
 
   const ready = value.trim().length > 0 && !disabled && !busy;

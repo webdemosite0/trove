@@ -15,6 +15,7 @@ import {
 import { Ico } from "@/components/ui/ico";
 import { SendIcon, LoaderIcon } from "@/components/animate-ui/icons";
 import { useVoice } from "@/components/chat/use-voice";
+import { appendDictation } from "@/lib/dictation";
 import { ModePicker } from "@/components/chat/mode-picker";
 import { AttachMenu } from "@/components/chat/attach-menu";
 import { ConnectorChip } from "@/components/chat/connector-chip";
@@ -72,7 +73,7 @@ export function Composer({
   const picker = useRef<HTMLInputElement>(null);
 
   const voice = useVoice((text) =>
-    setValue((v) => (v ? `${v} ${text}` : text)),
+    setValue((v) => appendDictation(v, text)),
   );
 
   const locked = disabled && !onStop;
@@ -263,7 +264,7 @@ export function Composer({
 
       {voice.listening ? (
         <p className={cn("text-[12.5px] text-accent", compact ? "px-3 pt-2" : "px-4 pt-3")}>
-          Listening — speak now
+          Listening — say “full stop”, “comma”, “new line”…
         </p>
       ) : null}
 
