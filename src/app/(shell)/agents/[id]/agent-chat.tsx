@@ -36,6 +36,7 @@ import { parseTeamBlocks, shortTask } from "@/lib/team-block";
 import {
   parseConnectorToolBlocks,
   stripConnectorToolBlocks,
+  toolCallLabel,
 } from "@/lib/tool-block";
 import { useTroPresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
@@ -646,7 +647,8 @@ export function AgentChat({
             );
             const outcomes: string[] = [];
             for (const call of parsed.calls.slice(0, 3)) {
-              pushActivity(`Using ${call.service}`, call.action, "run");
+              const toolLabel = toolCallLabel(call);
+              pushActivity(`Using ${call.service}`, toolLabel, "run");
               try {
                 const r = await fetch("/api/tro/tools", {
                   method: "POST",
@@ -654,6 +656,7 @@ export function AgentChat({
                   body: JSON.stringify({
                     agentId: agent.id,
                     service: call.service,
+                    tool: call.tool,
                     action: call.action,
                     args: call.args,
                   }),
@@ -661,22 +664,22 @@ export function AgentChat({
                 const d = await r.json().catch(() => null);
                 if (r.ok && d?.ok) {
                   outcomes.push(
-                    `**${call.service}.${call.action}** result:\n\n${d.result ?? ""}`,
+                    `**${toolLabel}** result:\n\n${d.result ?? ""}`,
                   );
                   pushActivity(
-                    `${call.service} ${call.action}`,
+                    toolLabel,
                     "Done",
                     "ok",
                   );
                 } else {
                   outcomes.push(
-                    `**${call.service}.${call.action}** failed: ${d?.error ?? "request failed"}.`,
+                    `**${toolLabel}** failed: ${d?.error ?? "request failed"}.`,
                   );
                   pushActivity("Tool failed", d?.error ?? "Error", "warn");
                 }
               } catch {
                 outcomes.push(
-                  `**${call.service}.${call.action}** failed: network error.`,
+                  `**${toolLabel}** failed: network error.`,
                 );
                 pushActivity("Tool failed", "Network error", "warn");
               }

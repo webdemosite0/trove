@@ -7,6 +7,11 @@ import type { ModeId } from "@/lib/modes";
 import { localTimeZone } from "@/lib/context";
 import type { LocalProjectFile } from "@/lib/local-project";
 import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
+import {
+  parseConnectorToolBlocks,
+  stripConnectorToolBlocks,
+  toolCallLabel,
+} from "@/lib/tool-block";
 
 export interface Turn {
   id: number;
@@ -166,63 +171,133 @@ export function useChatThread({
       setError(null);
       thinkStartedAt.current = Date.now();
       const replyId = nextId.current++;
+      let currentReplyId = replyId;
       setTurns((t) => [...t, { id: replyId, role: "model", text: "" }]);
       try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: history.map(({ role, text }) => ({ role, text })),
-            mode,
-            model: "auto",
-            projectId,
-            localProject: localProject
-              ? { name: localProject.name, files: localProject.files.slice(0, 12) }
-              : null,
-            timeZone: localTimeZone(),
-            attachments: files?.map(({ name, mimeType, size, data, kind }) => ({
-              name, mimeType, size, data, kind,
-            })),
-          }),
-          signal: ac.signal,
-        });
-        if (!res.ok || !res.body) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? "Request failed (" + res.status + ").");
-        }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffered = "";
-        let fullReply = "";
-        let raf = 0;
-        const flush = () => {
-          raf = 0;
-          if (!buffered) return;
-          const chunk = buffered;
-          buffered = "";
-          setTurns((t) => t.map((x) => (x.id === replyId ? { ...x, text: x.text + chunk } : x)));
+        // Stream one assistant turn into `rid`, returning the full text.
+        const streamInto = async (
+          msgs: { role: "user" | "model"; text: string }[],
+          rid: number,
+          withAttachments?: Attachment[],
+        ): Promise<string> => {
+          const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: msgs,
+              mode,
+              model: "auto",
+              projectId,
+              localProject: localProject
+                ? { name: localProject.name, files: localProject.files.slice(0, 12) }
+                : null,
+              timeZone: localTimeZone(),
+              attachments: withAttachments?.map(({ name, mimeType, size, data, kind }) => ({
+                name, mimeType, size, data, kind,
+              })),
+            }),
+            signal: ac.signal,
+          });
+          if (!res.ok || !res.body) {
+            const data = await res.json().catch(() => null);
+            throw new Error(data?.error ?? "Request failed (" + res.status + ").");
+          }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffered = "";
+          let out = "";
+          let raf = 0;
+          const flush = () => {
+            raf = 0;
+            if (!buffered) return;
+            const chunk = buffered;
+            buffered = "";
+            setTurns((t) => t.map((x) => (x.id === rid ? { ...x, text: x.text + chunk } : x)));
+          };
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const piece = decoder.decode(value, { stream: true });
+            out += piece;
+            buffered += piece;
+            if (!raf) raf = requestAnimationFrame(flush);
+          }
+          if (raf) cancelAnimationFrame(raf);
+          flush();
+          return out;
         };
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const piece = decoder.decode(value, { stream: true });
-          fullReply += piece;
-          buffered += piece;
-          if (!raf) raf = requestAnimationFrame(flush);
+
+        const convo: { role: "user" | "model"; text: string }[] = history.map(
+          ({ role, text }) => ({ role, text }),
+        );
+        let fullReply = await streamInto(convo, replyId, files);
+
+        // Connector tools: the agent can call @mentioned integrations
+        // mid-turn. Run any connector-tool blocks, feed the results back,
+        // and let the agent answer from them — all inside this user turn.
+        let toolRound = 0;
+        let parsed = parseConnectorToolBlocks(fullReply);
+        while (parsed.calls.length > 0 && toolRound < 3 && !ac.signal.aborted) {
+          toolRound++;
+          const shown = parsed.text;
+          setTurns((t) =>
+            t.map((x) => (x.id === currentReplyId ? { ...x, text: shown } : x)),
+          );
+          const outcomes: string[] = [];
+          for (const call of parsed.calls.slice(0, 3)) {
+            const label = toolCallLabel(call);
+            try {
+              const r = await fetch("/api/tro/tools", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  service: call.service,
+                  tool: call.tool,
+                  action: call.action,
+                  args: call.args,
+                }),
+                signal: ac.signal,
+              });
+              const d = await r.json().catch(() => null);
+              outcomes.push(
+                r.ok && d?.ok
+                  ? `**${label}** result:\n\n${d.result ?? ""}`
+                  : `**${label}** failed: ${d?.error ?? "request failed"}.`,
+              );
+            } catch (e) {
+              if (e instanceof DOMException && e.name === "AbortError") break;
+              outcomes.push(`**${label}** failed: network error.`);
+            }
+          }
+          if (ac.signal.aborted) break;
+          convo.push({ role: "model", text: shown });
+          convo.push({
+            role: "user",
+            text:
+              `Connector tool results — use them to answer the user:\n\n${outcomes.join("\n\n---\n\n")}\n\n` +
+              `Answer in your own voice using these results. Never mention tool blocks or protocols. ` +
+              `If a call failed, say what happened plainly and suggest the fix.`,
+          });
+          const followUpId = nextId.current++;
+          setTurns((t) => [...t, { id: followUpId, role: "model", text: "" }]);
+          fullReply = await streamInto(convo, followUpId);
+          parsed = parseConnectorToolBlocks(fullReply);
+          currentReplyId = followUpId;
         }
-        if (raf) cancelAnimationFrame(raf);
-        flush();
+        // Strip any leftover blocks (over the round cap) from the reply.
+        fullReply = stripConnectorToolBlocks(fullReply);
+
         setTurns((t) => {
           const elapsed = thinkStartedAt.current ? Date.now() - thinkStartedAt.current : undefined;
           const next = t.map((x) =>
-            x.id === replyId ? { ...x, text: fullReply, thinkMs: elapsed } : x,
+            x.id === currentReplyId ? { ...x, text: fullReply, thinkMs: elapsed } : x,
           );
           void save(next.map(({ role, text }) => ({ role, text })), next[0]?.text);
           return next;
         });
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
-        setTurns((t) => t.filter((x) => x.id !== replyId));
+        setTurns((t) => t.filter((x) => x.id !== currentReplyId));
         setError(e instanceof Error ? e.message : "Something went wrong.");
       } finally {
         setBusy(false);
