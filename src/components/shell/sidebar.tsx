@@ -6,31 +6,28 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { IconType } from "@/components/ui/icons";
 import {
-  FiX,
-  FiUser,
-  FiLogOut,
-  FiChevronRight,
-  FiSettings,
-  FiCreditCard,
-  FiSidebar,
-  TbLayoutDashboard,
-  TbFiles,
-  TbTable,
-  TbPresentation,
-  TbPalette,
-  TbFolder,
-  TbHelpCircle,
-  TbWorld,
-} from "@/components/ui/icons";
+  TroveHomeIcon,
+  TroveChatIcon,
+  TroveProjectsIcon,
+  TroveDocsIcon,
+  TroveSheetsIcon,
+  TroveDecksIcon,
+  TroveDesignIcon,
+  TroveSitesIcon,
+  TroveTrosIcon,
+  TroveArtifactsIcon,
+  TroveNewChatIcon,
+  TroveSettingsIcon,
+  TroveBillingIcon,
+  TroveAccountIcon,
+  TroveLogoutIcon,
+  TroveCloseIcon,
+  TroveCollapseIcon,
+  TroveHelpIcon,
+  TroveChevronRightIcon,
+} from "@/components/ui/trove-icons";
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
-import {
-  SettingsIcon,
-  CirclePlusIcon,
-  MessageCircleIcon,
-  LayersIcon,
-  BotIcon,
-} from "@/components/animate-ui/icons";
 import { ThemeToggle } from "@/components/shell/theme";
 import { ProductSwitcher, useIsTrosProduct } from "@/components/shell/product-switcher";
 import { Ico, type Motion } from "@/components/ui/ico";
@@ -56,26 +53,25 @@ interface Item {
   label: string;
   icon: IconType | React.ComponentType<{ size?: number; className?: string }>;
   motion?: Motion;
-  animated?: boolean;
 }
 
 const TROVE_WORKSPACE: Item[] = [
-  { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
-  { href: "/chat", label: "Chat", icon: MessageCircleIcon, animated: true },
-  { href: "/projects", label: "Projects", icon: TbFolder, motion: "stack" },
+  { href: "/dashboard", label: "Home", icon: TroveHomeIcon, motion: "panel" },
+  { href: "/chat", label: "Chat", icon: TroveChatIcon, motion: "send" },
+  { href: "/projects", label: "Projects", icon: TroveProjectsIcon, motion: "stack" },
 ];
 
 const TROVE_CREATE: Item[] = [
-  { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
-  { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
-  { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
-  { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
-  { href: "/websites", label: "Sites", icon: TbWorld, motion: "grow" },
+  { href: "/documents", label: "Docs", icon: TroveDocsIcon, motion: "stack" },
+  { href: "/spreadsheets", label: "Sheets", icon: TroveSheetsIcon, motion: "scan" },
+  { href: "/slides", label: "Decks", icon: TroveDecksIcon, motion: "launch" },
+  { href: "/design", label: "Design", icon: TroveDesignIcon, motion: "hue" },
+  { href: "/websites", label: "Sites", icon: TroveSitesIcon, motion: "grow" },
 ];
 
 const TROS_NAV: Item[] = [
-  { href: "/tros", label: "Home", icon: BotIcon, animated: true },
-  { href: "/artifacts", label: "Artifacts", icon: LayersIcon, animated: true },
+  { href: "/tros", label: "Home", icon: TroveTrosIcon, motion: "sparkle" },
+  { href: "/artifacts", label: "Artifacts", icon: TroveArtifactsIcon, motion: "lift" },
 ];
 
 function isActive(item: Item, pathname: string): boolean {
@@ -99,10 +95,6 @@ function isActive(item: Item, pathname: string): boolean {
 /** Icons never intercept pointer events — clicks land on the link. */
 function NavIcon({ item, active }: { item: Item; active: boolean }) {
   const cls = cn("pointer-events-none shrink-0", active ? "text-ink" : "text-ink-3");
-  if (item.animated) {
-    const Icon = item.icon as React.ComponentType<{ size?: number; className?: string }>;
-    return <Icon size={18} className={cls} />;
-  }
   return (
     <Ico
       icon={item.icon as IconType}
@@ -222,7 +214,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
             {user.effectivePlan || user.plan} plan
           </span>
         </span>
-        <FiChevronRight
+        <TroveChevronRightIcon
           size={14}
           className={cn(
             "pointer-events-none shrink-0 text-ink-3 transition-transform duration-200",
@@ -238,9 +230,9 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
         >
           {(
             [
-              { label: "Settings", icon: FiSettings, section: "general" },
-              { label: "Billing", icon: FiCreditCard, section: "wallet" },
-              { label: "Account", icon: FiUser, section: "general" },
+              { label: "Settings", icon: TroveSettingsIcon, section: "general" },
+              { label: "Billing", icon: TroveBillingIcon, section: "wallet" },
+              { label: "Account", icon: TroveAccountIcon, section: "general" },
             ] as const
           ).map((m) => (
             <button
@@ -261,7 +253,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
               role="menuitem"
               className="flex w-full min-w-0 items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-critical transition-colors hover:bg-hover"
             >
-              <FiLogOut size={15} className="pointer-events-none shrink-0" />
+              <TroveLogoutIcon size={15} className="pointer-events-none shrink-0" />
               <span className="truncate">Sign out</span>
             </button>
           </form>
@@ -351,7 +343,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
           }}
           aria-label="Close menu"
         >
-          <FiX size={18} className="pointer-events-none" />
+          <TroveCloseIcon size={18} className="pointer-events-none" />
         </button>
         <button
           type="button"
@@ -364,7 +356,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
           aria-label={c ? "Expand sidebar" : "Collapse sidebar"}
           title={c ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <FiSidebar size={17} className="pointer-events-none" />
+          <TroveCollapseIcon size={17} className="pointer-events-none" />
         </button>
       </div>
 
@@ -381,7 +373,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
                 c ? "mx-auto size-11 rounded-2xl" : "h-10 w-full rounded-2xl",
               )}
             >
-              <CirclePlusIcon size={17} className="pointer-events-none shrink-0" />
+              <TroveNewChatIcon size={17} className="pointer-events-none shrink-0" />
               {!c ? <span className="truncate">New {isTros ? "Tro" : "chat"}</span> : null}
             </Link>
           );
@@ -480,10 +472,10 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
                   openSettings("general");
                 }}
               >
-                <SettingsIcon size={16} />
+                <TroveSettingsIcon size={16} />
               </FooterButton>
               <FooterButton label="Plan" href="/plans">
-                <Ico icon={FiCreditCard} motion="pop" size={16} />
+                <Ico icon={TroveBillingIcon} motion="pop" size={16} />
               </FooterButton>
               <FooterButton
                 label="Help"
@@ -492,7 +484,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
                   openSettings("help");
                 }}
               >
-                <Ico icon={TbHelpCircle} motion="ring" size={16} />
+                <Ico icon={TroveHelpIcon} motion="ring" size={16} />
               </FooterButton>
               <span className="min-w-0 flex-1" />
               <ThemeToggle />
