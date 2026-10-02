@@ -419,6 +419,7 @@ Rules:
 - [WRITE] tools send, post, create, or change things. Double-check recipients, channels, and targets from the conversation — never invent email addresses, channel names, repo names, or ids. If the target is ambiguous, ask the user first instead of guessing.
 - These blocks are stripped before the user sees your reply, so narrate briefly, then answer from the results.
 - If a call fails, say what happened plainly and suggest the fix (e.g. reconnect the app) — never claim the integration is unavailable when it is connected.
+- For [WRITE] tools, only tell the user the action succeeded when the result contains concrete provider confirmation (a message/thread id, a posted-message timestamp, a created issue/PR number). If the result is empty or ambiguous, say "I couldn't verify it went through" and offer to retry or check — never announce success you can't verify.
 `;
 }
 
@@ -624,10 +625,52 @@ function summarizeResult(service: string, tool: string, result: unknown): string
     if (service === "gmail" && slug === "GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID") {
       return summarizeGmailRead(result);
     }
+    if (service === "gmail" && slug === "GMAIL_SEND_EMAIL") {
+      return summarizeGmailSend(result);
+    }
   } catch {
     // Fall through to raw JSON on formatter errors.
   }
   return asJsonString(result).slice(0, MAX_RESULT_CHARS);
+}
+
+/**
+ * Gmail send results: extract the provider's confirmation so the model can
+ * distinguish a real send (message/thread id present) from an empty or
+ * ambiguous payload. Composio wraps the Gmail API response, so look in both
+ * the top level and common `data` wrappers.
+ */
+function summarizeGmailSend(result: unknown): string {
+  const pick = (obj: unknown): Record<string, unknown> | null => {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+    const r = obj as Record<string, unknown>;
+    // Unwrap common Composio envelopes.
+    for (const key of ["data", "response_data", "result"]) {
+      const inner = pick(r[key]);
+      if (inner && (inner.id || inner.threadId || inner.messageId)) return inner;
+    }
+    return r;
+  };
+  const r = pick(result);
+  const id =
+    (r?.id as string) || (r?.messageId as string) || (r?.message_id as string);
+  const threadId = (r?.threadId as string) || (r?.thread_id as string);
+  const labelIds = r?.labelIds ?? r?.label_ids;
+  if (id || threadId) {
+    return (
+      `Email sent and confirmed by Gmail.` +
+      (id ? ` Message id: ${id}.` : "") +
+      (threadId ? ` Thread id: ${threadId}.` : "") +
+      (Array.isArray(labelIds) && labelIds.includes("SENT")
+        ? " It appears in the Sent folder."
+        : "")
+    );
+  }
+  return (
+    "Gmail did not return a message id — the send could not be verified. " +
+    "Raw response: " +
+    asJsonString(result).slice(0, 2000)
+  );
 }
 
 export interface ConnectorToolOutcome {
@@ -676,23 +719,46 @@ export async function executeConnectorTool(
     // direct tools.execute, which resolves the user's connected account.
     // Both are time-boxed: a hung provider must surface as a failed tool,
     // never as a permanently paused chat.
+    //
+    // Write safety: falling back is only safe when session *creation* failed
+    // (nothing executed yet). If the session's execution itself failed or timed
+    // out, the provider may already have acted — retrying a write could send
+    // it twice, so writes fail closed instead.
+    const isWrite =
+      Boolean(curatedAction?.write) ||
+      curatedWriteSlugs(svc).has(toolSlug.toUpperCase());
+    let session: Awaited<ReturnType<typeof createUserSession>> | null = null;
+    let sessionCreateFailed = false;
     try {
-      const created = await withTimeout(
+      session = await withTimeout(
         createUserSession(userId, { toolkits: [toolkit] }),
         TOOL_CALL_TIMEOUT_MS,
         "Connector session",
       );
-      raw = await withTimeout(
-        executeOnSession(created.session, toolSlug, sanitized.args),
-        TOOL_CALL_TIMEOUT_MS,
-        "Connector tool",
-      );
     } catch {
+      sessionCreateFailed = true;
+    }
+    if (sessionCreateFailed || !session) {
       raw = await withTimeout(
         executeTool(userId, toolSlug, sanitized.args),
         TOOL_CALL_TIMEOUT_MS,
         "Connector tool",
       );
+    } else {
+      try {
+        raw = await withTimeout(
+          executeOnSession(session.session, toolSlug, sanitized.args),
+          TOOL_CALL_TIMEOUT_MS,
+          "Connector tool",
+        );
+      } catch (execErr) {
+        if (isWrite) throw execErr;
+        raw = await withTimeout(
+          executeTool(userId, toolSlug, sanitized.args),
+          TOOL_CALL_TIMEOUT_MS,
+          "Connector tool",
+        );
+      }
     }
   } catch (e) {
     const message = e instanceof Error ? e.message : "Tool execution failed.";
@@ -700,5 +766,39 @@ export async function executeConnectorTool(
     return { ok: false, error: message };
   }
 
+  // Composio can report a provider failure as a resolved payload rather than
+  // a thrown error — never present that as success ("sent" emails that never
+  // left the outbox came from this exact path).
+  const failure = composioFailure(raw);
+  if (failure) {
+    console.error("[tro-connector-tools]", svc, toolSlug, "provider failure:", failure);
+    return { ok: false, error: failure };
+  }
+
   return { ok: true, result: summarizeResult(svc, toolSlug, raw) };
+}
+
+/**
+ * Composio resolves the execution promise even when the provider call failed —
+ * the failure arrives as a payload ({ successful: false, error }) rather than
+ * a thrown error. Treating that as success is how a "sent" email never leaves
+ * the outbox. This inspects the raw result and returns a failure message when
+ * the provider explicitly reported one.
+ */
+function composioFailure(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  if (r.successful === false) {
+    const err = r.error;
+    return typeof err === "string" && err
+      ? err
+      : "The connected service reported the action failed.";
+  }
+  // Some tools return { data: null, error: "..." } with no successful flag.
+  if (r.error && (r.data == null || r.data === "")) {
+    const err = r.error;
+    const msg = typeof err === "string" ? err : JSON.stringify(err);
+    return msg ? msg.slice(0, 500) : "The connected service reported an error.";
+  }
+  return null;
 }

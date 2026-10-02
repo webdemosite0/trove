@@ -22,7 +22,7 @@ import {
   TbHelpCircle,
   FiSmartphone,
 } from "@/components/ui/icons";
-import { IntegrationsView } from "@/app/(shell)/integrations/integrations-view";
+import { IntegrationsView } from "@/components/integrations/integrations-view";
 import { useTheme } from "@/components/shell/theme";
 import { logOut } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";

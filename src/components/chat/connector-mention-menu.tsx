@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { ServiceMark } from "@/components/integrations/service-mark";
+import { useNav } from "@/components/shell/nav-state";
 import { cn } from "@/lib/utils";
 
 export interface ConnectedConnectorOption {
@@ -96,6 +97,8 @@ export function ConnectorMentionMenu({
     () => filterConnectorOptions(items, query),
     [items, query],
   );
+  const { openSettings } = useNav();
+  const openConnectors = () => openSettings("integrations");
 
   return (
     <div
@@ -112,12 +115,13 @@ export function ConnectorMentionMenu({
         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
           Connected integrations
         </span>
-        <Link
-          href="/integrations"
+        <button
+          type="button"
+          onClick={openConnectors}
           className="text-[11.5px] font-medium text-accent hover:underline"
         >
           Manage
-        </Link>
+        </button>
       </div>
 
       <div className="max-h-[248px] overflow-y-auto p-1.5">
@@ -164,12 +168,13 @@ export function ConnectorMentionMenu({
                 : "No integrations connected yet."}
             </p>
             {!items.length ? (
-              <Link
-                href="/integrations"
+              <button
+                type="button"
+                onClick={openConnectors}
                 className="mt-1.5 inline-block text-[12px] font-medium text-accent hover:underline"
               >
                 Connect an app
-              </Link>
+              </button>
             ) : null}
           </div>
         )}

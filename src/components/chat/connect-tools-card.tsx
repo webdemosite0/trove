@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { FiArrowRight, FiLink } from "@/components/ui/icons";
 import { ServiceMark } from "@/components/integrations/service-mark";
+import { useNav } from "@/components/shell/nav-state";
 
 const PREVIEW_TOOLS = [
   { id: "gmail", name: "Gmail" },
@@ -11,10 +11,12 @@ const PREVIEW_TOOLS = [
 ];
 
 export function ConnectToolsCard() {
+  const { openSettings } = useNav();
   return (
-    <Link
-      href="/integrations"
-      className="group mx-auto flex w-full max-w-[640px] items-center justify-between gap-4 rounded-[22px] border border-violet-300/35 bg-gradient-to-r from-violet-500/[0.09] via-fuchsia-500/[0.07] to-sky-500/[0.09] px-4 py-3.5 text-left shadow-[0_14px_40px_-30px_var(--btn-glow)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-violet-400/45 hover:shadow-[0_18px_46px_-28px_var(--btn-glow)] dark:border-violet-400/20"
+    <button
+      type="button"
+      onClick={() => openSettings("integrations")}
+      className="group mx-auto flex w-full max-w-[640px] cursor-pointer items-center justify-between gap-4 rounded-[22px] border border-violet-300/35 bg-gradient-to-r from-violet-500/[0.09] via-fuchsia-500/[0.07] to-sky-500/[0.09] px-4 py-3.5 text-left shadow-[0_14px_40px_-30px_var(--btn-glow)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-violet-400/45 hover:shadow-[0_18px_46px_-28px_var(--btn-glow)] dark:border-violet-400/20"
     >
       <span className="flex min-w-0 items-center gap-3">
         <span className="flex shrink-0 -space-x-2">
@@ -44,6 +46,6 @@ export function ConnectToolsCard() {
         Connect all tools
         <FiArrowRight size={13} className="transition group-hover:translate-x-0.5" />
       </span>
-    </Link>
+    </button>
   );
 }
