@@ -13,6 +13,7 @@ import { hintFor, temperatureFor, modeFor } from "@/lib/modes";
 import type { ChatModelId } from "@/lib/chat-models";
 import { loadProject } from "@/lib/projects";
 import { buildChatConnectorContext } from "@/lib/chat-connectors";
+import { buildTroConnectorToolSection } from "@/lib/tro-connector-tools";
 import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
@@ -264,7 +265,20 @@ async function handle(req: NextRequest) {
 
   const lastUser = [...turns].reverse().find((x) => x.role === "user")?.text ?? "";
   const modelTurns = compactConversation(turns);
-  const connectorContext = await buildChatConnectorContext(lastUser);
+  const connectorContext = await buildChatConnectorContext(lastUser, {
+    connectorTools: true,
+  });
+  // @mentioned, connected integrations become callable tools for this turn
+  // (same mechanism as Tro chats).
+  let connectorToolSection = "";
+  try {
+    connectorToolSection = await buildTroConnectorToolSection(
+      account.userId,
+      connectorContext.requested,
+    );
+  } catch {
+    connectorToolSection = "";
+  }
   const projectContext =
     localProjectSystemContext(localProject) || projectSystemContext(project);
 
@@ -286,6 +300,7 @@ async function handle(req: NextRequest) {
           SYSTEM +
             connectorContext.connectedNote +
             connectorContext.liveContext +
+            connectorToolSection +
             (projectContext ? "\n\n" + projectContext : "") +
             custom,
           OBEY_FORMAT,

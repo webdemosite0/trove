@@ -1,17 +1,22 @@
-// Connector tool-call protocol for Tros.
-// When a Tro needs live data or an action from an @mentioned integration,
+// Connector tool-call protocol for Tros and the main Trove chat.
+// When an agent needs live data or an action from an @mentioned integration,
 // it emits a fenced block in its reply:
 //
 //   ```connector-tool
-//   {"service": "gmail", "action": "list_messages", "args": {"query": "is:unread", "max_results": 5}}
+//   {"service": "gmail", "tool": "GMAIL_SEND_EMAIL", "args": {"recipient_email": "a@b.com", "subject": "Hi", "body": "..."}}
 //   ```
 //
+// Legacy form (still accepted): {"service": "gmail", "action": "list_messages", "args": {...}}
+//
 // These blocks are parsed client-side, executed via /api/tro/tools, and the
-// results are fed back to the Tro in a follow-up turn. NEVER shown in chat.
+// results are fed back to the agent in a follow-up turn. NEVER shown in chat.
 
 export interface ConnectorToolCall {
   service: string;
-  action: string;
+  /** Composio tool slug, e.g. GMAIL_SEND_EMAIL (preferred form). */
+  tool?: string;
+  /** Legacy curated action name, e.g. list_messages. */
+  action?: string;
   args: Record<string, unknown>;
 }
 
@@ -35,7 +40,12 @@ function tryJson(raw: string): Record<string, unknown> | null {
   }
 }
 
-/** Parse and strip connector-tool blocks from a Tro's reply. */
+/** Human-readable label for a call, e.g. "gmail.GMAIL_SEND_EMAIL". */
+export function toolCallLabel(call: ConnectorToolCall): string {
+  return `${call.service}.${call.tool ?? call.action ?? "tool"}`;
+}
+
+/** Parse and strip connector-tool blocks from an agent reply. */
 export function parseConnectorToolBlocks(input: string): ParsedConnectorTools {
   const calls: ConnectorToolCall[] = [];
   if (!input || !input.includes("connector-tool")) {
@@ -45,12 +55,20 @@ export function parseConnectorToolBlocks(input: string): ParsedConnectorTools {
     const data = tryJson(body);
     if (!data) return "";
     const service = String(data.service ?? "").trim().toLowerCase();
+    const tool = String(data.tool ?? "").trim();
     const action = String(data.action ?? "").trim().toLowerCase();
     const args =
       data.args && typeof data.args === "object" && !Array.isArray(data.args)
         ? (data.args as Record<string, unknown>)
         : {};
-    if (service && action) calls.push({ service, action, args });
+    if (service && (tool || action)) {
+      calls.push({
+        service,
+        ...(tool ? { tool } : {}),
+        ...(action ? { action } : {}),
+        args,
+      });
+    }
     return "";
   });
   // Collapse the blank lines left behind by stripped blocks.

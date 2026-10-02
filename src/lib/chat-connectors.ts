@@ -2,7 +2,7 @@ import "server-only";
 
 import { listConnections, secretFor, type Connection } from "@/lib/connections";
 import { SERVICES } from "@/lib/services";
-import { connectorServiceDef } from "@/lib/tro-connector-tools";
+import { canResolveConnectorToolkit } from "@/lib/tro-connector-tools";
 import {
   formatSlackMessagesForModel,
   formatSlackWorkspaceMessagesForModel,
@@ -250,12 +250,13 @@ export async function buildChatConnectorContext(
         continue;
       }
 
-      // Composio-backed services with callable actions: the Tro gets real
+      // Composio-backed services with callable actions: the agent gets real
       // tools (see CONNECTOR TOOLS) instead of the "no live reader" note.
+      // Tool discovery is dynamic — any connected Composio app works.
       if (
         opts?.connectorTools &&
         connectedSet.has(service) &&
-        connectorServiceDef(service)
+        canResolveConnectorToolkit(service)
       ) {
         const meta = SERVICES.find((item) => item.id === service);
         liveParts.push(

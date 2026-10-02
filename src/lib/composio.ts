@@ -376,3 +376,86 @@ export async function listComposioCatalog(): Promise<CatalogApp[]> {
   catalogCache = { at: Date.now(), apps };
   return apps;
 }
+
+/* ------------------------------------------------------------------ */
+/* Live toolkit tools — the actual callable tools for one Composio     */
+/* toolkit (e.g. gmail → GMAIL_SEND_EMAIL). Fetched from the Composio  */
+/* Platform API and cached in memory for 24h so per-turn prompt        */
+/* building never hammers the API.                                    */
+/* ------------------------------------------------------------------ */
+
+export interface ComposioToolDef {
+  slug: string;
+  name: string;
+  description: string;
+  requiredParams: string[];
+  allParams: string[];
+}
+
+const toolkitToolsCache = new Map<string, { at: number; tools: ComposioToolDef[] }>();
+const TOOLKIT_TOOLS_TTL_MS = 24 * 60 * 60 * 1000;
+
+function toolDefFrom(raw: unknown): ComposioToolDef | null {
+  if (!raw || typeof raw !== "object") return null;
+  const t = raw as Record<string, unknown>;
+  const slug = String(t.slug ?? t.name ?? "").trim();
+  if (!slug) return null;
+  const params =
+    (t.parameters as Record<string, unknown> | undefined) ??
+    (t.input_parameters as Record<string, unknown> | undefined) ??
+    (t.inputParameters as Record<string, unknown> | undefined);
+  const props =
+    params && typeof params === "object"
+      ? ((params.properties ?? {}) as Record<string, unknown>)
+      : {};
+  const required = Array.isArray(params?.required)
+    ? (params.required as unknown[]).map((r) => String(r)).filter(Boolean)
+    : [];
+  return {
+    slug,
+    name: String(t.display_name ?? t.displayName ?? t.name ?? slug),
+    description: String(
+      t.description ?? (t.meta as Record<string, unknown> | undefined)?.description ?? "",
+    ).trim(),
+    requiredParams: required.slice(0, 12),
+    allParams: Object.keys(props).slice(0, 24),
+  };
+}
+
+export async function listToolkitTools(
+  toolkitSlug: string,
+): Promise<ComposioToolDef[]> {
+  const slug = toolkitSlug.trim().toLowerCase();
+  if (!slug) return [];
+  const cached = toolkitToolsCache.get(slug);
+  if (cached && Date.now() - cached.at < TOOLKIT_TOOLS_TTL_MS) {
+    return cached.tools;
+  }
+  const apiKey = process.env.COMPOSIO_API_KEY?.trim();
+  if (!apiKey) throw new Error("COMPOSIO_API_KEY is not set.");
+
+  const url = new URL("https://backend.composio.dev/api/v3/tools");
+  url.searchParams.set("toolkit_slug", slug);
+  url.searchParams.set("limit", "100");
+  const res = await fetch(url.toString(), {
+    headers: { "x-api-key": apiKey, accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`Composio tools request failed (${res.status}).`);
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = await res.json().catch(() => null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items: any[] = Array.isArray(data) ? data : (data?.items ?? []);
+  const tools: ComposioToolDef[] = [];
+  const seen = new Set<string>();
+  for (const raw of items) {
+    const def = toolDefFrom(raw);
+    if (!def || seen.has(def.slug.toUpperCase())) continue;
+    seen.add(def.slug.toUpperCase());
+    tools.push(def);
+  }
+  toolkitToolsCache.set(slug, { at: Date.now(), tools });
+  return tools;
+}
