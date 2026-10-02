@@ -94,7 +94,7 @@ export function Message({
             ))}
           </div>
         ) : null}
-        <div className="max-w-[min(85%,560px)] rounded-[20px] rounded-br-md bg-accent/15 px-4 py-2.5 text-[15px] leading-relaxed text-ink">
+        <div className="max-w-[min(85%,560px)] rounded-[20px] rounded-br-lg border border-line/60 bg-sunk px-4 py-2.5 text-[15px] leading-relaxed text-ink shadow-[0_2px_12px_-6px_rgba(15,23,42,0.15)]">
           <span className="whitespace-pre-wrap">{withLinkedText(text)}</span>
         </div>
       </div>
@@ -145,7 +145,7 @@ export function Message({
         <span className="text-[12.5px] font-medium text-ink-3">{brand}</span>
       </div>
       {text ? (
-        <div className="text-[15px] leading-relaxed text-ink">
+        <div className="max-w-none text-[15px] leading-[1.75] text-ink">
           <Markdown text={text} />
           {pending ? (
             <span

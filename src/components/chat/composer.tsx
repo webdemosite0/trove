@@ -208,10 +208,11 @@ export function Composer({
       data-disabled={locked}
       data-focused={focused}
       className={cn(
-        "composer relative w-full max-w-full border bg-rail/95 backdrop-blur-md",
+        "composer group relative w-full max-w-full border bg-raised/95 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.28)] backdrop-blur-md transition-all duration-200",
+        "focus-within:border-accent/40 focus-within:shadow-[0_24px_70px_-24px_rgba(99,102,241,0.45)]",
         compact
-          ? "rounded-[20px] border-line-strong shadow-[var(--sh-1)]"
-          : "rounded-[28px] border-line-strong shadow-[var(--sh-2)]",
+          ? "rounded-[22px] border-line"
+          : "rounded-[28px] border-line",
         locked && "opacity-60",
       )}
     >
@@ -327,8 +328,8 @@ export function Composer({
           "transition-[height] duration-[var(--t-hover)] ease-[var(--ease-ui)]",
           "[scrollbar-width:thin]",
           compact
-            ? "min-h-[40px] max-h-[140px] px-3 pb-1.5 pt-2.5 text-[16px] leading-[1.45] sm:px-3.5 sm:pt-3 sm:text-[13.5px]"
-            : "min-h-[72px] max-h-[200px] px-3.5 pb-2.5 pt-3.5 text-[16px] leading-[1.55] sm:min-h-[84px] sm:max-h-[220px] sm:px-5 sm:pb-3 sm:pt-5 sm:leading-[1.6]",
+            ? "min-h-[40px] max-h-[140px] px-3.5 pb-1.5 pt-3 text-[16px] leading-[1.45] sm:px-4 sm:text-[13.5px]"
+            : "min-h-[72px] max-h-[200px] px-4 pb-2 pt-4 text-[16px] leading-[1.55] sm:min-h-[88px] sm:max-h-[220px] sm:px-5 sm:pb-2.5 sm:pt-5 sm:leading-[1.6]",
         )}
       />
 
@@ -336,8 +337,8 @@ export function Composer({
         className={cn(
           "relative z-10 flex flex-wrap items-center",
           compact
-            ? "gap-1 px-1.5 pb-1.5 sm:gap-1.5 sm:px-2 sm:pb-2"
-            : "gap-1.5 border-t border-line/70 px-2.5 py-2 sm:gap-2 sm:px-3.5 sm:py-3",
+            ? "gap-1 px-2 pb-2 sm:gap-1.5 sm:px-2.5"
+            : "gap-1.5 px-2.5 pb-2.5 pt-1 sm:gap-2 sm:px-3.5 sm:pb-3",
         )}
       >
         {allowAttachments ? (
@@ -409,10 +410,10 @@ export function Composer({
             disabled={!ready}
             aria-label="Send"
             className={cn(
-              "hover-glow grid place-items-center rounded-full transition-all duration-[var(--t-hover)]",
+              "hover-glow grid place-items-center rounded-full transition-all duration-200",
               compact ? "size-8" : "size-9",
               ready
-                ? "btn-grad shadow-[0_6px_18px_-6px_var(--btn-glow)] active:scale-95"
+                ? "btn-grad text-white shadow-[0_8px_24px_-8px_var(--btn-glow)] hover:shadow-[0_10px_28px_-6px_var(--btn-glow)] active:scale-95"
                 : "bg-sunk text-ink-4",
             )}
           >
