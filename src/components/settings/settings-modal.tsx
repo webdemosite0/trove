@@ -36,6 +36,7 @@ import { InstructionsForm } from "@/components/settings/instructions-form";
 import { BillingPortalButton } from "@/components/settings/billing-portal-button";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { DownloadApps } from "@/components/settings/download-apps";
+import { SettingsIcon as AnimatedSettingsIcon, UnplugIcon } from "@/components/animate-ui/icons";
 
 /** Everything the overlay needs that the old /settings pages used to fetch. */
 export type SettingsData = {
@@ -67,9 +68,9 @@ export interface IntegrationsData {
   composioServices: string[];
 }
 
-const NAV: { id: SettingsSectionId; label: string; icon: typeof FiSettings }[] = [
-  { id: "general", label: "General", icon: FiSettings },
-  { id: "integrations", label: "Connectors", icon: FiGrid },
+const NAV: { id: SettingsSectionId; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+  { id: "general", label: "General", icon: AnimatedSettingsIcon },
+  { id: "integrations", label: "Connectors", icon: UnplugIcon },
   { id: "wallet", label: "Wallet", icon: FiCreditCard },
   { id: "secure", label: "Secure store", icon: FiShield },
   { id: "permissions", label: "Permissions", icon: FiUser },
@@ -128,7 +129,7 @@ function useAccent(): [string, (v: string) => void] {
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl bg-white/[0.045] p-5 dark:bg-white/[0.045]", className)}>{children}</div>
+    <div className={cn("rounded-2xl bg-raised p-5 dark:bg-raised", className)}>{children}</div>
   );
 }
 
@@ -138,7 +139,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function UsageBar({ pct }: { pct: number }) {
   return (
-    <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+    <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-line">
       <div
         className="h-full rounded-full bg-[#0a84ff] transition-all"
         style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
@@ -211,11 +212,10 @@ export function SettingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-[min(720px,calc(100dvh-3rem))] w-full max-w-[980px] overflow-hidden rounded-[20px] bg-[#1b1b1e] text-[#ececec] shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)]"
-        style={{ colorScheme: "dark" }}
+        className="relative flex h-[min(720px,calc(100dvh-3rem))] w-full max-w-[980px] overflow-hidden rounded-[20px] bg-canvas text-ink shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)]"
       >
         {/* Left nav */}
-        <aside className="flex w-[248px] shrink-0 flex-col bg-black/20">
+        <aside className="flex w-[248px] shrink-0 flex-col bg-sunk">
           <h2 id={titleId} className="px-5 pb-3 pt-5 text-[17px] font-semibold tracking-tight">
             Settings
           </h2>
@@ -230,8 +230,8 @@ export function SettingsModal({
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] transition-colors",
                     active
-                      ? "bg-white/[0.09] font-medium text-white"
-                      : "text-white/60 hover:bg-white/[0.05] hover:text-white",
+                      ? "bg-hover font-medium text-ink"
+                      : "text-ink-3 hover:bg-hover hover:text-ink",
                   )}
                 >
                   <item.icon size={17} className="shrink-0" />
@@ -240,10 +240,10 @@ export function SettingsModal({
               );
             })}
           </nav>
-          <form action={logOut} className="border-t border-white/10 p-3">
+          <form action={logOut} className="border-t border-line p-3">
             <button
               type="submit"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] text-white/60 transition-colors hover:bg-white/[0.05] hover:text-white"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] text-ink-3 transition-colors hover:bg-hover hover:text-ink"
             >
               <FiLogOut size={17} className="shrink-0" />
               Log out
@@ -257,7 +257,7 @@ export function SettingsModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-4 top-4 z-10 grid size-8 place-items-center rounded-full bg-white/[0.07] text-white/70 transition-colors hover:bg-white/[0.12] hover:text-white"
+            className="absolute right-4 top-4 z-10 grid size-8 place-items-center rounded-full bg-sunk text-ink-2 transition-colors hover:bg-hover hover:text-ink"
           >
             <FiX size={16} />
           </button>
@@ -292,7 +292,7 @@ export function SettingsModal({
                     composioServices={integrations.composioServices}
                   />
                 ) : (
-                  <p className="text-[13px] text-white/50">Loading connectors…</p>
+                  <p className="text-[13px] text-ink-3">Loading connectors…</p>
                 )}
               </div>
             ) : null}
@@ -361,7 +361,7 @@ function GeneralPane({
           <ProfileForm profile={settingsData.profile} />
         ) : (
           <Card>
-            <p className="text-[13px] text-white/50">Sign in to edit your profile.</p>
+            <p className="text-[13px] text-ink-3">Sign in to edit your profile.</p>
           </Card>
         )}
       </div>
@@ -373,7 +373,7 @@ function GeneralPane({
           <BusinessProfileForm initial={settingsData.businessProfile} />
         ) : (
           <Card>
-            <p className="text-[13px] text-white/50">Sign in to set your business profile.</p>
+            <p className="text-[13px] text-ink-3">Sign in to set your business profile.</p>
           </Card>
         )}
       </div>
@@ -388,21 +388,21 @@ function GeneralPane({
       <Card>
         <div className="flex items-baseline justify-between">
           <p className="text-[15px] font-semibold">{planName} plan</p>
-          <p className="text-[13px] text-white/50">{pct}% used</p>
+          <p className="text-[13px] text-ink-3">{pct}% used</p>
         </div>
-        <p className="mt-0.5 text-[13px] text-white/50">Weekly limit resets on {resetDate}</p>
+        <p className="mt-0.5 text-[13px] text-ink-3">Weekly limit resets on {resetDate}</p>
         <UsageBar pct={pct} />
 
         <div className="mt-5 flex items-baseline justify-between">
           <p className="text-[15px] font-semibold">Additional tokens</p>
-          <p className="text-[13px] text-white/50">
+          <p className="text-[13px] text-ink-3">
             0% used ({remaining > 0 ? `${remaining.toLocaleString()} tokens left` : "no tokens left"})
           </p>
         </div>
-        <p className="mt-0.5 text-[13px] text-white/50">Never expires</p>
+        <p className="mt-0.5 text-[13px] text-ink-3">Never expires</p>
         <UsageBar pct={0} />
 
-        <div className="mt-4 border-t border-white/10 pt-3">
+        <div className="mt-4 border-t border-line pt-3">
           <Link href="/plans" onClick={onClose} className="text-[14px] font-medium text-[#0a84ff] hover:underline">
             Upgrade
           </Link>
@@ -413,7 +413,7 @@ function GeneralPane({
       <Card>
         <div className="flex items-center justify-between">
           <p className="text-[15px] font-medium">Mode</p>
-          <div className="flex rounded-full bg-white/[0.07] p-1">
+          <div className="flex rounded-full bg-sunk p-1">
             {(
               [
                 { value: "light", icon: FiSun, label: "Light" },
@@ -429,7 +429,7 @@ function GeneralPane({
                 title={o.label}
                 className={cn(
                   "grid size-9 place-items-center rounded-full transition-colors",
-                  theme === o.value ? "bg-white/[0.14] text-white" : "text-white/45 hover:text-white/70",
+                  theme === o.value ? "bg-hover text-ink" : "text-ink-4 hover:text-ink-2",
                 )}
               >
                 <o.icon size={16} />
@@ -438,7 +438,7 @@ function GeneralPane({
           </div>
         </div>
 
-        <div className="mt-4 border-t border-white/10 pt-4">
+        <div className="mt-4 border-t border-line pt-4">
           <p className="mb-3 text-[15px] font-medium">Theme color</p>
           <div className="flex flex-wrap gap-2.5">
             {ACCENTS.map((a) => {
@@ -452,7 +452,7 @@ function GeneralPane({
                   aria-label={`Theme color ${a.name}`}
                   className={cn(
                     "grid size-8 place-items-center rounded-full transition-transform hover:scale-110",
-                    active && "ring-2 ring-white ring-offset-2 ring-offset-[#1e1e20]",
+                    active && "ring-2 ring-ink ring-offset-2 ring-offset-canvas",
                   )}
                   style={{ background: a.value || "conic-gradient(#3b82f6,#8b5cf6,#ec4899,#f97316,#22c55e,#3b82f6)" }}
                 >
@@ -464,7 +464,7 @@ function GeneralPane({
         </div>
       </Card>
 
-      <p className="mt-6 text-[12.5px] text-white/35">
+      <p className="mt-6 text-[12.5px] text-ink-4">
         Signed in as {name}
         {user?.email ? ` · ${user.email}` : ""}.
       </p>
@@ -492,7 +492,7 @@ function WalletPane({
       <Card>
         <div className="flex items-baseline justify-between">
           <p className="text-[15px] font-semibold">{planName}</p>
-          <p className="text-[13px] text-white/50">{pct}% used</p>
+          <p className="text-[13px] text-ink-3">{pct}% used</p>
         </div>
         <UsageBar pct={pct} />
         <div className="mt-4 flex flex-wrap gap-2">
@@ -511,21 +511,21 @@ function WalletPane({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[15px] font-semibold">Invoices & receipts</p>
-            <p className="mt-1 max-w-md text-[13px] leading-5 text-white/50">
+            <p className="mt-1 max-w-md text-[13px] leading-5 text-ink-3">
               {hasBillingProfile
                 ? "Billing profile connected. Open the portal to download receipts, invoices and tax documents."
                 : "No paid invoices yet. Billing history appears after your first successful checkout."}
             </p>
           </div>
           {hasBillingProfile ? (
-            <BillingPortalButton className="shrink-0 rounded-full bg-white/[0.07] px-4 py-2 text-[13.5px] font-medium text-white transition hover:bg-white/[0.12]">
+            <BillingPortalButton className="shrink-0 rounded-full bg-sunk px-4 py-2 text-[13.5px] font-medium text-ink transition hover:bg-hover">
               View billing history
             </BillingPortalButton>
           ) : (
             <Link
               href="/plans"
               onClick={onClose}
-              className="shrink-0 rounded-full bg-white/[0.07] px-4 py-2 text-center text-[13.5px] font-medium text-white transition hover:bg-white/[0.12]"
+              className="shrink-0 rounded-full bg-sunk px-4 py-2 text-center text-[13.5px] font-medium text-white transition hover:bg-hover"
             >
               View plans
             </Link>
@@ -536,18 +536,18 @@ function WalletPane({
       <SectionLabel>Payment</SectionLabel>
       <Card>
         <p className="text-[15px] font-medium">Payment methods</p>
-        <p className="mt-1 text-[13px] leading-5 text-white/50">
+        <p className="mt-1 text-[13px] leading-5 text-ink-3">
           Cards and billing info are managed securely in the customer portal.
         </p>
         {hasBillingProfile ? (
           <div className="mt-3">
-            <BillingPortalButton className="rounded-full bg-white/[0.07] px-4 py-2 text-[13.5px] font-medium text-white transition hover:bg-white/[0.12]">
+            <BillingPortalButton className="rounded-full bg-sunk px-4 py-2 text-[13.5px] font-medium text-ink transition hover:bg-hover">
               Manage payment methods
             </BillingPortalButton>
           </div>
         ) : null}
       </Card>
-      <p className="mt-4 text-[12.5px] text-white/35">
+      <p className="mt-4 text-[12.5px] text-ink-4">
         {remaining.toLocaleString()} credits remaining this period.
       </p>
     </div>
@@ -560,14 +560,14 @@ function SecurePane() {
       <SectionLabel>Secure store</SectionLabel>
       <Card>
         <p className="text-[15px] font-semibold">Credentials vault</p>
-        <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
           API keys and integration secrets are encrypted at rest and never shown in plain text —
           not even to Trove support. They are only decrypted in memory when an integration needs them.
         </p>
       </Card>
       <Card className="mt-3">
         <p className="text-[15px] font-semibold">Sessions</p>
-        <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
           Sign-in sessions are opaque tokens stored securely. Signing out on a device revokes its
           session immediately.
         </p>
@@ -592,7 +592,7 @@ function PermissionsPane() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[15px] font-medium">Notifications</p>
-            <p className="text-[13px] text-white/50">
+            <p className="text-[13px] text-ink-3">
               {notif === "granted" ? "Allowed" : notif === "denied" ? "Blocked" : "Not asked yet"}
             </p>
           </div>
@@ -606,14 +606,14 @@ function PermissionsPane() {
                   /* ignore */
                 }
               }}
-              className="rounded-full bg-white/[0.07] px-4 py-2 text-[13px] font-medium transition hover:bg-white/[0.12]"
+              className="rounded-full bg-sunk px-4 py-2 text-[13px] font-medium transition hover:bg-hover"
             >
               Enable
             </button>
           ) : null}
         </div>
       </Card>
-      <p className="mt-4 text-[12.5px] leading-relaxed text-white/35">
+      <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
         Trove only asks for what a feature needs — camera, microphone, and location are requested
         in context, never up front.
       </p>
@@ -627,7 +627,7 @@ function MessagingPane() {
       <SectionLabel>Messaging channels</SectionLabel>
       <Card>
         <p className="text-[15px] font-semibold">WhatsApp</p>
-        <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
           Chat with Muse from WhatsApp. Connection is managed in the Muse app under
           Chat connections.
         </p>
@@ -642,9 +642,9 @@ function DevicesPane() {
       <SectionLabel>Devices</SectionLabel>
       <Card>
         <p className="text-[15px] font-semibold">This device</p>
-        <p className="mt-1.5 text-[13.5px] text-white/55">Signed in via the web app.</p>
+        <p className="mt-1.5 text-[13.5px] text-ink-3">Signed in via the web app.</p>
       </Card>
-      <p className="mt-4 text-[12.5px] leading-relaxed text-white/35">
+      <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
         Pair your phone from the Muse app to sync health data, location, and messages.
       </p>
     </div>
@@ -657,20 +657,20 @@ function DataPane() {
       <SectionLabel>Data controls</SectionLabel>
       <Card>
         <p className="text-[15px] font-semibold">Export your data</p>
-        <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
           Download everything Trove stores about you — chats, artifacts, projects, and settings.
         </p>
         <a
           href="/api/account/export"
           download
-          className="mt-3 inline-block rounded-full bg-white/[0.07] px-4 py-2 text-[13px] font-medium text-white transition hover:bg-white/[0.12]"
+          className="mt-3 inline-block rounded-full bg-sunk px-4 py-2 text-[13px] font-medium text-ink transition hover:bg-hover"
         >
           Export data
         </a>
       </Card>
       <Card className="mt-3">
         <p className="text-[15px] font-semibold">Delete account</p>
-        <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
           Permanently remove your account and all associated data. This cannot be undone.
         </p>
         <div data-theme="dark" className="mt-3">
@@ -693,7 +693,7 @@ function HelpPane() {
         ].map((c) => (
           <Card key={c.title}>
             <p className="text-[15px] font-semibold">{c.title}</p>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">{c.body}</p>
+            <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">{c.body}</p>
           </Card>
         ))}
       </div>
@@ -720,10 +720,10 @@ function LegalPane() {
           <Link
             key={l.href}
             href={l.href}
-            className="flex items-center justify-between rounded-2xl bg-white/[0.045] p-5 transition-colors hover:bg-white/[0.07]"
+            className="flex items-center justify-between rounded-2xl bg-raised p-5 transition-colors hover:bg-sunk"
           >
             <span className="text-[15px] font-medium">{l.title}</span>
-            <FiExternalLink size={15} className="text-white/40" />
+            <FiExternalLink size={15} className="text-ink-4" />
           </Link>
         ))}
       </div>
