@@ -16,15 +16,19 @@ const NavContext = createContext<{
   setOpen: (v: boolean) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  /** Stable toggle — never reads stale state. */
   toggleCollapsed: () => void;
+  /** Settings as an overlay dialog (not a full-page route). */
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean) => void;
+  /** Which settings section the overlay opens to. */
   settingsSection: string | null;
+  /** Open the settings overlay, optionally at a section ("integrations", "appearance", …). */
   openSettings: (section?: string) => void;
 }>({
   open: false,
   setOpen: () => {},
-  collapsed: false,
+  collapsed: true,
   setCollapsed: () => {},
   toggleCollapsed: () => {},
   settingsOpen: false,
@@ -37,18 +41,23 @@ export const useNav = () => useContext(NavContext);
 
 export function NavProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  // Always start expanded on the server so SSR matches the first client paint.
-  // After mount, restore the saved preference.
-  const [collapsed, setCollapsedState] = useState(false);
+
+  // ChatGPT-style: the rail starts collapsed (icons only). One tap expands.
+  //
+  // Hydration-safe: the server and the first client paint both render
+  // collapsed=true, so they always agree. After mount we restore the saved
+  // preference — only users who explicitly expanded see a single snap.
+  // `ready` gates the exposed value so nothing can read a mid-restore state.
+  const [collapsed, setCollapsedState] = useState(true);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved === "1") setCollapsedState(true);
-      if (saved === "0") setCollapsedState(false);
+      if (window.localStorage.getItem(STORAGE_KEY) === "0") {
+        setCollapsedState(false);
+      }
     } catch {
-      /* ignore */
+      /* storage unavailable — stay collapsed */
     }
     setReady(true);
   }, []);
@@ -86,7 +95,7 @@ export function NavProvider({ children }: { children: React.ReactNode }) {
     () => ({
       open,
       setOpen,
-      collapsed: ready ? collapsed : false,
+      collapsed: ready ? collapsed : true,
       setCollapsed,
       toggleCollapsed,
       settingsOpen,
