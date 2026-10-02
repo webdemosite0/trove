@@ -78,7 +78,7 @@ const NAV: { id: SettingsSectionId; label: string; icon: React.ComponentType<{ s
   { id: "devices", label: "Devices", icon: FiSmartphone },
   { id: "data", label: "Data controls", icon: FiLock },
   { id: "download", label: "Download apps", icon: FiDownload },
-  { id: "help", label: "Help & support", icon: TbHelpCircle },
+  { id: "help", label: "Help center", icon: TbHelpCircle },
   { id: "legal", label: "Legal info", icon: FiFileText },
 ];
 
@@ -684,7 +684,24 @@ function DataPane() {
 function HelpPane() {
   return (
     <div>
-      <SectionLabel>Help & support</SectionLabel>
+      <SectionLabel>Help center</SectionLabel>
+      <Card className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[15px] font-semibold">Browse the Help center</p>
+          <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
+            Guides, quick answers, and troubleshooting for Trove — on the docs site.
+          </p>
+        </div>
+        <a
+          href="https://docs.troveai.site/help"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 rounded-full bg-[#0a84ff] px-4 py-2 text-[13.5px] font-semibold text-white transition hover:brightness-110"
+        >
+          Open Help center
+        </a>
+      </Card>
+      <SectionLabel>Quick answers</SectionLabel>
       <div className="space-y-3">
         {[
           { title: "Something is not working", body: "Refresh once, retry the action, then tell us the page you were on and what you clicked." },
@@ -699,7 +716,7 @@ function HelpPane() {
       </div>
       <a
         href="mailto:official@troveai.site?subject=Trove%20support"
-        className="mt-4 inline-block rounded-full bg-[#0a84ff] px-4 py-2 text-[13.5px] font-semibold text-white transition hover:brightness-110"
+        className="mt-4 inline-block rounded-full bg-raised px-4 py-2 text-[13.5px] font-semibold text-ink transition hover:bg-sunk"
       >
         Contact support
       </a>
