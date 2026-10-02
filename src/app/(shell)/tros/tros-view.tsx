@@ -14,6 +14,10 @@ import {
   FiEdit2,
   FiMessageSquare,
   FiZap,
+  FiAlertTriangle,
+  FiDatabase,
+  FiTerminal,
+  FiFileText,
 } from "@/components/ui/icons";
 import { Bot, SPECIES, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import {
@@ -44,7 +48,7 @@ const TOOLS = [
 const field =
   "w-full rounded-2xl border border-line-strong bg-sunk/80 px-4 py-3 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-[14px]";
 
-type Draft = { name: string; role: string; instructions: string };
+type Draft = { name: string; role: string; instructions: string; tools?: string[] };
 const BLANK_DRAFT: Draft = { name: "", role: "", instructions: "" };
 
 const STARTERS: { icon: typeof FiSearch; title: string; desc: string; tone: string; draft: Draft }[] = [
@@ -98,8 +102,75 @@ const STARTERS: { icon: typeof FiSearch; title: string; desc: string; tone: stri
   },
 ];
 
-const BRIEF_EXAMPLES = [
-  "track competitor pricing every week",
+const TEMPLATES: { icon: typeof FiSearch; title: string; desc: string; tone: string; draft: Draft }[] = [
+  {
+    icon: FiAlertTriangle,
+    title: "Incident responder",
+    tone: "#f87171",
+    desc: "Investigate incidents using logs, runbooks, code, and deployment history.",
+    draft: {
+      name: "",
+      role: "SRE / incident responder",
+      instructions:
+        "When I report an incident, investigate fast and systematically: gather the relevant logs and runbooks, check recent deploys and code changes, identify the most likely root cause, and propose a concrete remediation plan. Summarize findings with evidence and severity.",
+      tools: ["Search the web", "Cloud computer", "Documents", "Read repository"],
+    },
+  },
+  {
+    icon: FiMessageSquare,
+    title: "Team chat teammate",
+    tone: "#38bdf8",
+    desc: "Turn workplace conversations and files into answers, analysis, and drafts.",
+    draft: {
+      name: "",
+      role: "Team assistant",
+      instructions:
+        "Help me work through team conversations and shared files: answer questions grounded in what was actually discussed, analyze threads for decisions and open items, and draft replies or summaries in a natural, professional tone. Ask before assuming anything unclear.",
+      tools: ["Search the web", "Documents", "Spreadsheets"],
+    },
+  },
+  {
+    icon: FiDatabase,
+    title: "Data analyst",
+    tone: "#34d399",
+    desc: "Investigate business questions using your datasets and warehouse exports.",
+    draft: {
+      name: "",
+      role: "Data analyst",
+      instructions:
+        "Answer business questions with real numbers: explore the data I share, show your working, call out assumptions and data quality issues, and end with a clear takeaway plus a follow-up question worth asking. Never invent figures.",
+      tools: ["Spreadsheets", "Search the web", "Documents"],
+    },
+  },
+  {
+    icon: FiTerminal,
+    title: "Bug investigator",
+    tone: "#a78bfa",
+    desc: "Trace bug reports to their cause and propose a fix with supporting evidence.",
+    draft: {
+      name: "",
+      role: "Debugging engineer",
+      instructions:
+        "When I share a bug report, reproduce the issue mentally, trace it to the likely cause in the code, and propose a fix with supporting evidence. Show the relevant code, explain why it breaks, and suggest how to verify the fix.",
+      tools: ["Read repository", "Write code", "Search the web"],
+    },
+  },
+  {
+    icon: FiFileText,
+    title: "Invoice & contract reviewer",
+    tone: "#fbbf24",
+    desc: "Review document batches against supplied policies and flag discrepancies.",
+    draft: {
+      name: "",
+      role: "Contract reviewer",
+      instructions:
+        "Review invoices, contracts, and policy documents in batches: check each against the rules I supply, flag discrepancies with exact quotes and page references, and produce a clean pass/fail summary per document. Be precise — money is on the line.",
+      tools: ["Documents", "Spreadsheets", "Search the web"],
+    },
+  },
+];
+
+const BRIEF_EXAMPLES = [  "track competitor pricing every week",
   "draft my product launch announcement",
   "research EV incentives in Karachi",
   "summarize this week's sales numbers",
@@ -332,6 +403,44 @@ export function TrosView({
               ))}
             </div>
 
+            <div className="app-block-in mt-10 w-full" style={{ ["--app-delay" as string]: "200ms" }}>
+              <div className="mb-3 flex items-center justify-between px-1">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Templates</p>
+                  <p className="mt-1 text-[12.5px] text-ink-3">Ready-made setups — one click to hire.</p>
+                </div>
+              </div>
+              <div className="grid w-full gap-2.5 sm:grid-cols-2">
+                {TEMPLATES.map((t) => (
+                  <button
+                    key={t.title}
+                    type="button"
+                    onClick={() => setDraft(t.draft)}
+                    onMouseEnter={() => setGlow(t.tone)}
+                    onMouseLeave={() => setGlow(null)}
+                    onFocus={() => setGlow(t.tone)}
+                    onBlur={() => setGlow(null)}
+                    className="group flex items-start gap-3.5 rounded-2xl border border-line bg-raised/70 px-4 py-4 text-left transition duration-300 hover:-translate-y-1 hover:bg-raised hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
+                  >
+                    <span
+                      className="grid size-10 shrink-0 place-items-center rounded-xl transition group-hover:text-white"
+                      style={{ backgroundColor: `color-mix(in srgb, ${t.tone} 14%, transparent)`, color: t.tone }}
+                    >
+                      <Ico icon={t.icon} size={17} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13.5px] font-semibold text-ink">{t.title}</span>
+                      <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-3">{t.desc}</span>
+                      <span className="mt-1.5 block text-[11px] font-medium text-ink-4">
+                        {t.draft.tools?.length} tools preset
+                      </span>
+                    </span>
+                    <Ico icon={FiArrowRight} size={14} className="mt-1 shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="app-block-in mt-10 w-full" style={{ ["--app-delay" as string]: "220ms" }}>
               <div className="mb-3 flex items-center justify-between px-1">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">The specialists</p>
@@ -400,7 +509,7 @@ function CreateModal({ initial, onClose }: { initial: Draft; onClose: () => void
   const router = useRouter();
   const [state, action, pending] = useActionState<AgentFormState, FormData>(createAgent, {});
   const [accent, setAccent] = useState(ACCENTS[0]!);
-  const [tools, setTools] = useState<string[]>(["Search the web", "Cloud computer", "Documents"]);
+  const [tools, setTools] = useState<string[]>(initial.tools ?? ["Search the web", "Cloud computer", "Documents"]);
   const [name, setName] = useState(initial.name);
   const previewSpecies = speciesFromSeed(name || "preview");
 
