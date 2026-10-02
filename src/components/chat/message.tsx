@@ -178,7 +178,7 @@ export function Message({
             onClick={() => void copy()}
             aria-label="Copy"
             title="Copy"
-            className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+            className="hover-glow grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
           >
             {copied ? <FiCheck size={15} /> : <ClipboardCheckIcon size={15} />}
           </button>
@@ -188,7 +188,7 @@ export function Message({
               onClick={onRegenerate}
               aria-label="Regenerate"
               title="Regenerate"
-              className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+              className="hover-glow grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
             >
               <RotateCcwIcon size={15} />
             </button>
@@ -199,7 +199,7 @@ export function Message({
             title="Good"
             onClick={() => setVote((v) => (v === "up" ? null : "up"))}
             className={cn(
-              "grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink",
+              "hover-glow grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink",
               vote === "up" && "text-accent",
             )}
           >
@@ -211,7 +211,7 @@ export function Message({
             title="Bad"
             onClick={() => setVote((v) => (v === "down" ? null : "down"))}
             className={cn(
-              "grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink",
+              "hover-glow grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink",
               vote === "down" && "text-accent",
             )}
           >

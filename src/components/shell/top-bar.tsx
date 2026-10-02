@@ -60,7 +60,7 @@ export function TopBar({
         aria-label="Download Trove"
         title="Download Trove"
         className={cn(
-          "tap-44 group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line",
+          "hover-glow tap-44 group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line",
           "bg-raised px-2.5 text-[12.5px] font-medium text-ink-2 transition-colors",
           "hover:border-accent/40 hover:bg-accent/[0.06] hover:text-ink",
           "sm:px-3",

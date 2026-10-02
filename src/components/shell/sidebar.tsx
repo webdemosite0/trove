@@ -89,7 +89,7 @@ function NavRow({
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "mx-auto grid h-9 w-9 place-items-center rounded-xl transition-colors",
+            "hover-glow mx-auto grid h-9 w-9 place-items-center rounded-xl transition-colors",
             active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
@@ -105,7 +105,7 @@ function NavRow({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
+        "hover-glow group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] transition-colors",
         active
           ? "rail-item-active bg-hover font-medium text-ink"
           : "text-ink-2 hover:bg-hover hover:text-ink",
@@ -210,7 +210,7 @@ export function Sidebar({
         <button type="button" className="grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden" onClick={closeMobile} aria-label="Close menu">
           <FiX size={18} />
         </button>
-        <button type="button" className="grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink max-lg:hidden" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+        <button type="button" className="hover-glow grid size-8 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink max-lg:hidden" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           {collapsed ? (
             <PanelLeftOpenIcon size={16} />
           ) : (
@@ -226,7 +226,7 @@ export function Sidebar({
               onClick={closeMobile}
               aria-label={isTros ? "New Tro" : "New chat"}
               className={cn(
-                "btn-grad flex items-center justify-center gap-1.5 text-[13px] font-semibold",
+                "hover-glow btn-grad flex items-center justify-center gap-1.5 text-[13px] font-semibold",
                 c ? "mx-auto size-10 rounded-full" : "h-9 w-full rounded-full",
               )}
             >
@@ -273,7 +273,7 @@ export function Sidebar({
           {!c ? (
             <>
               <Tooltip label="Settings" side="top">
-                <button type="button" onClick={() => { closeMobile(); openSettings("general"); }} aria-label="Settings" className="grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
+                <button type="button" onClick={() => { closeMobile(); openSettings("general"); }} aria-label="Settings" className="hover-glow grid h-8 w-8 place-items-center rounded-xl text-ink transition-colors hover:bg-hover">
                   <SettingsIcon size={16} />
                 </button>
               </Tooltip>

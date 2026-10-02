@@ -409,7 +409,7 @@ export function Composer({
             disabled={!ready}
             aria-label="Send"
             className={cn(
-              "grid place-items-center rounded-full transition-all duration-[var(--t-hover)]",
+              "hover-glow grid place-items-center rounded-full transition-all duration-[var(--t-hover)]",
               compact ? "size-8" : "size-9",
               ready
                 ? "btn-grad shadow-[0_6px_18px_-6px_var(--btn-glow)] active:scale-95"

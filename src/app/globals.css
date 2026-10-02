@@ -163,3 +163,19 @@ body {
   color: var(--color-ink);
 }
 .chip:hover { background: var(--color-hover); }
+
+/* Hover "light up" — a soft luminous glow for nav items and buttons. */
+.hover-glow {
+  transition: box-shadow 0.25s ease, filter 0.25s ease, background-color 0.2s ease;
+}
+.hover-glow:hover {
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 16px -4px var(--glow, rgb(138 180 248 / 0.4)),
+    inset 0 0 0 1px rgb(255 255 255 / 0.07);
+}
+:root[data-theme="light"] .hover-glow:hover {
+  box-shadow:
+    0 0 16px -4px var(--glow, rgb(79 70 229 / 0.25)),
+    inset 0 0 0 1px rgb(0 0 0 / 0.05);
+}

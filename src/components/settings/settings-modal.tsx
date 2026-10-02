@@ -228,7 +228,7 @@ export function SettingsModal({
                   type="button"
                   onClick={() => setSection(item.id)}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] transition-colors",
+                    "hover-glow flex items-center gap-3 rounded-xl px-3 py-2 text-left text-[14px] transition-colors",
                     active
                       ? "bg-hover font-medium text-ink"
                       : "text-ink-3 hover:bg-hover hover:text-ink",
