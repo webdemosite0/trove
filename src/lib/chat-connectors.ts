@@ -2,6 +2,7 @@ import "server-only";
 
 import { listConnections, secretFor, type Connection } from "@/lib/connections";
 import { SERVICES } from "@/lib/services";
+import { connectorServiceDef } from "@/lib/tro-connector-tools";
 import {
   formatSlackMessagesForModel,
   formatSlackWorkspaceMessagesForModel,
@@ -211,6 +212,7 @@ async function githubContext(connected: boolean) {
 
 export async function buildChatConnectorContext(
   lastUserText: string,
+  opts?: { connectorTools?: boolean },
 ): Promise<ChatConnectorContext> {
   const requested = requestedServices(lastUserText);
 
@@ -245,6 +247,23 @@ export async function buildChatConnectorContext(
       }
       if (service === "github") {
         liveParts.push(await githubContext(connectedSet.has("github")));
+        continue;
+      }
+
+      // Composio-backed services with callable actions: the Tro gets real
+      // tools (see CONNECTOR TOOLS) instead of the "no live reader" note.
+      if (
+        opts?.connectorTools &&
+        connectedSet.has(service) &&
+        connectorServiceDef(service)
+      ) {
+        const meta = SERVICES.find((item) => item.id === service);
+        liveParts.push(
+          "CONNECTED CONNECTOR — " +
+            (meta?.name ?? service) +
+            ": connected and callable. Use a ```connector-tool block to call its actions (see CONNECTOR TOOLS below). " +
+            "Never claim it is unavailable or lacks a live reader.",
+        );
         continue;
       }
 

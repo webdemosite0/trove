@@ -33,6 +33,10 @@ import type { Recent } from "@/lib/recents";
 import { Recents } from "@/components/ui/recents";
 import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
 import { parseTeamBlocks, shortTask } from "@/lib/team-block";
+import {
+  parseConnectorToolBlocks,
+  stripConnectorToolBlocks,
+} from "@/lib/tool-block";
 import { useTroPresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
 
@@ -627,6 +631,87 @@ export function AgentChat({
           attachments,
         );
 
+        // Connector tools: the Tro can call @mentioned integrations mid-turn.
+        // Run any connector-tool blocks, feed the results back, and let the
+        // Tro answer from them — all inside this same user turn.
+        {
+          let toolRound = 0;
+          let parsed = parseConnectorToolBlocks(full);
+          let toolTurnId = replyId;
+          while (parsed.calls.length > 0 && toolRound < 3) {
+            toolRound++;
+            const shown = parsed.text;
+            setTurns((t) =>
+              t.map((x) => (x.id === toolTurnId ? { ...x, text: shown } : x)),
+            );
+            const outcomes: string[] = [];
+            for (const call of parsed.calls.slice(0, 3)) {
+              pushActivity(`Using ${call.service}`, call.action, "run");
+              try {
+                const r = await fetch("/api/tro/tools", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    agentId: agent.id,
+                    service: call.service,
+                    action: call.action,
+                    args: call.args,
+                  }),
+                });
+                const d = await r.json().catch(() => null);
+                if (r.ok && d?.ok) {
+                  outcomes.push(
+                    `**${call.service}.${call.action}** result:\n\n${d.result ?? ""}`,
+                  );
+                  pushActivity(
+                    `${call.service} ${call.action}`,
+                    "Done",
+                    "ok",
+                  );
+                } else {
+                  outcomes.push(
+                    `**${call.service}.${call.action}** failed: ${d?.error ?? "request failed"}.`,
+                  );
+                  pushActivity("Tool failed", d?.error ?? "Error", "warn");
+                }
+              } catch {
+                outcomes.push(
+                  `**${call.service}.${call.action}** failed: network error.`,
+                );
+                pushActivity("Tool failed", "Network error", "warn");
+              }
+            }
+            const followUpId = nextId.current++;
+            setTurns((t) => [
+              ...t,
+              { id: followUpId, role: "model" as const, text: "" },
+            ]);
+            const followUpMsgs = [
+              ...history.map(({ role, text: body }) => ({
+                role,
+                text: body,
+              })),
+              { role: "model" as const, text: shown },
+              {
+                role: "user" as const,
+                text:
+                  `Connector tool results — use them to answer the user:\n\n${outcomes.join("\n\n---\n\n")}\n\n` +
+                  `Answer in your own voice using these results. Never mention tool blocks or protocols. ` +
+                  `If a call failed, say what happened plainly and suggest the fix.`,
+              },
+            ];
+            full = await streamTurn(followUpMsgs, followUpId);
+            parsed = parseConnectorToolBlocks(full);
+            toolTurnId = followUpId;
+          }
+          // Strip any leftover blocks (over the round cap) from the reply.
+          full = stripConnectorToolBlocks(full);
+          const stripped = full;
+          setTurns((t) =>
+            t.map((x) => (x.id === toolTurnId ? { ...x, text: stripped } : x)),
+          );
+        }
+
         // Team orchestration: this Tro may have delegated work to teammates
         // or hired new Tros. Run those blocks, then have the manager
         // summarize the results for the user.
@@ -698,7 +783,9 @@ export function AgentChat({
             { role: "user" as const, text: followUp },
           ];
           // One delegation round per user message — strip any further blocks.
-          full = parseTeamBlocks(await streamTurn(summaryMsgs, summaryId)).text;
+          full = stripConnectorToolBlocks(
+            parseTeamBlocks(await streamTurn(summaryMsgs, summaryId)).text,
+          );
           setTurns((t) => t.map((x) => (x.id === summaryId ? { ...x, text: full } : x)));
         }
 

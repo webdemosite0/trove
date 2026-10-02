@@ -7,6 +7,7 @@ import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { buildChatConnectorContext } from "@/lib/chat-connectors";
+import { buildTroConnectorToolSection } from "@/lib/tro-connector-tools";
 import { buildTroSystemPrompt, buildTeamSection } from "@/lib/tro-prompt";
 
 export const runtime = "nodejs";
@@ -61,7 +62,19 @@ export async function POST(req: NextRequest) {
   }
 
   const lastUser = [...turns].reverse().find((turn) => turn.role === "user")?.text ?? "";
-  const connectorContext = await buildChatConnectorContext(lastUser);
+  const connectorContext = await buildChatConnectorContext(lastUser, {
+    connectorTools: true,
+  });
+  // @mentioned, connected integrations become callable tools for this turn.
+  let connectorToolSection = "";
+  try {
+    connectorToolSection = await buildTroConnectorToolSection(
+      user.id,
+      connectorContext.requested,
+    );
+  } catch {
+    connectorToolSection = "";
+  }
 
   // Team roster so this Tro can delegate/hire teammates.
   let teamSection = "";
@@ -91,7 +104,7 @@ export async function POST(req: NextRequest) {
     agent: { name: agent.name, role: agent.role, instructions: agent.instructions, tools },
     browserNote,
     connectedNote: connectorContext.connectedNote,
-    liveContext: connectorContext.liveContext,
+    liveContext: connectorContext.liveContext + connectorToolSection,
     timeZone,
     obeyFormat: OBEY_FORMAT,
     situation: situation({ timeZone, canSearch: true }),
