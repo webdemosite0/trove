@@ -14,6 +14,7 @@ import { Message } from "@/components/chat/message";
 import { MobileComposer } from "@/components/mobile/composer";
 import { DEFAULT_MODE, type ModeId } from "@/lib/modes";
 import { useChatThread } from "@/hooks/use-chat-thread";
+import { useNav } from "@/components/shell/nav-state";
 import type { Recent } from "@/lib/recents";
 import { FailureNote } from "@/components/ui/failure-note";
 import { TroveOrb } from "@/components/brand/orb";
@@ -50,6 +51,7 @@ export function MobileChat({
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = React.useState(initialDraft);
+  const { openSettings } = useNav();
   const [activity, setActivity] = React.useState<Recent[]>(initialActivity);
 
   React.useEffect(() => {
@@ -141,13 +143,14 @@ export function MobileChat({
                 {item.label}
               </button>
             ))}
-            <Link
-              href="/integrations"
+            <button
+              type="button"
+              onClick={() => openSettings("integrations")}
               className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/8 px-3.5 text-[12px] font-medium text-ink-2 transition active:scale-95"
             >
               <TbPlugConnected size={14} className="text-accent" />
               Plugins
-            </Link>
+            </button>
           </div>
 
           {activity.length ? (

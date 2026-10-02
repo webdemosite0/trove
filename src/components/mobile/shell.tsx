@@ -39,6 +39,8 @@ type Item = {
   label: string;
   icon: IconType;
   motion: Motion;
+  /** Opens the settings overlay at this section instead of navigating. */
+  settingsSection?: string;
 };
 
 /** Same destinations as desktop sidebar — no Projects, no theme control here. */
@@ -52,7 +54,7 @@ const PRIMARY: Item[] = [
   { href: "/websites", label: "Websites", icon: TbWorld, motion: "grow" },
   { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
-  { href: "/integrations", label: "Plugins", icon: TbPlugConnected, motion: "nudge" },
+  { href: "/settings", label: "Plugins", icon: TbPlugConnected, motion: "nudge", settingsSection: "integrations" },
   { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring" },
   { href: "/team", label: "Team", icon: FiUsers, motion: "stack" },
 ];
@@ -62,7 +64,7 @@ const TABS: Item[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
   { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
   { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
-  { href: "/integrations", label: "Plugins", icon: TbPlugConnected, motion: "nudge" },
+  { href: "/settings", label: "Plugins", icon: TbPlugConnected, motion: "nudge", settingsSection: "integrations" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -216,23 +218,35 @@ export function MobileShell({
           <ul className="mx-auto flex h-14 max-w-[560px] items-stretch justify-between px-1">
             {TABS.map((tab) => {
               const active = isActive(pathname, tab.href);
-              return (
+              const inner = (
+                <>
+                  <Ico
+                    icon={tab.icon}
+                    motion={tab.motion}
+                    size={20}
+                    active={active}
+                    className={active ? "text-accent" : "text-ink-3"}
+                  />
+                  <span className="truncate">{tab.label}</span>
+                </>
+              );
+              const cls = cn(
+                "flex w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-medium transition active:scale-95",
+                active ? "text-accent" : "text-ink-4",
+              );
+              return tab.settingsSection ? (
+                <li key={tab.href + tab.label} className="flex min-w-0 flex-1">
+                  <button type="button" onClick={() => openSettings(tab.settingsSection!)} className={cls}>
+                    {inner}
+                  </button>
+                </li>
+              ) : (
                 <li key={tab.href} className="flex min-w-0 flex-1">
                   <Link
                     href={tab.href}
-                    className={cn(
-                      "flex w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-medium transition active:scale-95",
-                      active ? "text-accent" : "text-ink-4",
-                    )}
+                    className={cls}
                   >
-                    <Ico
-                      icon={tab.icon}
-                      motion={tab.motion}
-                      size={20}
-                      active={active}
-                      className={active ? "text-accent" : "text-ink-3"}
-                    />
-                    <span className="truncate">{tab.label}</span>
+                    {inner}
                   </Link>
                 </li>
               );
@@ -279,19 +293,8 @@ export function MobileShell({
           <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2 scrollbar-none">
             {PRIMARY.map((item) => {
               const active = isActive(pathname, item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "group flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-[13.5px] transition-colors",
-                    active
-                      ? "bg-hover font-medium text-ink"
-                      : "text-ink-2 hover:bg-hover hover:text-ink",
-                  )}
-                >
+              const inner = (
+                <>
                   <Ico
                     icon={item.icon}
                     motion={item.motion}
@@ -300,6 +303,35 @@ export function MobileShell({
                     className={cn("shrink-0", active ? "text-ink" : "text-ink-3")}
                   />
                   <span className="truncate">{item.label}</span>
+                </>
+              );
+              const cls = cn(
+                "group flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-[13.5px] transition-colors",
+                active
+                  ? "bg-hover font-medium text-ink"
+                  : "text-ink-2 hover:bg-hover hover:text-ink",
+              );
+              return item.settingsSection ? (
+                <button
+                  key={item.href + item.label}
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    openSettings(item.settingsSection!);
+                  }}
+                  className={cn(cls, "w-full text-left")}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={cls}
+                >
+                  {inner}
                 </Link>
               );
             })}

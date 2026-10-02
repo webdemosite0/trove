@@ -26,11 +26,11 @@ export async function connect(
   const result = await connectService(service, secret);
   if (!result.ok) return { error: result.error };
 
-  revalidatePath("/integrations");
+  revalidatePath("/", "layout");
   return { ok: true, account: result.account };
 }
 
 export async function disconnect(service: string) {
   await disconnectService(service);
-  revalidatePath("/integrations");
+  revalidatePath("/", "layout");
 }

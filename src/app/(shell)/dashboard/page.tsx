@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OpenSettingsButton } from "@/components/settings/open-settings-button";
 import {
   FiZap,
   FiArrowRight,
@@ -116,9 +117,9 @@ export default async function MePage() {
     listAllRecents(8),
   ]);
 
-  const stats = [
+  const stats: { label: string; value: number; href?: string; settingsSection?: string; accent: string }[] = [
     { label: "Tros", value: agents, href: "/tros", accent: "#8b5cf6" },
-    { label: "Connectors", value: integrations, href: "/integrations", accent: "#10b981" },
+    { label: "Connectors", value: integrations, settingsSection: "integrations", accent: "#10b981" },
     { label: "Projects", value: projects, href: "/projects", accent: "#3b82f6" },
   ];
 
@@ -265,23 +266,32 @@ export default async function MePage() {
         <section className="mt-12">
           <SectionLabel>Your workspace</SectionLabel>
           <div className="grid grid-cols-3 gap-3">
-            {stats.map((s) => (
-              <Link
-                key={s.label}
-                href={s.href}
-                className="group rounded-2xl border border-line bg-raised/80 px-4 py-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong"
-              >
-                <p
-                  className="text-[26px] font-semibold tracking-tight tabular-nums"
-                  style={{ color: s.accent }}
-                >
-                  {s.value}
-                </p>
-                <p className="mt-1 text-[12px] font-medium text-ink-4 transition-colors group-hover:text-ink-3">
-                  {s.label}
-                </p>
-              </Link>
-            ))}
+            {stats.map((s) => {
+              const inner = (
+                <>
+                  <p
+                    className="text-[26px] font-semibold tracking-tight tabular-nums"
+                    style={{ color: s.accent }}
+                  >
+                    {s.value}
+                  </p>
+                  <p className="mt-1 text-[12px] font-medium text-ink-4 transition-colors group-hover:text-ink-3">
+                    {s.label}
+                  </p>
+                </>
+              );
+              const cls =
+                "group rounded-2xl border border-line bg-raised/80 px-4 py-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong";
+              return s.settingsSection ? (
+                <OpenSettingsButton key={s.label} section={s.settingsSection} className={cls}>
+                  {inner}
+                </OpenSettingsButton>
+              ) : (
+                <Link key={s.label} href={s.href!} className={cls}>
+                  {inner}
+                </Link>
+              );
+            })}
           </div>
         </section>
 

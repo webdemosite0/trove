@@ -37,7 +37,6 @@ const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> 
 const PATH_KINDS: { match: (p: string) => boolean; kinds: RecentKind[] | "hide" | "all" }[] = [
   { match: (p) => p.startsWith("/websites"), kinds: ["site"] },
   { match: (p) => p.startsWith("/chat"), kinds: "hide" },
-  { match: (p) => p.startsWith("/integrations"), kinds: "hide" },
   { match: (p) => p.startsWith("/plans"), kinds: "hide" },
   { match: (p) => p.startsWith("/settings"), kinds: "hide" },
   { match: (p) => p.startsWith("/documents"), kinds: ["docs"] },

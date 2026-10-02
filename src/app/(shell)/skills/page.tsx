@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OpenSettingsButton } from "@/components/settings/open-settings-button";
 
 export const metadata = { title: "Skills" };
 
@@ -43,7 +44,7 @@ const SKILLS = [
     id: "connectors",
     name: "Connectors",
     blurb: "Type @ in chat to attach tools when Integrations are ready.",
-    href: "/integrations",
+    settingsSection: "integrations",
   },
 ];
 
@@ -58,25 +59,34 @@ export default function SkillsPage() {
             become available.
           </p>
         </div>
-        <Link
-          href="/integrations"
+        <OpenSettingsButton
+          section="integrations"
           className="rounded-full border border-line bg-raised px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
         >
           Manage connectors
-        </Link>
+        </OpenSettingsButton>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {SKILLS.map((s) => (
-          <Link
-            key={s.id}
-            href={s.href}
-            className="group rounded-[18px] border border-line bg-rail p-4 transition hover:border-accent/35 hover:bg-hover/40"
-          >
-            <p className="text-[14.5px] font-medium text-ink group-hover:text-accent">{s.name}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-3">{s.blurb}</p>
-          </Link>
-        ))}
+        {SKILLS.map((s) => {
+          const inner = (
+            <>
+              <p className="text-[14.5px] font-medium text-ink group-hover:text-accent">{s.name}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-3">{s.blurb}</p>
+            </>
+          );
+          const cls =
+            "group rounded-[18px] border border-line bg-rail p-4 text-left transition hover:border-accent/35 hover:bg-hover/40";
+          return "settingsSection" in s && s.settingsSection ? (
+            <OpenSettingsButton key={s.id} section={s.settingsSection} className={cls}>
+              {inner}
+            </OpenSettingsButton>
+          ) : (
+            <Link key={s.id} href={(s as { href: string }).href} className={cls}>
+              {inner}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

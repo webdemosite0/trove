@@ -56,7 +56,7 @@ const COMMANDS: Command[] = [
   { id: "nav-team", label: "Team", hint: "Four specialists, one task", icon: TbUsers, tone: "#f59e0b", href: "/team", group: "Navigate" },
   { id: "nav-home", label: "Home", hint: "Your workspace", icon: TbLayoutDashboard, tone: "#64748b", href: "/dashboard", group: "Navigate" },
   { id: "nav-reminders", label: "Alerts", hint: "Notify me later", icon: TbBell, tone: "#f43f5e", href: "/reminders", group: "Navigate" },
-  { id: "nav-integrations", label: "Apps", hint: "Connect a service", icon: TbPlugConnected, tone: "#0284c7", href: "/integrations", group: "Navigate", overlay: "integrations" },
+  { id: "nav-integrations", label: "Apps", hint: "Connect a service", icon: TbPlugConnected, tone: "#0284c7", href: "/settings", group: "Navigate", overlay: "integrations" },
   { id: "nav-plans", label: "Plan", hint: "Credits and limits", icon: TbCreditCard, tone: "#8b5cf6", href: "/plans", group: "Navigate" },
   { id: "nav-settings", label: "Settings", hint: "Account and appearance", icon: TbSettings, tone: "#64748b", href: "/settings", group: "Navigate", overlay: "general" },
 ];

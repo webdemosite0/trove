@@ -36,6 +36,6 @@ export async function toggleIntegration(serviceId: string) {
     );
   }
 
-  revalidatePath("/integrations");
+  revalidatePath("/", "layout");
   return { ok: true };
 }

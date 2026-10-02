@@ -400,7 +400,7 @@ export const FEATURES: Feature[] = [
     sections: [
       {
         heading: "OAuth, never passwords",
-        body: "Connections use each provider's official OAuth flow. You grant scoped access and can revoke it anytime from the integrations page.",
+        body: "Connections use each provider's official OAuth flow. You grant scoped access and can revoke it anytime from Settings.",
       },
       {
         heading: "Agents use real data",
@@ -417,7 +417,7 @@ export const FEATURES: Feature[] = [
       "Revoke anytime from one page",
       "Reads automatic, actions need approval",
     ],
-    href: "/integrations",
+    href: "/signup",
     example: {
       kind: "integrations",
       title: "4,000+ connected apps",

@@ -34,7 +34,7 @@ export function LandingTrustedBar({ models }: { models: ChatModelOption[] }) {
               </span>
             </Reveal>
           ))}
-          <Link href="/integrations" className="ml-1 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-white transition hover:-translate-y-0.5 hover:bg-black" aria-label="Open integrations">
+          <Link href="/signup" className="ml-1 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-white transition hover:-translate-y-0.5 hover:bg-black" aria-label="Sign up to connect integrations">
             <FiArrowRight size={14} />
           </Link>
         </div>
