@@ -349,13 +349,6 @@ export function TrosView({
             <Ico icon={FiSidebar} size={17} />
           </button>
           <span className="text-[14px] font-semibold text-ink">Tros</span>
-          <button
-            type="button"
-            onClick={() => setDraft(BLANK_DRAFT)}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-violet-500 px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition hover:bg-violet-600"
-          >
-            <Ico icon={FiPlus} size={14} /> New Tro
-          </button>
         </div>
 
         <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">

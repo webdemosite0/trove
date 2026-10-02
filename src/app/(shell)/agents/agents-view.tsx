@@ -74,13 +74,15 @@ export function AgentsView({
             A team of specialists — each with a unique splashy, brief, and toolkit.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-semibold shadow-md shadow-accent/15 transition hover:scale-[1.03]"
-        >
-          <Ico icon={FiPlus} motion="open" size={16} /> New Tro
-        </button>
+        {agents.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-semibold shadow-md shadow-accent/15 transition hover:scale-[1.03]"
+          >
+            <Ico icon={FiPlus} motion="open" size={16} /> New Tro
+          </button>
+        ) : null}
       </header>
 
       {agents.length === 0 ? (
