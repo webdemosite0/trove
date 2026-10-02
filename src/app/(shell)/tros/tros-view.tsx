@@ -633,15 +633,15 @@ function CreateModal({ initial, onClose }: { initial: Draft; onClose: () => void
         <input type="hidden" name="tools" value={JSON.stringify(tools)} />
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Name</span>
-          <input name="name" required placeholder="e.g. Research lead" className={field} value={name} onChange={(e) => setName(e.target.value)} />
+          <input name="name" required autoComplete="off" placeholder="e.g. Research lead" className={field} value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Role</span>
-          <input name="role" required placeholder="e.g. Market research" defaultValue={initial.role} className={field} />
+          <input name="role" required autoComplete="off" placeholder="e.g. Market research" defaultValue={initial.role} className={field} />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Instructions</span>
-          <textarea name="instructions" required rows={4} placeholder="How this Tro should work, tone, constraints…" defaultValue={initial.instructions} className={cn(field, "resize-y")} />
+          <textarea name="instructions" required autoComplete="off" rows={4} placeholder="How this Tro should work, tone, constraints…" defaultValue={initial.instructions} className={cn(field, "resize-y")} />
         </label>
         <div>
           <span className="mb-1.5 block text-[12px] font-semibold text-ink-2">Accent</span>

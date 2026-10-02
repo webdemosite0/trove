@@ -41,6 +41,11 @@ export function Modal({
   const panel = React.useRef<HTMLDivElement>(null);
   const restoreTo = React.useRef<HTMLElement | null>(null);
   const mounted = useMounted();
+  // onClose is inlined by callers (new identity every render) — keep it in a
+  // ref so the open effect below only re-runs on the open transition, instead
+  // of re-stealing focus on every parent re-render.
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose;
 
   React.useEffect(() => {
     if (!open) return;
@@ -64,12 +69,21 @@ export function Modal({
       ).filter((el) => el.offsetParent !== null);
 
     const first = focusables()[0] ?? panel.current;
-    first?.focus();
+    // Focus the first form field — not the × close button — so the dialog
+    // opens ready to type. Callers can override with [data-autofocus].
+    const fields = () =>
+      Array.from(
+        panel.current?.querySelectorAll<HTMLElement>(
+          '[data-autofocus],input:not([type="hidden"]),textarea,select',
+        ) ?? [],
+      ).filter((el) => el.offsetParent !== null);
+    const target = fields()[0] ?? first;
+    target?.focus();
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -96,7 +110,7 @@ export function Modal({
       body.style.paddingRight = prevPad;
       restoreTo.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!mounted || !open) return null;
 

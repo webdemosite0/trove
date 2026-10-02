@@ -215,7 +215,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
           </span>
         </span>
         <TroveChevronRightIcon
-          size={16}
+          size={18}
           className={cn(
             "pointer-events-none shrink-0 text-ink-3 transition-transform duration-200",
             menuOpen && "rotate-90",
@@ -242,7 +242,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
               onClick={() => go(m.section)}
               className="flex w-full min-w-0 items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
             >
-              <m.icon size={17} className="pointer-events-none shrink-0" />
+              <m.icon size={19} className="pointer-events-none shrink-0" />
               <span className="truncate">{m.label}</span>
             </button>
           ))}
@@ -253,7 +253,7 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
               role="menuitem"
               className="flex w-full min-w-0 items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-critical transition-colors hover:bg-hover"
             >
-              <TroveLogoutIcon size={17} className="pointer-events-none shrink-0" />
+              <TroveLogoutIcon size={19} className="pointer-events-none shrink-0" />
               <span className="truncate">Sign out</span>
             </button>
           </form>
@@ -343,7 +343,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
           }}
           aria-label="Close menu"
         >
-          <TroveCloseIcon size={20} className="pointer-events-none" />
+          <TroveCloseIcon size={22} className="pointer-events-none" />
         </button>
         <button
           type="button"
@@ -356,7 +356,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
           aria-label={c ? "Expand sidebar" : "Collapse sidebar"}
           title={c ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <TroveCollapseIcon size={20} className="pointer-events-none" />
+          <TroveCollapseIcon size={22} className="pointer-events-none" />
         </button>
       </div>
 
@@ -373,7 +373,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
                 c ? "mx-auto size-11 rounded-2xl" : "h-10 w-full rounded-2xl",
               )}
             >
-              <TroveNewChatIcon size={19} className="pointer-events-none shrink-0" />
+              <TroveNewChatIcon size={21} className="pointer-events-none shrink-0" />
               {!c ? <span className="truncate">New {isTros ? "Tro" : "chat"}</span> : null}
             </Link>
           );
@@ -472,10 +472,10 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
                   openSettings("general");
                 }}
               >
-                <TroveSettingsIcon size={18} />
+                <TroveSettingsIcon size={20} />
               </FooterButton>
               <FooterButton label="Plan" href="/plans">
-                <Ico icon={TroveBillingIcon} motion="pop" size={18} />
+                <Ico icon={TroveBillingIcon} motion="pop" size={20} />
               </FooterButton>
               <FooterButton
                 label="Help"
@@ -484,7 +484,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
                   openSettings("help");
                 }}
               >
-                <Ico icon={TroveHelpIcon} motion="ring" size={18} />
+                <Ico icon={TroveHelpIcon} motion="ring" size={20} />
               </FooterButton>
               <span className="min-w-0 flex-1" />
               <ThemeToggle />

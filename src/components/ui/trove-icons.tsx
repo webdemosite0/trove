@@ -11,12 +11,12 @@ import type { LucideIcon, LucideProps } from "lucide-react";
 type SvgProps = LucideProps & { children: React.ReactNode };
 
 const Svg = forwardRef<SVGSVGElement, SvgProps>(function Svg(
-  { size = 20, className, strokeWidth = 2.5, style, children, absoluteStrokeWidth, ...rest },
+  { size = 20, className, strokeWidth = 1.8, style, children, absoluteStrokeWidth, ...rest },
   ref,
 ) {
   void absoluteStrokeWidth;
-  // Never render thinner than 2.5 — keeps glyphs bold and legible at small sizes.
-  const sw = Math.max(2.5, Number(strokeWidth) || 2.5);
+  // Never render thinner than 1.75 — keeps glyphs light but legible at small sizes.
+  const sw = Math.max(1.75, Number(strokeWidth) || 1.8);
   return (
     <svg
       ref={ref}
