@@ -112,16 +112,13 @@ function NavRow({
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "hover-glow group relative mx-auto grid h-10 w-10 place-items-center rounded-2xl transition-all duration-200",
+            "hover-glow mx-auto grid h-10 w-10 place-items-center rounded-2xl transition-all duration-200",
             active
               ? "bg-hover text-ink shadow-[inset_0_0_0_1px_var(--color-line-strong)]"
               : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
           <NavIcon item={item} active={active} />
-          {active ? (
-            <span aria-hidden className="absolute -left-[13px] top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-accent" />
-          ) : null}
         </Link>
       </Tooltip>
     );
