@@ -180,6 +180,52 @@ export const TRO_CONNECTOR_ACTIONS: Record<string, ConnectorServiceDef> = {
         description: "List the user's repositories.",
         argHint: `{}`,
       },
+      create_repo: {
+        tool: "GITHUB_CREATE_REPO",
+        description: "Create a new GitHub repository. Use when the user asks to make a new repo.",
+        argHint: `{"name": "my-project", "description": "...", "private": false, "auto_init": true}`,
+        write: true,
+      },
+      get_repo: {
+        tool: "GITHUB_GET_REPO",
+        description: "Get details about a repository.",
+        argHint: `{"owner": "octo", "repo": "hello"}`,
+      },
+      create_file: {
+        tool: "GITHUB_CREATE_FILE",
+        description: "Create a new file in a repository (write code, upload content).",
+        argHint: `{"owner": "octo", "repo": "hello", "path": "src/index.ts", "content": "...", "message": "Add index.ts"}`,
+        write: true,
+      },
+      update_file: {
+        tool: "GITHUB_UPDATE_FILE",
+        description: "Update an existing file in a repository.",
+        argHint: `{"owner": "octo", "repo": "hello", "path": "src/index.ts", "content": "...", "message": "Update index.ts", "sha": "..."}`,
+        write: true,
+      },
+      delete_file: {
+        tool: "GITHUB_DELETE_FILE",
+        description: "Delete a file from a repository.",
+        argHint: `{"owner": "octo", "repo": "hello", "path": "old.ts", "message": "Remove old.ts", "sha": "..."}`,
+        write: true,
+      },
+      list_files: {
+        tool: "GITHUB_LIST_FILES",
+        description: "List files in a repository path.",
+        argHint: `{"owner": "octo", "repo": "hello", "path": ""}`,
+      },
+      create_branch: {
+        tool: "GITHUB_CREATE_BRANCH",
+        description: "Create a new branch in a repository.",
+        argHint: `{"owner": "octo", "repo": "hello", "branch": "feature-x", "from_branch": "main"}`,
+        write: true,
+      },
+      create_pr: {
+        tool: "GITHUB_CREATE_PULL_REQUEST",
+        description: "Open a pull request.",
+        argHint: `{"owner": "octo", "repo": "hello", "title": "...", "head": "feature-x", "base": "main", "body": "..."}`,
+        write: true,
+      },
       create_issue: {
         tool: "GITHUB_CREATE_ISSUE",
         description: "Create an issue in a repository.",
