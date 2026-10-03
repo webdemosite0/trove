@@ -1490,7 +1490,7 @@ export function AgentChat({
             <div
               role="tablist"
               aria-label="Panel sections"
-              className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex items-center gap-1"
             >
               {(
                 [
@@ -1502,31 +1502,32 @@ export function AgentChat({
                   { id: "skills", label: "Skills", icon: FiZap, badge: undefined as number | undefined },
                 ] as const
               ).map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={panelTab === t.id}
-                  onClick={() => setPanelTab(t.id)}
-                  className={cn(
-                    "relative flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-t-lg px-2.5 py-2 text-[12px] font-medium transition",
-                    panelTab === t.id ? "text-ink" : "text-ink-4 hover:bg-hover hover:text-ink-2",
-                  )}
-                >
-                  <Ico icon={t.icon} size={13} />
-                  {t.label}
-                  {t.badge ? (
-                    <span className="rounded-full bg-accent/15 px-1.5 text-[10px] font-bold text-accent">
-                      {t.badge}
-                    </span>
-                  ) : null}
-                  <span
+                <Tooltip key={t.id} label={t.label} side="bottom">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={panelTab === t.id}
+                    aria-label={t.label}
+                    onClick={() => setPanelTab(t.id)}
                     className={cn(
-                      "absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent transition-opacity",
-                      panelTab === t.id ? "opacity-100" : "opacity-0",
+                      "relative grid size-9 shrink-0 place-items-center rounded-xl transition",
+                      panelTab === t.id ? "bg-hover text-ink" : "text-ink-4 hover:bg-hover hover:text-ink-2",
                     )}
-                  />
-                </button>
+                  >
+                    <Ico icon={t.icon} size={16} />
+                    {t.badge ? (
+                      <span className="absolute -right-0.5 -top-0.5 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+                        {t.badge > 99 ? "99+" : t.badge}
+                      </span>
+                    ) : null}
+                    <span
+                      className={cn(
+                        "absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent transition-opacity",
+                        panelTab === t.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                  </button>
+                </Tooltip>
               ))}
             </div>
           </div>
