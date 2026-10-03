@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap } from "@/components/ui/icons";
 import { TroTasksPanel } from "@/components/agents/tro-tasks-panel";
+import { TroSkillsPanel } from "@/components/agents/tro-skills-panel";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -293,7 +294,7 @@ export function AgentChat({
   const [panelOpen, setPanelOpen] = useState(true);
   const { openSettings } = useNav();
   const [browserExpanded, setBrowserExpanded] = useState(false);
-  type PanelTab = "desktop" | "files" | "activity" | "connectors" | "tasks";
+  type PanelTab = "desktop" | "files" | "activity" | "connectors" | "tasks" | "skills";
   const [panelTab, setPanelTab] = useState<PanelTab>("desktop");
   /** Inline artifact preview shown at the top of the Files tab (Claude-style). */
   const [previewArtifact, setPreviewArtifact] = useState<SavedArtifact | null>(null);
@@ -1498,6 +1499,7 @@ export function AgentChat({
                   { id: "activity", label: "Activity", icon: FiActivity, badge: activity.filter((a) => a.tone === "run").length || undefined },
                   { id: "connectors", label: "Connectors", icon: TbPlugConnected, badge: undefined as number | undefined },
                   { id: "tasks", label: "Tasks", icon: FiClock, badge: undefined as number | undefined },
+                  { id: "skills", label: "Skills", icon: FiZap, badge: undefined as number | undefined },
                 ] as const
               ).map((t) => (
                 <button
@@ -1795,6 +1797,7 @@ export function AgentChat({
           {panelTab === "tasks" ? (
             <TroTasksPanel agentId={agent.id} agentName={agent.name} />
           ) : null}
+          {panelTab === "skills" ? <TroSkillsPanel /> : null}
 
           <p className="flex items-center gap-1.5 px-4 py-3 text-[10.5px] leading-relaxed text-ink-4">
             <Ico icon={FiCpu} size={11} className="shrink-0" />
