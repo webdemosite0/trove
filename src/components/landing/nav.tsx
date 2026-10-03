@@ -8,7 +8,6 @@ import {
   FiMenu,
   FiX,
   FiExternalLink,
-  TbWorld,
   TbFileText,
   TbTable,
   TbPresentation,
@@ -21,7 +20,6 @@ import { ThemeToggle } from "@/components/shell/theme";
 import { cn } from "@/lib/utils";
 
 const PRODUCT_LINKS = [
-  { label: "Websites", desc: "Sites with live preview", href: "/features/websites", icon: TbWorld, tone: "#8b5cf6" },
   { label: "Documents", desc: "Memos, reports, proposals", href: "/features/documents", icon: TbFileText, tone: "#3b82f6" },
   { label: "Sheets", desc: "Models with real formulas", href: "/features/spreadsheets", icon: TbTable, tone: "#22c55e" },
   { label: "Presentations", desc: "Decks with a point of view", href: "/features/presentations", icon: TbPresentation, tone: "#f97316" },

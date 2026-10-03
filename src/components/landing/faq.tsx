@@ -7,15 +7,15 @@ import { SectionHead } from "@/components/landing/sections";
 const QA: { q: string; a: string }[] = [
   {
     q: "What is Trove?",
-    a: "An AI workspace for real work. You describe what you need and get websites, documents, spreadsheets, decks, research, code, and agents — in projects you can refine, publish, and return to. Not a chat that disappears when you close the tab.",
+    a: "An AI workspace for real work. You describe what you need and get documents, spreadsheets, decks, research, code, and agents — in projects you can refine and return to. Not a chat that disappears when you close the tab.",
   },
   {
     q: "What can I build with it?",
-    a: "Static websites and React apps with live preview, Word documents, Excel workbooks, PowerPoint decks, runnable code, research write-ups, and agents with their own brief and history. Team workspaces add shared projects and invitations.",
+    a: "Word documents, Excel workbooks, PowerPoint decks, runnable code, research write-ups, and agents with their own brief and history. Team workspaces add shared projects and invitations.",
   },
   {
     q: "Do I need an account?",
-    a: "Explore Trove without one — the examples, templates, and feature pages are all public. Create a free account when you're ready to start building and save your work; generating, saving, publishing, and exporting need an account.",
+    a: "Explore Trove without one — the examples, templates, and feature pages are all public. Create a free account when you're ready to start building and save your work; generating, saving, and exporting need an account.",
   },
   {
     q: "How do credits work?",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  TbWorld,
+  TbPalette,
   TbFileText,
   TbTable,
   TbPresentation,
@@ -44,7 +44,7 @@ function CardHead({
   title,
   desc,
 }: {
-  icon: typeof TbWorld;
+  icon: typeof TbPalette;
   tone: string;
   title: string;
   desc: string;
@@ -81,13 +81,13 @@ export function Bento() {
         </div>
 
         <div className="mt-10 grid gap-4 sm:mt-14 sm:grid-cols-6">
-          {/* Websites — large */}
-          <Card href="/features/websites" className="sm:col-span-4">
+          {/* Design — large */}
+          <Card href="/design" className="sm:col-span-4">
             <CardHead
-              icon={TbWorld}
-              tone="#8b5cf6"
-              title="Websites with live preview"
-              desc="Landing pages, portfolios, shops, booking sites — built as real HTML you can publish or download."
+              icon={TbPalette}
+              tone="#ec4899"
+              title="Designs with a canvas"
+              desc="Social posts, posters, logos, thumbnails — compose on a real canvas and export crisp PNGs."
             />
             <div className="relative mt-2 overflow-hidden rounded-2xl border border-line">
               <div className="flex items-center gap-1.5 border-b border-line bg-sunk/60 px-3 py-2">
@@ -95,13 +95,13 @@ export function Bento() {
                 <span className="size-2 rounded-full bg-line-strong" />
                 <span className="size-2 rounded-full bg-line-strong" />
               </div>
-              <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-fuchsia-600 px-6 py-8">
-                <p className="text-[13px] font-semibold uppercase tracking-[0.24em] text-white/70">Your site</p>
+              <div className="bg-gradient-to-br from-pink-500 via-rose-500 to-orange-400 px-6 py-8">
+                <p className="text-[13px] font-semibold uppercase tracking-[0.24em] text-white/70">Your design</p>
                 <p className="mt-2 max-w-[24ch] text-[22px] font-semibold leading-tight tracking-tight text-white">
-                  Designed, written, and shipped in one conversation.
+                  Composed, layered, and exported in one conversation.
                 </p>
-                <span className="mt-4 inline-block rounded-full bg-white px-4 py-2 text-[12px] font-semibold text-indigo-700">
-                  Publish live
+                <span className="mt-4 inline-block rounded-full bg-white px-4 py-2 text-[12px] font-semibold text-rose-600">
+                  Export PNG
                 </span>
               </div>
             </div>

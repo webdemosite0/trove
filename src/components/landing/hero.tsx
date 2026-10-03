@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  FiFileText,
   FiGlobe,
   FiLayout,
   FiCreditCard,
   FiCalendar,
   FiLayers,
   FiGrid,
+  FiSearch,
   FiArrowRight,
   FiCheck,
   FiZap,
@@ -24,17 +26,16 @@ const PROMPTS = [
   "Draft a Q3 investor memo from these numbers…",
 ];
 
-const CHIPS: { label: string; icon: typeof FiGlobe; prompt: string }[] = [
-  { label: "Portfolio", icon: FiLayout, prompt: "Build a premium portfolio website for a creative professional with case studies, about, and contact pages" },
-  { label: "Landing page", icon: FiGlobe, prompt: "Create a high-converting SaaS landing page with hero, features, pricing, and FAQ" },
-  { label: "Online shop", icon: FiCreditCard, prompt: "Design an elegant online shop homepage with product grid, cart preview, and brand story" },
-  { label: "Booking site", icon: FiCalendar, prompt: "Build a booking website for a local clinic with services, doctors, and appointment CTA" },
+const CHIPS: { label: string; icon: typeof FiFileText; prompt: string }[] = [
   { label: "Investor memo", icon: FiLayers, prompt: "Draft a crisp Q3 investor memo: traction, burn, runway, and asks" },
   { label: "Pitch deck", icon: FiGrid, prompt: "Create a 10-slide seed pitch deck with a clear narrative arc" },
+  { label: "Budget model", icon: FiCreditCard, prompt: "Build a 12-month budget model with revenue, costs, and runway" },
+  { label: "Research brief", icon: FiSearch, prompt: "Research the competitive landscape for AI productivity tools and summarize the top 5 players" },
+  { label: "Brand guide", icon: FiLayout, prompt: "Design a brand identity guide with colors, typography, and logo usage" },
+  { label: "Project plan", icon: FiCalendar, prompt: "Create a 90-day project plan with milestones, owners, and deliverables" },
 ];
 
 const CAPABILITIES = [
-  "Websites",
   "Documents",
   "Spreadsheets",
   "Decks",
@@ -144,10 +145,10 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
   function go(text?: string) {
     const idea = (text ?? value).trim();
     if (!idea) {
-      router.push("/websites");
+      router.push("/chat");
       return;
     }
-    router.push(`/websites?q=${encodeURIComponent(idea.slice(0, 2000))}`);
+    router.push(`/chat?q=${encodeURIComponent(idea.slice(0, 2000))}`);
   }
 
   return (
