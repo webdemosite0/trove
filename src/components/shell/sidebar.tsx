@@ -392,6 +392,7 @@ export function Sidebar({
           </Link>
         )}
 
+        {/* Theme + tools only when expanded */}
         {!compact ? (
           <div className="flex items-center gap-0.5">
             <Tooltip label="Settings" side="top">
@@ -433,11 +434,7 @@ export function Sidebar({
             <span className="flex-1" />
             <ThemeToggle />
           </div>
-        ) : (
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-        )}
+        ) : null}
 
         {balance && !compact ? (
           <div className="flex items-center justify-between rounded-xl bg-sunk px-3 py-2">
