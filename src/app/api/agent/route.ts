@@ -8,6 +8,7 @@ import { requireCredits, spend, OutOfCredits } from "@/lib/credits";
 import { expensiveRequestLimit } from "@/lib/rate-limit";
 import { buildChatConnectorContext } from "@/lib/chat-connectors";
 import { buildTroConnectorToolSection } from "@/lib/tro-connector-tools";
+import { buildTroBrowserToolSection } from "@/lib/browser-tool-block";
 import { buildTroSystemPrompt, buildTeamSection } from "@/lib/tro-prompt";
 
 export const runtime = "nodejs";
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
     agent: { name: agent.name, role: agent.role, instructions: agent.instructions, tools },
     browserNote,
     connectedNote: connectorContext.connectedNote,
-    liveContext: connectorContext.liveContext + connectorToolSection,
+    liveContext: connectorContext.liveContext + connectorToolSection + buildTroBrowserToolSection(),
     timeZone,
     obeyFormat: OBEY_FORMAT,
     situation: situation({ timeZone, canSearch: true }),

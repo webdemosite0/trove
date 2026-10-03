@@ -13,9 +13,9 @@
  * the Tro — each Tro has its own library in its workspace panel.
  */
 
-export type ArtifactKind = "doc" | "sheet" | "deck" | "note" | "code";
+export type ArtifactKind = "doc" | "sheet" | "deck" | "note" | "code" | "website";
 
-export const ARTIFACT_KINDS: ArtifactKind[] = ["doc", "sheet", "deck", "note", "code"];
+export const ARTIFACT_KINDS: ArtifactKind[] = ["doc", "sheet", "deck", "note", "code", "website"];
 
 export interface ArtifactBlock {
   kind: ArtifactKind;

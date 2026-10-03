@@ -9,6 +9,7 @@ import {
   browserElements,
   browserKey,
   browserNavigate,
+  browserPageText,
   browserScreenshot,
   browserScroll,
   browserType,
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
       selector?: string;
       text?: string;
       ref?: number;
-      submit?: boolean;
+      submit?: boolean | string;
       direction?: string;
       key?: string;
       sessionId?: string | null;
@@ -231,8 +232,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (action === "elements") {
-      const result = await browserElements(held.connectUrl);
+    if (action === "read") {
+      const result = await browserPageText(held.connectUrl);
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready", pageText: result.text },
+        ),
+      );
+    }
+
+    if (action === "elements") {      const result = await browserElements(held.connectUrl);
       return NextResponse.json(
         snapshot(
           { ...held, pageUrl: result.pageUrl, title: result.title },
@@ -262,7 +272,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "ref (element number) required." }, { status: 400 });
       }
       const result = await browserTypeRef(held.connectUrl, Math.floor(ref), text, {
-        submit: body.submit === true,
+        submit: body.submit === true || body.submit === "true",
       });
       return NextResponse.json(
         snapshot(

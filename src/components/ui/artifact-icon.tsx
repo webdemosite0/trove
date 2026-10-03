@@ -94,6 +94,19 @@ function CodeIcon() {
   );
 }
 
+function WebsiteIcon() {
+  return (
+    <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <rect x="2.5" y="3.5" width="14" height="12" rx="2" opacity=".9" />
+      <line x1="2.5" y1="7" x2="16.5" y2="7" opacity=".5" />
+      <circle className="art-cell art-cell-1" cx="5" cy="5.2" r="0.9" fill="currentColor" stroke="none" />
+      <circle className="art-cell art-cell-3" cx="7.4" cy="5.2" r="0.9" fill="currentColor" stroke="none" opacity=".6" />
+      <line className="art-doc-2" x1="5" y1="10.5" x2="14" y2="10.5" />
+      <line className="art-doc-3" x1="5" y1="13" x2="11" y2="13" />
+    </g>
+  );
+}
+
 export function ArtifactIcon({
   kind,
   size = 16,
@@ -112,6 +125,7 @@ export function ArtifactIcon({
         {kind === "deck" && <DeckIcon />}
         {kind === "note" && <NoteIcon />}
         {kind === "code" && <CodeIcon />}
+        {kind === "website" && <WebsiteIcon />}
       </svg>
     </span>
   );

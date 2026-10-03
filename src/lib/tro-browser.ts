@@ -19,6 +19,8 @@ export type TroBrowserSnapshot = {
   screenshotBase64: string | null;
   /** Accessibility-tree element list from the `elements` action. */
   elements?: string | null;
+  /** Visible page text from the `read` action. */
+  pageText?: string | null;
   /** Whether `waitForText` found its text. */
   waitFound?: boolean | null;
 };
@@ -573,6 +575,30 @@ async function axActionables(page: Page): Promise<AxActionable[]> {
     return out;
   } finally {
     await cdp.detach().catch(() => undefined);
+  }
+}
+
+/**
+ * Visible page text for the agent's "eyes" — innerText of the body,
+ * whitespace-collapsed and truncated.
+ */
+export async function browserPageText(
+  connectUrl: string,
+  maxChars = 6000,
+): Promise<{ pageUrl: string; title: string; text: string }> {
+  const { browser, page } = await connectPage(connectUrl);
+  try {
+    const raw = await page
+      .evaluate(() => document.body?.innerText ?? "")
+      .catch(() => "");
+    const text = raw.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, maxChars);
+    return {
+      pageUrl: page.url(),
+      title: (await page.title().catch(() => "")) || "",
+      text: text || "(no readable text on this page)",
+    };
+  } finally {
+    await browser.close().catch(() => undefined);
   }
 }
 
