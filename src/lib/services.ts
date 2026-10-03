@@ -13,9 +13,14 @@ export interface Service {
   category: Category;
   blurb: string;
   oauth?: boolean;
+  /** Featured umbrella entry (e.g. Google) that bundles several services. */
+  featured?: boolean;
+  /** Service ids bundled under a featured umbrella. */
+  includes?: string[];
 }
 
 export type Category =
+  | "Featured"
   | "Email & Calendar"
   | "Communication"
   | "Source control"
@@ -49,6 +54,17 @@ export const CATEGORIES: Category[] = [
 ];
 
 export const SERVICES: Service[] = [
+  // Featured umbrella — one Google connection covers Gmail, Calendar, and Drive.
+  {
+    id: "google",
+    name: "Google",
+    category: "Featured",
+    blurb: "Gmail, Calendar, and Drive in one connection.",
+    oauth: true,
+    featured: true,
+    includes: ["gmail", "google-calendar", "google-drive"],
+  },
+
   // Email & Calendar
   { id: "gmail", name: "Gmail", category: "Email & Calendar", blurb: "Read, draft, and send mail on your behalf.", oauth: true },
   { id: "google-calendar", name: "Google Calendar", category: "Email & Calendar", blurb: "Read availability and schedule events.", oauth: true },

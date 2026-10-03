@@ -222,6 +222,8 @@ export function resolveToolkitSlug(service: string): string | null {
 
 /** Can this service plausibly offer callable tools? (cheap, no network) */
 export function canResolveConnectorToolkit(service: string): boolean {
+  const s = service.trim().toLowerCase();
+  if (s === "google") return true; // Umbrella: gmail + calendar + drive.
   return resolveToolkitSlug(service) !== null;
 }
 
@@ -276,6 +278,27 @@ export async function resolveServiceTools(
   service: string,
 ): Promise<{ toolkit: string; tools: ResolvedTool[] }> {
   const svc = service.trim().toLowerCase();
+
+  // Google umbrella: merge Gmail + Calendar + Drive toolkits into one set.
+  if (svc === "google") {
+    const merged: ResolvedTool[] = [];
+    const seen = new Set<string>();
+    for (const sub of ["gmail", "google-calendar", "google-drive"]) {
+      try {
+        const { tools } = await resolveServiceTools(sub);
+        for (const t of tools) {
+          const key = t.slug.toUpperCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          merged.push(t);
+        }
+      } catch {
+        // Skip a sub-service that fails to resolve.
+      }
+    }
+    return { toolkit: "google", tools: merged };
+  }
+
   const toolkit = resolveToolkitSlug(svc) ?? svc;
   const writeSlugs = curatedWriteSlugs(svc);
 
@@ -348,7 +371,14 @@ async function connectedServices(userId: string): Promise<Set<string>> {
       `SELECT service FROM connections WHERE user_id = ?`,
       [userId],
     );
-    return new Set(rows.map((r) => str(r.service).toLowerCase()));
+    const set = new Set(rows.map((r) => str(r.service).toLowerCase()));
+    // Google umbrella counts as connected when all its bundled services are.
+    if (
+      ["gmail", "google-calendar", "google-drive"].every((s) => set.has(s))
+    ) {
+      set.add("google");
+    }
+    return set;
   } catch {
     return new Set();
   }
@@ -696,7 +726,20 @@ export async function executeConnectorTool(
   if (!svc || !toolSlug) {
     return { ok: false, error: "Service and tool are required." };
   }
-  const toolkit = resolveToolkitSlug(svc) ?? svc;
+  // Google umbrella: route the tool to its real toolkit by slug prefix.
+  let toolkit = resolveToolkitSlug(svc) ?? svc;
+  if (svc === "google") {
+    const upper = toolSlug.toUpperCase();
+    if (upper.startsWith("GMAIL_")) toolkit = "gmail";
+    else if (upper.startsWith("GOOGLECALENDAR_")) toolkit = "googlecalendar";
+    else if (upper.startsWith("GOOGLEDRIVE_")) toolkit = "googledrive";
+    else {
+      return {
+        ok: false,
+        error: "That tool does not belong to the Google connector.",
+      };
+    }
+  }
   if (!composioConfigured()) {
     return { ok: false, error: "Connector execution is not configured." };
   }

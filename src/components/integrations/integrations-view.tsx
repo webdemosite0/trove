@@ -8,6 +8,11 @@ import { ConnectDialog } from "@/components/integrations/connect-dialog";
 import { SERVICES } from "@/lib/services";
 import { ServiceMark } from "@/components/integrations/service-mark";
 import { serviceForComposioToolkit } from "@/lib/composio-map";
+import {
+  GOOGLE_UMBRELLA_ID,
+  GOOGLE_UMBRELLA_SERVICES,
+  GOOGLE_UMBRELLA_TOOLKITS,
+} from "@/lib/composio-map";
 
 export interface ConnectedService {
   service: string;
@@ -64,7 +69,7 @@ export function IntegrationsView({
   );
 
   const installed = useMemo(
-    () => SERVICES.filter((s) => byId.has(s.id)),
+    () => SERVICES.filter((s) => byId.has(s.id) && s.id !== GOOGLE_UMBRELLA_ID),
     [byId],
   );
 
@@ -73,14 +78,17 @@ export function IntegrationsView({
     if (!q) {
       const map = new Map(SERVICES.map((s) => [s.id, s]));
       const ordered = POPULAR_IDS.map((id) => map.get(id)).filter(Boolean) as typeof SERVICES;
-      const rest = SERVICES.filter((s) => !POPULAR_IDS.includes(s.id));
+      const rest = SERVICES.filter(
+        (s) => !POPULAR_IDS.includes(s.id) && s.id !== GOOGLE_UMBRELLA_ID,
+      );
       return [...ordered, ...rest].slice(0, 24);
     }
     return SERVICES.filter(
       (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.blurb.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q),
+        s.id !== GOOGLE_UMBRELLA_ID &&
+        (s.name.toLowerCase().includes(q) ||
+          s.blurb.toLowerCase().includes(q) ||
+          s.category.toLowerCase().includes(q)),
     ).slice(0, 40);
   }, [query]);
 
@@ -188,11 +196,55 @@ export function IntegrationsView({
   }
 
   function startConnect(id: string) {
+    if (id === GOOGLE_UMBRELLA_ID) {
+      void connectGoogle();
+      return;
+    }
     if (composioOn && composioSet.has(id)) {
       void connectComposio(id);
       return;
     }
     if (connectable[id]) setOpening(id);
+  }
+
+  /** One Google connection: OAuth Gmail, Calendar, and Drive in sequence. */
+  async function connectGoogle() {
+    setError(null);
+    setBusy(GOOGLE_UMBRELLA_ID);
+    try {
+      for (const toolkit of GOOGLE_UMBRELLA_TOOLKITS) {
+        const res = await fetch("/api/composio/authorize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ toolkit }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error ?? `Failed (${res.status})`);
+        const link = data.redirectUrl as string;
+        if (!link || !link.startsWith("http")) {
+          throw new Error("Composio did not return a connect link.");
+        }
+        const popup = window.open(link, "composio-connect", "width=520,height=720");
+        if (!popup) throw new Error("Popup blocked — allow popups for this site.");
+        const started = Date.now();
+        await new Promise<void>((resolve) => {
+          const t = setInterval(() => {
+            if (popup?.closed || Date.now() - started > 5 * 60_000) {
+              clearInterval(t);
+              resolve();
+            }
+          }, 800);
+        });
+      }
+      const sync = await fetch("/api/composio/sync", { method: "POST" });
+      const syncData = await sync.json().catch(() => null);
+      if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync connections.");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Connect failed.");
+    } finally {
+      setBusy(null);
+    }
   }
 
   function canConnect(id: string) {
@@ -252,6 +304,66 @@ export function IntegrationsView({
             OAuth for Gmail, Slack, GitHub, and more.
           </p>
         ) : null}
+
+        {/* Featured: Google umbrella connector — pinned on top. */}
+        {(() => {
+          const googleOn = GOOGLE_UMBRELLA_SERVICES.every((id) => byId.has(id));
+          const googleBusy = busy === GOOGLE_UMBRELLA_ID;
+          return (
+            <section className="mt-8 overflow-hidden rounded-3xl border border-line bg-raised shadow-[var(--sh-1)]">
+              <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+                <span className="grid size-[72px] shrink-0 place-items-center rounded-2xl bg-white shadow-[var(--sh-1)] ring-1 ring-line">
+                  <ServiceMark id="google" name="Google" size={54} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[17px] font-semibold tracking-[-0.01em] text-ink">
+                    Google
+                  </p>
+                  <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
+                    One connection for your whole Google workspace — Gmail, Google
+                    Calendar, and Google Drive. Your Tros get mail, scheduling,
+                    and files with a single @google mention.
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {GOOGLE_UMBRELLA_SERVICES.map((id) => {
+                      const svc = SERVICES.find((s) => s.id === id);
+                      const on = byId.has(id);
+                      return (
+                        <span
+                          key={id}
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] ${
+                            on
+                              ? "border-positive/30 bg-positive-soft text-positive"
+                              : "border-line bg-transparent text-ink-3"
+                          }`}
+                        >
+                          {on ? <FiCheck size={12} /> : null}
+                          {svc?.name ?? id}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {googleOn ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-positive/30 bg-positive-soft px-4 py-2 text-[13.5px] font-medium text-positive">
+                      <FiCheck size={15} /> Connected
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!signedIn || busy !== null || !composioOn}
+                      onClick={() => startConnect(GOOGLE_UMBRELLA_ID)}
+                      className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+                    >
+                      {googleBusy ? "Connecting…" : "Connect Google"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+          );
+        })()}
 
         {installed.length > 0 ? (
           <section className="mt-10">

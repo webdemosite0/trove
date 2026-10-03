@@ -49,3 +49,11 @@ export function serviceForComposioToolkit(toolkit: string): string | null {
   }
   return null;
 }
+
+/**
+ * The Google umbrella connector: one "Google" entry that connects the
+ * Gmail, Google Calendar, and Google Drive toolkits together.
+ */
+export const GOOGLE_UMBRELLA_ID = "google";
+export const GOOGLE_UMBRELLA_SERVICES = ["gmail", "google-calendar", "google-drive"];
+export const GOOGLE_UMBRELLA_TOOLKITS = ["gmail", "googlecalendar", "googledrive"];
