@@ -350,29 +350,12 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
       <div
         className={cn(
           "flex shrink-0 items-center gap-1 overflow-hidden px-2.5 transition-all duration-300",
-          c ? "flex-col py-3" : "h-14",
+          c ? "flex-col gap-2 py-3" : "h-14",
         )}
       >
-        {/* Cross-fade between full and icon-only switcher instead of swapping */}
+        {/* Single animated switcher — text collapses instead of swapping layouts */}
         <div className={cn("grid min-w-0", c ? "" : "flex-1")}>
-          <div
-            className={cn(
-              "col-start-1 row-start-1 min-w-0 transition-opacity duration-200",
-              c ? "pointer-events-none opacity-0" : "opacity-100 delay-150",
-            )}
-            aria-hidden={c}
-          >
-            <ProductSwitcher onNavigate={closeMobile} />
-          </div>
-          <div
-            className={cn(
-              "col-start-1 row-start-1 mx-auto transition-opacity duration-200",
-              c ? "opacity-100 delay-150" : "pointer-events-none opacity-0",
-            )}
-            aria-hidden={!c}
-          >
-            <ProductSwitcher collapsed onNavigate={closeMobile} />
-          </div>
+          <ProductSwitcher collapsed={c} onNavigate={closeMobile} />
         </div>
         <button
           type="button"
@@ -484,8 +467,8 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
           <div className="grid">
             <div
               className={cn(
-                "col-start-1 row-start-1 min-w-0 transition-opacity duration-200",
-                c ? "pointer-events-none opacity-0" : "opacity-100 delay-150",
+                "col-start-1 row-start-1 min-w-0 transition-opacity",
+                c ? "pointer-events-none opacity-0 duration-150" : "opacity-100 delay-100 duration-200",
               )}
               aria-hidden={c}
             >
@@ -493,8 +476,8 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
             </div>
             <div
               className={cn(
-                "col-start-1 row-start-1 mx-auto transition-opacity duration-200",
-                c ? "opacity-100 delay-150" : "pointer-events-none opacity-0",
+                "col-start-1 row-start-1 mx-auto transition-opacity",
+                c ? "opacity-100 delay-100 duration-200" : "pointer-events-none opacity-0 duration-150",
               )}
               aria-hidden={!c}
             >
