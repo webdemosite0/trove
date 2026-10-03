@@ -1,7 +1,7 @@
 "use client";
 
 import type { IconType } from "@/components/ui/icons";
-import { TbWorld, TbRobot, TbSearch, TbFileText, FiArrowRight } from "@/components/ui/icons";
+import { TbPalette, TbRobot, TbSearch, TbFileText, FiArrowRight } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,17 +21,17 @@ export interface Starter {
   prompt: string;
   copy: string;
   tone: string;
-  preview: "site" | "agent" | "doc" | "research";
+  preview: "design" | "agent" | "doc" | "research";
 }
 
 const STARTERS: Starter[] = [
   {
-    icon: TbWorld,
-    label: "Build a website",
-    prompt: "Create a polished landing page for my startup",
-    copy: "A complete, responsive site from one description.",
-    tone: "#7c6fff",
-    preview: "site",
+    icon: TbPalette,
+    label: "Design something",
+    prompt: "Design a bold Instagram post for a coffee brand launch",
+    copy: "Canvas-ready visuals, exported as PNG.",
+    tone: "#f472b6",
+    preview: "design",
   },
   {
     icon: TbRobot,
@@ -65,15 +65,13 @@ function Preview({ kind, tone }: { kind: Starter["preview"]; tone: string }) {
     <span className="block h-[3px] rounded-full" style={{ width: w, background: tone, opacity: o }} />
   );
 
-  if (kind === "site") {
+  if (kind === "design") {
     return (
       <span className="flex flex-col gap-1">
-        {bar("40%", 0.5)}
-        {bar("70%")}
-        <span className="mt-0.5 flex gap-1">
-          {[0, 1, 2].map((i) => (
-            <span key={i} className="h-3 flex-1 rounded-[var(--r-tight)]" style={{ background: tone, opacity: 0.14 }} />
-          ))}
+        <span className="h-6 rounded-[var(--r-tight)]" style={{ background: tone, opacity: 0.2 }} />
+        <span className="flex gap-1">
+          <span className="h-3 flex-1 rounded-[var(--r-tight)]" style={{ background: tone, opacity: 0.35 }} />
+          <span className="h-3 flex-1 rounded-full" style={{ background: tone, opacity: 0.2 }} />
         </span>
       </span>
     );

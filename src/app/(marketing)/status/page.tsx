@@ -48,7 +48,7 @@ async function serviceStatus(): Promise<Service[]> {
       detail: aiOk ? "Available" : "Temporarily unavailable",
     },
     {
-      name: "Website live preview",
+      name: "Artifact preview",
       ok: previewOk,
       detail: previewOk ? "Available" : "Temporarily unavailable",
     },
@@ -80,7 +80,7 @@ export default async function StatusPage() {
             </h1>
             <p className="mt-2 text-sm leading-6 text-ink-3">
               {allGood
-                ? "Trove's core account, AI, and website-preview services are available."
+                ? "Trove's core account, AI, and artifact services are available."
                 : `${available} of ${services.length} core services are currently available. We are keeping this page intentionally simple and do not expose internal credentials or provider details.`}
             </p>
           </div>

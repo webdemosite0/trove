@@ -197,7 +197,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           style={{ animationDelay: "140ms" }}
         >
           Trove is the AI workspace for founders, freelancers, and small teams.
-          Websites, documents, spreadsheets, decks, research — described once in chat,
+          Documents, spreadsheets, decks, designs, research — described once in chat,
           delivered as real work you keep, refine, and publish.
         </p>
 

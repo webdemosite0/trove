@@ -68,7 +68,6 @@ export async function finishOnboarding(payload: OnboardingPayload) {
   const goal = payload.goal || "explore";
   const idea = payload.firstIdea || "";
   if (goal === "website") {
-    // Web builder disabled — send website-intent users to chat for now.
     redirect(withReferralWelcome("/chat", idea));
   }
   if (goal === "documents") redirect(withReferralWelcome("/documents", idea));

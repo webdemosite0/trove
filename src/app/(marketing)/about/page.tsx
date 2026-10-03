@@ -31,7 +31,7 @@ export default function AboutPage() {
           Most AI products are a box you type into. You get an answer, you copy
           it somewhere else, and the thread is gone. Trove is the other way
           round: you describe the job once, it plans the tools, and you download
-          a website, a Word document, a spreadsheet, a deck, or an agent you can
+          a document, a spreadsheet, a deck, a design, or an agent you can
           open again tomorrow.
         </p>
         <p>

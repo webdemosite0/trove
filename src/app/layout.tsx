@@ -204,7 +204,7 @@ function StructuredData() {
             name: "Can Trove create real downloadable files?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Yes. Trove can create downloadable Word documents, Excel workbooks, PowerPoint presentations, code projects, and website files.",
+              text: "Yes. Trove can create downloadable Word documents, Excel workbooks, PowerPoint presentations, code projects, and design files.",
             },
           },
         ],
