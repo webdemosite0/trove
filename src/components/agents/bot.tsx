@@ -108,10 +108,12 @@ export function Bot({
   // Working footage for this species (falls back to the animated mascot
   // if the video file isn't available).
   const [videoFailed, setVideoFailed] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const workingVideo = working && !videoFailed ? WORKING_VIDEO[kind] : undefined;
   // A different species gets a fresh attempt at its own footage.
   useEffect(() => {
     setVideoFailed(false);
+    setVideoReady(false);
   }, [kind]);
   // Deterministic per-instance phase so a grid of mascots doesn't pulse in sync.
   const phase = ((size * 13 + kind.length * 7) % 10) * 0.42;
@@ -150,22 +152,43 @@ export function Bot({
           }}
         />
 
-        {workingVideo ? (
-          /* Real working footage — circular crop hides the 16:9 frame. */
-          <video
-            src={workingVideo}
-            autoPlay
-            muted
-            loop
-            playsInline
-            onError={() => setVideoFailed(true)}
-            className="relative z-[1] select-none rounded-full object-cover ring-1 ring-white/25"
-            style={{
-              width: size,
-              height: size,
-              filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.28))",
-            }}
-          />
+        {workingVideo && meta.image ? (
+          /* Real working footage layered over the mascot image: the image stays
+             visible until the video can actually play, so a missing/404 video
+             never leaves an empty hole (e.g. on hover). */
+          <span className="relative z-[1] inline-block select-none" style={{ width: size, height: size }}>
+            <img
+              src={meta.image}
+              alt=""
+              width={size}
+              height={size}
+              draggable={false}
+              className="absolute inset-0"
+              style={{
+                width: size,
+                height: size,
+                filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.28))",
+              }}
+            />
+            {!videoFailed ? (
+              <video
+                src={workingVideo}
+                autoPlay
+                muted
+                loop
+                playsInline
+                onError={() => setVideoFailed(true)}
+                onCanPlay={() => setVideoReady(true)}
+                className="absolute inset-0 rounded-full object-cover ring-1 ring-white/25 transition-opacity duration-200"
+                style={{
+                  width: size,
+                  height: size,
+                  filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.28))",
+                  opacity: videoReady ? 1 : 0,
+                }}
+              />
+            ) : null}
+          </span>
         ) : meta.image ? (
           <>
             <img

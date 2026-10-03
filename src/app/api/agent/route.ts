@@ -84,6 +84,20 @@ export async function POST(req: NextRequest) {
     connectorToolSection = "";
   }
 
+  // @mentioned skills: the Tro adopts the skill's behavior for this turn.
+  let troSkillSection = "";
+  try {
+    const { parseSkillMentions, resolveMentionedSkills, buildTroSkillSection } =
+      await import("@/lib/tro-skills");
+    const mentioned = parseSkillMentions(mentionScope);
+    if (mentioned.length) {
+      const skills = await resolveMentionedSkills(user.id, mentioned);
+      troSkillSection = buildTroSkillSection(skills);
+    }
+  } catch {
+    troSkillSection = "";
+  }
+
   // Team roster so this Tro can delegate/hire teammates.
   let teamSection = "";
   try {
@@ -115,6 +129,7 @@ export async function POST(req: NextRequest) {
     liveContext:
       connectorContext.liveContext +
       connectorToolSection +
+      troSkillSection +
       buildTroBrowserToolSection() +
       buildTroScheduleSection(timeZone),
     timeZone,
