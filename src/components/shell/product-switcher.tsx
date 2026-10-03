@@ -23,14 +23,18 @@ function TrosMark({ size = 28 }: { size?: number }) {
 export function ProductSwitcher({
   collapsed,
   onNavigate,
+  /** Pro / Team only — Free never sees Tros in the chrome */
+  canUseTros = false,
 }: {
   collapsed?: boolean;
   onNavigate?: () => void;
+  canUseTros?: boolean;
 }) {
   const pathname = usePathname() || "/";
   const isDesktop = useIsDesktopClient();
   const onTrosPath = pathname === "/tros" || pathname.startsWith("/tros/");
-  const showingTros = isDesktop && onTrosPath;
+  // Never treat Tros as active chrome for Free (and hide the menu entry)
+  const showingTros = Boolean(canUseTros && isDesktop && onTrosPath);
 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -56,6 +60,25 @@ export function ProductSwitcher({
   }, [pathname]);
 
   const currentName = showingTros ? "Tros" : "Trove";
+
+  // Free plan: brand mark only — no product menu, no Tros
+  if (!canUseTros) {
+    if (collapsed) {
+      return (
+        <div className="grid size-9 place-items-center" aria-label="Trove">
+          <TroveOrb size={28} />
+        </div>
+      );
+    }
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-2 px-1.5 py-1.5">
+        <TroveOrb size={28} />
+        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold tracking-tight text-ink">
+          Trove
+        </span>
+      </div>
+    );
+  }
 
   const menu = (
     <div
@@ -105,7 +128,7 @@ export function ProductSwitcher({
               {showingTros ? <FiCheck size={14} className="text-accent" /> : null}
             </span>
             <span className="mt-0.5 block text-[11px] leading-snug text-ink-3">
-              Team plan · specialists & tools
+              Pro · Team · specialists & tools
             </span>
           </span>
         </Link>
@@ -121,7 +144,7 @@ export function ProductSwitcher({
             <span className="flex flex-wrap items-center gap-1.5 text-[13px] font-semibold text-ink">
               Tros
               <span className="inline-flex items-center gap-1 rounded-full bg-sunk px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-3 ring-1 ring-line">
-                Team
+                Pro · Team
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-sunk px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-3 ring-1 ring-line">
                 <FiMonitor size={10} />
@@ -129,7 +152,7 @@ export function ProductSwitcher({
               </span>
             </span>
             <span className="mt-0.5 block text-[11px] leading-snug text-ink-3">
-              Team plan · desktop app only
+              Desktop app · Pro or Team plan
             </span>
           </span>
         </Link>
