@@ -130,7 +130,7 @@ export function MobileComposer({
   };
 
   const mention = connectorMentionAt(value, cursor);
-  const { items: connectorOptions, loading: connectorsLoading } =
+  const { items: connectorOptions, skills: skillOptions, loading: connectorsLoading } =
     useConnectedConnectors(Boolean(mention));
   const connectedIds = new Set(connectorOptions.map((item) => item.id));
   const mentionedIds = Array.from(
@@ -162,6 +162,23 @@ export function MobileComposer({
     });
   };
 
+  const selectSkill = (skill: { slug: string }) => {
+    if (!mention) return;
+    const token = `@${skill.slug} `;
+    const nextValue =
+      value.slice(0, mention.start) + token + value.slice(mention.end);
+    const nextCursor = mention.start + token.length;
+    setValue(nextValue);
+    setCursor(nextCursor);
+    requestAnimationFrame(() => {
+      const el = box.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(nextCursor, nextCursor);
+      resize();
+    });
+  };
+
   const ready = Boolean(value.trim()) && !disabled;
 
   return (
@@ -174,9 +191,11 @@ export function MobileComposer({
       {mentionOpen ? (
         <ConnectorMentionMenu
           items={connectorOptions}
+          skills={skillOptions}
           query={mention?.query ?? ""}
           loading={connectorsLoading}
           onSelect={selectConnector}
+          onSelectSkill={selectSkill}
           compact
         />
       ) : null}
