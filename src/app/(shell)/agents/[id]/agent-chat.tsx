@@ -5,6 +5,7 @@ import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap } from "@/components/ui/icons";
+import { ThinkingBall } from "@/components/chat/thinking";
 import { TroTasksPanel } from "@/components/agents/tro-tasks-panel";
 import { TroSkillsPanel } from "@/components/agents/tro-skills-panel";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
@@ -1241,8 +1242,8 @@ export function AgentChat({
               <p className="truncate text-[12px] text-ink-3">
                 {busy ? (
                   <span className="inline-flex items-center gap-1.5">
-                    <span aria-hidden className="muse-thinking-dot size-1.5 rounded-full bg-ink-3" />
-                    <span className="muse-thinking-label">Working</span>
+                    <ThinkingBall size={14} />
+                    <span>Working</span>
                   </span>
                 ) : (
                   agent.role

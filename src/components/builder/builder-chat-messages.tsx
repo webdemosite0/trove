@@ -1,7 +1,7 @@
 "use client";
 
 import { TroveOrb } from "@/components/brand/orb";
-import { ThinkingLine } from "@/components/chat/thinking-line";
+import { Thinking } from "@/components/chat/thinking";
 import { StreamingText } from "@/components/chat/streaming-text";
 import { ThinkingTimeline } from "@/components/builder/thinking-timeline";
 import type { Task } from "@/lib/builder";
@@ -72,7 +72,7 @@ export function BuilderChatMessages({
 
         // Empty assistant placeholder — ThinkingLine owns the orb
         if (!m.text) {
-          return <ThinkingLine key={m.id} />;
+          return <Thinking key={m.id} />;
         }
 
         const isLast = idx === messages.length - 1;
@@ -112,7 +112,7 @@ export function BuilderChatMessages({
         );
       })}
 
-      {showThinking ? <ThinkingLine /> : null}
+      {showThinking ? <Thinking /> : null}
 
       {timelineLines.length > 0 && (phase === "building" || phase === "planning") ? (
         <div className={cn("pl-9", showThinking && "mt-1")}>

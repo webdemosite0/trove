@@ -13,7 +13,7 @@ import { Markdown } from "@/components/chat/markdown";
 import { withLinkedText } from "@/components/chat/linked-text";
 import { TroveOrb } from "@/components/brand/orb";
 import { Bot } from "@/components/agents/bot";
-import { ThinkingState } from "@/components/chat/thinking-state";
+import { Thinking } from "@/components/chat/thinking";
 import { cn } from "@/lib/utils";
 import type { Attachment } from "@/lib/attachments";
 
@@ -117,7 +117,7 @@ export function Message({
     }
     return (
       <div className="nx-in group/msg">
-        <ThinkingState variant="Steps" />
+        <Thinking />
       </div>
     );
   }
@@ -140,7 +140,7 @@ export function Message({
       </div>
       {!pending && thinkMs != null && thinkMs > 0 ? (
         <div className="mb-1.5">
-          <ThinkingState variant="Steps" settled durationSec={thinkMs / 1000} rows={[]} />
+          <Thinking label={`Thought for ${Math.max(1, Math.round(thinkMs / 1000))}s`} />
         </div>
       ) : null}
       {text ? (
