@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { BRAND_LOGOS, BRAND_PNGS } from "@/lib/brand-logos";
+import { BRAND_LOGOS, BRAND_MULTICOLOR, BRAND_PNGS } from "@/lib/brand-logos";
 
 function GenericMark({ size }: { size: number }) {
   return (
@@ -35,8 +35,9 @@ export function ServiceMark({
 }) {
   const key = id.toLowerCase().replace(/^@/, "").trim();
   const logo = BRAND_LOGOS[key];
+  const multi = BRAND_MULTICOLOR[key];
   const pngUri = BRAND_PNGS[key];
-  const hasBrand = Boolean(logo) || Boolean(pngUri);
+  const hasBrand = Boolean(logo) || Boolean(multi) || Boolean(pngUri);
   const iconSize = Math.round(size * 0.72);
 
   return (
@@ -49,7 +50,17 @@ export function ServiceMark({
       )}
       style={{ width: size, height: size }}
     >
-      {logo ? (
+      {multi ? (
+        <svg
+          width={iconSize}
+          height={iconSize}
+          viewBox={multi.viewBox}
+          aria-hidden
+          role="img"
+          // Vendored official brand artwork (never user input).
+          dangerouslySetInnerHTML={{ __html: multi.body }}
+        />
+      ) : logo ? (
         <svg
           width={iconSize}
           height={iconSize}
