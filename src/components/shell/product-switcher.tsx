@@ -5,21 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FiCheck, FiChevronDown } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
-import { Wordmark } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
 function TrosMark({ size = 28 }: { size?: number }) {
   return (
-    <img
-      src="/brand/tros-logo.svg"
-      alt=""
-      width={size}
-      height={size}
-      draggable={false}
-      className="shrink-0 rounded-[9px]"
-      style={{ width: size, height: size }}
+    <span
+      className="grid shrink-0 place-items-center rounded-[9px] bg-[#2f2f2f] text-[12px] font-bold tracking-tight text-[#ececec] ring-1 ring-white/10 dark:bg-[#3a3a3a]"
+      style={{ width: size, height: size, fontFamily: "var(--font-display)" }}
       aria-hidden
-    />
+    >
+      Tr
+    </span>
   );
 }
 
@@ -35,7 +31,7 @@ const PRODUCTS = [
     id: "tros" as const,
     name: "Tros",
     href: "/tros",
-    blurb: "Specialists with briefs & tools",
+    blurb: "Desktop app only",
     match: (path: string) => path === "/tros" || path.startsWith("/tros/"),
   },
 ];
@@ -72,59 +68,24 @@ export function ProductSwitcher({
     setOpen(false);
   }, [pathname]);
 
-  // Single animated tree: the text/chevron collapse to zero width + fade
-  // instead of swapping between two layouts, so the sidebar transition is smooth.
-  return (
-    <div ref={ref} className={cn("relative min-w-0", !collapsed && "flex-1")}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={collapsed ? `Product: ${current.name}` : undefined}
-        className={cn(
-          "group flex min-w-0 items-center gap-2 overflow-hidden rounded-xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-hover",
-          collapsed ? "w-10 justify-center px-0 py-1" : "w-full px-1 py-1",
-        )}
-      >
-        {current.id === "tros" ? <TrosMark size={28} /> : <TroveOrb size={28} />}
-        <span
-          aria-hidden={collapsed}
-          className={cn(
-            "min-w-0 flex-1 whitespace-nowrap text-left transition-all duration-200",
-            collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100 delay-150",
-          )}
+  if (collapsed) {
+    return (
+      <div ref={ref} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label={`Product: ${current.name}`}
+          className="grid size-9 place-items-center rounded-xl transition hover:bg-hover"
         >
-          {current.id === "trove" ? (
-            <Wordmark size={18} />
-          ) : (
-            <span className="block truncate text-[17px] font-semibold tracking-tight text-ink" style={{ fontFamily: "var(--font-display)" }}>
-              Tros
-            </span>
-          )}
-        </span>
-        <FiChevronDown
-          size={14}
-          aria-hidden={collapsed}
-          className={cn(
-            "shrink-0 text-ink-3 transition-all duration-200 group-hover:text-ink",
-            open && "rotate-180",
-            collapsed ? "max-w-0 opacity-0" : "max-w-[20px] opacity-100 delay-150",
-          )}
-        />
-      </button>
-
-      {open ? (
-        <div
-          role="menu"
-          className={cn(
-            "absolute top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]",
-            collapsed ? "left-0 w-[240px]" : "left-0 w-[min(100%,260px)] min-w-[220px]",
-          )}
-        >
-          {!collapsed ? (
-            <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-4">Products</p>
-          ) : null}
+          {current.id === "tros" ? <TrosMark size={28} /> : <TroveOrb size={28} />}
+        </button>
+        {open ? (
+          <div
+            role="menu"
+            className="absolute left-0 top-full z-50 mt-1.5 w-[240px] overflow-hidden rounded-2xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]"
+          >
             {PRODUCTS.map((p) => {
               const active = p.id === current.id;
               return (
@@ -133,7 +94,10 @@ export function ProductSwitcher({
                   href={p.href}
                   role="menuitem"
                   onClick={onNavigate}
-                  className={cn("flex items-start gap-3 px-3 py-2.5 transition hover:bg-hover", active && "bg-hover/60")}
+                  className={cn(
+                    "flex items-start gap-3 px-3 py-2.5 transition hover:bg-hover",
+                    active && "bg-hover/60",
+                  )}
                 >
                   {p.id === "tros" ? <TrosMark size={22} /> : <TroveOrb size={22} />}
                   <span className="min-w-0 flex-1">
@@ -141,7 +105,9 @@ export function ProductSwitcher({
                       {p.name}
                       {active ? <FiCheck size={14} className="text-accent" /> : null}
                     </span>
-                    <span className="mt-0.5 block text-[11px] leading-snug text-ink-3">{p.blurb}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-ink-3">
+                      {p.blurb}
+                    </span>
                   </span>
                 </Link>
               );
@@ -149,10 +115,67 @@ export function ProductSwitcher({
           </div>
         ) : null}
       </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative min-w-0 flex-1">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="flex w-full min-w-0 items-center gap-2 rounded-xl px-1.5 py-1.5 transition hover:bg-hover"
+      >
+        {current.id === "tros" ? <TrosMark size={28} /> : <TroveOrb size={28} />}
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-[14px] font-semibold tracking-tight text-ink">
+            {current.name}
+          </span>
+        </span>
+        <FiChevronDown
+          size={16}
+          className={cn("shrink-0 text-ink-4 transition-transform", open && "rotate-180")}
+        />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute left-0 top-full z-50 mt-1.5 w-full min-w-[220px] overflow-hidden rounded-2xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]"
+        >
+          {PRODUCTS.map((p) => {
+            const active = p.id === current.id;
+            return (
+              <Link
+                key={p.id}
+                href={p.href}
+                role="menuitem"
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-start gap-3 px-3 py-2.5 transition hover:bg-hover",
+                  active && "bg-hover/60",
+                )}
+              >
+                {p.id === "tros" ? <TrosMark size={22} /> : <TroveOrb size={22} />}
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+                    {p.name}
+                    {active ? <FiCheck size={14} className="text-accent" /> : null}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-ink-3">
+                    {p.blurb}
+                  </span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
 export function useIsTrosProduct(pathname?: string | null) {
-  const path = pathname || "";
+  const path = pathname ?? "";
   return path === "/tros" || path.startsWith("/tros/");
 }

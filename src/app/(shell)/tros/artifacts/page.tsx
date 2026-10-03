@@ -5,6 +5,8 @@ import { all, str, num } from "@/lib/db";
 import { Bot } from "@/components/agents/bot";
 import { ArtifactIcon } from "@/components/ui/artifact-icon";
 import type { ArtifactKind } from "@/lib/artifact-block";
+import { isDesktopShell } from "@/lib/desktop-shell";
+import { TrosDesktopOnly } from "../desktop-only";
 
 export const metadata = { title: "Artifacts · Tros" };
 export const dynamic = "force-dynamic";
@@ -28,6 +30,14 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export default async function TrosArtifactsPage() {
+  if (!(await isDesktopShell())) {
+    return (
+      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
+        <TrosDesktopOnly />
+      </div>
+    );
+  }
+
   const user = await currentUser();
   if (!user) redirect("/login");
 
