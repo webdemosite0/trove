@@ -53,7 +53,7 @@ const PRIMARY: Item[] = [
   { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
   { href: "/websites", label: "Websites", icon: TbWorld, motion: "grow" },
   { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
-  { href: "/tros", label: "Tros", icon: TbRobot, motion: "ring" },
+  { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
   { href: "/settings", label: "Plugins", icon: TbPlugConnected, motion: "nudge", settingsSection: "integrations" },
   { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring" },
   { href: "/team", label: "Team", icon: FiUsers, motion: "stack" },
