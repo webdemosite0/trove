@@ -364,6 +364,8 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS agents_by_parent ON agents (user_id, parent_id)`,
   `CREATE TABLE IF NOT EXISTS tro_presence (agent_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS tro_presence_by_user ON tro_presence (user_id, updated_at DESC)`,
+  // Per-user persistent Browserbase context (cookies/logins isolated by user).
+  `CREATE TABLE IF NOT EXISTS tro_browser_contexts (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, context_id TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
 ];
 
 export const REPAIRS = `

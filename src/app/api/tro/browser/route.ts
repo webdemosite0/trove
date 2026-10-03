@@ -3,11 +3,19 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { one, str } from "@/lib/db";
 import {
+  browserBack,
   browserClick,
+  browserClickRef,
+  browserElements,
+  browserKey,
   browserNavigate,
   browserScreenshot,
+  browserScroll,
   browserType,
+  browserTypeRef,
+  browserWaitForText,
   createBrowserSession,
+  diagnoseBrowser,
   endBrowserSession,
   troBrowserConfigured,
   troBrowserSetupHint,
@@ -103,6 +111,10 @@ export async function POST(req: NextRequest) {
       url?: string;
       selector?: string;
       text?: string;
+      ref?: number;
+      submit?: boolean;
+      direction?: string;
+      key?: string;
       sessionId?: string | null;
       connectUrl?: string | null;
       liveUrl?: string | null;
@@ -125,7 +137,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Tro not found." }, { status: 404 });
     }
 
-    if (!troBrowserConfigured()) {
+    if (!troBrowserConfigured() && action !== "diagnose") {
       return softError(null, troBrowserSetupHint(), 503);
     }
 
@@ -137,11 +149,16 @@ export async function POST(req: NextRequest) {
       title: body.title,
     };
 
+    if (action === "diagnose") {
+      const report = await diagnoseBrowser();
+      return NextResponse.json({ ok: true, diagnosis: report });
+    }
+
     if (action === "start") {
       if (held.sessionId && held.connectUrl) {
         return NextResponse.json(snapshot(held, { status: "ready" }));
       }
-      const created = await createBrowserSession();
+      const created = await createBrowserSession({ userId: user.id });
       return NextResponse.json(
         snapshot(
           {
@@ -210,6 +227,93 @@ export async function POST(req: NextRequest) {
         snapshot(
           { ...held, pageUrl: result.pageUrl, title: result.title },
           { status: "ready" },
+        ),
+      );
+    }
+
+    if (action === "elements") {
+      const result = await browserElements(held.connectUrl);
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready", elements: result.elements },
+        ),
+      );
+    }
+
+    if (action === "clickRef") {
+      const ref = Number(body.ref);
+      if (!Number.isFinite(ref) || ref < 1) {
+        return NextResponse.json({ error: "ref (element number) required." }, { status: 400 });
+      }
+      const result = await browserClickRef(held.connectUrl, Math.floor(ref));
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready" },
+        ),
+      );
+    }
+
+    if (action === "typeRef") {
+      const ref = Number(body.ref);
+      const text = String(body.text || "");
+      if (!Number.isFinite(ref) || ref < 1) {
+        return NextResponse.json({ error: "ref (element number) required." }, { status: 400 });
+      }
+      const result = await browserTypeRef(held.connectUrl, Math.floor(ref), text, {
+        submit: body.submit === true,
+      });
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready" },
+        ),
+      );
+    }
+
+    if (action === "scroll") {
+      const direction = String(body.direction || "down");
+      const dir = direction === "up" || direction === "top" || direction === "bottom" ? direction : "down";
+      const result = await browserScroll(held.connectUrl, dir);
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready" },
+        ),
+      );
+    }
+
+    if (action === "back") {
+      const result = await browserBack(held.connectUrl);
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready" },
+        ),
+      );
+    }
+
+    if (action === "key") {
+      const key = String(body.key || "").trim();
+      if (!key) return NextResponse.json({ error: "key required." }, { status: 400 });
+      const result = await browserKey(held.connectUrl, key);
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready" },
+        ),
+      );
+    }
+
+    if (action === "waitForText") {
+      const text = String(body.text || "").trim();
+      if (!text) return NextResponse.json({ error: "text required." }, { status: 400 });
+      const result = await browserWaitForText(held.connectUrl, text);
+      return NextResponse.json(
+        snapshot(
+          { ...held, pageUrl: result.pageUrl, title: result.title },
+          { status: "ready", waitFound: result.found },
         ),
       );
     }
