@@ -22,6 +22,7 @@ import {
   TbPalette,
   TbWorld,
   TbRobot,
+  TbUsers,
   TbHelpCircle,
 } from "@/components/ui/icons";
 import { logOut } from "@/app/actions/auth";
@@ -47,6 +48,7 @@ const MAIN: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard },
   { href: "/chat", label: "Chat", icon: TbMessageCircle },
   { href: "/projects", label: "Projects", icon: TbFolder },
+  { href: "/team", label: "Team", icon: TbUsers },
 ];
 
 const CREATE: NavItem[] = [
@@ -253,7 +255,6 @@ export function Sidebar({
   const isTrosPath = useIsTrosProduct(pathname);
   const isDesktop = useIsDesktopClient();
   const canTros = userHasTrosAccess(user);
-  // Tros nav only for Pro/Team inside the desktop app
   const isTros = isTrosPath && isDesktop && canTros;
   const close = () => setOpen(false);
 
