@@ -149,6 +149,26 @@ export async function runDelegation(opts: {
     account = null;
   }
 
+  // Delegated Tros get their knowledge + memories too.
+  let knowledge: { title: string; content: string }[] = [];
+  let memories: { kind: "preference" | "task"; content: string }[] = [];
+  try {
+    const kRows = (await all(
+      `SELECT title, content FROM tro_knowledge WHERE user_id = ? AND agent_id = ? ORDER BY created_at DESC LIMIT 10`,
+      [userId, target.id],
+    )) as { title: unknown; content: unknown }[];
+    knowledge = kRows.map((r) => ({ title: String(r.title), content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+  try {
+    const mRows = (await all(
+      `SELECT kind, content FROM tro_memories WHERE user_id = ? AND agent_id = ? AND enabled = 1 ORDER BY updated_at DESC LIMIT 20`,
+      [userId, target.id],
+    )) as { kind: unknown; content: unknown }[];
+    memories = mRows
+      .filter((r) => r.kind === "preference" || r.kind === "task")
+      .map((r) => ({ kind: r.kind as "preference" | "task", content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+
   const system = buildTroSystemPrompt({
     agent: target,
     browserNote: `CLOUD COMPUTER starts automatically in this workspace. When asked to research the web, treat browsing as available.`,
@@ -158,6 +178,8 @@ export async function runDelegation(opts: {
     obeyFormat: OBEY_FORMAT,
     situation: situation({ timeZone: safeTimeZone("UTC"), canSearch: true }),
     teamSection: buildTeamSection(target.id, toRosterEntries(roster)),
+    knowledge,
+    memories,
   });
 
   const brief = `${senderName} (a fellow Tro on your team) asked you to do this:\n\n${task}\n\nDeliver the finished work directly — no preamble about being delegated to, just do the job in your voice.`;

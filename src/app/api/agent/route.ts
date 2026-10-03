@@ -122,8 +122,30 @@ export async function POST(req: NextRequest) {
     ? `CLOUD COMPUTER is connected.\nCurrent page: ${browser.pageUrl || "about:blank"}${browser.title ? ` (“${browser.title}”)` : ""}.\nWhen the user asks you to browse, research, or open a site, assume the computer can navigate. Reference what is on screen when useful.`
     : `CLOUD COMPUTER starts automatically in this workspace. When the user shares a URL or asks to research the web, treat browsing as available.`;
 
+  // Fetch knowledge base and enabled memories for this Tro.
+  let knowledge: { title: string; content: string }[] = [];
+  let memories: { kind: "preference" | "task"; content: string }[] = [];
+  try {
+    const kRows = (await all(
+      `SELECT title, content FROM tro_knowledge WHERE user_id = ? AND agent_id = ? ORDER BY created_at DESC LIMIT 10`,
+      [user.id, agentId],
+    )) as { title: unknown; content: unknown }[];
+    knowledge = kRows.map((r) => ({ title: String(r.title), content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+  try {
+    const mRows = (await all(
+      `SELECT kind, content FROM tro_memories WHERE user_id = ? AND agent_id = ? AND enabled = 1 ORDER BY updated_at DESC LIMIT 20`,
+      [user.id, agentId],
+    )) as { kind: unknown; content: unknown }[];
+    memories = mRows
+      .filter((r) => r.kind === "preference" || r.kind === "task")
+      .map((r) => ({ kind: r.kind as "preference" | "task", content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+
   const system = buildTroSystemPrompt({
     agent: { name: agent.name, role: agent.role, instructions: agent.instructions, tools },
+    knowledge,
+    memories,
     browserNote,
     connectedNote: connectorContext.connectedNote,
     liveContext:
