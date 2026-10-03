@@ -1,34 +1,24 @@
 import { notFound } from "next/navigation";
-import { loadConversation } from "@/lib/conversations";
-import { parseSavedDesign } from "@/lib/design-saves";
-import { DesignView } from "../design-view";
+import { DesignEditor } from "../editor/design-editor";
+import { getDesignDoc } from "@/lib/design-docs";
+import { currentUser } from "@/lib/auth";
 
-export const metadata = { title: "Design workspace" };
+export const metadata = { title: "Design editor" };
 
-export default async function DesignWorkspacePage({
+/** Design editor — canvas, layers, export. */
+export default async function DesignEditorPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const conversation = await loadConversation(id).catch(() => null);
-  if (!conversation || conversation.kind !== "design") notFound();
-
-  const payload = [...conversation.messages]
-    .reverse()
-    .find((message) => message.role === "model");
-  const design = payload ? parseSavedDesign(payload.text) : null;
-  if (!design) notFound();
-
+  const user = await currentUser();
+  if (!user) notFound();
+  const doc = await getDesignDoc(user.id, id);
+  if (!doc) notFound();
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <DesignView
-        restored={{
-          id: conversation.id,
-          brief: design.brief,
-          screens: design.screens,
-        }}
-      />
+      <DesignEditor doc={doc} />
     </div>
   );
 }

@@ -1,24 +1,16 @@
-import { DesignView } from "./design-view";
-import { listRecents } from "@/lib/recents";
-import { redirect } from "next/navigation";
+import { DesignGallery } from "./design-gallery";
+import { listDesignDocs } from "@/lib/design-docs";
+import { currentUser } from "@/lib/auth";
 
 export const metadata = { title: "Design" };
 
-/**
- * Design is a brief + screen set, not a prose tool.
- */
-export default async function DesignPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ c?: string }>;
-}) {
-  const { c } = await searchParams;
-  if (c) redirect(`/design/${encodeURIComponent(c)}`);
-
-  const recents = await listRecents("design");
+/** Design — Canva-style gallery of the user's designs. */
+export default async function DesignPage() {
+  const user = await currentUser();
+  const docs = user ? await listDesignDocs(user.id) : [];
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <DesignView recents={recents} />
+      <DesignGallery docs={docs} />
     </div>
   );
 }
