@@ -1,4 +1,4 @@
-import { PlansView } from "./plans-view";
+import { PlansView } from "@/components/billing/plans-view";
 import { currentUser } from "@/lib/auth";
 import { PLANS, myBalance, usageByKind } from "@/lib/credits";
 import { subscriptionFor } from "@/lib/billing";

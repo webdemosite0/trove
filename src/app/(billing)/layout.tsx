@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Backdrop } from "@/components/shell/backdrop";
 import { PlansBackLink } from "@/components/billing/plans-back-link";
@@ -30,7 +31,15 @@ export default function BillingLayout({
             <span className="hidden h-4 w-px bg-line sm:block" aria-hidden />
             <span className="hidden text-[13px] font-medium text-ink-3 sm:inline">Plans</span>
           </div>
-          <PlansBackLink />
+          <Suspense
+            fallback={
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] font-medium text-ink-2">
+                Back to Trove
+              </span>
+            }
+          >
+            <PlansBackLink />
+          </Suspense>
         </div>
       </header>
       <main className="relative flex-1">{children}</main>
