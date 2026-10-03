@@ -37,7 +37,6 @@ const publicRule = {
     "/pricing",
     "/templates",
     "/changelog",
-    "/ai-website-builder",
     "/ai-presentation-maker",
     "/ai-document-generator",
     "/ai-spreadsheet-generator",

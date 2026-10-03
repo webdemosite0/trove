@@ -24,37 +24,6 @@ export interface SeoPage {
 
 export const SEO_PAGES: SeoPage[] = [
   {
-    slug: "ai-website-builder",
-    title: "AI Website Builder — Describe It, Trove Builds It",
-    description:
-      "Trove's AI website builder turns a description into a real, publishable website — design, copy, and live preview included. Free to try.",
-    h1: "The AI website builder that ships real sites",
-    standfirst:
-      "Describe the site you need in plain language. Trove designs it, writes the copy, and renders a live preview you can click through — then publishes it or hands you the files.",
-    example: {
-      kind: "site",
-      title: "Ember & Oak — roastery landing page",
-      caption: "Built from one paragraph. Real sections, real copy, publishable as-is.",
-    },
-    steps: [
-      { heading: "Describe it", body: "“A warm, premium site for our roastery — three products, subscription CTA.” One paragraph is enough." },
-      { heading: "Review the preview", body: "A real, clickable page renders in seconds. Scroll it, resize it, click every button." },
-      { heading: "Refine or publish", body: "“Make the hero bolder” — or publish to yourname.troveai.site when it's ready." },
-    ],
-    compare: {
-      chatbot: "Gives you HTML in a chat bubble to paste somewhere yourself.",
-      trove: "Renders the live site, iterates in chat, and publishes it for you.",
-    },
-    faqs: [
-      { q: "Do I need to know how to code?", a: "No. You describe the site; Trove handles layout, styling, and copy. If you do code, you can export the HTML and take it further yourself." },
-      { q: "Can I publish the site on my own domain?", a: "You can publish instantly to yourname.troveai.site, or export the HTML and host it anywhere." },
-      { q: "What kinds of sites can it build?", a: "Landing pages, portfolios, booking sites, small shops, and multi-page business sites — anything that doesn't need a custom backend." },
-      { q: "How is this different from a template?", a: "Templates start from someone else's design. Trove starts from your description, so the structure, copy, and style match your brief from the first draft." },
-      { q: "Is it free to try?", a: "Yes — the free plan includes 200 credits a month, no card required. That's enough to build and publish a real site." },
-    ],
-    cta: "Build my website",
-  },
-  {
     slug: "ai-presentation-maker",
     title: "AI Presentation Maker — Decks With a Point of View",
     description:

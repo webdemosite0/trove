@@ -89,7 +89,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ marginTop: 44, display: "flex", gap: 14 }}>
-          {["Website builder", "AI agents", ".docx", ".xlsx"].map((chip) => (
+          {["AI agents", ".docx", ".xlsx", ".pptx"].map((chip) => (
             <div
               key={chip}
               style={{
