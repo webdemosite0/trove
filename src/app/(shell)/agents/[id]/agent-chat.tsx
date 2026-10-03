@@ -1483,9 +1483,14 @@ export function AgentChat({
               </button>
             </section>
           ) : null}
-          {/* Panel tabs — separate sections instead of one long stack */}
-          <div className="sticky top-0 z-10 shrink-0 border-b border-line bg-raised/95 px-3 pt-2">
-            <div role="tablist" aria-label="Panel sections" className="flex gap-1">
+          {/* Panel tabs — separate sections instead of one long stack.
+              Horizontally scrollable so 5 tabs never squeeze/glitch in a narrow panel. */}
+          <div className="sticky top-0 z-10 shrink-0 border-b border-line bg-raised/95 px-2 pt-2">
+            <div
+              role="tablist"
+              aria-label="Panel sections"
+              className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {(
                 [
                   { id: "desktop", label: "Desktop", icon: FiMonitor, badge: undefined as number | undefined },
@@ -1502,7 +1507,7 @@ export function AgentChat({
                   aria-selected={panelTab === t.id}
                   onClick={() => setPanelTab(t.id)}
                   className={cn(
-                    "relative flex flex-1 items-center justify-center gap-1.5 rounded-t-lg px-2 py-2 text-[12px] font-medium transition",
+                    "relative flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-t-lg px-2.5 py-2 text-[12px] font-medium transition",
                     panelTab === t.id ? "text-ink" : "text-ink-4 hover:bg-hover hover:text-ink-2",
                   )}
                 >
