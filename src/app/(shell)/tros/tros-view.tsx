@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,6 +18,9 @@ import {
   FiDatabase,
   FiTerminal,
   FiFileText,
+  FiClock,
+  FiCheck,
+  FiLayers,
 } from "@/components/ui/icons";
 import { Bot, SPECIES, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import {
@@ -179,24 +182,110 @@ const BRIEF_EXAMPLES = [  "track competitor pricing every week",
   "design a pricing page that converts",
 ];
 
-function greetingFor(name?: string | null): string {
-  const h = new Date().getHours();
-  const part = h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : "evening";
-  const first = name?.trim().split(" ")[0];
-  return `Good ${part}${first ? `, ${first}` : ""}`;
+/* ------------------------------- overview types ------------------------------ */
+
+interface OverviewTask {
+  id: string;
+  taskId: string | null;
+  agentId: string;
+  agentName: string;
+  kind: string;
+  status: "queued" | "working" | "waiting" | "done" | "failed" | "cancelled";
+  title: string;
+  detail: string;
+  targetAgentName: string | null;
+  createdAt: number;
 }
 
-/** Pulsing blue dot shown above a Tro's avatar while it is working. */
-function BlueDot({ label }: { label: string }) {
+interface OverviewApproval {
+  id: string;
+  agentId: string;
+  agentName: string;
+  title: string;
+  detail: string;
+  createdAt: number;
+}
+
+interface OverviewAttention {
+  id: string;
+  agentId: string;
+  agentName: string;
+  title: string;
+  kind: "failed" | "paused" | "overdue";
+  detail: string;
+  createdAt: number;
+}
+
+interface OverviewArtifact {
+  id: string;
+  agentId: string;
+  agentName: string;
+  kind: string;
+  title: string;
+  updatedAt: number;
+}
+
+interface OverviewData {
+  activeTasks: OverviewTask[];
+  pendingApprovals: OverviewApproval[];
+  attention: OverviewAttention[];
+  recentArtifacts: OverviewArtifact[];
+  agentActivity: Record<string, number>;
+}
+
+type AgentState = "working" | "approval" | "blocked" | "idle";
+
+/* --------------------------------- helpers ---------------------------------- */
+
+function timeAgo(ts: number): string {
+  const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d`;
+  return `${Math.floor(d / 30)}mo`;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+const STATE_META: Record<AgentState, { label: string; dot: string; badge: string }> = {
+  working: {
+    label: "Working",
+    dot: "bg-blue-500",
+    badge: "border-blue-500/30 bg-blue-500/10 text-blue-500",
+  },
+  approval: {
+    label: "Needs approval",
+    dot: "bg-amber-500",
+    badge: "border-amber-500/30 bg-amber-500/10 text-amber-500",
+  },
+  blocked: {
+    label: "Blocked",
+    dot: "bg-red-500",
+    badge: "border-red-500/30 bg-red-500/10 text-red-500",
+  },
+  idle: {
+    label: "Idle",
+    dot: "bg-ink-4",
+    badge: "border-line bg-sunk text-ink-3",
+  },
+};
+
+function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
-    <span className="absolute -top-[2px] left-1/2 z-10 -translate-x-1/2" role="status" aria-label={label}>
-      <span className="relative flex size-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
-        <span className="relative inline-flex size-2 rounded-full bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.7)]" />
-      </span>
-    </span>
+    <div className="mb-3 px-1">
+      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">{children}</p>
+      {hint ? <p className="mt-1 text-[12.5px] text-ink-3">{hint}</p> : null}
+    </div>
   );
 }
+
+/* --------------------------------- main view --------------------------------- */
 
 export function TrosView({
   agents,
@@ -210,19 +299,21 @@ export function TrosView({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
-  const [glow, setGlow] = useState<string | null>(null);
   const [brief, setBrief] = useState("");
   const [phIdx, setPhIdx] = useState(0);
+  const [query, setQuery] = useState("");
+  const [overview, setOverview] = useState<OverviewData | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const deleting = agents.find((a) => a.id === deletingId) ?? null;
   const router = useRouter();
   const presence = useTroPresence(true);
 
+  const byId = useMemo(() => new Map(agents.map((a) => [a.id, a])), [agents]);
+
   // Org chart: managers (Tros with hires) and their reports.
   const teams = agents
     .filter((a) => agents.some((c) => c.parent_id === a.id))
     .map((m) => ({ lead: m, reports: agents.filter((c) => c.parent_id === m.id) }));
-  const workingCount = agents.filter((a) => presence.has(a.id)).length;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -241,6 +332,24 @@ export function TrosView({
     return () => clearInterval(t);
   }, []);
 
+  // Load overview data (tasks, approvals, artifacts, activity).
+  useEffect(() => {
+    if (!signedIn) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/tro/overview", { cache: "no-store" });
+        const data = await res.json().catch(() => null);
+        if (!cancelled && res.ok && data) setOverview(data);
+      } catch {
+        /* overview is best-effort */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [signedIn, agents.length]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || draft) return;
@@ -258,6 +367,47 @@ export function TrosView({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [draft]);
+
+  const activeTasks = overview?.activeTasks ?? [];
+  const pendingApprovals = overview?.pendingApprovals ?? [];
+  const attention = overview?.attention ?? [];
+  const recentArtifacts = overview?.recentArtifacts ?? [];
+  const agentActivity = overview?.agentActivity ?? {};
+
+  const workingCount = agents.filter((a) => presence.has(a.id)).length;
+
+  // Per-agent derived state.
+  const agentState = (id: string): AgentState => {
+    if (presence.has(id)) return "working";
+    if (pendingApprovals.some((p) => p.agentId === id)) return "approval";
+    if (attention.some((a) => a.agentId === id && a.kind === "failed")) return "blocked";
+    return "idle";
+  };
+  const agentTask = (id: string): OverviewTask | undefined =>
+    activeTasks.find((t) => t.agentId === id);
+  const lastActive = (a: AgentRow): number | null =>
+    agentActivity[a.id] ?? (a.created_at || null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return agents;
+    return agents.filter(
+      (a) =>
+        a.name.toLowerCase().includes(q) ||
+        a.role.toLowerCase().includes(q),
+    );
+  }, [agents, query]);
+
+  // Order team list: working first, then needs approval, blocked, then by recency.
+  const ordered = useMemo(() => {
+    const rank: Record<AgentState, number> = { working: 0, approval: 1, blocked: 2, idle: 3 };
+    return [...filtered].sort((x, y) => {
+      const r = rank[agentState(x.id)] - rank[agentState(y.id)];
+      if (r !== 0) return r;
+      return (lastActive(y) ?? 0) - (lastActive(x) ?? 0);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, presence, overview]);
 
   if (!signedIn) {
     return (
@@ -283,27 +433,13 @@ export function TrosView({
   }
 
   return (
-    <div
-      className="relative flex h-full min-h-0 bg-canvas"
-      style={glow ? ({ ["--tro-glow" as string]: glow } as CSSProperties) : undefined}
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 transition-all duration-700"
-        style={{
-          background:
-            "radial-gradient(ellipse 55% 38% at 50% -4%, color-mix(in srgb, var(--tro-glow, #8b5cf6) 13%, transparent), transparent 70%)",
-          opacity: glow ? 1 : 0.55,
-        }}
-      />
+    <div className="relative flex h-full min-h-0 bg-canvas">
       {/* Tro list — desktop */}
       <aside className="hidden w-[300px] shrink-0 border-r border-line/70 lg:block">
         <TroListPanel
           agents={agents}
           onNew={() => setDraft(BLANK_DRAFT)}
           onDelete={setDeletingId}
-          onHoverAgent={(a) => setGlow(a?.accent ?? null)}
-          searchRef={searchRef}
           workingIds={presence}
           className="h-full"
         />
@@ -337,212 +473,456 @@ export function TrosView({
         />
       </aside>
 
-      {/* Main — Muse-style home */}
+      {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex shrink-0 items-center gap-2 border-b border-line/60 px-4 py-2.5 lg:hidden">
+        {/* Compact header: title, search, ONE New Tro button */}
+        <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line/60 px-4 py-3 sm:px-6">
           <button
             type="button"
             onClick={() => setNavOpen(true)}
             aria-label="Open Tros list"
-            className="grid size-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink"
+            className="grid size-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink lg:hidden"
           >
             <Ico icon={FiSidebar} size={17} />
           </button>
-          <span className="text-[14px] font-semibold text-ink">Tros</span>
-        </div>
+          <div className="flex min-w-0 items-center gap-3">
+            <h1 className="text-[17px] font-semibold tracking-tight text-ink">Tros</h1>
+            <div className="hidden items-center gap-2 sm:flex">
+              <span className="rounded-full border border-line bg-raised/70 px-2.5 py-0.5 text-[11px] font-semibold text-ink-2">
+                {agents.length} Tro{agents.length === 1 ? "" : "s"}
+              </span>
+              {activeTasks.length > 0 ? (
+                <a
+                  href="#active-work"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-500 transition hover:bg-blue-500/20"
+                >
+                  <span className="relative flex size-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+                    <span className="relative inline-flex size-1.5 rounded-full bg-blue-500" />
+                  </span>
+                  {activeTasks.length} active task{activeTasks.length === 1 ? "" : "s"}
+                </a>
+              ) : null}
+              {pendingApprovals.length > 0 ? (
+                <a
+                  href="#needs-attention"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-500 transition hover:bg-amber-500/20"
+                >
+                  {pendingApprovals.length} approval{pendingApprovals.length === 1 ? "" : "s"}
+                </a>
+              ) : null}
+              {teams.length > 0 ? (
+                <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-500">
+                  {teams.length} team{teams.length === 1 ? "" : "s"}
+                </span>
+              ) : null}
+            </div>
+          </div>
+          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:max-w-[420px]">
+            <div className="relative min-w-0 flex-1 sm:max-w-[240px]">
+              <Ico icon={FiSearch} size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+              <input
+                ref={searchRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search Tros…  ( / )"
+                aria-label="Search Tros"
+                className="w-full rounded-xl border border-line bg-sunk/60 py-2 pl-9 pr-3 text-[13px] text-ink outline-none transition placeholder:text-ink-4 focus:border-violet-500/50"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setDraft(BLANK_DRAFT)}
+              className="btn-grad inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03]"
+            >
+              <Ico icon={FiPlus} size={14} />
+              <span className="hidden sm:inline">New Tro</span>
+              <span className="sm:hidden">New</span>
+            </button>
+          </div>
+        </header>
 
         <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_50%_0%,rgba(139,92,246,0.14),transparent_55%)]" />
-          <div className="app-page-in relative mx-auto flex min-h-full w-full max-w-[780px] flex-col items-center justify-center px-6 py-12">
-            <div className="app-block-in flex items-end justify-center" style={{ ["--app-delay" as string]: "40ms" }} aria-hidden>
-              {SPECIES.slice(0, 5).map((s, i) => (
-                <div key={s} style={{ marginLeft: i === 0 ? 0 : -14, zIndex: 5 - i }}>
-                  <Bot size={i === 2 ? 84 : 60} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
-                </div>
-              ))}
-            </div>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(ellipse_at_50%_0%,rgba(139,92,246,0.12),transparent_55%)]" />
+          <div className="relative mx-auto w-full max-w-[860px] space-y-8 px-4 py-6 sm:px-6">
 
-            <h1 className="app-title-in mt-7 text-center text-[26px] font-semibold tracking-tight text-ink sm:text-[32px]">
-              {greetingFor(userName)}.
-            </h1>
-            <p className="app-sub-in mt-2.5 max-w-[52ch] text-center text-[14px] leading-relaxed text-ink-3">
-              Who&apos;s joining the crew today? Describe the job, or pick a specialist below.
-            </p>
-
-            {agents.length > 0 ? (
-              <div className="app-block-in mt-4 flex flex-wrap items-center justify-center gap-2" style={{ ["--app-delay" as string]: "100ms" }}>
-                <span className="rounded-full border border-line bg-raised/70 px-3 py-1 text-[11.5px] font-semibold text-ink-2">
-                  {agents.length} Tro{agents.length === 1 ? "" : "s"}
-                </span>
-                {workingCount > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[11.5px] font-semibold text-blue-500">
-                    <span className="relative flex size-1.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
-                      <span className="relative inline-flex size-1.5 rounded-full bg-blue-500" />
-                    </span>
-                    {workingCount} working
-                  </span>
-                ) : null}
-                {teams.length > 0 ? (
-                  <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-[11.5px] font-semibold text-violet-500">
-                    {teams.length} team{teams.length === 1 ? "" : "s"}
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (brief.trim()) setDraft({ name: "", role: "", instructions: brief.trim() });
-              }}
-              className="app-block-in mt-6 flex w-full max-w-[560px] items-center gap-2 rounded-2xl border border-line bg-raised/85 p-2 pl-4 shadow-[0_20px_50px_-24px_rgba(139,92,246,0.45)] backdrop-blur transition focus-within:border-violet-500/55 focus-within:shadow-[0_24px_60px_-20px_rgba(139,92,246,0.6)]"
-              style={{ ["--app-delay" as string]: "140ms" }}
-            >
-              <Ico icon={FiZap} motion="sparkle" size={17} className="shrink-0 text-violet-500" />
-              <input
-                value={brief}
-                onChange={(e) => setBrief(e.target.value)}
-                placeholder={`Describe the job — e.g. “${BRIEF_EXAMPLES[phIdx]}”…`}
-                aria-label="Describe the job to hire a Tro"
-                className="min-w-0 flex-1 bg-transparent py-2 text-[14px] text-ink outline-none placeholder:text-ink-4"
-              />
-              <button
-                type="submit"
-                disabled={!brief.trim()}
-                className="btn-grad shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
-              >
-                Hire
-              </button>
-            </form>
-
-            {teams.length > 0 ? (
-              <div className="app-block-in mt-10 w-full max-w-[600px]" style={{ ["--app-delay" as string]: "170ms" }}>
-                <div className="mb-3 px-1">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Your team</p>
-                  <p className="mt-1 text-[12.5px] text-ink-3">
-                    Tros leading Tros. Tell any of them to hire or delegate — they run their own crew.
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {teams.map(({ lead, reports }) => (
-                    <div
-                      key={lead.id}
-                      className="rounded-2xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+            {/* Needs attention — only when present */}
+            {attention.length > 0 || pendingApprovals.length > 0 ? (
+              <section id="needs-attention" aria-label="Needs attention">
+                <SectionTitle hint="Blocked work and waiting approvals — clear these first.">
+                  Needs attention
+                </SectionTitle>
+                <div className="space-y-2">
+                  {pendingApprovals.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/tros/${p.agentId}`}
+                      className="group flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 transition hover:border-amber-500/50 hover:bg-amber-500/[0.1]"
                     >
-                      <Link href={`/tros/${lead.id}`} className="group flex items-center gap-3">
-                        <span className="relative shrink-0 pt-1">
-                          {presence.has(lead.id) ? <BlueDot label={`${lead.name} is working`} /> : null}
-                          <Bot size={44} seed={lead.id} accent={lead.accent} state={presence.has(lead.id) ? "working" : "idle"} />
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-amber-500">
+                        <Ico icon={FiAlertCircle} size={16} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13.5px] font-semibold text-ink">
+                          {p.title}
+                        </span>
+                        <span className="block truncate text-[12px] text-ink-3">
+                          {p.agentName} · waiting {timeAgo(p.createdAt)} · tap to review
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-amber-500/15 px-2.5 py-1 text-[10.5px] font-bold text-amber-500">
+                        Approval
+                      </span>
+                      <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-amber-500" />
+                    </Link>
+                  ))}
+                  {attention.map((a) => {
+                    const meta =
+                      a.kind === "failed"
+                        ? { icon: FiAlertCircle, tone: "red", label: "Failed" }
+                        : a.kind === "paused"
+                          ? { icon: FiClock, tone: "ink", label: "Paused" }
+                          : { icon: FiClock, tone: "amber", label: "Overdue" };
+                    return (
+                      <Link
+                        key={`${a.kind}-${a.id}`}
+                        href={`/tros/${a.agentId}`}
+                        className={cn(
+                          "group flex items-center gap-3 rounded-2xl border px-4 py-3 transition",
+                          a.kind === "failed"
+                            ? "border-red-500/30 bg-red-500/[0.06] hover:border-red-500/50 hover:bg-red-500/[0.1]"
+                            : "border-line bg-raised/70 hover:border-violet-500/40",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "grid size-9 shrink-0 place-items-center rounded-xl",
+                            a.kind === "failed"
+                              ? "bg-red-500/15 text-red-500"
+                              : a.kind === "paused"
+                                ? "bg-sunk text-ink-3"
+                                : "bg-amber-500/15 text-amber-500",
+                          )}
+                        >
+                          <Ico icon={meta.icon} size={16} />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14px] font-semibold text-ink">{lead.name}</span>
-                          <span className="block truncate text-[12px] text-ink-3">{lead.role}</span>
+                          <span className="block truncate text-[13.5px] font-semibold text-ink">
+                            {a.title}
+                          </span>
+                          <span className="block truncate text-[12px] text-ink-3">
+                            {a.agentName} · {a.detail} · {timeAgo(a.createdAt)} ago
+                          </span>
                         </span>
-                        <span className="shrink-0 rounded-full bg-blue-500/12 px-2 py-0.5 text-[10.5px] font-bold text-blue-500">
-                          Leads {reports.length}
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-bold",
+                            a.kind === "failed"
+                              ? "bg-red-500/15 text-red-500"
+                              : a.kind === "paused"
+                                ? "bg-sunk text-ink-3"
+                                : "bg-amber-500/15 text-amber-500",
+                          )}
+                        >
+                          {meta.label}
                         </span>
-                        <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+                        <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5" />
                       </Link>
-                      <div className="ml-[27px] mt-3 space-y-1 border-l-2 border-violet-500/25 pl-3">
-                        {reports.map((r) => (
-                          <Link
-                            key={r.id}
-                            href={`/tros/${r.id}`}
-                            className="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-hover"
-                          >
-                            <span className="relative shrink-0 pt-0.5">
-                              {presence.has(r.id) ? <BlueDot label={`${r.name} is working`} /> : null}
-                              <Bot size={32} seed={r.id} accent={r.accent} state={presence.has(r.id) ? "working" : "idle"} />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[13px] font-semibold text-ink">{r.name}</span>
-                              <span className="block truncate text-[11.5px] text-ink-3">{r.role}</span>
-                            </span>
-                            <span className="shrink-0 text-[10.5px] text-ink-4">↳ {lead.name.split(" ")[0]}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-              </div>
+              </section>
             ) : null}
 
-            <div className="app-stagger mt-6 grid w-full max-w-[600px] gap-2.5 sm:grid-cols-2">
-              {STARTERS.map((s) => (
-                <button
-                  key={s.title}
-                  type="button"
-                  onClick={() => setDraft(s.draft)}
-                  onMouseEnter={() => setGlow(s.tone)}
-                  onMouseLeave={() => setGlow(null)}
-                  onFocus={() => setGlow(s.tone)}
-                  onBlur={() => setGlow(null)}
-                  className="group flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-4 py-3.5 text-left transition duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:bg-raised hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
-                >
-                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
-                    <Ico icon={s.icon} size={17} />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[13.5px] font-semibold text-ink">Hire {/^[aeiou]/i.test(s.title) ? "an" : "a"} {s.title.toLowerCase()}</span>
-                    <span className="block truncate text-[12px] text-ink-3">{s.desc}</span>
-                  </span>
-                  <Ico icon={FiArrowRight} size={14} className="ml-auto shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
-                </button>
-              ))}
-            </div>
+            {/* Active work */}
+            {activeTasks.length > 0 ? (
+              <section id="active-work" aria-label="Active work">
+                <SectionTitle hint="What the crew is doing right now.">
+                  Active work
+                </SectionTitle>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {activeTasks.slice(0, 6).map((t) => {
+                    const agent = byId.get(t.agentId);
+                    const nextAction =
+                      t.status === "waiting"
+                        ? "Waiting on input — check in"
+                        : t.status === "queued"
+                          ? "Queued — starts next"
+                          : t.targetAgentName
+                            ? `Delegated to ${t.targetAgentName}`
+                            : "In progress — view live";
+                    return (
+                      <Link
+                        key={t.id}
+                        href={`/tros/${t.agentId}`}
+                        className="group rounded-2xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          {agent ? (
+                            <span className="relative shrink-0">
+                              <span className="absolute -top-[3px] left-1/2 z-10 -translate-x-1/2">
+                                <span className="relative flex size-1.5">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+                                  <span className="relative inline-flex size-1.5 rounded-full bg-blue-500" />
+                                </span>
+                              </span>
+                              <Bot size={36} seed={agent.id} accent={agent.accent} state="working" />
+                            </span>
+                          ) : null}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13.5px] font-semibold text-ink">{t.title || "Working"}</p>
+                            <p className="truncate text-[12px] text-ink-3">
+                              {t.agentName}
+                              {t.targetAgentName ? ` → ${t.targetAgentName}` : ""}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-full border px-2 py-0.5 text-[10.5px] font-bold capitalize",
+                              t.status === "waiting"
+                                ? "border-amber-500/30 bg-amber-500/10 text-amber-500"
+                                : t.status === "queued"
+                                  ? "border-line bg-sunk text-ink-3"
+                                  : "border-blue-500/30 bg-blue-500/10 text-blue-500",
+                            )}
+                          >
+                            {t.status}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between border-t border-line/60 pt-2.5">
+                          <span className="inline-flex items-center gap-1 text-[11.5px] text-ink-4">
+                            <Ico icon={FiClock} size={12} />
+                            {timeAgo(t.createdAt)} elapsed
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-violet-500">
+                            {nextAction}
+                            <Ico icon={FiArrowRight} size={12} className="transition group-hover:translate-x-0.5" />
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
 
-            <div className="app-block-in mt-10 w-full" style={{ ["--app-delay" as string]: "200ms" }}>
-              <div className="mb-3 flex items-center justify-between px-1">
+            {/* Team overview */}
+            <section aria-label="Team overview">
+              <div className="mb-3 flex items-end justify-between px-1">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Templates</p>
-                  <p className="mt-1 text-[12.5px] text-ink-3">Ready-made setups — one click to hire.</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Team overview</p>
+                  <p className="mt-1 text-[12.5px] text-ink-3">
+                    {query ? `${ordered.length} of ${agents.length} Tros match` : "Everyone on the crew, live status."}
+                  </p>
                 </div>
               </div>
-              <div className="grid w-full gap-2.5 sm:grid-cols-2">
+              {ordered.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-line px-6 py-10 text-center">
+                  <p className="text-[14px] font-semibold text-ink">
+                    {agents.length === 0 ? "No Tros yet" : "No matches"}
+                  </p>
+                  <p className="mt-1 text-[12.5px] text-ink-3">
+                    {agents.length === 0
+                      ? "Hire your first specialist to get started."
+                      : "Try a different search."}
+                  </p>
+                  {agents.length === 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setDraft(BLANK_DRAFT)}
+                      className="btn-grad mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-semibold text-white"
+                    >
+                      <Ico icon={FiPlus} size={14} /> New Tro
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-line bg-raised/50">
+                  {ordered.map((a, i) => {
+                    const state = agentState(a.id);
+                    const meta = STATE_META[state];
+                    const task = agentTask(a.id);
+                    const active = lastActive(a);
+                    const parent = a.parent_id ? byId.get(a.parent_id) : null;
+                    const reports = agents.filter((c) => c.parent_id === a.id);
+                    return (
+                      <Link
+                        key={a.id}
+                        href={`/tros/${a.id}`}
+                        className={cn(
+                          "group flex items-center gap-3.5 px-4 py-3 transition hover:bg-hover/60",
+                          i > 0 && "border-t border-line/60",
+                        )}
+                      >
+                        <span className="relative shrink-0">
+                          {state === "working" ? (
+                            <span className="absolute -top-[3px] left-1/2 z-10 -translate-x-1/2">
+                              <span className="relative flex size-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+                                <span className="relative inline-flex size-2 rounded-full bg-blue-500" />
+                              </span>
+                            </span>
+                          ) : null}
+                          <Bot
+                            size={44}
+                            seed={a.id}
+                            accent={a.accent}
+                            state={state === "working" ? "working" : "idle"}
+                          />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span className="truncate text-[14px] font-semibold text-ink">{a.name}</span>
+                            <span className={cn("rounded-full border px-2 py-px text-[10px] font-bold", meta.badge)}>
+                              {meta.label}
+                            </span>
+                          </span>
+                          <span className="mt-0.5 block truncate text-[12.5px] text-ink-2">{a.role}</span>
+                          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-ink-4">
+                            {task ? (
+                              <span className="truncate text-violet-500/90">On: {task.title}</span>
+                            ) : null}
+                            {parent ? <span>Reports to {parent.name}</span> : null}
+                            {reports.length > 0 ? (
+                              <span className="inline-flex items-center gap-1 text-blue-500/90">
+                                <Ico icon={FiLayers} size={11} /> Leads {reports.length}
+                              </span>
+                            ) : null}
+                            {active ? <span>Active {timeAgo(active)} ago</span> : null}
+                          </span>
+                        </span>
+                        <Ico icon={FiArrowRight} size={15} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Recent artifacts */}
+            {recentArtifacts.length > 0 ? (
+              <section aria-label="Recent artifacts">
+                <SectionTitle hint="Finished outputs from the crew.">
+                  Recent artifacts
+                </SectionTitle>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {recentArtifacts.map((art) => (
+                    <Link
+                      key={art.id}
+                      href={`/tros/${art.agentId}`}
+                      className="group rounded-2xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500">
+                          <Ico icon={FiFileText} size={15} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13.5px] font-semibold text-ink">{art.title}</p>
+                          <p className="text-[11.5px] capitalize text-ink-4">{art.kind}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 flex items-center justify-between border-t border-line/60 pt-2.5 text-[11.5px] text-ink-4">
+                        <span className="inline-flex items-center gap-1 truncate">
+                          <Ico icon={FiCheck} size={12} className="text-emerald-500" />
+                          {art.agentName}
+                        </span>
+                        <span className="shrink-0">{timeAgo(art.updatedAt)} ago</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {/* Hire — compact */}
+            <section aria-label="Hire a Tro">
+              <SectionTitle hint="Describe the job, or start from a preset.">
+                Hire
+              </SectionTitle>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (brief.trim()) setDraft({ name: "", role: "", instructions: brief.trim() });
+                }}
+                className="flex w-full items-center gap-2 rounded-2xl border border-line bg-raised/85 p-2 pl-4 shadow-[0_20px_50px_-24px_rgba(139,92,246,0.45)] transition focus-within:border-violet-500/55"
+              >
+                <Ico icon={FiZap} motion="sparkle" size={16} className="shrink-0 text-violet-500" />
+                <input
+                  value={brief}
+                  onChange={(e) => setBrief(e.target.value)}
+                  placeholder={`Describe the job — e.g. “${BRIEF_EXAMPLES[phIdx]}”…`}
+                  aria-label="Describe the job to hire a Tro"
+                  className="min-w-0 flex-1 bg-transparent py-2 text-[14px] text-ink outline-none placeholder:text-ink-4"
+                />
+                <button
+                  type="submit"
+                  disabled={!brief.trim()}
+                  className="btn-grad shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
+                >
+                  Hire
+                </button>
+              </form>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {STARTERS.map((s) => (
+                  <button
+                    key={s.title}
+                    type="button"
+                    onClick={() => setDraft(s.draft)}
+                    className="group flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-3.5 py-3 text-left transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.55)]"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
+                      <Ico icon={s.icon} size={16} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-semibold text-ink">{s.title}</span>
+                      <span className="block truncate text-[11.5px] text-ink-3">{s.desc}</span>
+                    </span>
+                    <Ico icon={FiArrowRight} size={13} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Templates — compact */}
+            <section aria-label="Templates">
+              <SectionTitle hint="Ready-made setups — one click to hire.">
+                Templates
+              </SectionTitle>
+              <div className="grid gap-2 sm:grid-cols-2">
                 {TEMPLATES.map((t) => (
                   <button
                     key={t.title}
                     type="button"
                     onClick={() => setDraft(t.draft)}
-                    onMouseEnter={() => setGlow(t.tone)}
-                    onMouseLeave={() => setGlow(null)}
-                    onFocus={() => setGlow(t.tone)}
-                    onBlur={() => setGlow(null)}
-                    className="group flex items-start gap-3.5 rounded-2xl border border-line bg-raised/70 px-4 py-4 text-left transition duration-300 hover:-translate-y-1 hover:bg-raised hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
+                    className="group flex items-start gap-3 rounded-2xl border border-line bg-raised/70 px-3.5 py-3.5 text-left transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.5)]"
                   >
                     <span
-                      className="grid size-10 shrink-0 place-items-center rounded-xl transition group-hover:text-white"
+                      className="grid size-9 shrink-0 place-items-center rounded-xl"
                       style={{ backgroundColor: `color-mix(in srgb, ${t.tone} 14%, transparent)`, color: t.tone }}
                     >
-                      <Ico icon={t.icon} size={17} />
+                      <Ico icon={t.icon} size={16} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-semibold text-ink">{t.title}</span>
-                      <span className="mt-0.5 block text-[12.5px] leading-relaxed text-ink-3">{t.desc}</span>
-                      <span className="mt-1.5 block text-[11px] font-medium text-ink-4">
-                        {t.draft.tools?.length} tools preset
-                      </span>
+                      <span className="block text-[13px] font-semibold text-ink">{t.title}</span>
+                      <span className="mt-0.5 line-clamp-2 block text-[12px] leading-relaxed text-ink-3">{t.desc}</span>
                     </span>
-                    <Ico icon={FiArrowRight} size={14} className="mt-1 shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+                    <Ico icon={FiArrowRight} size={13} className="mt-1 shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div className="app-block-in mt-10 w-full" style={{ ["--app-delay" as string]: "220ms" }}>
+            {/* Specialists strip — compact */}
+            <section aria-label="Mascots">
               <div className="mb-3 flex items-center justify-between px-1">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">The specialists</p>
                 <p className="text-[11px] text-ink-4">{SPECIES.length} unique looks</p>
               </div>
               <div
-                className="flex gap-2.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 style={{
-                  maskImage:
-                    "linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)",
-                  WebkitMaskImage:
-                    "linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)",
+                  maskImage: "linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)",
+                  WebkitMaskImage: "linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent)",
                 }}
               >
                 {SPECIES.map((s) => (
@@ -550,20 +930,16 @@ export function TrosView({
                     key={s}
                     type="button"
                     onClick={() => setDraft(BLANK_DRAFT)}
-                    onMouseEnter={() => setGlow(SPECIES_META[s].defaultAccent)}
-                    onMouseLeave={() => setGlow(null)}
-                    onFocus={() => setGlow(SPECIES_META[s].defaultAccent)}
-                    onBlur={() => setGlow(null)}
                     title={`Hire a Tro — ${SPECIES_META[s].label}`}
-                    className="flex w-[104px] shrink-0 flex-col items-center rounded-2xl border border-line/70 bg-raised/50 px-2 py-3.5 transition duration-300 hover:-translate-y-1 hover:border-violet-500/35 hover:bg-raised hover:shadow-[0_16px_36px_-20px_rgba(139,92,246,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60"
+                    className="flex w-[92px] shrink-0 flex-col items-center rounded-2xl border border-line/70 bg-raised/50 px-2 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35"
                   >
-                    <Bot size={52} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
-                    <span className="mt-2 text-[11.5px] font-semibold text-ink">{SPECIES_META[s].label}</span>
+                    <Bot size={44} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
+                    <span className="mt-1.5 text-[11px] font-semibold text-ink">{SPECIES_META[s].label}</span>
                     <span className="text-[10px] text-ink-4">{SPECIES_META[s].vibe}</span>
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </div>
