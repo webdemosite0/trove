@@ -20,7 +20,7 @@ import {
   TbTable,
   TbPresentation,
   TbPalette,
-  TbWorld,
+ 
   TbRobot,
   TbUsers,
   TbHelpCircle,
@@ -64,7 +64,6 @@ const CREATE: NavItem[] = [
   { href: "/spreadsheets", label: "Sheets", icon: TbTable },
   { href: "/slides", label: "Decks", icon: TbPresentation },
   { href: "/design", label: "Design", icon: TbPalette },
-  { href: "/websites", label: "Sites", icon: TbWorld },
 ];
 
 const TROS: NavItem[] = [
