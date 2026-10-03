@@ -38,7 +38,8 @@ export function useNav(): NavCtx {
 
 export function NavProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsedState] = useState(false);
+  // Default closed (icon rail). Only expand if user saved "0".
+  const [collapsed, setCollapsedState] = useState(true);
   const [hydrated, setHydrated] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | null>(null);
@@ -46,7 +47,9 @@ export function NavProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(COLLAPSE_KEY);
-      if (saved === "1") setCollapsedState(true);
+      if (saved === "0") setCollapsedState(false);
+      else if (saved === "1") setCollapsedState(true);
+      // no key → stay collapsed (default)
     } catch {
       /* ignore */
     }
@@ -83,7 +86,8 @@ export function NavProvider({ children }: { children: ReactNode }) {
     () => ({
       open,
       setOpen,
-      collapsed: hydrated ? collapsed : false,
+      // Closed until hydrated too, so first paint matches default
+      collapsed: hydrated ? collapsed : true,
       setCollapsed,
       toggleCollapsed,
       settingsOpen,
