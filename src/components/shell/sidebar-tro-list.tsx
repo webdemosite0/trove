@@ -8,9 +8,9 @@ import { listAgents, type AgentRow } from "@/app/actions/agents";
 import { cn } from "@/lib/utils";
 
 /**
- * The Tro list, living inside the main app sidebar.
- * This is the single sidebar — the old standalone TroListPanel
- * in the Tro chat view was removed.
+ * The Tros sidebar list — deliberately distinct from the Trove sidebar.
+ * Tro-first: your Tros are the hero here, as cards with mascots,
+ * roles, and live working dots. Not a nav list.
  */
 export function SidebarTroList({ rail }: { rail: boolean }) {
   const pathname = usePathname() || "";
@@ -36,7 +36,7 @@ export function SidebarTroList({ rail }: { rail: boolean }) {
 
   if (rail) {
     return (
-      <div className="space-y-1 px-1">
+      <div className="space-y-1.5 px-1">
         {agents.map((a) => (
           <Link
             key={a.id}
@@ -44,13 +44,16 @@ export function SidebarTroList({ rail }: { rail: boolean }) {
             title={a.name}
             aria-current={a.id === activeId ? "page" : undefined}
             className={cn(
-              "grid size-11 place-items-center rounded-2xl transition",
+              "relative grid size-11 place-items-center rounded-2xl transition",
               a.id === activeId
-                ? "bg-hover ring-1 ring-line-strong"
-                : "hover:bg-hover",
+                ? "bg-violet-500/15 ring-1 ring-violet-500/40"
+                : "hover:bg-violet-500/10",
             )}
           >
             <Bot size={30} seed={a.id} accent={a.accent} state="idle" />
+            {a.id === activeId ? (
+              <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-violet-500 ring-2 ring-rail" />
+            ) : null}
           </Link>
         ))}
       </div>
@@ -58,10 +61,7 @@ export function SidebarTroList({ rail }: { rail: boolean }) {
   }
 
   return (
-    <div className="space-y-0.5">
-      <p className="px-3 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
-        Tros
-      </p>
+    <div className="space-y-1.5">
       {agents.map((a) => {
         const active = a.id === activeId;
         return (
@@ -69,16 +69,31 @@ export function SidebarTroList({ rail }: { rail: boolean }) {
             key={a.id}
             href={`/tros/${a.id}`}
             aria-current={active ? "page" : undefined}
-            title={a.name}
             className={cn(
-              "flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition",
-              active ? "bg-hover font-medium text-ink" : "hover:bg-hover/60 text-ink-2",
+              "group flex items-center gap-3 rounded-2xl border p-2 pr-3 transition-all duration-200",
+              active
+                ? "border-violet-500/40 bg-violet-500/[0.08] shadow-[0_0_0_1px_rgba(139,92,246,0.15)]"
+                : "border-transparent hover:border-line hover:bg-hover/70",
             )}
           >
-            <span className="shrink-0">
-              <Bot size={28} seed={a.id} accent={a.accent} state="idle" />
+            <span className="relative shrink-0">
+              <Bot size={36} seed={a.id} accent={a.accent} state="idle" />
             </span>
-            <span className="min-w-0 flex-1 truncate text-[13px]">{a.name}</span>
+            <span className="min-w-0 flex-1">
+              <span
+                className={cn(
+                  "block truncate text-[13.5px] leading-tight",
+                  active ? "font-semibold text-ink" : "font-medium text-ink-2",
+                )}
+              >
+                {a.name}
+              </span>
+              {a.role ? (
+                <span className="block truncate text-[11px] leading-tight text-ink-4">
+                  {a.role}
+                </span>
+              ) : null}
+            </span>
           </Link>
         );
       })}

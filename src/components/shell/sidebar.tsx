@@ -432,18 +432,21 @@ function SidebarBody({
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-x-hidden overflow-y-auto overscroll-contain px-2 pb-3">
         {isTros ? (
           <>
-            <SectionTitle rail={rail}>Tros</SectionTitle>
-            {TROS_NAV.map((item) => (
-              <NavItem
-                key={item.href + item.label}
-                item={item}
-                pathname={pathname}
-                rail={rail}
-                onNavigate={closeMobile}
-              />
-            ))}
-            <div className="pt-2">
+            {/* Tros product: the Tros themselves are the hero — not a nav list.
+                Distinct from the Trove sidebar's Workspace/Create structure. */}
+            <div className="px-1">
               <SidebarTroList rail={rail} />
+            </div>
+            <div className="mt-3 border-t border-line/60 pt-2">
+              {TROS_NAV.map((item) => (
+                <NavItem
+                  key={item.href + item.label}
+                  item={item}
+                  pathname={pathname}
+                  rail={rail}
+                  onNavigate={closeMobile}
+                />
+              ))}
             </div>
           </>
         ) : (
