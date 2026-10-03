@@ -20,6 +20,8 @@ function ToggleRow({
   defaultOn?: boolean;
 }) {
   const [on, setOn] = useState(defaultOn);
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
     try {
       const v = localStorage.getItem(storageKey);
@@ -28,7 +30,9 @@ function ToggleRow({
     } catch {
       /* ignore */
     }
+    setReady(true);
   }, [storageKey]);
+
   function toggle() {
     setOn((prev) => {
       const next = !prev;
@@ -40,6 +44,7 @@ function ToggleRow({
       return next;
     });
   }
+
   return (
     <div className="flex items-start justify-between gap-6 border-t border-line py-4 first:border-t-0 first:pt-0">
       <div className="min-w-0 flex-1">
@@ -50,16 +55,20 @@ function ToggleRow({
         type="button"
         role="switch"
         aria-checked={on}
+        aria-label={label}
         onClick={toggle}
         className={cn(
-          "relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors",
+          "relative inline-flex h-[28px] w-[48px] shrink-0 items-center rounded-full p-[2px] transition-colors duration-200 ease-out",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a84ff]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-raised",
           on ? "bg-[#0a84ff]" : "bg-line-strong",
+          !ready && "opacity-80",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 size-6 rounded-full bg-white shadow transition-transform",
-            on ? "translate-x-5" : "translate-x-0.5",
+            "pointer-events-none block size-6 rounded-full bg-white shadow-sm",
+            "transition-transform duration-200 ease-out will-change-transform",
+            on ? "translate-x-[20px]" : "translate-x-0",
           )}
         />
       </button>
