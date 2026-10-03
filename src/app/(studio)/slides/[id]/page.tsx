@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { loadConversation } from "@/lib/conversations";
-import { SlidesView } from "../slides-view";
+import { parseDeck, enrichDeckImages } from "@/lib/slides";
+import { DeckEditor, type RestoredDeck } from "../editor/deck-editor";
 
 export const metadata = { title: "Deck" };
 
@@ -13,16 +14,21 @@ export default async function SlidesWorkspacePage({
   const saved = await loadConversation(id).catch(() => null);
   if (!saved || saved.kind !== "slides") notFound();
 
+  const prompt = saved.messages.find((m) => m.role === "user")?.text ?? "";
+  const latest =
+    [...saved.messages].reverse().find((m) => m.role === "model")?.text ?? "";
+  const slides = enrichDeckImages(parseDeck(latest));
+
+  const restored: RestoredDeck = {
+    id: saved.id,
+    title: saved.title || prompt.slice(0, 64) || "Untitled deck",
+    prompt,
+    slides,
+  };
+
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <SlidesView
-        restored={{
-          id: saved.id,
-          title: saved.messages.find((m) => m.role === "user")?.text ?? saved.title,
-          messages: saved.messages,
-        }}
-        key={saved.id}
-      />
+      <DeckEditor restored={restored} />
     </div>
   );
 }
