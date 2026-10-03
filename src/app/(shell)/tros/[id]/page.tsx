@@ -5,7 +5,7 @@ import { one, str, num } from "@/lib/db";
 import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { listAgents, type AgentRow } from "@/app/actions/agents";
-import { isDesktopShell } from "@/lib/desktop-shell";
+import { isMobile } from "@/lib/device";
 import { TrosDesktopOnly } from "../desktop-only";
 
 export const metadata = { title: "Tro" };
@@ -27,16 +27,9 @@ export default async function TroPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ c?: string }>;
 }) {
-  // Tros is Windows desktop (.exe) only
-  if (!(await isDesktopShell())) {
-    return (
-      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-        <TrosDesktopOnly />
-      </div>
-    );
-  }
-
   const [{ id }, { c }] = await Promise.all([params, searchParams]);
+
+  if (await isMobile()) return <TrosDesktopOnly />;
 
   const user = await currentUser();
   if (!user) notFound();

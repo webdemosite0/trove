@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FiCheck, FiChevronDown } from "@/components/ui/icons";
 import { TroveOrb } from "@/components/brand/orb";
-import { Wordmark } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
 function TrosMark({ size = 28 }: { size?: number }) {
@@ -32,7 +31,7 @@ const PRODUCTS = [
     id: "tros" as const,
     name: "Tros",
     href: "/tros",
-    blurb: "Windows desktop app only",
+    blurb: "Specialists with briefs & tools",
     match: (path: string) => path === "/tros" || path.startsWith("/tros/"),
   },
 ];
@@ -180,6 +179,3 @@ export function useIsTrosProduct(pathname?: string | null) {
   const path = pathname ?? "";
   return path === "/tros" || path.startsWith("/tros/");
 }
-
-// Keep Wordmark import used if tree-shaking complains in some builds
-void Wordmark;
