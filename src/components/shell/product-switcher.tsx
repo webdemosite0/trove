@@ -30,7 +30,6 @@ export function ProductSwitcher({
   const pathname = usePathname() || "/";
   const isDesktop = useIsDesktopClient();
   const onTrosPath = pathname === "/tros" || pathname.startsWith("/tros/");
-  // Only show Tros chrome inside the desktop app
   const showingTros = isDesktop && onTrosPath;
 
   const [open, setOpen] = useState(false);
@@ -106,7 +105,7 @@ export function ProductSwitcher({
               {showingTros ? <FiCheck size={14} className="text-accent" /> : null}
             </span>
             <span className="mt-0.5 block text-[11px] leading-snug text-ink-3">
-              Specialists with briefs & tools
+              Team plan · specialists & tools
             </span>
           </span>
         </Link>
@@ -122,12 +121,15 @@ export function ProductSwitcher({
             <span className="flex flex-wrap items-center gap-1.5 text-[13px] font-semibold text-ink">
               Tros
               <span className="inline-flex items-center gap-1 rounded-full bg-sunk px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-3 ring-1 ring-line">
+                Team
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-sunk px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-3 ring-1 ring-line">
                 <FiMonitor size={10} />
                 Desktop
               </span>
             </span>
             <span className="mt-0.5 block text-[11px] leading-snug text-ink-3">
-              Not available in the browser — download the app
+              Team plan · desktop app only
             </span>
           </span>
         </Link>
