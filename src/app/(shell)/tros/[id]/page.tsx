@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AgentChat } from "./agent-chat";
 import { currentUser } from "@/lib/auth";
 import { one, str, num } from "@/lib/db";
@@ -6,7 +6,9 @@ import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { listAgents, type AgentRow } from "@/app/actions/agents";
 import { isDesktopShell } from "@/lib/desktop-shell";
+import { userHasTrosAccess } from "@/lib/tros-access";
 import { TrosDesktopOnly } from "../desktop-only";
+import { TrosTeamOnly } from "../team-only";
 
 export const metadata = { title: "Tro" };
 
@@ -27,6 +29,17 @@ export default async function TroPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ c?: string }>;
 }) {
+  const user = await currentUser();
+  if (!user) redirect("/login");
+
+  if (!userHasTrosAccess(user)) {
+    return (
+      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
+        <TrosTeamOnly />
+      </div>
+    );
+  }
+
   if (!(await isDesktopShell())) {
     return (
       <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
@@ -36,9 +49,6 @@ export default async function TroPage({
   }
 
   const [{ id }, { c }] = await Promise.all([params, searchParams]);
-
-  const user = await currentUser();
-  if (!user) notFound();
 
   const row = await one(
     `SELECT * FROM agents WHERE id = ? AND user_id = ?`,

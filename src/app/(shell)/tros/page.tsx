@@ -1,13 +1,28 @@
 import { TrosView } from "./tros-view";
 import { TrosDesktopOnly } from "./desktop-only";
+import { TrosTeamOnly } from "./team-only";
 import { listAgents } from "@/app/actions/agents";
 import { currentUser } from "@/lib/auth";
 import { isDesktopShell } from "@/lib/desktop-shell";
+import { userHasTrosAccess } from "@/lib/tros-access";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Tros" };
 
 export default async function TrosPage() {
-  // Desktop app only — not the web product surface
+  const user = await currentUser();
+  if (!user) redirect("/login");
+
+  // Team plan only
+  if (!userHasTrosAccess(user)) {
+    return (
+      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
+        <TrosTeamOnly />
+      </div>
+    );
+  }
+
+  // Desktop app only
   if (!(await isDesktopShell())) {
     return (
       <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
@@ -16,11 +31,10 @@ export default async function TrosPage() {
     );
   }
 
-  const user = await currentUser();
   const agents = await listAgents();
   return (
     <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-      <TrosView agents={agents} signedIn={Boolean(user)} userName={user?.name ?? null} />
+      <TrosView agents={agents} signedIn userName={user.name} />
     </div>
   );
 }

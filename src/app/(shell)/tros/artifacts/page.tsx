@@ -6,7 +6,9 @@ import { Bot } from "@/components/agents/bot";
 import { ArtifactIcon } from "@/components/ui/artifact-icon";
 import type { ArtifactKind } from "@/lib/artifact-block";
 import { isDesktopShell } from "@/lib/desktop-shell";
+import { userHasTrosAccess } from "@/lib/tros-access";
 import { TrosDesktopOnly } from "../desktop-only";
+import { TrosTeamOnly } from "../team-only";
 
 export const metadata = { title: "Artifacts · Tros" };
 export const dynamic = "force-dynamic";
@@ -30,6 +32,17 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export default async function TrosArtifactsPage() {
+  const user = await currentUser();
+  if (!user) redirect("/login");
+
+  if (!userHasTrosAccess(user)) {
+    return (
+      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
+        <TrosTeamOnly />
+      </div>
+    );
+  }
+
   if (!(await isDesktopShell())) {
     return (
       <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
@@ -37,9 +50,6 @@ export default async function TrosArtifactsPage() {
       </div>
     );
   }
-
-  const user = await currentUser();
-  if (!user) redirect("/login");
 
   const rows = await all<Row>(
     `SELECT a.id, a.agent_id, a.kind, a.title, a.created_at,
@@ -71,18 +81,13 @@ export default async function TrosArtifactsPage() {
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Tros</p>
         <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-ink">Artifacts</h1>
         <p className="mt-2 max-w-[52ch] text-[14px] text-ink-3">
-          Real files your Tros have saved — documents, sheets, decks, notes, and code. Each one
-          lives with the Tro that made it.
+          Real files your Tros have saved — documents, sheets, decks, notes, and code.
         </p>
       </header>
 
       {groups.size === 0 ? (
         <div className="rounded-3xl border border-dashed border-line-strong bg-raised/40 px-6 py-16 text-center">
           <p className="text-[15px] font-medium text-ink">No artifacts yet</p>
-          <p className="mx-auto mt-2 max-w-[44ch] text-[13px] text-ink-3">
-            Ask a Tro to draft a document, plan, or snippet and it will save a real file to its
-            library.
-          </p>
           <Link
             href="/tros"
             className="mt-6 inline-flex rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-canvas"
