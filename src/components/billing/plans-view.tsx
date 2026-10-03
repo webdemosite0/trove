@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, Fragment } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -75,9 +74,7 @@ export function PlansView({
   purchasable,
   subscription,
   checkout,
-  accountType,
   teamEligible,
-  teamMember,
   teamPlanActive,
 }: {
   plans: Plan[];
@@ -339,32 +336,37 @@ export function PlansView({
             <thead>
               <tr className="border-b border-line bg-sunk/50">
                 <th className="px-4 py-3 font-medium text-ink-3">Feature</th>
-                {PLAN_COMPARISON.map((c) => (
-                  <th key={c.id} className="px-4 py-3 font-semibold capitalize text-ink">
-                    {c.id}
-                  </th>
-                ))}
+                <th className="px-4 py-3 font-semibold text-ink">Free</th>
+                <th className="px-4 py-3 font-semibold text-ink">Pro</th>
+                <th className="px-4 py-3 font-semibold text-ink">Team</th>
               </tr>
             </thead>
             <tbody>
               {PLAN_COMPARE_GROUPS.map((group) => (
-                <>
-                  <tr key={group.label} className="border-b border-line bg-raised/40">
-                    <td colSpan={1 + PLAN_COMPARISON.length} className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-ink-4">
+                <Fragment key={String(group.id)}>
+                  <tr className="border-b border-line bg-raised/40">
+                    <td
+                      colSpan={4}
+                      className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-ink-4"
+                    >
                       {group.label}
                     </td>
                   </tr>
-                  {group.rows.map((row) => (
-                    <tr key={row.key} className="border-b border-line last:border-0">
+                  {PLAN_COMPARISON.filter((row) => row.group === group.id).map((row) => (
+                    <tr key={row.label} className="border-b border-line last:border-0">
                       <td className="px-4 py-2.5 text-ink-2">{row.label}</td>
-                      {PLAN_COMPARISON.map((c) => (
-                        <td key={c.id} className="px-4 py-2.5 text-center">
-                          <CompareCell value={(c as Record<string, PlanCompareValue>)[row.key]} />
-                        </td>
-                      ))}
+                      <td className="px-4 py-2.5 text-center">
+                        <CompareCell value={row.free} />
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <CompareCell value={row.pro} />
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <CompareCell value={row.team} />
+                      </td>
                     </tr>
                   ))}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
