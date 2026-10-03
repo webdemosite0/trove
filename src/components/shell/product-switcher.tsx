@@ -30,9 +30,7 @@ export function ProductSwitcher({
   const pathname = usePathname() || "/";
   const isDesktop = useIsDesktopClient();
   const onTrosPath = pathname === "/tros" || pathname.startsWith("/tros/");
-  // On the web, never treat Tros as the active product chrome
-  const currentId = onTrosPath && isDesktop ? "tros" : onTrosPath && !isDesktop ? "trove" : onTrosPath ? "tros" : "trove";
-  // Before hydration isDesktop is false — prefer trove branding on /tros web download wall
+  // Only show Tros chrome inside the desktop app
   const showingTros = isDesktop && onTrosPath;
 
   const [open, setOpen] = useState(false);
@@ -65,7 +63,9 @@ export function ProductSwitcher({
       role="menu"
       className={cn(
         "absolute z-50 overflow-hidden rounded-2xl border border-line bg-raised py-1 shadow-[var(--elev-lift)]",
-        collapsed ? "left-0 top-full mt-1.5 w-[260px]" : "left-0 top-full mt-1.5 w-full min-w-[240px]",
+        collapsed
+          ? "left-0 top-full mt-1.5 w-[260px]"
+          : "left-0 top-full mt-1.5 w-full min-w-[240px]",
       )}
     >
       <Link
@@ -182,6 +182,3 @@ export function useIsTrosProduct(pathname?: string | null) {
   const path = pathname ?? "";
   return path === "/tros" || path.startsWith("/tros/");
 }
-
-// silence unused if tree-shaken
-void currentId;
