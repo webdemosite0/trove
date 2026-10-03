@@ -40,15 +40,17 @@ import type { User, Balance } from "@/lib/types";
 import { Tooltip } from "@/components/ui/tooltip";
 
 /* ─────────────────────────────────────────────────────────────
- * Sidebar — full rebuild.
+ * Sidebar — single unified component.
  *
- * Glitch-proofing rules applied throughout (each one fixed a real
- * visual bug):
- * - icons are pointer-events-none so SVG nodes never swallow clicks
- * - every text row is min-w-0 + truncate inside overflow-hidden parents,
- *   so the width transition clips cleanly instead of squishing
- * - collapse state is a stable functional toggle (no stale closures)
- * - mobile drawer locks scroll and closes on Escape
+ * There is exactly one sidebar body. It renders inside the desktop
+ * <aside> and inside the mobile drawer. Collapse is a pure CSS
+ * animation driven by one boolean (`rail`):
+ *
+ * - RailLabel is the only collapse primitive: text shrinks to zero
+ *   width and fades. Nothing ever unmounts on toggle.
+ * - On expand, labels fade in with a 150ms delay so the width opens
+ *   first. On collapse they vanish immediately so the width closes clean.
+ * - Icons are pointer-events-none so SVG nodes never swallow clicks.
  * ───────────────────────────────────────────────────────────── */
 
 interface Item {
@@ -96,7 +98,32 @@ function isActive(item: Item, pathname: string): boolean {
   return false;
 }
 
-/** Icons never intercept pointer events — clicks land on the link. */
+/** The single collapse primitive: label shrinks to zero width and fades. */
+function RailLabel({
+  rail,
+  max = "max-w-[180px]",
+  className,
+  children,
+}: {
+  rail: boolean;
+  max?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      aria-hidden={rail}
+      className={cn(
+        "min-w-0 truncate whitespace-nowrap transition-all duration-200",
+        rail ? "max-w-0 opacity-0" : cn(max, "opacity-100 delay-150"),
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 function NavIcon({ item, active }: { item: Item; active: boolean }) {
   const cls = cn("pointer-events-none shrink-0", active ? "text-ink" : "text-ink-3");
   if (item.animated) {
@@ -114,62 +141,49 @@ function NavIcon({ item, active }: { item: Item; active: boolean }) {
   );
 }
 
-function NavRow({
+function NavItem({
   item,
   pathname,
+  rail,
   onNavigate,
-  compact,
 }: {
   item: Item;
   pathname: string;
+  rail: boolean;
   onNavigate?: () => void;
-  compact?: boolean;
 }) {
   const active = isActive(item, pathname);
-
-  // One unified tree: the label collapses to zero width + fades instead of
-  // the whole row being swapped, so expand/collapse animates smoothly.
   const link = (
     <Link
       href={item.href}
       onClick={onNavigate}
-      aria-label={compact ? item.label : undefined}
+      aria-label={rail ? item.label : undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
         "hover-glow flex min-w-0 items-center overflow-hidden rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-        compact
-          ? "mx-auto h-10 w-10 shrink-0 justify-center"
-          : "w-full gap-3 px-3 py-2.5 text-[13.5px]",
+        rail ? "mx-auto size-10 shrink-0 justify-center" : "w-full gap-3 px-3 py-2.5 text-[13.5px]",
         active
-          ? "bg-hover text-ink ring-1 ring-line-strong"
+          ? "bg-hover font-medium text-ink ring-1 ring-line-strong"
           : "text-ink-3 hover:bg-hover hover:text-ink",
-        !compact && !active && "text-ink-2",
-        !compact && active && "font-medium",
+        !rail && !active && "text-ink-2",
       )}
     >
       <NavIcon item={item} active={active} />
-      <span
-        aria-hidden={compact}
-        className={cn(
-          "min-w-0 flex-1 truncate whitespace-nowrap tracking-[-0.01em] transition-all duration-200",
-          compact ? "max-w-0 opacity-0" : "max-w-[180px] opacity-100 delay-150",
-        )}
-      >
+      <RailLabel rail={rail} className="flex-1 tracking-[-0.01em]">
         {item.label}
-      </span>
+      </RailLabel>
       {active ? (
         <span
           aria-hidden
           className={cn(
-            "ml-auto size-1.5 shrink-0 rounded-full bg-accent transition-opacity duration-200",
-            compact ? "w-0 opacity-0" : "opacity-100 delay-150",
+            "ml-auto size-1.5 shrink-0 rounded-full bg-accent transition-all duration-200",
+            rail ? "w-0 opacity-0" : "opacity-100 delay-150",
           )}
         />
       ) : null}
     </Link>
   );
-
-  return compact ? (
+  return rail ? (
     <Tooltip label={item.label} side="right">
       {link}
     </Tooltip>
@@ -178,13 +192,13 @@ function NavRow({
   );
 }
 
-function SectionLabel({ children, collapsed }: { children: React.ReactNode; collapsed?: boolean }) {
+function SectionTitle({ rail, children }: { rail: boolean; children: React.ReactNode }) {
   return (
     <p
-      aria-hidden={collapsed}
+      aria-hidden={rail}
       className={cn(
         "overflow-hidden whitespace-nowrap px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-4 transition-all duration-200",
-        collapsed ? "max-h-0 pb-0 pt-0 opacity-0" : "max-h-10 pb-2 pt-4 opacity-100 delay-150",
+        rail ? "max-h-0 pb-0 pt-0 opacity-0" : "max-h-10 pb-2 pt-4 opacity-100 delay-150",
       )}
     >
       {children}
@@ -192,7 +206,15 @@ function SectionLabel({ children, collapsed }: { children: React.ReactNode; coll
   );
 }
 
-function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void }) {
+function UserMenu({
+  user,
+  rail,
+  onNavigate,
+}: {
+  user: User;
+  rail: boolean;
+  onNavigate?: () => void;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { openSettings } = useNav();
   const ref = useRef<HTMLDivElement>(null);
@@ -226,24 +248,32 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
         onClick={() => setMenuOpen((v) => !v)}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
-        className="hover-glow flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-2xl px-2.5 py-2 transition-colors duration-200 hover:bg-hover"
+        aria-label={rail ? user.name : undefined}
+        className={cn(
+          "hover-glow flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl transition-all duration-300 hover:bg-hover",
+          rail ? "mx-auto size-10 justify-center px-0 py-0" : "w-full px-2.5 py-2",
+        )}
       >
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent/15 text-[13px] font-semibold text-ink ring-1 ring-line">
           {user.name.slice(0, 1).toUpperCase()}
         </span>
         <span className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-[13.5px] font-medium text-ink">{user.name}</span>
-          <span className="block truncate text-[11px] capitalize text-ink-3">
+          <RailLabel rail={rail} className="block text-[13.5px] font-medium text-ink">
+            {user.name}
+          </RailLabel>
+          <RailLabel rail={rail} className="block text-[11px] capitalize text-ink-3">
             {user.effectivePlan || user.plan} plan
-          </span>
+          </RailLabel>
         </span>
-        <FiChevronRight
-          size={18}
-          className={cn(
-            "pointer-events-none shrink-0 text-ink-3 transition-transform duration-200",
-            menuOpen && "rotate-90",
-          )}
-        />
+        {!rail ? (
+          <FiChevronRight
+            size={18}
+            className={cn(
+              "pointer-events-none shrink-0 text-ink-3 transition-transform duration-200",
+              menuOpen && "rotate-90",
+            )}
+          />
+        ) : null}
       </button>
 
       {menuOpen ? (
@@ -286,15 +316,13 @@ function UserMenu({ user, onNavigate }: { user: User; onNavigate?: () => void })
   );
 }
 
-function FooterButton({
+function FooterIconButton({
   label,
-  side = "top",
   onClick,
   href,
   children,
 }: {
   label: string;
-  side?: "top" | "right";
   onClick?: () => void;
   href?: string;
   children: React.ReactNode;
@@ -311,16 +339,234 @@ function FooterButton({
       {inner}
     </Link>
   );
+  return <Tooltip label={label}>{btn}</Tooltip>;
+}
+
+/* ── The one sidebar body. Desktop rail and mobile drawer both render this. ── */
+function SidebarBody({
+  user,
+  balance,
+  rail,
+  isMobile,
+}: {
+  user: User | null;
+  balance?: Balance | null;
+  rail: boolean;
+  isMobile?: boolean;
+}) {
+  const pathname = usePathname() || "/";
+  const { toggleCollapsed, openSettings, setOpen } = useNav();
+  const closeMobile = () => setOpen(false);
+  const isTros = useIsTrosProduct(pathname);
+  const newHref = isTros ? "/tros?new=1" : "/chat";
+  const newLabel = isTros ? "New Tro" : "New chat";
+
+  const newBtn = (
+    <Link
+      href={newHref}
+      onClick={closeMobile}
+      aria-label={newLabel}
+      className={cn(
+        "hover-glow btn-grad flex items-center justify-center gap-2 overflow-hidden text-[13.5px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]",
+        rail ? "mx-auto size-11 rounded-2xl" : "h-10 w-full rounded-2xl",
+      )}
+    >
+      <CirclePlusIcon size={21} className="pointer-events-none shrink-0" />
+      <RailLabel rail={rail} max="max-w-[120px]">
+        {newLabel}
+      </RailLabel>
+    </Link>
+  );
+
   return (
-    <Tooltip label={label} side={side}>
-      {btn}
-    </Tooltip>
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      {/* Header */}
+      <div
+        className={cn(
+          "flex shrink-0 items-center gap-1 overflow-hidden px-2.5 transition-all duration-300",
+          rail ? "flex-col gap-2 py-3" : "h-14",
+        )}
+      >
+        <div className={cn("min-w-0", !rail && "flex-1")}>
+          <ProductSwitcher collapsed={rail} onNavigate={closeMobile} />
+        </div>
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={closeMobile}
+            aria-label="Close menu"
+            className="grid size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition-colors duration-200 hover:bg-hover hover:text-ink"
+          >
+            <FiX size={22} className="pointer-events-none" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleCollapsed();
+            }}
+            aria-label={rail ? "Expand sidebar" : "Collapse sidebar"}
+            title={rail ? "Expand sidebar" : "Collapse sidebar"}
+            className="hover-glow grid size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition-colors duration-200 hover:bg-hover hover:text-ink"
+          >
+            <FiSidebar size={22} className="pointer-events-none" />
+          </button>
+        )}
+      </div>
+
+      {/* New action */}
+      <div className="shrink-0 overflow-hidden px-2.5 pb-2">
+        {rail ? (
+          <Tooltip label={newLabel} side="right">
+            {newBtn}
+          </Tooltip>
+        ) : (
+          newBtn
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="min-h-0 flex-1 space-y-0.5 overflow-x-hidden overflow-y-auto overscroll-contain px-2 pb-3">
+        {isTros ? (
+          <>
+            <SectionTitle rail={rail}>Tros</SectionTitle>
+            {TROS_NAV.map((item) => (
+              <NavItem
+                key={item.href + item.label}
+                item={item}
+                pathname={pathname}
+                rail={rail}
+                onNavigate={closeMobile}
+              />
+            ))}
+          </>
+        ) : (
+          <>
+            <SectionTitle rail={rail}>Workspace</SectionTitle>
+            {TROVE_WORKSPACE.map((item) => (
+              <NavItem
+                key={item.href + item.label}
+                item={item}
+                pathname={pathname}
+                rail={rail}
+                onNavigate={closeMobile}
+              />
+            ))}
+            <SectionTitle rail={rail}>Create</SectionTitle>
+            {TROVE_CREATE.map((item) => (
+              <NavItem
+                key={item.href + item.label}
+                item={item}
+                pathname={pathname}
+                rail={rail}
+                onNavigate={closeMobile}
+              />
+            ))}
+          </>
+        )}
+      </nav>
+
+      {/* Footer */}
+      <div className="relative z-10 shrink-0 space-y-2 overflow-hidden border-t border-line bg-rail p-2.5">
+        {user ? (
+          <UserMenu user={user} rail={rail} onNavigate={closeMobile} />
+        ) : (
+          <Link
+            href="/login"
+            onClick={closeMobile}
+            className="btn-grad flex h-10 w-full items-center justify-center rounded-2xl text-[13.5px] font-semibold"
+          >
+            Log in
+          </Link>
+        )}
+
+        <div
+          className={cn(
+            "flex min-w-0 items-center transition-all duration-300",
+            rail ? "gap-0" : "gap-1",
+          )}
+        >
+          {(
+            [
+              {
+                key: "settings",
+                btn: (
+                  <FooterIconButton
+                    label="Settings"
+                    onClick={() => {
+                      closeMobile();
+                      openSettings("general");
+                    }}
+                  >
+                    <SettingsIcon size={20} />
+                  </FooterIconButton>
+                ),
+              },
+              {
+                key: "plan",
+                btn: (
+                  <FooterIconButton label="Plan" href="/plans">
+                    <Ico icon={FiCreditCard} motion="pop" size={20} />
+                  </FooterIconButton>
+                ),
+              },
+              {
+                key: "help",
+                btn: (
+                  <FooterIconButton
+                    label="Help"
+                    onClick={() => {
+                      closeMobile();
+                      openSettings("help");
+                    }}
+                  >
+                    <Ico icon={TbHelpCircle} motion="ring" size={20} />
+                  </FooterIconButton>
+                ),
+              },
+            ] as const
+          ).map((b) => (
+            <span
+              key={b.key}
+              aria-hidden={rail}
+              className={cn(
+                "overflow-hidden transition-all duration-200",
+                rail ? "max-w-0 opacity-0" : "max-w-[40px] opacity-100 delay-150",
+              )}
+            >
+              {b.btn}
+            </span>
+          ))}
+          <span className="min-w-0 flex-1" />
+          <ThemeToggle />
+        </div>
+
+        {balance ? (
+          <div
+            aria-hidden={rail}
+            className={cn(
+              "overflow-hidden transition-all duration-200",
+              rail ? "max-h-0 opacity-0" : "max-h-12 opacity-100 delay-150",
+            )}
+          >
+            <div className="flex min-w-0 items-center justify-between whitespace-nowrap rounded-2xl bg-sunk px-3 py-2 ring-1 ring-line/50">
+              <span className="truncate text-[11px] font-medium text-ink-4">Credits</span>
+              <span className="shrink-0 text-[11px] font-semibold tabular-nums text-ink">
+                {formatCredits(Number(balance.remaining))}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
 export function Sidebar({ user, balance }: { user: User | null; balance?: Balance | null }) {
   const pathname = usePathname() || "/";
-  const { open, setOpen, collapsed, toggleCollapsed, openSettings } = useNav();
+  const { open, setOpen, collapsed } = useNav();
   const closeMobile = () => setOpen(false);
 
   useEffect(() => {
@@ -342,246 +588,6 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
     };
   }, [open, setOpen]);
 
-  const isTros = useIsTrosProduct(pathname);
-
-  const renderBody = (c: boolean) => (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div
-        className={cn(
-          "flex shrink-0 items-center gap-1 overflow-hidden px-2.5 transition-all duration-300",
-          c ? "flex-col gap-2 py-3" : "h-14",
-        )}
-      >
-        {/* Single animated switcher — text collapses instead of swapping layouts */}
-        <div className={cn("grid min-w-0", c ? "" : "flex-1")}>
-          <ProductSwitcher collapsed={c} onNavigate={closeMobile} />
-        </div>
-        <button
-          type="button"
-          className="grid size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition-colors duration-200 hover:bg-hover hover:text-ink lg:hidden"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closeMobile();
-          }}
-          aria-label="Close menu"
-        >
-          <FiX size={22} className="pointer-events-none" />
-        </button>
-        <button
-          type="button"
-          className="hover-glow hidden size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition-colors duration-200 hover:bg-hover hover:text-ink lg:grid"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleCollapsed();
-          }}
-          aria-label={c ? "Expand sidebar" : "Collapse sidebar"}
-          title={c ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <FiSidebar size={22} className="pointer-events-none" />
-        </button>
-      </div>
-
-      {/* ── New action ─────────────────────────────────────── */}
-      <div className="shrink-0 overflow-hidden px-2.5 pb-2">
-        {(() => {
-          const btn = (
-            <Link
-              href={isTros ? "/tros?new=1" : "/chat"}
-              onClick={closeMobile}
-              aria-label={isTros ? "New Tro" : "New chat"}
-              className={cn(
-                "hover-glow btn-grad flex items-center justify-center gap-2 overflow-hidden text-[13.5px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]",
-                c ? "mx-auto size-11 rounded-2xl" : "h-10 w-full rounded-2xl",
-              )}
-            >
-              <CirclePlusIcon size={21} className="pointer-events-none shrink-0" />
-              <span
-                aria-hidden={c}
-                className={cn(
-                  "truncate whitespace-nowrap transition-all duration-200",
-                  c ? "max-w-0 opacity-0" : "max-w-[120px] opacity-100 delay-150",
-                )}
-              >
-                New {isTros ? "Tro" : "chat"}
-              </span>
-            </Link>
-          );
-          return c ? (
-            <Tooltip label={isTros ? "New Tro" : "New chat"} side="right">
-              {btn}
-            </Tooltip>
-          ) : (
-            btn
-          );
-        })()}
-      </div>
-
-      {/* ── Nav ────────────────────────────────────────────── */}
-      <nav className="min-h-0 flex-1 space-y-0.5 overflow-x-hidden overflow-y-auto overscroll-contain px-2 pb-3">
-        {isTros ? (
-          <>
-            <SectionLabel collapsed={c}>Tros</SectionLabel>
-            {TROS_NAV.map((item) => (
-              <NavRow
-                key={item.href + item.label}
-                item={item}
-                pathname={pathname}
-                onNavigate={closeMobile}
-                compact={c}
-              />
-            ))}
-          </>
-        ) : (
-          <>
-            <SectionLabel collapsed={c}>Workspace</SectionLabel>
-            {TROVE_WORKSPACE.map((item) => (
-              <NavRow
-                key={item.href + item.label}
-                item={item}
-                pathname={pathname}
-                onNavigate={closeMobile}
-                compact={c}
-              />
-            ))}
-            <SectionLabel collapsed={c}>Create</SectionLabel>
-            {TROVE_CREATE.map((item) => (
-              <NavRow
-                key={item.href + item.label}
-                item={item}
-                pathname={pathname}
-                onNavigate={closeMobile}
-                compact={c}
-              />
-            ))}
-          </>
-        )}
-      </nav>
-
-      {/* ── Footer ─────────────────────────────────────────── */}
-      <div className="relative z-10 shrink-0 space-y-2 overflow-hidden border-t border-line bg-rail p-2.5">
-        {user ? (
-          /* Cross-fade between full user menu and avatar instead of swapping */
-          <div className="grid">
-            <div
-              className={cn(
-                "col-start-1 row-start-1 min-w-0 transition-opacity",
-                c ? "pointer-events-none opacity-0 duration-150" : "opacity-100 delay-100 duration-200",
-              )}
-              aria-hidden={c}
-            >
-              <UserMenu user={user} onNavigate={closeMobile} />
-            </div>
-            <div
-              className={cn(
-                "col-start-1 row-start-1 mx-auto transition-opacity",
-                c ? "opacity-100 delay-100 duration-200" : "pointer-events-none opacity-0 duration-150",
-              )}
-              aria-hidden={!c}
-            >
-              <Tooltip label={user.name} side="right">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMobile();
-                    openSettings("general");
-                  }}
-                  aria-label="Open settings"
-                  className="hover-glow mx-auto grid size-10 shrink-0 place-items-center rounded-2xl bg-accent/15 text-[13px] font-semibold text-ink ring-1 ring-line transition-colors duration-200"
-                >
-                  {user.name.slice(0, 1).toUpperCase()}
-                </button>
-              </Tooltip>
-            </div>
-          </div>
-        ) : (
-          <Link
-            href="/login"
-            onClick={closeMobile}
-            className="btn-grad flex h-10 w-full items-center justify-center rounded-2xl text-[13.5px] font-semibold"
-          >
-            Log in
-          </Link>
-        )}
-
-        <div className={cn("flex min-w-0 items-center transition-all duration-300", c ? "gap-0" : "gap-1")}>
-          {(
-            [
-              {
-                label: "Settings",
-                el: (
-                  <FooterButton
-                    label="Settings"
-                    onClick={() => {
-                      closeMobile();
-                      openSettings("general");
-                    }}
-                  >
-                    <SettingsIcon size={20} />
-                  </FooterButton>
-                ),
-              },
-              {
-                label: "Plan",
-                el: (
-                  <FooterButton label="Plan" href="/plans">
-                    <Ico icon={FiCreditCard} motion="pop" size={20} />
-                  </FooterButton>
-                ),
-              },
-              {
-                label: "Help",
-                el: (
-                  <FooterButton
-                    label="Help"
-                    onClick={() => {
-                      closeMobile();
-                      openSettings("help");
-                    }}
-                  >
-                    <Ico icon={TbHelpCircle} motion="ring" size={20} />
-                  </FooterButton>
-                ),
-              },
-            ] as const
-          ).map((b) => (
-            <span
-              key={b.label}
-              aria-hidden={c}
-              className={cn(
-                "overflow-hidden transition-all duration-200",
-                c ? "max-w-0 opacity-0" : "max-w-[40px] opacity-100 delay-150",
-              )}
-            >
-              {b.el}
-            </span>
-          ))}
-          <span className="min-w-0 flex-1" />
-          <ThemeToggle />
-        </div>
-
-        {balance ? (
-          <div
-            aria-hidden={c}
-            className={cn(
-              "overflow-hidden transition-all duration-200",
-              c ? "max-h-0 opacity-0" : "max-h-12 opacity-100 delay-150",
-            )}
-          >
-            <div className="flex min-w-0 items-center justify-between whitespace-nowrap rounded-2xl bg-sunk px-3 py-2 ring-1 ring-line/50">
-              <span className="truncate text-[11px] font-medium text-ink-4">Credits</span>
-              <span className="shrink-0 text-[11px] font-semibold tabular-nums text-ink">
-                {formatCredits(Number(balance.remaining))}
-              </span>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-
   return (
     <>
       <aside
@@ -590,7 +596,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
           collapsed ? "w-[76px]" : "w-[264px]",
         )}
       >
-        {renderBody(collapsed)}
+        <SidebarBody user={user} balance={balance} rail={collapsed} />
       </aside>
 
       {open ? (
@@ -602,7 +608,7 @@ export function Sidebar({ user, balance }: { user: User | null; balance?: Balanc
             onClick={closeMobile}
           />
           <aside className="absolute inset-y-0 left-0 flex w-[min(88vw,300px)] flex-col overflow-hidden rounded-r-[24px] border-r border-line bg-rail shadow-[0_24px_64px_-16px_rgb(0_0_0/0.4)]">
-            {renderBody(false)}
+            <SidebarBody user={user} balance={balance} rail={false} isMobile />
           </aside>
         </div>
       ) : null}
