@@ -88,44 +88,6 @@ export const FEATURES: Feature[] = [
     href: "/agents",
   },
   {
-    slug: "websites",
-    label: "Websites",
-    title: "AI website builder",
-    description:
-      "Describe the site you need and Trove designs, writes, and builds it — with a live preview you can click through. Publish on troveai.site or keep refining in chat.",
-    icon: TbWorld,
-    tone: "#0284c7",
-    headline: "Describe the site. Get the site.",
-    standfirst:
-      "Trove is an AI website builder that ships real pages, not mockups: layout, copy, and styling in one pass, rendered in a live preview you can click through. Then refine it in chat — “make the hero bolder”, “add a pricing section” — or publish it when it's ready.",
-    sections: [
-      {
-        heading: "A live preview, not a picture",
-        body: "Every site renders as a real page you can scroll, click, and resize. What you see in the preview is what your visitors get — no “design concept” that a developer still has to build.",
-      },
-      {
-        heading: "Copy is included",
-        body: "A website with lorem ipsum is a template. Trove writes the actual headlines, product descriptions, and calls to action from your brief — then lets you rewrite any line in chat.",
-      },
-      {
-        heading: "Publish or take the files",
-        body: "Publish to yourname.troveai.site in one click, or export the HTML and host it anywhere. The site stays in your workspace, so next month's update is a conversation, not a rebuild.",
-      },
-    ],
-    facts: [
-      "Real multi-section pages with a clickable live preview",
-      "Copywriting from your brief — headlines, CTAs, product copy",
-      "Refine in chat: layout, tone, sections, imagery",
-      "One-click publish on *.troveai.site, or export the HTML",
-    ],
-    href: "/websites",
-    example: {
-      kind: "site",
-      title: "Ember & Oak — roastery landing page",
-      caption: "Built from one paragraph: “Launch site for Ember & Oak — our small-batch roastery. Warm, premium, with the three house roasts and a subscription CTA.”",
-    },
-  },
-  {
     slug: "documents",
     label: "Documents",
     title: "AI document generator",

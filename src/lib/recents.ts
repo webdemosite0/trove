@@ -14,8 +14,7 @@ export type RecentKind =
   | "research"
   | "code"
   | "agent"
-  | "team"
-  | "site";
+  | "team";
 
 export interface Recent {
   /** The strip row itself. Not the conversation — see `conversationId`. */
@@ -59,7 +58,6 @@ export const RECENT_LABEL: Record<RecentKind, string> = {
   code: "Recent code",
   agent: "Recent agents",
   team: "Recent team tasks",
-  site: "Recent sites",
 };
 
 /**

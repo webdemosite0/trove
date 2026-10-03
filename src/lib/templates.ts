@@ -8,14 +8,13 @@ import {
   MEMO,
   RESEARCH,
   SHEET,
-  SITE_HTML,
   type DeckSlide,
   type MemoSection,
   type ResearchFinding,
   type SheetRow,
 } from "@/components/landing/demo-outputs";
 
-export type TemplateKind = "doc" | "sheet" | "deck" | "site" | "research";
+export type TemplateKind = "doc" | "sheet" | "deck" | "research";
 
 export interface TemplateDoc {
   title: string;
@@ -47,7 +46,6 @@ export interface Template {
   doc?: TemplateDoc;
   sheet?: TemplateSheet;
   deck?: TemplateDeck;
-  siteHtml?: string;
   research?: TemplateResearch;
 }
 
@@ -157,14 +155,6 @@ export const TEMPLATES: Template[] = [
     },
   },
   {
-    id: "roastery-site",
-    title: "Roastery landing page",
-    description: "A complete small-business site: story, products, pricing, and a subscription CTA.",
-    kind: "site",
-    prompt: "Launch site for Ember & Oak — our small-batch roastery. Warm, premium, with the three house roasts and a subscription CTA.",
-    siteHtml: SITE_HTML,
-  },
-  {
     id: "pitch-deck",
     title: "Wholesale pitch deck",
     description: "Three slides with an argument: the win, the numbers, the ask.",
@@ -211,6 +201,5 @@ export const TEMPLATE_KINDS: { id: TemplateKind | "all"; label: string }[] = [
   { id: "doc", label: "Documents" },
   { id: "sheet", label: "Spreadsheets" },
   { id: "deck", label: "Decks" },
-  { id: "site", label: "Websites" },
   { id: "research", label: "Research" },
 ];

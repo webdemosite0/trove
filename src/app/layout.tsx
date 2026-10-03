@@ -188,7 +188,7 @@ function StructuredData() {
             name: "What is Trove AI?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Trove is an AI workspace for business that creates websites, documents, spreadsheets, presentations, code, research, designs, and AI agent workflows in one place.",
+              text: "Trove is an AI workspace for business that creates documents, spreadsheets, presentations, code, research, designs, and AI agent workflows in one place.",
             },
           },
           {

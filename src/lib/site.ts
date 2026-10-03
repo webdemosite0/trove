@@ -35,12 +35,12 @@ export const site = {
   email: "official@troveai.site",
   tagline: "Describe the work. Get the files.",
   description:
-    "Trove is an AI workspace for real work: chat, websites, documents, spreadsheets, decks, code, research, and agents — in projects you can refine and return to.",
+    "Trove is an AI workspace for real work: chat, documents, spreadsheets, decks, code, research, and agents — in projects you can refine and return to.",
   searchTitle: "Describe the work. Get the files. — Trove AI workspace",
   metaDescription:
-    "AI workspace for websites, docs, spreadsheets, decks, code, research, and agents. Describe the work, refine in chat, and export when you are ready.",
+    "AI workspace for docs, spreadsheets, decks, code, research, and agents. Describe the work, refine in chat, and export when you are ready.",
   shortDescription:
-    "AI workspace for websites, docs, sheets, decks, code, and agents — refine in chat or export.",
+    "AI workspace for docs, sheets, decks, code, and agents — refine in chat or export.",
   keywords: [
     "AI agent builder",
     "AI workspace",
@@ -69,7 +69,6 @@ export const publicRoutes = [
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/templates", priority: 0.8, changeFrequency: "weekly" as const },
   { path: "/changelog", priority: 0.5, changeFrequency: "monthly" as const },
-  { path: "/ai-website-builder", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/ai-presentation-maker", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/ai-document-generator", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/ai-spreadsheet-generator", priority: 0.9, changeFrequency: "monthly" as const },

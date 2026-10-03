@@ -18,10 +18,6 @@ ${site.description}
 
 ## What it does
 
-- **Website builder** — describe a site and get a real multi-file project
-  (index.html, styles.css, script.js). Every follow-up message edits the actual
-  files; only changed files are rewritten. Live preview at desktop, tablet and
-  mobile widths. Download as a ZIP.
 - **AI agents** — create agents with a name, role, instructions and tool list.
   The instructions become that agent's system prompt, so it stays in character.
 - **AI team** — four specialists (architect, designer, engineer, QA) work one
@@ -53,7 +49,6 @@ for generation, SQLite via node:sqlite for storage.
 ## Pages
 
 - ${site.url}/ — chat home
-- ${site.url}/websites — website builder
 - ${site.url}/agents — build custom AI agents
 - ${site.url}/team — four agents on one task
 - ${site.url}/code — code generation

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: "Trove — Describe the work. Get the files.",
   description:
-    "AI workspace for websites, documents, spreadsheets, presentations, research, code, and agents. Describe the work, refine in chat, publish or export when ready.",
+    "AI workspace for documents, spreadsheets, presentations, research, code, and agents. Describe the work, refine in chat, export when ready.",
 };
 
 export default async function Landing() {
