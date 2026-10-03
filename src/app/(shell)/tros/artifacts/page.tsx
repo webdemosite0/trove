@@ -8,7 +8,6 @@ import type { ArtifactKind } from "@/lib/artifact-block";
 import { isDesktopShell } from "@/lib/desktop-shell";
 import { userHasTrosAccess } from "@/lib/tros-access";
 import { TrosDesktopOnly } from "../desktop-only";
-import { TrosTeamOnly } from "../team-only";
 
 export const metadata = { title: "Artifacts · Tros" };
 export const dynamic = "force-dynamic";
@@ -36,11 +35,7 @@ export default async function TrosArtifactsPage() {
   if (!user) redirect("/login");
 
   if (!userHasTrosAccess(user)) {
-    return (
-      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-        <TrosTeamOnly />
-      </div>
-    );
+    redirect("/dashboard?settings=tros");
   }
 
   if (!(await isDesktopShell())) {
