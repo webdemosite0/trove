@@ -485,7 +485,7 @@ function SidebarBody({
         <div
           className={cn(
             "flex min-w-0 items-center transition-all duration-300",
-            rail ? "gap-0" : "gap-1",
+            rail ? "flex-col gap-1" : "gap-1",
           )}
         >
           {(
@@ -528,18 +528,11 @@ function SidebarBody({
               },
             ] as const
           ).map((b) => (
-            <span
-              key={b.key}
-              aria-hidden={rail}
-              className={cn(
-                "overflow-hidden transition-all duration-200",
-                rail ? "max-w-0 opacity-0" : "max-w-[40px] opacity-100 delay-150",
-              )}
-            >
+            <span key={b.key} className="shrink-0">
               {b.btn}
             </span>
           ))}
-          <span className="min-w-0 flex-1" />
+          <span className={cn("min-w-0 flex-1", rail && "hidden")} />
           <ThemeToggle />
         </div>
 
