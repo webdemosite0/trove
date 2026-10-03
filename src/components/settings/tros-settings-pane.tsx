@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiExternalLink } from "@/components/ui/icons";
+import { Bot, SPECIES, SPECIES_META } from "@/components/agents/bot";
 import { userHasTrosAccess } from "@/lib/tros-access";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -79,6 +80,24 @@ export function TrosPane({
     <div>
       <div className="relative overflow-hidden rounded-2xl border border-line bg-sunk/40 p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_20%,rgba(99,102,241,0.12),transparent_55%)]" />
+
+        <div className="relative mb-5 flex items-end justify-start" aria-hidden>
+          {SPECIES.slice(0, 6).map((s, i) => (
+            <div
+              key={s}
+              className="relative"
+              style={{ marginLeft: i === 0 ? 0 : -14, zIndex: 6 - i }}
+            >
+              <Bot
+                size={i === 2 ? 56 : 46}
+                species={s}
+                accent={SPECIES_META[s]?.defaultAccent}
+                state="idle"
+              />
+            </div>
+          ))}
+        </div>
+
         <div className="relative max-w-[52ch]">
           <p className="text-[16px] font-semibold tracking-tight text-ink">Tros</p>
           <p className="mt-2 text-[13.5px] leading-relaxed text-ink-3">
@@ -105,14 +124,26 @@ export function TrosPane({
             </Link>
           )}
         </div>
-        <div className="pointer-events-none absolute bottom-4 right-4 hidden w-[200px] rounded-xl border border-line bg-raised/90 p-3 shadow-lg sm:block">
-          <div className="mb-2 flex gap-1.5">
-            <span className="size-2 rounded-full bg-[#ff5f57]" />
-            <span className="size-2 rounded-full bg-[#febc2e]" />
-            <span className="size-2 rounded-full bg-[#28c840]" />
-          </div>
-          <p className="font-mono text-[11px] text-ink-3">&gt; Draft launch plan for Q2</p>
-          <p className="mt-1.5 font-mono text-[11px] text-amber-500/90">* Working…</p>
+      </div>
+
+      <p className="mb-2.5 mt-7 text-[13px] font-medium text-ink-3">Team</p>
+      <div className="rounded-2xl bg-raised p-5">
+        <p className="text-[13.5px] leading-relaxed text-ink-3">
+          Each Tro has its own mascot — a unique personality for research, design, code, and more.
+        </p>
+        <div className="mt-4 grid grid-cols-5 gap-3 sm:grid-cols-5">
+          {SPECIES.map((s) => {
+            const meta = SPECIES_META[s];
+            return (
+              <div key={s} className="flex flex-col items-center gap-1.5 text-center">
+                <Bot size={44} species={s} accent={meta?.defaultAccent} state="idle" />
+                <span className="text-[11px] font-medium text-ink">{meta?.label ?? s}</span>
+                <span className="line-clamp-2 text-[10px] leading-tight text-ink-4">
+                  {meta?.vibe}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
