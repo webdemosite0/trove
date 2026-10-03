@@ -73,6 +73,10 @@ async function assertAgent(userId: string, agentId: string) {
 }
 
 export async function GET(req: NextRequest) {
+  // Temporary probe: bypasses auth/db to isolate a production 500.
+  if (req.nextUrl.searchParams.get("probe") === "1") {
+    return NextResponse.json({ ok: true, route: "tro/browser", alive: true });
+  }
   try {
     const user = await currentUser();
     if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
