@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { getDocument } from "@/lib/documents";
-import { DocEditor } from "@/components/docs/doc-editor";
+import { DocsStudio } from "@/components/studio/docs-studio";
 
 export const metadata = { title: "Document" };
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export default async function DocumentPage({
   if (!doc) notFound();
   return (
     <div className="h-full min-h-0 overflow-hidden bg-canvas">
-      <DocEditor initial={doc} />
+      <DocsStudio initial={doc} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { SheetEditor } from "../sheet-editor";
+import { SheetsStudio } from "@/components/studio/sheets-studio";
 
 export const metadata = { title: "New spreadsheet" };
 
@@ -11,7 +11,7 @@ export default async function NewSpreadsheetPage({
 
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <SheetEditor
+      <SheetsStudio
         sheetId={null}
         initial={q ? { title: "Untitled sheet", grid: [], prompt: q } : null}
         key={q ?? "blank"}

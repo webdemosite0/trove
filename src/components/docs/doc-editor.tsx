@@ -38,6 +38,34 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Listen for external AI prompts from the studio chat panel (StudioSplit).
+  // Detail: { prompt: string; rewrite?: boolean; tone?: string }.
+  useEffect(() => {
+    function onExternalPrompt(e: Event) {
+      const detail = (e as CustomEvent<{ prompt: string; rewrite?: boolean; tone?: string }>).detail;
+      if (!detail) return;
+      let prompt = detail.prompt;
+      if (detail.rewrite) {
+        const html = bodyRef.current?.innerHTML?.trim() ?? "";
+        const tone = detail.tone ?? "clear";
+        prompt = html
+          ? `Rewrite the following document in a ${tone} tone. Return ONLY the rewritten document content as clean HTML (use <h2>, <p>, <ul>/<li>, <strong>, <em> tags — no <html>/<body> wrapper, no markdown fences, no commentary):\n\n${html}`
+          : `Write a short sample document in a ${tone} tone. Return ONLY the document content as clean HTML (use <h2>, <p>, <ul>/<li>, <strong>, <em> tags — no <html>/<body> wrapper, no markdown fences, no commentary).`;
+      }
+      if (!prompt.trim()) return;
+      setAiPrompt(prompt);
+      setAiOpen(true);
+      // Defer so state settles before runAi reads it.
+      setTimeout(() => {
+        void runAiRef.current?.();
+      }, 50);
+    }
+    window.addEventListener("docs-ai-prompt", onExternalPrompt);
+    return () => window.removeEventListener("docs-ai-prompt", onExternalPrompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
   function updateWordCount() {
     const text = bodyRef.current?.innerText ?? "";
     setWords(text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0);
@@ -111,6 +139,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
   }
 
   /** AI drafting: stream from /api/chat, show the Thinking ball until text arrives. */
+  const runAiRef = useRef<(() => Promise<void>) | null>(null);
   async function runAi() {
     const prompt = aiPrompt.trim();
     if (!prompt || aiBusy) return;
@@ -148,8 +177,12 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       setAiError(e instanceof Error ? e.message : "Generation failed.");
     } finally {
       setAiBusy(false);
+      // Notify external listeners (e.g. the studio chat panel) that generation ended.
+      window.dispatchEvent(new CustomEvent("docs-ai-finished"));
     }
   }
+
+  runAiRef.current = runAi;
 
   function insertAi(replace: boolean) {
     if (!aiResult.trim() || !bodyRef.current) return;

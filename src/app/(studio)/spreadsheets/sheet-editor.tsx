@@ -39,9 +39,12 @@ function draftKey(id: string | null) {
 export function SheetEditor({
   sheetId = null,
   initial,
+  hideAiBar = false,
 }: {
   sheetId?: string | null;
   initial?: { title: string; grid: string[][]; prompt?: string } | null;
+  /** Hide the built-in AI prompt bar + header button (split view provides its own chat panel). */
+  hideAiBar?: boolean;
 }) {
   const router = useRouter();
   const { save } = useSaved("sheets", sheetId);
@@ -190,6 +193,46 @@ export function SheetEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial?.prompt]);
 
+  // External control: split-view chat panel dispatches these window events.
+  const runAiRef = useRef(runAi);
+  useEffect(() => {
+    runAiRef.current = runAi;
+  });
+  useEffect(() => {
+    function onExternalPrompt(e: Event) {
+      const prompt = (e as CustomEvent<string>).detail;
+      if (typeof prompt !== "string" || !prompt.trim()) return;
+      void runAiRef.current(prompt).finally(() => {
+        window.dispatchEvent(new CustomEvent("sheets-ai-done"));
+      });
+    }
+    function onAddRow() {
+      setGrid((g) => {
+        const cols = Math.max(...g.map((r) => r.length), 1);
+        return [...g, Array.from({ length: cols }, () => "")];
+      });
+      dirtyRef.current = true;
+    }
+    function onAddCol() {
+      setGrid((g) => g.map((row) => [...row, ""]));
+      dirtyRef.current = true;
+    }
+    function onClear() {
+      setGrid(blankGrid(20, 8));
+      dirtyRef.current = true;
+    }
+    window.addEventListener("sheets-ai-prompt", onExternalPrompt);
+    window.addEventListener("sheets-add-row", onAddRow);
+    window.addEventListener("sheets-add-col", onAddCol);
+    window.addEventListener("sheets-clear", onClear);
+    return () => {
+      window.removeEventListener("sheets-ai-prompt", onExternalPrompt);
+      window.removeEventListener("sheets-add-row", onAddRow);
+      window.removeEventListener("sheets-add-col", onAddCol);
+      window.removeEventListener("sheets-clear", onClear);
+    };
+  }, []);
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       {/* Header */}
@@ -210,18 +253,20 @@ export function SheetEditor({
         {savedFlash ? (
           <span className="shrink-0 text-[12px] font-medium text-positive">Saved</span>
         ) : null}
-        <button
-          type="button"
-          onClick={() => setAiOpen((v) => !v)}
-          aria-expanded={aiOpen}
-          className={cn(
-            "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition active:scale-95",
-            aiOpen ? "bg-accent/15 text-accent" : "bg-sunk text-ink-2 hover:bg-hover",
-          )}
-        >
-          <TbSparkles size={15} />
-          <span className="hidden sm:inline">AI</span>
-        </button>
+        {!hideAiBar ? (
+          <button
+            type="button"
+            onClick={() => setAiOpen((v) => !v)}
+            aria-expanded={aiOpen}
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition active:scale-95",
+              aiOpen ? "bg-accent/15 text-accent" : "bg-sunk text-ink-2 hover:bg-hover",
+            )}
+          >
+            <TbSparkles size={15} />
+            <span className="hidden sm:inline">AI</span>
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => void doSave(grid, title, prompt || title)}
@@ -242,8 +287,8 @@ export function SheetEditor({
         </div>
       </header>
 
-      {/* AI prompt bar */}
-      {aiOpen ? (
+      {/* AI prompt bar (hidden in split view — the chat panel is the prompt UI) */}
+      {aiOpen && !hideAiBar ? (
         <div className="shrink-0 border-b border-line bg-raised/60 px-3 py-3 sm:px-4">
           <form
             onSubmit={(e) => {

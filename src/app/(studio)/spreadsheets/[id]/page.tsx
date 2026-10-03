@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { loadConversation } from "@/lib/conversations";
 import { decodeSheet } from "@/lib/sheet-format";
-import { SheetEditor } from "../sheet-editor";
+import { SheetsStudio } from "@/components/studio/sheets-studio";
 
 export const metadata = { title: "Spreadsheet" };
 
@@ -46,7 +46,7 @@ export default async function SpreadsheetWorkspacePage({
 
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <SheetEditor
+      <SheetsStudio
         sheetId={saved.id}
         initial={{ title: doc.title || saved.title, grid: doc.grid, prompt: userPrompt }}
         key={saved.id}
