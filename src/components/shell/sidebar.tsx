@@ -31,6 +31,7 @@ import { ThemeToggle } from "@/components/shell/theme";
 import { Tooltip } from "@/components/ui/tooltip";
 import { formatCredits } from "@/lib/format-credits";
 import { useIsDesktopClient } from "@/lib/is-desktop-client";
+import { userHasTrosAccess } from "@/lib/tros-access";
 import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
 
@@ -251,8 +252,9 @@ export function Sidebar({
   const { open, setOpen, collapsed, toggleCollapsed, openSettings } = useNav();
   const isTrosPath = useIsTrosProduct(pathname);
   const isDesktop = useIsDesktopClient();
-  // Tros nav only inside the desktop app — never on the web UI
-  const isTros = isTrosPath && isDesktop;
+  const canTros = userHasTrosAccess(user);
+  // Tros nav only for Pro/Team inside the desktop app
+  const isTros = isTrosPath && isDesktop && canTros;
   const close = () => setOpen(false);
 
   useEffect(() => {
@@ -285,7 +287,11 @@ export function Sidebar({
         )}
       >
         <div className={cn(compact ? "" : "min-w-0 flex-1")}>
-          <ProductSwitcher collapsed={compact} onNavigate={close} />
+          <ProductSwitcher
+            collapsed={compact}
+            onNavigate={close}
+            canUseTros={canTros}
+          />
         </div>
 
         <button
