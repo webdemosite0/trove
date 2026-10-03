@@ -1,28 +1,24 @@
-import { notFound } from "next/navigation";
-import { loadConversation } from "@/lib/conversations";
-import { DocumentView } from "../document-view";
+import { notFound, redirect } from "next/navigation";
+import { currentUser } from "@/lib/auth";
+import { getDocument } from "@/lib/documents";
+import { DocEditor } from "@/components/docs/doc-editor";
 
 export const metadata = { title: "Document" };
+export const dynamic = "force-dynamic";
 
-export default async function DocumentWorkspacePage({
+export default async function DocumentPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const user = await currentUser();
+  if (!user) redirect("/login");
   const { id } = await params;
-  const saved = await loadConversation(id).catch(() => null);
-  if (!saved || saved.kind !== "docs") notFound();
-
+  const doc = await getDocument(user.id, id);
+  if (!doc) notFound();
   return (
-    <div className="h-full min-h-0 overflow-y-auto">
-      <DocumentView
-        restored={{
-          id: saved.id,
-          title: saved.messages.find((m) => m.role === "user")?.text ?? saved.title,
-          messages: saved.messages,
-        }}
-        key={saved.id}
-      />
+    <div className="h-full min-h-0 overflow-hidden bg-canvas">
+      <DocEditor initial={doc} />
     </div>
   );
 }

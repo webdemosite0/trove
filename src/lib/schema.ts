@@ -372,6 +372,12 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS tro_scheduled_tasks_agent ON tro_scheduled_tasks (agent_id, next_run_at)`,
   `CREATE TABLE IF NOT EXISTS tro_skills (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, slug TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', instructions TEXT NOT NULL DEFAULT '', icon TEXT NOT NULL DEFAULT '✨', source TEXT NOT NULL DEFAULT 'custom', connector TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(user_id, slug))`,
   `CREATE INDEX IF NOT EXISTS tro_skills_user ON tro_skills (user_id, slug)`,
+  // Canva-style design docs: size id, layers JSON, background, thumbnail data URL.
+  `CREATE TABLE IF NOT EXISTS design_docs (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL DEFAULT 'Untitled design', category TEXT NOT NULL DEFAULT 'custom', size_id TEXT NOT NULL DEFAULT 'ig-post', layers TEXT NOT NULL DEFAULT '[]', background TEXT NOT NULL DEFAULT '#ffffff', thumbnail TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS design_docs_user ON design_docs (user_id, updated_at DESC)`,
+  // Studio documents: real docs with title + HTML content, per user.
+  `CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS documents_by_user ON documents (user_id, updated_at DESC)`,
 ];
 
 export const REPAIRS = `
