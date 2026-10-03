@@ -281,7 +281,17 @@ export function AgentChat({
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const deleting = agents.find((a) => a.id === deletingId) ?? null;
-  const [answeredAsks, setAnsweredAsks] = useState<Set<string>>(() => new Set());
+  const [answeredAsks, setAnsweredAsks] = useState<Set<string>>(() => {
+    // Restore answered questions across refreshes — otherwise answered
+    // prompts resurrect and the Tro asks the user to repeat themselves.
+    try {
+      const raw = window.localStorage.getItem(`tro-answered-asks:${agent.id}`);
+      if (raw) return new Set(JSON.parse(raw) as string[]);
+    } catch {
+      /* ignore */
+    }
+    return new Set();
+  });
   const [connectors, setConnectors] = useState<{ service: string; label: string; account: string | null }[] | null>(null);
   const { save, reset } = useSaved("agent", restored?.id ?? null);
   const [turns, setTurns] = useState<Turn[]>(() =>
@@ -1165,9 +1175,17 @@ export function AgentChat({
       if (prev.has(key)) return prev;
       const next = new Set(prev);
       next.add(key);
+      try {
+        window.localStorage.setItem(
+          `tro-answered-asks:${agent.id}`,
+          JSON.stringify([...next]),
+        );
+      } catch {
+        /* ignore */
+      }
       return next;
     });
-  }, []);
+  }, [agent.id]);
 
   const answerAsk = useCallback(
     (turnId: number, askIdx: number, block: AskBlock) =>
