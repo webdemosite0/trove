@@ -15,7 +15,6 @@ import { Ico } from "@/components/ui/ico";
 import { Tooltip } from "@/components/ui/tooltip";
 import { FailureNote } from "@/components/ui/failure-note";
 import { Modal } from "@/components/ui/modal";
-import { TroListPanel } from "../../tros/tro-list";
 import { useNav } from "@/components/shell/nav-state";
 import { ApprovalPrompt } from "@/components/agents/approval-prompt";
 import { extractAskBlocks, stripAskBlocks, type AskBlock } from "@/lib/ask-block";
@@ -1202,18 +1201,6 @@ export function AgentChat({
 
   return (
     <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
-      {agents.length > 0 ? (
-        <div className="hidden w-[272px] shrink-0 border-r border-line/70 xl:block">
-          <TroListPanel
-            agents={agents}
-            activeId={agent.id}
-            onNew={() => router.push("/tros?new=1")}
-            onDelete={setDeletingId}
-            workingIds={teamPresence}
-            className="h-full"
-          />
-        </div>
-      ) : null}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="shrink-0 border-b border-line/80 bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
           <div className="flex h-14 items-center gap-3">
