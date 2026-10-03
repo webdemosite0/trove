@@ -16,8 +16,16 @@ export async function GET() {
 
   const connections = await listConnections();
   const byId = new Map(SERVICES.map((s) => [s.id, s]));
+  const connectedIds = new Set(connections.map((c) => c.service));
 
-  const items = connections.map((c) => {
+  const items: Array<{
+    id: string;
+    name: string;
+    account: string | undefined;
+    mark: string;
+    direct: boolean;
+    viaBrowser?: boolean;
+  }> = connections.map((c) => {
     const meta = byId.get(c.service);
     return {
       id: c.service,
@@ -28,8 +36,22 @@ export async function GET() {
     };
   });
 
+  // Browser-powered services (e.g. ride hailing) need no OAuth — the Tro
+  // drives them through its cloud browser. Always @mentionable.
+  for (const s of SERVICES) {
+    if (s.viaBrowser && !connectedIds.has(s.id)) {
+      items.push({
+        id: s.id,
+        name: s.name,
+        account: "Via Tro's browser",
+        mark: s.name.slice(0, 1).toUpperCase(),
+        direct: false,
+        viaBrowser: true,
+      });
+    }
+  }
+
   // Google umbrella: offer @google when all bundled services are connected.
-  const connectedIds = new Set(connections.map((c) => c.service));
   if (GOOGLE_UMBRELLA_SERVICES.every((id) => connectedIds.has(id))) {
     const gmailConn = connections.find((c) => c.service === "gmail");
     items.push({

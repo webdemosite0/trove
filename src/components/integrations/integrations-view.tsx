@@ -409,6 +409,13 @@ export function IntegrationsView({
                       >
                         <FiCheck size={16} />
                       </button>
+                    ) : s.viaBrowser ? (
+                      <span
+                        className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[10.5px] font-semibold text-accent"
+                        title="No connection needed — your Tro drives this through its cloud browser. Just @mention it in chat."
+                      >
+                        Via browser
+                      </span>
                     ) : canConnect(s.id) ? (
                       <button
                         type="button"

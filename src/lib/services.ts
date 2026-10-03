@@ -17,6 +17,8 @@ export interface Service {
   featured?: boolean;
   /** Service ids bundled under a featured umbrella. */
   includes?: string[];
+  /** Works through the Tro's cloud browser instead of an API/OAuth connection. */
+  viaBrowser?: boolean;
 }
 
 export type Category =
@@ -34,6 +36,7 @@ export type Category =
   | "Support"
   | "Analytics"
   | "Design"
+  | "Ride hailing"
   | "Automation";
 
 export const CATEGORIES: Category[] = [
@@ -50,6 +53,7 @@ export const CATEGORIES: Category[] = [
   "Support",
   "Analytics",
   "Design",
+  "Ride hailing",
   "Automation",
 ];
 
@@ -173,6 +177,14 @@ export const SERVICES: Service[] = [
   { id: "make", name: "Make", category: "Automation", blurb: "Visual automation scenarios.", oauth: true },
   { id: "n8n", name: "n8n", category: "Automation", blurb: "Self-hosted workflow automation." },
   { id: "ifttt", name: "IFTTT", category: "Automation", blurb: "Simple applet triggers.", oauth: true },
+
+  // Ride hailing — no public APIs exist for these; the Tro books through its
+  // cloud browser on the service's web app. Always confirm with the user
+  // before confirming a booking (real money).
+  { id: "yango", name: "Yango", category: "Ride hailing", blurb: "Book cars, rickshaws & bikes — the Tro drives the Yango web app for you.", viaBrowser: true },
+  { id: "indrive", name: "inDrive", category: "Ride hailing", blurb: "Negotiate fares and book rides — the Tro drives the inDrive web app for you.", viaBrowser: true },
+  { id: "careem", name: "Careem", category: "Ride hailing", blurb: "Book cars & bikes — the Tro drives the Careem web app for you.", viaBrowser: true },
+  { id: "uber", name: "Uber", category: "Ride hailing", blurb: "Book rides — the Tro drives the Uber web app for you.", viaBrowser: true },
 ];
 
 export function serviceById(id: string) {

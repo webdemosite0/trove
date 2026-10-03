@@ -283,11 +283,21 @@ export async function buildChatConnectorContext(
         );
       } else {
         const meta = SERVICES.find((item) => item.id === service);
-        liveParts.push(
-          "CONNECTOR REQUEST — " +
-            (meta?.name ?? service) +
-            ": this app is not currently connected for the user.",
-        );
+        if (meta?.viaBrowser) {
+          liveParts.push(
+            "BROWSER-POWERED SERVICE — " +
+              meta.name +
+              ": no connection needed. Drive it through your CLOUD COMPUTER with browser-tool blocks (see BOOKING RIDES). " +
+              "Start the computer, open the " + meta.name + " web app, and do the task there. " +
+              "Never say it needs connecting.",
+          );
+        } else {
+          liveParts.push(
+            "CONNECTOR REQUEST — " +
+              (meta?.name ?? service) +
+              ": this app is not currently connected for the user.",
+          );
+        }
       }
     } catch (error) {
       liveParts.push(
