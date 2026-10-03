@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock } from "@/components/ui/icons";
+import { TroTasksPanel } from "@/components/agents/tro-tasks-panel";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -38,6 +39,7 @@ import {
   stripConnectorToolBlocks,
   toolCallLabel,
 } from "@/lib/tool-block";
+import { parseScheduleBlocks, stripScheduleBlocks } from "@/lib/schedule-block";
 import {
   parseBrowserToolBlocks,
   stripBrowserToolBlocks,
@@ -291,7 +293,7 @@ export function AgentChat({
   const [panelOpen, setPanelOpen] = useState(true);
   const { openSettings } = useNav();
   const [browserExpanded, setBrowserExpanded] = useState(false);
-  type PanelTab = "desktop" | "files" | "activity" | "connectors";
+  type PanelTab = "desktop" | "files" | "activity" | "connectors" | "tasks";
   const [panelTab, setPanelTab] = useState<PanelTab>("desktop");
   /** Inline artifact preview shown at the top of the Files tab (Claude-style). */
   const [previewArtifact, setPreviewArtifact] = useState<SavedArtifact | null>(null);
@@ -1050,11 +1052,83 @@ export function AgentChat({
           setTurns((t) => t.map((x) => (x.id === summaryId ? { ...x, text: full } : x)));
         }
 
-        // Final safety: never persist or display raw tool blocks of either kind.
-        full = stripConnectorToolBlocks(stripBrowserToolBlocks(full));
+        // Scheduled tasks: the Tro emitted schedule-task blocks. Create
+        // them, then have the Tro confirm briefly in its own voice.
+        const sched = parseScheduleBlocks(full);
+        if (sched.tasks.length > 0) {
+          const shown = sched.text;
+          setTurns((t) =>
+            t.map((x) => (x.id === replyId ? { ...x, text: shown } : x)),
+          );
+          const outcomes: string[] = [];
+          for (const task of sched.tasks.slice(0, 3)) {
+            const when = task.cron
+              ? `recurring (${task.cron}${task.timezone ? `, ${task.timezone}` : ""})`
+              : task.run_at ?? "once";
+            pushActivity(`Scheduling`, `${task.title} — ${when}`, "run");
+            try {
+              const r = await fetch("/api/tro/schedule", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  agentId: agent.id,
+                  title: task.title,
+                  kind: task.kind,
+                  instruction: task.instruction,
+                  run_at: task.run_at,
+                  cron: task.cron,
+                  timezone: task.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+                }),
+              });
+              const d = await r.json().catch(() => null);
+              if (r.ok && d?.task) {
+                const next = d.task.nextRunAt
+                  ? new Date(d.task.nextRunAt).toLocaleString()
+                  : "soon";
+                outcomes.push(
+                  `Scheduled **${d.task.title}** (${d.task.kind}) — next run ${next}.`,
+                );
+                pushActivity("Scheduled", d.task.title, "ok");
+              } else {
+                outcomes.push(`Couldn't schedule "${task.title}": ${d?.error ?? "request failed"}.`);
+                pushActivity("Schedule failed", d?.error ?? "Error", "warn");
+              }
+            } catch {
+              outcomes.push(`Couldn't schedule "${task.title}": network error.`);
+              pushActivity("Schedule failed", "Network error", "warn");
+            }
+          }
+          // Refresh the Tasks tab list.
+          try {
+            window.dispatchEvent(new CustomEvent("tro-schedules-changed"));
+          } catch {
+            /* noop */
+          }
+          const confirmId = nextId.current++;
+          setTurns((t) => [...t, { id: confirmId, role: "model" as const, text: "" }]);
+          const confirmMsgs = [
+            ...history.map(({ role, text: body }) => ({ role, text: body })),
+            { role: "model" as const, text: shown },
+            {
+              role: "user" as const,
+              text:
+                `Scheduling results — confirm to the user in one short sentence per task:\n\n${outcomes.join("\n")}\n\n` +
+                `If any failed, say so plainly and ask for the missing detail. Never mention schedule blocks or protocols.`,
+            },
+          ];
+          full = stripScheduleBlocks(
+            parseScheduleBlocks(await streamTurn(confirmMsgs, confirmId)).text,
+          );
+          setTurns((t) =>
+            t.map((x) => (x.id === confirmId ? { ...x, text: full } : x)),
+          );
+        }
+
+        // Final safety: never persist or display raw tool blocks of any kind.
+        full = stripScheduleBlocks(stripConnectorToolBlocks(stripBrowserToolBlocks(full)));
         setTurns((t) =>
           t.map((x) =>
-            x.role === "model" ? { ...x, text: stripConnectorToolBlocks(stripBrowserToolBlocks(x.text)) } : x,
+            x.role === "model" ? { ...x, text: stripScheduleBlocks(stripConnectorToolBlocks(stripBrowserToolBlocks(x.text))) } : x,
           ),
         );
 
@@ -1410,6 +1484,7 @@ export function AgentChat({
                   { id: "files", label: "Files", icon: FiFolder, badge: artifacts.length || undefined },
                   { id: "activity", label: "Activity", icon: FiActivity, badge: activity.filter((a) => a.tone === "run").length || undefined },
                   { id: "connectors", label: "Connectors", icon: TbPlugConnected, badge: undefined as number | undefined },
+                  { id: "tasks", label: "Tasks", icon: FiClock, badge: undefined as number | undefined },
                 ] as const
               ).map((t) => (
                 <button
@@ -1702,6 +1777,10 @@ export function AgentChat({
               live data.
             </p>
           </section>
+          ) : null}
+
+          {panelTab === "tasks" ? (
+            <TroTasksPanel agentId={agent.id} agentName={agent.name} />
           ) : null}
 
           <p className="flex items-center gap-1.5 px-4 py-3 text-[10.5px] leading-relaxed text-ink-4">
