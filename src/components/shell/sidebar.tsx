@@ -13,7 +13,6 @@ import {
   FiLogOut,
   FiChevronRight,
   FiLayers,
-  FiBookOpen,
   TbLayoutDashboard,
   TbMessageCircle,
   TbFolder,
@@ -45,8 +44,6 @@ type NavItem = {
 const MAIN: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard },
   { href: "/chat", label: "Chat", icon: TbMessageCircle },
-  { href: "/library", label: "Library", icon: FiBookOpen },
-  { href: "/artifacts", label: "Artifacts", icon: FiLayers },
   { href: "/projects", label: "Projects", icon: TbFolder },
 ];
 
@@ -253,12 +250,10 @@ export function Sidebar({
   const isTros = useIsTrosProduct(pathname);
   const close = () => setOpen(false);
 
-  // Close mobile drawer on navigation
   useEffect(() => {
     setOpen(false);
   }, [pathname, setOpen]);
 
-  // Escape + lock scroll when mobile drawer open
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -278,7 +273,6 @@ export function Sidebar({
 
   const body = (compact: boolean) => (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
-      {/* Top */}
       <div
         className={cn(
           "flex shrink-0 items-center gap-1 px-2",
@@ -289,7 +283,6 @@ export function Sidebar({
           <ProductSwitcher collapsed={compact} onNavigate={close} />
         </div>
 
-        {/* Mobile close */}
         <button
           type="button"
           onClick={close}
@@ -299,7 +292,6 @@ export function Sidebar({
           <FiX size={18} />
         </button>
 
-        {/* Desktop collapse */}
         <button
           type="button"
           onClick={toggleCollapsed}
@@ -311,7 +303,6 @@ export function Sidebar({
         </button>
       </div>
 
-      {/* Primary CTA */}
       <div className="shrink-0 px-2 pb-2">
         {compact ? (
           <Tooltip label={isTros ? "New Tro" : "New chat"} side="right">
@@ -336,7 +327,6 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Links */}
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-3">
         {!compact ? (
           <p className="px-2 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
@@ -378,7 +368,6 @@ export function Sidebar({
         ) : null}
       </nav>
 
-      {/* Footer */}
       <div className="shrink-0 space-y-2 border-t border-line p-2">
         {user ? (
           <AccountMenu user={user} compact={compact} onNavigate={close} />
@@ -392,7 +381,6 @@ export function Sidebar({
           </Link>
         )}
 
-        {/* Theme + tools only when expanded */}
         {!compact ? (
           <div className="flex items-center gap-0.5">
             <Tooltip label="Settings" side="top">
@@ -450,7 +438,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop rail */}
       <aside
         className={cn(
           "sticky top-0 hidden h-dvh shrink-0 overflow-hidden border-r border-line bg-rail transition-[width] duration-300 ease-out lg:flex lg:flex-col",
@@ -460,7 +447,6 @@ export function Sidebar({
         {body(collapsed)}
       </aside>
 
-      {/* Mobile drawer */}
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <button
