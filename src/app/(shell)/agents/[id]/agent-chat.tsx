@@ -38,6 +38,12 @@ import {
   stripConnectorToolBlocks,
   toolCallLabel,
 } from "@/lib/tool-block";
+import {
+  parseBrowserToolBlocks,
+  stripBrowserToolBlocks,
+  browserToolLabel,
+  type BrowserToolCall,
+} from "@/lib/browser-tool-block";
 import { useTroPresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +79,7 @@ const ARTIFACT_LABEL: Record<ArtifactKind, string> = {
   deck: "Deck",
   note: "Note",
   code: "Code",
+  website: "Website",
 };
 
 const ARTIFACT_EXT: Record<ArtifactKind, string> = {
@@ -81,6 +88,7 @@ const ARTIFACT_EXT: Record<ArtifactKind, string> = {
   deck: "md",
   note: "md",
   code: "txt",
+  website: "html",
 };
 
 /** Card rendered under a chat turn for an artifact the Tro produced. */
@@ -158,6 +166,90 @@ const IDLE_COMPUTER: ComputerState = {
   screenshotBase64: null,
 };
 
+/** Inline artifact preview pinned at the top of the Files tab (Claude-style). */
+function ArtifactPreview({
+  artifact,
+  agentName,
+  onClose,
+  onExpand,
+  onDownload,
+  onDelete,
+}: {
+  artifact: SavedArtifact;
+  agentName: string;
+  onClose: () => void;
+  onExpand: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="mb-3 overflow-hidden rounded-2xl border border-line bg-canvas/60">
+      <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
+          <ArtifactIcon kind={artifact.kind} size={14} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12.5px] font-semibold text-ink">{artifact.title}</p>
+          <p className="text-[10.5px] text-ink-4">
+            {ARTIFACT_LABEL[artifact.kind]} · {agentName.split(" ")[0]}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close preview"
+          className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+        >
+          <FiX size={14} />
+        </button>
+      </div>
+      <div className="max-h-[320px] overflow-y-auto">
+        {artifact.kind === "website" ? (
+          <iframe
+            title={artifact.title}
+            srcDoc={artifact.content}
+            sandbox="allow-same-origin"
+            className="h-[280px] w-full bg-white"
+          />
+        ) : artifact.kind === "code" ? (
+          <pre className="whitespace-pre-wrap break-words p-4 font-mono text-[11.5px] leading-relaxed text-ink">
+            {artifact.content}
+          </pre>
+        ) : (
+          <div className="px-4 py-3">
+            <Markdown text={artifact.content} compact />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-2">
+        <button
+          type="button"
+          onClick={onDelete}
+          className="rounded-full px-3 py-1.5 text-[12px] font-medium text-critical transition hover:bg-critical/10"
+        >
+          Delete
+        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onExpand}
+            className="rounded-full border border-line px-3 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+          >
+            Full view
+          </button>
+          <button
+            type="button"
+            onClick={onDownload}
+            className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-[12px] font-semibold text-canvas transition hover:opacity-90"
+          >
+            <FiDownload size={13} /> Download
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function extractBrowseUrl(text: string): string | null {
   const m = text.match(/https?:\/\/[^\s<>"']+/i);
   if (m) return m[0];
@@ -199,6 +291,10 @@ export function AgentChat({
   const [panelOpen, setPanelOpen] = useState(true);
   const { openSettings } = useNav();
   const [browserExpanded, setBrowserExpanded] = useState(false);
+  type PanelTab = "desktop" | "files" | "activity" | "connectors";
+  const [panelTab, setPanelTab] = useState<PanelTab>("desktop");
+  /** Inline artifact preview shown at the top of the Files tab (Claude-style). */
+  const [previewArtifact, setPreviewArtifact] = useState<SavedArtifact | null>(null);
   const pendingApprovals = useMemo(() => {
     if (busy) return [];
     const out: { turnId: number; askIdx: number; title: string }[] = [];
@@ -289,6 +385,10 @@ export function AgentChat({
             setArtifacts((prev) =>
               prev.some((a) => a.id === saved.id) ? prev : [saved, ...prev],
             );
+            // Pop the new file into the Files tab preview, Claude-style.
+            setPreviewArtifact(saved);
+            setPanelTab("files");
+            if (!panelOpen) setPanelOpen(true);
           }
         } catch {
           /* network failed — stays unmarked so the next turn retries */
@@ -302,6 +402,7 @@ export function AgentChat({
   async function deleteArtifact(id: string) {
     setArtifacts((prev) => prev.filter((a) => a.id !== id));
     if (viewer?.id === id) setViewer(null);
+    if (previewArtifact?.id === id) setPreviewArtifact(null);
     try {
       await fetch(`/api/tro/artifacts/${encodeURIComponent(id)}`, { method: "DELETE" });
     } catch {
@@ -310,7 +411,8 @@ export function AgentChat({
   }
 
   function downloadArtifact(a: SavedArtifact) {
-    const blob = new Blob([a.content], { type: "text/plain;charset=utf-8" });
+    const mime = a.kind === "website" ? "text/html;charset=utf-8" : "text/plain;charset=utf-8";
+    const blob = new Blob([a.content], { type: mime });
     const url = URL.createObjectURL(blob);
     const el = document.createElement("a");
     el.href = url;
@@ -439,6 +541,7 @@ export function AgentChat({
       if (!computerRef.current.sessionId) await startComputer();
       // Entering focus mode when browsing starts — like Claude's browser panel.
       setBrowserExpanded(true);
+      setPanelTab("desktop");
       if (!panelOpen) setPanelOpen(true);
       const data = await browserAction("navigate", { url });
       pushActivity("Opened page", data.title || data.pageUrl || url, "ok");
@@ -450,6 +553,103 @@ export function AgentChat({
       return data;
     },
     [browserAction, pushActivity, startComputer, panelOpen],
+  );
+
+  /**
+   * Execute one browser-tool op emitted by the Tro, returning a compact
+   * text result to feed back into the conversation. Auto-starts the cloud
+   * browser on first use.
+   */
+  const runBrowserToolCall = useCallback(
+    async (call: BrowserToolCall): Promise<string> => {
+      if (!computerRef.current.sessionId) {
+        await startComputer();
+        // Entering focus mode when browsing starts — like Claude's browser panel.
+        setBrowserExpanded(true);
+        setPanelTab("desktop");
+        if (!panelOpen) setPanelOpen(true);
+      }
+      const truncate = (s: string, n: number) =>
+        s.length > n ? s.slice(0, n) + `\n…(truncated, ${s.length - n} more chars)` : s;
+      const pageLine = (d: { pageUrl?: string | null; title?: string | null }) =>
+        d.pageUrl ? `Current page: ${d.pageUrl}${d.title ? ` ("${d.title}")` : ""}` : "";
+      try {
+        switch (call.op) {
+          case "navigate": {
+            if (!call.url || !/^https?:\/\//i.test(call.url)) {
+              return "Navigation failed: give a full URL starting with http:// or https://.";
+            }
+            const d = await browserAction("navigate", { url: call.url });
+            try {
+              await browserAction("screenshot");
+            } catch {
+              /* optional */
+            }
+            return `Opened ${call.url}.\n${pageLine(d)}`;
+          }
+          case "observe": {
+            const d = (await browserAction("elements")) as typeof IDLE_COMPUTER & { elements?: string | null };
+            const list = truncate(String(d.elements ?? "(no elements)"), 3500);
+            return `Interactive elements on the page:\n${list}\n${pageLine(d)}`;
+          }
+          case "read": {
+            const d = (await browserAction("read")) as typeof IDLE_COMPUTER & { pageText?: string | null };
+            const text = truncate(String(d.pageText ?? "(no text)"), 5000);
+            return `Page text:\n${text}\n${pageLine(d)}`;
+          }
+          case "click": {
+            const extra: Record<string, string> = {};
+            if (typeof call.ref === "number") extra.ref = String(Math.floor(call.ref));
+            else if (call.selector) extra.selector = call.selector;
+            else return "Click failed: provide a ref from observe, or a selector.";
+            const d = await browserAction(typeof call.ref === "number" ? "clickRef" : "click", extra);
+            try {
+              await browserAction("screenshot");
+            } catch {
+              /* optional */
+            }
+            return `Clicked.\n${pageLine(d)}`;
+          }
+          case "type": {
+            if (!call.text) return "Type failed: provide text to type.";
+            const extra: Record<string, string> = { text: call.text };
+            if (call.submit) extra.submit = "true";
+            if (typeof call.ref === "number") extra.ref = String(Math.floor(call.ref));
+            else if (call.selector) extra.selector = call.selector;
+            else return "Type failed: provide a ref from observe, or a selector.";
+            const d = await browserAction(typeof call.ref === "number" ? "typeRef" : "type", extra);
+            try {
+              await browserAction("screenshot");
+            } catch {
+              /* optional */
+            }
+            return `Typed${call.submit ? " and submitted" : ""}.\n${pageLine(d)}`;
+          }
+          case "screenshot": {
+            await browserAction("screenshot");
+            return "Screenshot refreshed in the user's Desktop panel.";
+          }
+          case "back": {
+            const d = await browserAction("back");
+            try {
+              await browserAction("screenshot");
+            } catch {
+              /* optional */
+            }
+            return `Went back.\n${pageLine(d)}`;
+          }
+          case "scroll": {
+            const dir = call.direction || "down";
+            const d = await browserAction("scroll", { direction: dir });
+            return `Scrolled ${dir}.\n${pageLine(d)}`;
+          }
+        }
+      } catch (e) {
+        return `Browser action failed: ${e instanceof Error ? e.message : "error"}.`;
+      }
+      return "Browser action failed: unknown op.";
+    },
+    [browserAction, startComputer, panelOpen],
   );
 
   useEffect(() => {
@@ -720,6 +920,59 @@ export function AgentChat({
           );
         }
 
+        // Browser tools: the Tro drives its cloud computer with fenced
+        // browser-tool blocks. Run them, feed the results back, and let the
+        // Tro continue — same shape as the connector-tool loop above.
+        {
+          let browseRound = 0;
+          let parsed = parseBrowserToolBlocks(full);
+          let browseTurnId = replyId;
+          while (parsed.calls.length > 0 && browseRound < 3) {
+            browseRound++;
+            const shown = parsed.text;
+            setTurns((t) =>
+              t.map((x) => (x.id === browseTurnId ? { ...x, text: shown } : x)),
+            );
+            const outcomes: string[] = [];
+            for (const call of parsed.calls.slice(0, 3)) {
+              const label = browserToolLabel(call);
+              pushActivity("Browsing", label, "run");
+              const result = await runBrowserToolCall(call);
+              const failed = /failed/i.test(result.slice(0, 60));
+              outcomes.push(`**${label}**:\n\n${result}`);
+              pushActivity(label, failed ? "Failed" : "Done", failed ? "warn" : "ok");
+            }
+            const followUpId = nextId.current++;
+            setTurns((t) => [
+              ...t,
+              { id: followUpId, role: "model" as const, text: "" },
+            ]);
+            const followUpMsgs = [
+              ...history.map(({ role, text: body }) => ({
+                role,
+                text: body,
+              })),
+              { role: "model" as const, text: shown },
+              {
+                role: "user" as const,
+                text:
+                  `Browser results — use them to continue your task:\n\n${outcomes.join("\n\n---\n\n")}\n\n` +
+                  `Keep going with browser-tool blocks if you need more steps, or answer the user from what you found. ` +
+                  `Never mention tool blocks or protocols. If an action failed, say what happened plainly.`,
+              },
+            ];
+            full = await streamTurn(followUpMsgs, followUpId);
+            parsed = parseBrowserToolBlocks(full);
+            browseTurnId = followUpId;
+          }
+          // Strip any leftover blocks (over the round cap) from the reply.
+          full = stripBrowserToolBlocks(full);
+          const strippedBrowse = full;
+          setTurns((t) =>
+            t.map((x) => (x.id === browseTurnId ? { ...x, text: strippedBrowse } : x)),
+          );
+        }
+
         // Team orchestration: this Tro may have delegated work to teammates
         // or hired new Tros. Run those blocks, then have the manager
         // summarize the results for the user.
@@ -797,14 +1050,21 @@ export function AgentChat({
           setTurns((t) => t.map((x) => (x.id === summaryId ? { ...x, text: full } : x)));
         }
 
+        // Final safety: never persist or display raw tool blocks of either kind.
+        full = stripConnectorToolBlocks(stripBrowserToolBlocks(full));
+        setTurns((t) =>
+          t.map((x) =>
+            x.role === "model" ? { ...x, text: stripConnectorToolBlocks(stripBrowserToolBlocks(x.text)) } : x,
+          ),
+        );
+
         setTurns((t) => {
           void save(
             t.map(({ role, text: body }) => ({ role, text: body })),
             agent.name + ": " + (history[0]?.text ?? "chat"),
           );
           return t;
-        });
-        pushActivity("Task complete", undefined, "ok");
+        });        pushActivity("Task complete", undefined, "ok");
       } catch (e) {
         setTurns((t) => t.filter((x) => x.id !== replyId));
         setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -998,7 +1258,11 @@ export function AgentChat({
                           block={p.block}
                           saved={saved}
                           onOpen={() => {
-                            if (saved) openArtifact(saved);
+                            if (saved) {
+                              setPreviewArtifact(saved);
+                              setPanelTab("files");
+                              if (!panelOpen) setPanelOpen(true);
+                            }
                           }}
                           onDownload={() => {
                             if (saved) downloadArtifact(saved);
@@ -1090,7 +1354,10 @@ export function AgentChat({
             </button>
             <button
               type="button"
-              onClick={() => document.getElementById("panel-library")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              onClick={() => {
+                setPanelTab("files");
+                if (!panelOpen) setPanelOpen(true);
+              }}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
             >
               <Ico icon={FiBookOpen} motion="lift" size={13} /> Library
@@ -1134,6 +1401,46 @@ export function AgentChat({
               </button>
             </section>
           ) : null}
+          {/* Panel tabs — separate sections instead of one long stack */}
+          <div className="sticky top-0 z-10 shrink-0 border-b border-line bg-raised/95 px-3 pt-2">
+            <div role="tablist" aria-label="Panel sections" className="flex gap-1">
+              {(
+                [
+                  { id: "desktop", label: "Desktop", icon: FiMonitor, badge: undefined as number | undefined },
+                  { id: "files", label: "Files", icon: FiFolder, badge: artifacts.length || undefined },
+                  { id: "activity", label: "Activity", icon: FiActivity, badge: activity.filter((a) => a.tone === "run").length || undefined },
+                  { id: "connectors", label: "Connectors", icon: TbPlugConnected, badge: undefined as number | undefined },
+                ] as const
+              ).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={panelTab === t.id}
+                  onClick={() => setPanelTab(t.id)}
+                  className={cn(
+                    "relative flex flex-1 items-center justify-center gap-1.5 rounded-t-lg px-2 py-2 text-[12px] font-medium transition",
+                    panelTab === t.id ? "text-ink" : "text-ink-4 hover:bg-hover hover:text-ink-2",
+                  )}
+                >
+                  <Ico icon={t.icon} size={13} />
+                  {t.label}
+                  {t.badge ? (
+                    <span className="rounded-full bg-accent/15 px-1.5 text-[10px] font-bold text-accent">
+                      {t.badge}
+                    </span>
+                  ) : null}
+                  <span
+                    className={cn(
+                      "absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent transition-opacity",
+                      panelTab === t.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+          {panelTab === "desktop" ? (
           <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
@@ -1208,6 +1515,12 @@ export function AgentChat({
                       Live
                     </a>
                   ) : null}
+                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("back").catch(() => undefined)} aria-label="Go back" title="Back" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                    ← Back
+                  </button>
+                  <button type="button" disabled={busy || computerBusy || !computerConnected || !computer.pageUrl} onClick={() => { if (computer.pageUrl) void navigateComputer(computer.pageUrl).catch(() => undefined); }} aria-label="Reload page" title="Reload page" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                    ⟳ Reload
+                  </button>
                   <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
                     Snap
                   </button>
@@ -1223,8 +1536,9 @@ export function AgentChat({
               </div>
             </div>
           </section>
-
-          <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "hidden")} style={{ ["--app-delay" as string]: "120ms" }}>
+          ) : null}
+          {panelTab === "activity" ? (
+          <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
             <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
               <Ico icon={FiActivity} size={11} className="text-ink-3" /> Activity
             </p>
@@ -1232,7 +1546,7 @@ export function AgentChat({
               <p className="text-[12px] text-ink-4">Tasks appear here as {agent.name.split(" ")[0]} works.</p>
             ) : (
               <ul className="relative space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-line">
-                {activity.slice(-6).map((a) => (
+                {[...activity].reverse().map((a) => (
                   <li key={a.id} className="relative flex items-start gap-2.5 rounded-lg py-1.5 pl-1">
                     <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-raised", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
                     <span className="min-w-0 flex-1">
@@ -1244,8 +1558,22 @@ export function AgentChat({
               </ul>
             )}
           </section>
-
-          <section id="panel-library" className={cn("app-block-in scroll-mt-4 border-t border-line px-4 py-3", browserExpanded && "hidden")} style={{ ["--app-delay" as string]: "160ms" }}>
+          ) : null}
+          {panelTab === "files" ? (
+          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
+            {previewArtifact ? (
+              <ArtifactPreview
+                artifact={previewArtifact}
+                agentName={agent.name}
+                onClose={() => setPreviewArtifact(null)}
+                onExpand={() => openArtifact(previewArtifact)}
+                onDownload={() => downloadArtifact(previewArtifact)}
+                onDelete={() => {
+                  void deleteArtifact(previewArtifact.id);
+                  setPreviewArtifact(null);
+                }}
+              />
+            ) : null}
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={FiFolder} size={11} className="text-ink-3" /> Library
@@ -1275,7 +1603,7 @@ export function AgentChat({
                       <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-hover">
                         <button
                           type="button"
-                          onClick={() => openArtifact(a)}
+                          onClick={() => setPreviewArtifact(a)}
                           className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                         >
                           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
@@ -1319,8 +1647,9 @@ export function AgentChat({
               </ul>
             )}
           </section>
-
-          <section className={cn("app-block-in border-t border-line px-4 py-3", browserExpanded && "hidden")} style={{ ["--app-delay" as string]: "240ms" }}>
+          ) : null}
+          {panelTab === "connectors" ? (
+          <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={TbPlugConnected} size={11} className="text-ink-3" /> Connectors
@@ -1373,6 +1702,7 @@ export function AgentChat({
               live data.
             </p>
           </section>
+          ) : null}
 
           <p className="flex items-center gap-1.5 px-4 py-3 text-[10.5px] leading-relaxed text-ink-4">
             <Ico icon={FiCpu} size={11} className="shrink-0" />
@@ -1480,6 +1810,21 @@ export function AgentChat({
               spellCheck={false}
               className="mt-4 w-full resize-y rounded-2xl border border-line bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none focus:border-accent/50"
             />
+          ) : viewer.kind === "website" ? (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white">
+              <iframe
+                title={viewer.title}
+                srcDoc={viewer.content}
+                sandbox="allow-same-origin"
+                className="h-[60vh] w-full"
+              />
+            </div>
+          ) : viewer.kind === "code" ? (
+            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 p-4">
+              <pre className="whitespace-pre-wrap break-words font-mono text-[12.5px] leading-relaxed text-ink">
+                {viewer.content}
+              </pre>
+            </div>
           ) : (
             <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 px-5 py-4">
               <Markdown text={viewer.content} compact />
