@@ -57,17 +57,19 @@ const CREATE: NavItem[] = [
 
 const TROS: NavItem[] = [
   { href: "/tros", label: "Library", icon: TbRobot },
-  { href: "/artifacts", label: "Artifacts", icon: FiLayers },
+  { href: "/tros/artifacts", label: "Artifacts", icon: FiLayers },
 ];
 
 function isActive(pathname: string, href: string) {
   const base = href.split("?")[0] || href;
   if (pathname === base) return true;
   if (base === "/dashboard") return false;
+  // /tros home: exact or a single-segment Tro chat (/tros/:id), not /tros/artifacts
   if (base === "/tros") {
-    return pathname === "/tros" || pathname.startsWith("/tros/");
+    if (pathname === "/tros") return true;
+    return /^\/tros\/[^/]+$/.test(pathname) && !pathname.startsWith("/tros/artifacts");
   }
-  return pathname.startsWith(base + "/");
+  return pathname.startsWith(base + "/") || pathname.startsWith(base + "?");
 }
 
 function NavLink({
