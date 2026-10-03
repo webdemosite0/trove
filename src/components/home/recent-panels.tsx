@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { IconType } from "@/components/ui/icons";
-import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbSearch, TbPresentation, TbPalette, TbUsers, TbMessageCircle } from "@/components/ui/icons";
+import { TbRobot, TbCode, TbFileText, TbTable, TbSearch, TbPresentation, TbPalette, TbUsers, TbMessageCircle } from "@/components/ui/icons";
 import type { Recent, RecentKind } from "@/lib/recents";
 import { relativeTime } from "@/lib/time";
 import { TroveOrb } from "@/components/brand/orb";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 
 const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> = {
   chat: { label: "Chat", icon: TbMessageCircle, tone: "var(--color-accent)" },
-  site: { label: "Site", icon: TbWorld, tone: "#38bdf8" },
   agent: { label: "Agent", icon: TbRobot, tone: "#a78bfa" },
   team: { label: "Team", icon: TbUsers, tone: "#f472b6" },
   code: { label: "Code", icon: TbCode, tone: "#34d399" },
