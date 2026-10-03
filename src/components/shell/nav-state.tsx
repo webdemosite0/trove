@@ -7,56 +7,56 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from "react";
 
-const COLLAPSE_KEY = "trove-rail-collapsed";
+const STORAGE_KEY = "trove-sidebar-collapsed";
 
-type NavCtx = {
-  /** Mobile drawer open */
+const NavContext = createContext<{
   open: boolean;
   setOpen: (v: boolean) => void;
-  /** Desktop rail collapsed to icons */
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  /** Stable toggle — never reads stale state. */
   toggleCollapsed: () => void;
+  /** Settings as an overlay dialog (not a full-page route). */
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean) => void;
+  /** Which settings section the overlay opens to. */
   settingsSection: string | null;
+  /** Open the settings overlay, optionally at a section ("integrations", "appearance", …). */
   openSettings: (section?: string) => void;
-};
+}>({
+  open: false,
+  setOpen: () => {},
+  collapsed: true,
+  setCollapsed: () => {},
+  toggleCollapsed: () => {},
+  settingsOpen: false,
+  setSettingsOpen: () => {},
+  settingsSection: null,
+  openSettings: () => {},
+});
 
-const NavContext = createContext<NavCtx | null>(null);
+export const useNav = () => useContext(NavContext);
 
-export function useNav(): NavCtx {
-  const ctx = useContext(NavContext);
-  if (!ctx) {
-    throw new Error("useNav must be used inside NavProvider");
-  }
-  return ctx;
-}
-
-export function NavProvider({ children }: { children: ReactNode }) {
+export function NavProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsedState] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsSection, setSettingsSection] = useState<string | null>(null);
+
+  // The rail starts collapsed (icons only). One tap expands.
+  //
+  // Hydration-safe: the server and the first client paint both render
+  // collapsed=true, so they always agree.
+  const [collapsed, setCollapsedState] = useState(true);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(COLLAPSE_KEY);
-      if (saved === "1") setCollapsedState(true);
-    } catch {
-      /* ignore */
-    }
-    setHydrated(true);
+    setReady(true);
   }, []);
 
   const setCollapsed = useCallback((v: boolean) => {
     setCollapsedState(v);
     try {
-      localStorage.setItem(COLLAPSE_KEY, v ? "1" : "0");
+      window.localStorage.setItem(STORAGE_KEY, v ? "1" : "0");
     } catch {
       /* ignore */
     }
@@ -66,7 +66,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
     setCollapsedState((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
+        window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
       } catch {
         /* ignore */
       }
@@ -74,16 +74,19 @@ export function NavProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<string | null>(null);
+
   const openSettings = useCallback((section?: string) => {
     setSettingsSection(section ?? null);
     setSettingsOpen(true);
   }, []);
 
-  const value = useMemo<NavCtx>(
+  const value = useMemo(
     () => ({
       open,
       setOpen,
-      collapsed: hydrated ? collapsed : false,
+      collapsed: ready ? collapsed : true,
       setCollapsed,
       toggleCollapsed,
       settingsOpen,
@@ -94,7 +97,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
     [
       open,
       collapsed,
-      hydrated,
+      ready,
       setCollapsed,
       toggleCollapsed,
       settingsOpen,

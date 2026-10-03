@@ -128,13 +128,13 @@ function NavIcon({ item, active }: { item: Item; active: boolean }) {
   const cls = cn("pointer-events-none shrink-0", active ? "text-ink" : "text-ink-3");
   if (item.animated) {
     const Icon = item.icon as React.ComponentType<{ size?: number; className?: string }>;
-    return <Icon size={21} className={cls} />;
+    return <Icon size={17} className={cls} />;
   }
   return (
     <Ico
       icon={item.icon as IconType}
       motion={item.motion}
-      size={21}
+      size={17}
       active={active}
       className={cls}
     />
@@ -267,7 +267,7 @@ function UserMenu({
         </span>
         {!rail ? (
           <FiChevronRight
-            size={18}
+            size={15}
             className={cn(
               "pointer-events-none shrink-0 text-ink-3 transition-transform duration-200",
               menuOpen && "rotate-90",
@@ -295,7 +295,7 @@ function UserMenu({
               onClick={() => go(m.section)}
               className="flex w-full min-w-0 items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-ink-2 transition-colors hover:bg-hover hover:text-ink"
             >
-              <m.icon size={19} className="pointer-events-none shrink-0" />
+              <m.icon size={16} className="pointer-events-none shrink-0" />
               <span className="truncate">{m.label}</span>
             </button>
           ))}
@@ -306,7 +306,7 @@ function UserMenu({
               role="menuitem"
               className="flex w-full min-w-0 items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-critical transition-colors hover:bg-hover"
             >
-              <FiLogOut size={19} className="pointer-events-none shrink-0" />
+              <FiLogOut size={16} className="pointer-events-none shrink-0" />
               <span className="truncate">Sign out</span>
             </button>
           </form>
@@ -371,7 +371,7 @@ function SidebarBody({
         rail ? "mx-auto size-11 rounded-2xl" : "h-10 w-full rounded-2xl",
       )}
     >
-      <CirclePlusIcon size={21} className="pointer-events-none shrink-0" />
+      <CirclePlusIcon size={18} className="pointer-events-none shrink-0" />
       <RailLabel rail={rail} max="max-w-[120px]">
         {newLabel}
       </RailLabel>
@@ -397,7 +397,7 @@ function SidebarBody({
             aria-label="Close menu"
             className="grid size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition-colors duration-200 hover:bg-hover hover:text-ink"
           >
-            <FiX size={22} className="pointer-events-none" />
+            <FiX size={18} className="pointer-events-none" />
           </button>
         ) : (
           <button
@@ -411,7 +411,7 @@ function SidebarBody({
             title={rail ? "Expand sidebar" : "Collapse sidebar"}
             className="hover-glow grid size-9 shrink-0 place-items-center rounded-xl text-ink-3 transition-colors duration-200 hover:bg-hover hover:text-ink"
           >
-            <FiSidebar size={22} className="pointer-events-none" />
+            <FiSidebar size={18} className="pointer-events-none" />
           </button>
         )}
       </div>
@@ -500,7 +500,7 @@ function SidebarBody({
                       openSettings("general");
                     }}
                   >
-                    <SettingsIcon size={20} />
+                    <SettingsIcon size={17} />
                   </FooterIconButton>
                 ),
               },
@@ -508,7 +508,7 @@ function SidebarBody({
                 key: "plan",
                 btn: (
                   <FooterIconButton label="Plan" href="/plans">
-                    <Ico icon={FiCreditCard} motion="pop" size={20} />
+                    <Ico icon={FiCreditCard} motion="pop" size={17} />
                   </FooterIconButton>
                 ),
               },
@@ -522,7 +522,7 @@ function SidebarBody({
                       openSettings("help");
                     }}
                   >
-                    <Ico icon={TbHelpCircle} motion="ring" size={20} />
+                    <Ico icon={TbHelpCircle} motion="ring" size={17} />
                   </FooterIconButton>
                 ),
               },
