@@ -55,6 +55,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       if (!prompt.trim()) return;
       setAiPrompt(prompt);
       setAiOpen(true);
+      autoInsertRef.current = true; // external trigger: auto-insert on success
       // Defer so state settles before runAi reads it.
       setTimeout(() => {
         void runAiRef.current?.();
@@ -140,6 +141,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
 
   /** AI drafting: stream from /api/chat, show the Thinking ball until text arrives. */
   const runAiRef = useRef<(() => Promise<void>) | null>(null);
+  const autoInsertRef = useRef(false);
   async function runAi() {
     const prompt = aiPrompt.trim();
     if (!prompt || aiBusy) return;
@@ -173,6 +175,22 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
         setAiResult(full);
       }
       if (!full.trim()) throw new Error("The AI returned nothing. Try again.");
+      // Auto-insert when triggered from the studio chat panel.
+      if (autoInsertRef.current) {
+        autoInsertRef.current = false;
+        // Defer so aiResult state settles, then insert.
+        setTimeout(() => {
+          const el = bodyRef.current;
+          if (el && full.trim()) {
+            el.innerHTML = full;
+            setAiResult("");
+            setAiPrompt("");
+            setAiOpen(false);
+            scheduleSave();
+            updateWordCount();
+          }
+        }, 100);
+      }
     } catch (e) {
       setAiError(e instanceof Error ? e.message : "Generation failed.");
     } finally {
