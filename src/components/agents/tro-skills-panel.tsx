@@ -109,8 +109,9 @@ export function TroSkillsPanel() {
       </div>
 
       <p className="px-4 pb-3 text-[11.5px] leading-relaxed text-ink-4">
-        @mention a skill in chat and the Tro behaves from it — research mode,
-        inbox triage, meeting prep, or your own custom playbook.
+        Type <span className="font-mono text-ink-3">/</span> in chat to invoke a
+        skill — the Tro behaves from it. <span className="font-mono text-ink-3">@</span> is
+        for connectors.
       </p>
 
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 pb-4">
@@ -145,7 +146,7 @@ export function TroSkillsPanel() {
                     {skill.description || "No description."}
                   </p>
                   <p className="mt-1 truncate font-mono text-[11px] text-ink-4">
-                    @{skill.slug}
+                    /{skill.slug}
                   </p>
                 </div>
                 {skill.source === "custom" ? (

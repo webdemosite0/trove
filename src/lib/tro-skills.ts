@@ -157,11 +157,11 @@ export async function findTroSkill(userId: string, slug: string): Promise<TroSki
   return builtin ? builtinToSkill(userId, builtin) : null;
 }
 
-/** Extract @mention slugs from text. */
+/** Extract /skill slugs from text. Skills use / — @ is reserved for connectors. */
 export function parseSkillMentions(text: string): string[] {
   const out = new Set<string>();
-  for (const m of text.matchAll(/@([a-z0-9][\w.-]*)/gi)) {
-    out.add(m[1].toLowerCase());
+  for (const m of text.matchAll(/(^|[\s(])\/([a-z0-9][\w.-]*)/gi)) {
+    out.add(m[2].toLowerCase());
   }
   return [...out];
 }
@@ -258,7 +258,7 @@ export function buildTroSkillSection(skills: TroSkill[]): string {
   if (!skills.length) return "";
   const blocks = skills.map((s) => `### ${s.icon} ${s.name}\n${s.instructions.trim()}`);
   return `## ACTIVE SKILLS
-The user invoked ${skills.length === 1 ? "this skill" : "these skills"} with @mentions. Adopt ${skills.length === 1 ? "its" : "their"} behavior for this conversation — it overrides your default approach for the task at hand, but your identity, voice, and safety rules stay the same. When the skill's job is done, say so briefly.
+The user invoked ${skills.length === 1 ? "this skill" : "these skills"} with /commands. Adopt ${skills.length === 1 ? "its" : "their"} behavior for this conversation — it overrides your default approach for the task at hand, but your identity, voice, and safety rules stay the same. When the skill's job is done, say so briefly.
 
 ${blocks.join("\n\n")}`;
 }

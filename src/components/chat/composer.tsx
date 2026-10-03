@@ -23,8 +23,11 @@ import {
   ConnectorMentionMenu,
   connectorMentionAt,
   filterConnectorOptions,
+  filterSkillOptions,
+  skillMentionAt,
   useConnectedConnectors,
   type ConnectedConnectorOption,
+  type SkillMentionOption,
 } from "@/components/chat/connector-mention-menu";
 import type { ModeId } from "@/lib/modes";
 import {
@@ -82,8 +85,9 @@ export function Composer({
   const showStop = Boolean(busy && onStop && !hasContent);
 
   const mention = connectorMentionAt(value, cursor);
+  const skillMention = skillMentionAt(value, cursor);
   const { items: connectorOptions, skills: skillOptions, loading: connectorsLoading } =
-    useConnectedConnectors(Boolean(mention));
+    useConnectedConnectors(Boolean(mention) || Boolean(skillMention));
   const connectedIds = new Set(connectorOptions.map((item) => item.id));
   const mentionedIds = Array.from(
     new Set(
@@ -95,7 +99,12 @@ export function Composer({
   const mentionItems = mention
     ? filterConnectorOptions(connectorOptions, mention.query)
     : [];
-  const mentionOpen = Boolean(mention) && focused && !locked;
+  const skillItems = skillMention
+    ? filterSkillOptions(skillOptions, skillMention.query)
+    : [];
+  // @ → connectors, / → skills. @ takes precedence if both match.
+  const activeMention = mention ?? skillMention;
+  const mentionOpen = Boolean(activeMention) && focused && !locked;
 
   function minHeight() {
     return compact ? 40 : 72;
@@ -171,12 +180,12 @@ export function Composer({
     });
   }
 
-  function selectSkill(skill: { slug: string }) {
-    if (!mention) return;
-    const token = `@${skill.slug} `;
+  function selectSkill(skill: SkillMentionOption) {
+    if (!skillMention) return;
+    const token = `/${skill.slug} `;
     const nextValue =
-      value.slice(0, mention.start) + token + value.slice(mention.end);
-    const nextCursor = mention.start + token.length;
+      value.slice(0, skillMention.start) + token + value.slice(skillMention.end);
+    const nextCursor = skillMention.start + token.length;
 
     setValue(nextValue);
     setCursor(nextCursor);
@@ -239,10 +248,11 @@ export function Composer({
         <ConnectorMentionMenu
           items={connectorOptions}
           skills={skillOptions}
-          query={mention?.query ?? ""}
+          query={activeMention?.query ?? ""}
           loading={connectorsLoading}
           onSelect={selectConnector}
           onSelectSkill={selectSkill}
+          mode={skillMention && !mention ? "skills" : "connectors"}
           compact={compact}
         />
       ) : null}
@@ -325,10 +335,17 @@ export function Composer({
         onBlur={() => setFocused(false)}
         onKeyDown={(e) => {
           if (e.nativeEvent.isComposing || e.keyCode === 229) return;
-          if (mentionOpen && e.key === "Enter" && mentionItems.length) {
-            e.preventDefault();
-            selectConnector(mentionItems[0]);
-            return;
+          if (mentionOpen && e.key === "Enter") {
+            if (mention && mentionItems.length) {
+              e.preventDefault();
+              selectConnector(mentionItems[0]);
+              return;
+            }
+            if (skillMention && !mention && skillItems.length) {
+              e.preventDefault();
+              selectSkill(skillItems[0]);
+              return;
+            }
           }
           if (mentionOpen && e.key === "Escape") {
             e.preventDefault();

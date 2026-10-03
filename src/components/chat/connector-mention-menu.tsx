@@ -44,6 +44,20 @@ export function connectorMentionAt(
   };
 }
 
+/** / triggers the skills menu — @ is reserved for connectors. */
+export function skillMentionAt(value: string, cursor: number): ConnectorMentionMatch | null {
+  const before = value.slice(0, Math.max(0, cursor));
+  const match = before.match(/(^|[\s(])\/([a-z0-9._-]*)$/i);
+  if (!match) return null;
+
+  const query = match[2] ?? "";
+  return {
+    start: before.length - query.length - 1,
+    end: before.length,
+    query: query.toLowerCase(),
+  };
+}
+
 export function filterConnectorOptions(
   items: ConnectedConnectorOption[],
   query: string,
@@ -118,6 +132,7 @@ export function ConnectorMentionMenu({
   loading,
   onSelect,
   onSelectSkill,
+  mode = "connectors",
   compact = false,
   className,
 }: {
@@ -127,6 +142,7 @@ export function ConnectorMentionMenu({
   loading: boolean;
   onSelect: (item: ConnectedConnectorOption) => void;
   onSelectSkill?: (skill: SkillMentionOption) => void;
+  mode?: "connectors" | "skills";
   compact?: boolean;
   className?: string;
 }) {
@@ -141,6 +157,8 @@ export function ConnectorMentionMenu({
   const { openSettings } = useNav();
   const openConnectors = () => openSettings("integrations");
 
+  const isSkills = mode === "skills";
+
   return (
     <div
       className={cn(
@@ -154,106 +172,107 @@ export function ConnectorMentionMenu({
     >
       <div className="flex items-center justify-between gap-3 border-b border-line/70 px-3.5 py-2.5">
         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
-          Connected integrations
+          {isSkills ? "Skills" : "Connected integrations"}
         </span>
-        <button
-          type="button"
-          onClick={openConnectors}
-          className="text-[11.5px] font-medium text-accent hover:underline"
-        >
-          Manage
-        </button>
+        {!isSkills ? (
+          <button
+            type="button"
+            onClick={openConnectors}
+            className="text-[11.5px] font-medium text-accent hover:underline"
+          >
+            Manage
+          </button>
+        ) : null}
       </div>
 
       <div className="max-h-[248px] overflow-y-auto p-1.5">
         {loading ? (
-          <p className="px-3 py-4 text-[12.5px] text-ink-4">Loading integrations…</p>
-        ) : (
+          <p className="px-3 py-4 text-[12.5px] text-ink-4">
+            Loading {isSkills ? "skills" : "integrations"}…
+          </p>
+        ) : isSkills ? (
           <>
             {filteredSkills.length ? (
-              <>
-                <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
-                  Skills
-                </p>
-                {filteredSkills.map((skill) => (
-                  <button
-                    key={`skill:${skill.slug}`}
-                    type="button"
-                    onClick={() => onSelectSkill?.(skill)}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-hover"
-                  >
-                    <span className="grid size-[30px] shrink-0 place-items-center rounded-[10px] bg-accent/10 text-[16px]">
-                      {skill.icon}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-[13.5px] font-medium text-ink">
-                          {skill.name}
-                        </span>
-                        {skill.source === "custom" ? (
-                          <span className="rounded-full bg-accent/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-accent">
-                            Custom
-                          </span>
-                        ) : null}
+              filteredSkills.map((skill) => (
+                <button
+                  key={`skill:${skill.slug}`}
+                  type="button"
+                  onClick={() => onSelectSkill?.(skill)}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-hover"
+                >
+                  <span className="grid size-[30px] shrink-0 place-items-center rounded-[10px] bg-accent/10 text-[16px]">
+                    {skill.icon}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="truncate text-[13.5px] font-medium text-ink">
+                        {skill.name}
                       </span>
-                      <span className="block truncate text-[11.5px] text-ink-4">
-                        {skill.description}
-                      </span>
+                      {skill.source === "custom" ? (
+                        <span className="rounded-full bg-accent/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-accent">
+                          Custom
+                        </span>
+                      ) : null}
                     </span>
-                    <span className="shrink-0 text-[12px] text-ink-4">@{skill.slug}</span>
-                  </button>
-                ))}
-              </>
-            ) : null}
-            {filtered.length ? (
-              <>
-                {filteredSkills.length ? (
-                  <p className="px-2.5 pb-1 pt-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
-                    Integrations
-                  </p>
-                ) : null}
-                {filtered.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => onSelect(item)}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-hover"
-                  >
-                    <ServiceMark id={item.id} name={item.name} size={30} />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-[13.5px] font-medium text-ink">
-                          {item.name}
-                        </span>
-                        {item.direct ? (
-                          <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-emerald-600 dark:text-emerald-400">
-                            Live
-                          </span>
-                        ) : null}
-                      </span>
-                      {item.account ? (
-                        <span className="block truncate text-[11.5px] text-ink-4">
-                          {item.account}
-                        </span>
-                      ) : (
-                        <span className="block text-[11.5px] text-ink-4">
-                          Connected
-                        </span>
-                      )}
+                    <span className="block truncate text-[11.5px] text-ink-4">
+                      {skill.description}
                     </span>
-                    <span className="text-[12px] text-ink-4">@{item.id}</span>
-                  </button>
-                ))}
-              </>
-            ) : null}
-            {!filtered.length && !filteredSkills.length ? (
+                  </span>
+                  <span className="shrink-0 text-[12px] text-ink-4">/{skill.slug}</span>
+                </button>
+              ))
+            ) : (
               <div className="px-3 py-4">
                 <p className="text-[12.5px] text-ink-3">
-                  {items.length || skills.length
-                    ? "Nothing matches that name."
+                  {skills.length ? "No skill matches that name." : "No skills yet."}
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {filtered.length ? (
+              filtered.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelect(item)}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-hover"
+                >
+                  <ServiceMark id={item.id} name={item.name} size={30} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="truncate text-[13.5px] font-medium text-ink">
+                        {item.name}
+                      </span>
+                      {item.direct ? (
+                        <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-emerald-600 dark:text-emerald-400">
+                          Live
+                        </span>
+                      ) : null}
+                    </span>
+                    {item.account ? (
+                      <span className="block truncate text-[11.5px] text-ink-4">
+                        {item.account}
+                      </span>
+                    ) : (
+                      <span className="block text-[11.5px] text-ink-4">
+                        Connected
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[12px] text-ink-4">@{item.id}</span>
+                </button>
+              ))
+            ) : null}
+            {!filtered.length ? (
+              <div className="px-3 py-4">
+                <p className="text-[12.5px] text-ink-3">
+                  {items.length
+                    ? "No connected integration matches that name."
                     : "No integrations connected yet."}
                 </p>
-                {!items.length && !skills.length ? (
+                {!items.length ? (
                   <button
                     type="button"
                     onClick={openConnectors}
