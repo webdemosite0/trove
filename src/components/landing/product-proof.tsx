@@ -252,24 +252,24 @@ export function ProductProof() {
 
           {/* After: the finished files */}
           <div className="flex min-w-0 flex-col">
-            <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 sm:text-[11px]">
                 After — the finished files
               </p>
               <button
                 type="button"
                 onClick={() => download(active.file, active.mime, active.getContent())}
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3 py-1.5 text-[11.5px] font-medium text-ink-2 transition hover:border-line-strong hover:text-ink"
+                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-line bg-raised px-3 py-1.5 text-[11.5px] font-medium text-ink-2 transition hover:border-line-strong hover:text-ink"
               >
-                <FiDownload size={12} aria-hidden />
-                Download {active.file}
+                <FiDownload size={12} aria-hidden className="shrink-0" />
+                <span className="truncate">Download {active.file}</span>
               </button>
             </div>
             <div className="overflow-hidden rounded-[18px] border border-line bg-white shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)]">
               <div
                 role="tablist"
                 aria-label="Finished files"
-                className="flex items-center gap-1 border-b border-line bg-sunk/60 px-2 py-1.5"
+                className="flex items-center gap-1 overflow-x-auto border-b border-line bg-sunk/60 px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {TABS.map((t) => {
                   const Icon = t.Icon;
@@ -280,7 +280,7 @@ export function ProductProof() {
                       role="tab"
                       aria-selected={on}
                       onClick={() => setTab(t.id)}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition ${
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition ${
                         on
                           ? "bg-raised text-ink shadow-sm ring-1 ring-line"
                           : "text-ink-3 hover:text-ink"

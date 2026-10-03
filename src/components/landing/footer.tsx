@@ -35,12 +35,12 @@ export function Footer() {
               <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                 Product
               </h2>
-              <ul className="space-y-2">
+              <ul className="space-y-0.5">
                 {FEATURES.map((f) => (
                   <li key={f.slug}>
                     <Link
                       href={`/features/${f.slug}`}
-                      className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                      className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                     >
                       {f.label}
                     </Link>
@@ -49,7 +49,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/pricing"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Pricing
                   </Link>
@@ -57,7 +57,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/templates"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Templates
                   </Link>
@@ -65,7 +65,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/about"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     About
                   </Link>
@@ -77,11 +77,11 @@ export function Footer() {
               <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                 Start
               </h2>
-              <ul className="space-y-2">
+              <ul className="space-y-0.5">
                 <li>
                   <Link
                     href="/signup"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Create an account
                   </Link>
@@ -89,7 +89,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/login"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Sign in
                   </Link>
@@ -97,7 +97,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/chat"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Open chat
                   </Link>
@@ -109,11 +109,11 @@ export function Footer() {
               <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                 Legal
               </h2>
-              <ul className="space-y-2">
+              <ul className="space-y-0.5">
                 <li>
                   <Link
                     href="/privacy"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Privacy
                   </Link>
@@ -121,7 +121,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/terms"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Terms
                   </Link>
@@ -129,7 +129,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/security"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Security
                   </Link>
@@ -137,7 +137,7 @@ export function Footer() {
                 <li>
                   <Link
                     href="/sitemap.xml"
-                    className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                    className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                   >
                     Sitemap
                   </Link>
@@ -149,7 +149,7 @@ export function Footer() {
               <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                 Resources
               </h2>
-              <ul className="space-y-2">
+              <ul className="space-y-0.5">
                 {[
                   { label: "Examples", href: "/templates" },
                   { label: "Changelog", href: "/changelog" },
@@ -160,7 +160,7 @@ export function Footer() {
                     <Link
                       href={l.href}
                       {...(l.href.startsWith("http") ? { target: "_blank", rel: "noopener" } : {})}
-                      className="text-[13px] text-ink-2 transition-colors hover:text-ink"
+                      className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
                     >
                       {l.label}
                     </Link>
@@ -175,7 +175,7 @@ export function Footer() {
               </h2>
               <a
                 href={`mailto:${site.email}`}
-                className="block text-[13px] text-ink-2 transition-colors hover:text-ink"
+                className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
               >
                 {site.email}
               </a>
@@ -183,7 +183,7 @@ export function Footer() {
                 href={site.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer me"
-                className="mt-2 block text-[13px] text-ink-2 transition-colors hover:text-ink"
+                className="flex min-h-[40px] items-center text-[13.5px] text-ink-2 transition-colors hover:text-ink"
               >
                 Instagram {site.instagram}
               </a>

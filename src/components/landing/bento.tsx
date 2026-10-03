@@ -186,11 +186,11 @@ export function Bento() {
                 title="Decks with a point of view"
                 desc="Pitch decks and presentations with narrative arc — not bullet dumps. Export to PowerPoint when the story lands."
               />
-              <div className="flex gap-2.5 overflow-hidden">
+              <div className="-mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 sm:overflow-hidden sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {["Problem", "Solution", "Traction"].map((t, i) => (
                   <div
                     key={t}
-                    className="w-36 shrink-0 rounded-xl border border-line bg-gradient-to-br from-sunk to-raised p-3.5"
+                    className="w-32 shrink-0 snap-start rounded-xl border border-line bg-gradient-to-br from-sunk to-raised p-3.5 sm:w-36"
                     style={{ transform: `rotate(${(i - 1) * 2.5}deg)` }}
                   >
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-4">{String(i + 1).padStart(2, "0")}</p>

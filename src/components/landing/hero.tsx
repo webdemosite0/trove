@@ -246,7 +246,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                   key={chip.label}
                   type="button"
                   onClick={() => go(chip.prompt)}
-                  className="lp-chip-in inline-flex items-center gap-1.5 rounded-full border border-line bg-raised/90 px-3 py-1.5 text-[11.5px] font-medium text-ink-2 shadow-sm transition hover:-translate-y-0.5 hover:border-line-strong hover:text-ink hover:shadow-md sm:px-3.5 sm:py-2 sm:text-[13px]"
+                  className="lp-chip-in inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-line bg-raised/90 px-3 py-1.5 text-[12px] font-medium text-ink-2 shadow-sm transition hover:-translate-y-0.5 hover:border-line-strong hover:text-ink hover:shadow-md sm:px-3.5 sm:py-2 sm:text-[13px]"
                   style={{ animationDelay: `${260 + i * 40}ms` }}
                 >
                   <Icon size={13} aria-hidden />

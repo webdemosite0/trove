@@ -342,7 +342,7 @@ export function LiveDemo() {
                 key={s.id}
                 type="button"
                 onClick={() => select(i)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition ${
+                className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition ${
                   active
                     ? "border-violet-300 bg-violet-50 text-violet-700 shadow-sm"
                     : "border-line bg-raised text-ink-3 hover:border-zinc-300 hover:text-ink"
@@ -357,7 +357,7 @@ export function LiveDemo() {
           <button
             type="button"
             onClick={() => select(scenarioIdx)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-2 text-[13px] font-medium text-ink-3 transition hover:border-zinc-300 hover:text-ink"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-line bg-raised px-3.5 py-2 text-[13px] font-medium text-ink-3 transition hover:border-zinc-300 hover:text-ink"
             aria-label="Replay demo"
           >
             <FiRotateCcw size={14} aria-hidden />
