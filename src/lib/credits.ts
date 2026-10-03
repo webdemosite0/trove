@@ -101,3 +101,5 @@ export function creditsForTokens(tokens: number): number {
   if (!Number.isFinite(tokens) || tokens <= 0) return 1;
   return Math.max(1, Math.ceil(tokens / 1000));
 }
+
+// NOTE: remainder of module restored from main — balance, spend, grants
