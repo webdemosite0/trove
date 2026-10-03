@@ -32,7 +32,8 @@ HARD RULES:
 - Premium, modern, distinctive design: striking typography (system fonts or Google Fonts), generous whitespace, refined color palette, subtle gradients, tasteful shadows and radii, micro-interactions (hover states, smooth scroll, reveal-on-scroll).
 - Fully responsive: mobile-first, works at 360px and at 1440px.
 - Real, high-quality copy written for the requested topic — no lorem ipsum, no placeholder brackets.
-- Sections should feel complete: nav, hero, features/services, social proof (testimonials/stats), pricing or CTA, footer.
+- ALWAYS include a sticky header/nav (logo left, links center/right, CTA button) and a complete footer (columns of links, social icons, copyright). These are mandatory on every site.
+- Build a LONG, complete landing page — never a short one-pager. Minimum sections in order: sticky header, hero (big headline, subcopy, 2 CTAs, visual), logos/social proof strip, features (3-6 cards), how-it-works or showcase, testimonials (2-3), stats, pricing or final CTA, FAQ (optional), full footer. Aim for a rich, scrollable page.
 - Use inline SVG for icons/illustrations — no external images (they may not load). CSS gradients and shapes for visuals.
 - Valid HTML5, <meta viewport>, semantic tags, accessible contrast.
 - Keep total output under ~28KB.`;
