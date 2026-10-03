@@ -103,7 +103,6 @@ const FILES = [
   { ext: "DOCX", label: "Word", tone: "#60a5fa" },
   { ext: "XLSX", label: "Excel", tone: "#4ade80" },
   { ext: "PPTX", label: "PowerPoint", tone: "#fb923c" },
-  { ext: "ZIP", label: "Website", tone: "#38bdf8" },
   { ext: "MD", label: "Markdown", tone: "#a78bfa" },
 ];
 
@@ -116,7 +115,7 @@ export function Files() {
             center={false}
             eyebrow="Your work"
             title="Your work doesn't disappear into a chat."
-            lede="Every document, spreadsheet, deck, website and project stays where you left it — and leaves as a real file you can open anywhere."
+            lede="Every document, spreadsheet, deck and project stays where you left it — and leaves as a real file you can open anywhere."
           />
           <Link
             href="/chat"
@@ -169,7 +168,7 @@ export function Files() {
 /* ------------------------------------------------------------------ */
 
 const USES = [
-  { label: "Build a website", href: "/websites" },
+  { label: "Design a brand", href: "/design" },
   { label: "Research a market", href: "/research" },
   { label: "Hire a Tro", href: "/tros" },
   { label: "Analyse data", href: "/spreadsheets" },

@@ -7,13 +7,11 @@ import {
   FiCheck,
   FiDownload,
   FiFileText,
-  FiGlobe,
   FiGrid,
 } from "@/components/ui/icons";
 import {
   MEMO,
   SHEET,
-  SITE_HTML,
   memoMarkdown,
   sheetCsv,
 } from "./demo-outputs";
@@ -35,7 +33,7 @@ const BRIEF = `We're Ember & Oak — small-batch roastery in Portland. Wholesale
 
 Go.`;
 
-type TabId = "site" | "memo" | "sheet";
+type TabId = "memo" | "sheet";
 
 const TABS: {
   id: TabId;
@@ -43,18 +41,17 @@ const TABS: {
   file: string;
   mime: string;
   getContent: () => string;
-  Icon: typeof FiGlobe;
+  Icon: typeof FiFileText;
 }[] = [
-  { id: "site", label: "Website", file: "ember-and-oak.html", mime: "text/html", getContent: () => SITE_HTML, Icon: FiGlobe },
   { id: "memo", label: "Investor memo", file: "q3-investor-update.md", mime: "text/markdown", getContent: memoMarkdown, Icon: FiFileText },
   { id: "sheet", label: "Pricing model", file: "wholesale-pricing.csv", mime: "text/csv", getContent: sheetCsv, Icon: FiGrid },
 ];
 
 const WORKFLOW = [
   { title: "Brief", text: "One message, the whole job. No prompt engineering, no forms." },
-  { title: "Build", text: "Trove drafts each file as a real artifact — site, memo, model." },
+  { title: "Build", text: "Trove drafts each file as a real artifact — memo, model, deck." },
   { title: "Refine", text: "Change anything in plain language. Files update in place." },
-  { title: "Keep", text: "Download the real files, or publish the site. They're yours." },
+  { title: "Keep", text: "Download the real files. They're yours." },
 ];
 
 function download(name: string, mime: string, content: string) {
@@ -67,17 +64,6 @@ function download(name: string, mime: string, content: string) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
-}
-
-function SiteView() {
-  return (
-    <iframe
-      title="Ember & Oak — demo website, built in Trove"
-      srcDoc={SITE_HTML}
-      sandbox="allow-same-origin"
-      className="h-full w-full border-0 bg-white"
-    />
-  );
 }
 
 function MemoView() {
@@ -184,7 +170,7 @@ function SheetView() {
 }
 
 export function ProductProof() {
-  const [tab, setTab] = useState<TabId>("site");
+  const [tab, setTab] = useState<TabId>("memo");
   const active = TABS.find((t) => t.id === tab)!;
 
   return (
@@ -293,7 +279,6 @@ export function ProductProof() {
                 })}
               </div>
               <div key={tab} className="h-[420px] sm:h-[520px]">
-                {tab === "site" && <SiteView />}
                 {tab === "memo" && <MemoView />}
                 {tab === "sheet" && <SheetView />}
               </div>

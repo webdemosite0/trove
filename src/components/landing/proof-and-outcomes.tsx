@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { IconType } from "@/components/ui/icons";
-import { TbWorld, TbRobot, TbCode, TbFileText, TbTable, TbSearch, TbRefreshDot, FiArrowRight } from "@/components/ui/icons";
+import { TbRobot, TbCode, TbFileText, TbTable, TbSearch, TbRefreshDot, FiArrowRight } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 /* ------------------------------------------------------------------ */
 
 const CAPS: { icon: IconType; label: string; sub: string; href: string }[] = [
-  { icon: TbWorld, label: "Websites", sub: "Launch complete sites", href: "/websites" },
   { icon: TbRobot, label: "Tros", sub: "Hire specialist mascots", href: "/tros" },
   { icon: TbFileText, label: "Documents", sub: "Professionally written", href: "/documents" },
   { icon: TbTable, label: "Spreadsheets", sub: "Analyse and visualise", href: "/spreadsheets" },
@@ -59,21 +58,6 @@ export function CapabilityStrip() {
 function Plate({ kind }: { kind: string }) {
   const base = "absolute inset-0 p-2.5";
 
-  if (kind === "website") {
-    return (
-      <>
-        <span className={base}>
-          <span className="mb-1 block h-1 w-6 rounded-full bg-white/60" />
-          <span className="mb-1.5 block h-2 w-[62%] rounded-[var(--r-tight)] bg-white/35" />
-          <span className="flex gap-1">
-            {[0, 1, 2].map((i) => (
-              <span key={i} className="h-5 flex-1 rounded-[var(--r-tight)] bg-white/12" />
-            ))}
-          </span>
-        </span>
-      </>
-    );
-  }
   if (kind === "agent") {
     return (
       <span className={base}>
@@ -127,7 +111,6 @@ function Plate({ kind }: { kind: string }) {
 }
 
 const OUTCOMES = [
-  { kind: "website", name: "Website", copy: "A complete, responsive website in seconds.", href: "/websites", tone: "#7c3aed" },
   { kind: "agent", name: "Tro", copy: "A specialist Tro that thinks, acts and gets things done.", href: "/tros", tone: "#6d28d9" },
   { kind: "sheet", name: "Spreadsheet", copy: "Clean, structured data ready to analyse.", href: "/spreadsheets", tone: "#15803d" },
   { kind: "doc", name: "Document", copy: "Polished documents ready to share.", href: "/documents", tone: "#334155" },

@@ -11,12 +11,6 @@ import { cn } from "@/lib/utils";
  */
 const SAMPLES = [
   {
-    kind: "Website",
-    prompt: "Build a landing page for a specialty coffee roastery with tasting notes and a shop.",
-    href: "/websites",
-    result: "Responsive site as a ZIP",
-  },
-  {
     kind: "Document",
     prompt: "Write a six-week design retainer proposal with scope, timeline and fees.",
     href: "/documents",
