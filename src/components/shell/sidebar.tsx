@@ -48,8 +48,16 @@ const MAIN: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard },
   { href: "/chat", label: "Chat", icon: TbMessageCircle },
   { href: "/projects", label: "Projects", icon: TbFolder },
-  { href: "/team", label: "Team", icon: TbUsers },
 ];
+
+const TEAM_NAV: NavItem = { href: "/team", label: "Team", icon: TbUsers };
+
+function isTeamPlan(user: User | null): boolean {
+  if (!user) return false;
+  if (user.teamPlanActive) return true;
+  const p = (user.effectivePlan || user.plan || "").toLowerCase();
+  return p === "team";
+}
 
 const CREATE: NavItem[] = [
   { href: "/documents", label: "Docs", icon: TbFiles },
@@ -276,7 +284,12 @@ export function Sidebar({
     };
   }, [open, setOpen]);
 
-  const mainItems = isTros ? TROS : MAIN;
+  const onTeamPlan = isTeamPlan(user);
+  const mainItems = isTros
+    ? TROS
+    : onTeamPlan
+      ? [...MAIN, TEAM_NAV]
+      : MAIN;
   const createItems = isTros ? [] : CREATE;
 
   const body = (compact: boolean) => (
