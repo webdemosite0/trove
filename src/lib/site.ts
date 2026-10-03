@@ -76,6 +76,7 @@ export const publicRoutes = [
   { path: "/ai-agents", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/ai-research", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/about", priority: 0.8, changeFrequency: "monthly" as const },
+  { path: "/security", priority: 0.7, changeFrequency: "monthly" as const },
   { path: "/privacy", priority: 0.4, changeFrequency: "yearly" as const },
   { path: "/terms", priority: 0.4, changeFrequency: "yearly" as const },
 ];
