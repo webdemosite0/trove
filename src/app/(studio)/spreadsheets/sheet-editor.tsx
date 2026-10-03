@@ -133,15 +133,25 @@ export function SheetEditor({
       setError(null);
       setAiOpen(false);
       try {
-        const res = await fetch("/api/tool", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tool: "sheets",
-            timeZone: localTimeZone(),
-            messages: [{ role: "user", text: q }],
-          }),
-        });
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 90000); // 90s max
+        let res: Response;
+        try {
+          res = await fetch("/api/tool", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: ctrl.signal,
+            body: JSON.stringify({
+              tool: "sheets",
+              timeZone: localTimeZone(),
+              messages: [{ role: "user", text: q }],
+            }),
+          });
+        } catch (e) {
+          clearTimeout(timeout);
+          throw new Error(e instanceof Error && e.name === "AbortError" ? "Generation timed out. Try again." : "Network error. Try again.");
+        }
+        clearTimeout(timeout);
         if (!res.ok || !res.body) {
           const data = await res.json().catch(() => null);
           throw new Error(data?.error ?? `Failed (${res.status}).`);

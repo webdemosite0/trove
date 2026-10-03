@@ -16,10 +16,17 @@ document in markdown: a clear title, short intro, logical headings, and concrete
 detail. No filler, no "in conclusion". Write the actual content the user asked
 for, not a description of it.`,
 
-  sheets: `You are Trove's data analyst. Return a markdown table as the main
-output: a header row, correct alignment, and realistic, internally consistent
-values. Add any formulas as a short list under the table using spreadsheet
-syntax (e.g. =SUM(B2:B13)). Keep prose to two sentences at most.`,
+  sheets: `You are Trove's data analyst. Return ONLY a markdown table, nothing else.
+Rules:
+- First row is the header row, then a separator row (|---|---|), then data rows.
+- Put formulas INLINE in the cells using spreadsheet syntax (e.g. =B2*C2, =SUM(B2:B5)). Never list formulas separately below the table.
+- Use realistic, internally consistent values. Every formula must reference valid cells in the table.
+- No prose, no explanations, no code fences — just the markdown table. Example:
+| Item | Qty | Price | Total |
+|------|-----|-------|-------|
+| Apples | 10 | 2.5 | =B2*C2 |
+| Oranges | 5 | 3 | =B3*C3 |
+| Total |  |  | =SUM(D2:D3) |`,
 
   slides: `You are an elite presentation designer with full creative freedom.
 Build a distinctive, visually rich deck for THIS topic — not a generic template.
