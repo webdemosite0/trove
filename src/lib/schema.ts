@@ -366,6 +366,10 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS tro_presence_by_user ON tro_presence (user_id, updated_at DESC)`,
   // Per-user persistent Browserbase context (cookies/logins isolated by user).
   `CREATE TABLE IF NOT EXISTS tro_browser_contexts (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, context_id TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  // Tro scheduled tasks: reminders and recurring agent work.
+  `CREATE TABLE IF NOT EXISTS tro_scheduled_tasks (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, title TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'reminder', instruction TEXT NOT NULL DEFAULT '', run_at INTEGER, cron_expr TEXT, timezone TEXT NOT NULL DEFAULT 'UTC', active INTEGER NOT NULL DEFAULT 1, last_run_at INTEGER, next_run_at INTEGER, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_scheduled_tasks_due ON tro_scheduled_tasks (active, next_run_at)`,
+  `CREATE INDEX IF NOT EXISTS tro_scheduled_tasks_agent ON tro_scheduled_tasks (agent_id, next_run_at)`,
 ];
 
 export const REPAIRS = `

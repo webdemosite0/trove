@@ -34,6 +34,7 @@ const PUBLIC_PREFIXES = [
   "/api/site/",
   "/api/mascots/",
   "/api/crew/",
+  "/api/cron/",
   "/r/",
   "/s/",
 ];
@@ -168,11 +169,6 @@ export function middleware(req: NextRequest) {
   if (subdomain) return subdomain;
 
   const { pathname, search } = req.nextUrl;
-
-  // Temporary diagnostic probe — public so it can be curled without a session.
-  if (pathname === "/api/tro/browser" && req.nextUrl.searchParams.get("probe") === "1") {
-    return secureAppResponse(pinUi(req, NextResponse.next()));
-  }
 
   const toApex = canonicalHost(req);
   if (toApex) return secureAppResponse(toApex);
