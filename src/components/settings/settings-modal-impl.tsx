@@ -1,39 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
-  FiSettings,
-  FiGrid,
   FiCreditCard,
-  FiShield,
   FiLock,
   FiFileText,
   FiUser,
-  FiSun,
-  FiMoon,
-  FiMonitor,
   FiX,
-  FiLogOut,
-  FiCheck,
   FiExternalLink,
   FiDownload,
+  FiShield,
   TbMessageCircle,
   TbHelpCircle,
   FiSmartphone,
   TbRobot,
 } from "@/components/ui/icons";
 import { IntegrationsView } from "@/components/integrations/integrations-view";
-import { useTheme } from "@/components/shell/theme";
-import { logOut } from "@/app/actions/auth";
 import { cn } from "@/lib/utils";
 import type { User, Balance } from "@/lib/types";
 import type { Profile } from "@/app/actions/profile";
 import type { BusinessProfile } from "@/lib/business-profile";
 import type { Subscription } from "@/lib/billing";
 import { ProfileForm } from "@/components/settings/profile-form";
-import { BusinessProfileForm } from "@/components/settings/business-profile-form";
-import { InstructionsForm } from "@/components/settings/instructions-form";
 import { BillingPortalButton } from "@/components/settings/billing-portal-button";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { DownloadApps } from "@/components/settings/download-apps";
@@ -92,10 +81,6 @@ function Card({ children, className }: { children: React.ReactNode; className?: 
   return (
     <div className={cn("rounded-2xl bg-raised p-5 dark:bg-raised", className)}>{children}</div>
   );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2.5 mt-7 text-[13px] font-medium text-ink-3 first:mt-0">{children}</p>;
 }
 
 export function SettingsModal({
@@ -294,13 +279,17 @@ export function SettingsModal({
 
             {section === "legal" ? (
               <div className="space-y-3">
-                {["/terms", "/privacy", "/security"].map((href) => (
+                {[
+                  { href: "/terms", label: "Terms of service" },
+                  { href: "/privacy", label: "Privacy policy" },
+                  { href: "/security", label: "Security" },
+                ].map((l) => (
                   <Link
-                    key={href}
-                    href={href}
+                    key={l.href}
+                    href={l.href}
                     className="flex items-center justify-between rounded-2xl bg-raised p-5 hover:bg-sunk"
                   >
-                    <span className="text-[15px] font-medium capitalize">{href.slice(1)}</span>
+                    <span className="text-[15px] font-medium">{l.label}</span>
                     <FiExternalLink size={15} className="text-ink-4" />
                   </Link>
                 ))}
