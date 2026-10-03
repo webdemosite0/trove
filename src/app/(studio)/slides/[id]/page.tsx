@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { loadConversation } from "@/lib/conversations";
 import { parseDeck, enrichDeckImages } from "@/lib/slides";
-import { DeckEditor, type RestoredDeck } from "../editor/deck-editor";
+import { type RestoredDeck } from "../editor/deck-editor";
+import { DecksStudio } from "@/components/studio/decks-studio";
 
 export const metadata = { title: "Deck" };
 
@@ -28,7 +29,7 @@ export default async function SlidesWorkspacePage({
 
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <DeckEditor restored={restored} />
+      <DecksStudio restored={restored} />
     </div>
   );
 }

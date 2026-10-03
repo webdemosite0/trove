@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { loadProject } from "@/lib/projects";
-import { SiteBuilder } from "@/components/websites/site-builder";
+import { WebsitesStudio } from "@/components/studio/websites-studio";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export default async function WebsiteProjectPage({ params }: { params: Promise<{
 
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <SiteBuilder
+      <WebsitesStudio
         initialProject={{ id: project.id, name: project.name, prompt: project.prompt, html }}
       />
     </div>

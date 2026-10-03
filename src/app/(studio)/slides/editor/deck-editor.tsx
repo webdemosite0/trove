@@ -352,6 +352,30 @@ export function DeckEditor({
       persist(slides, t, prompt);
   }
 
+  /* ------------- external studio events (split-view chat panel) ------------ */
+  const askAiRef = useRef(askAi);
+  askAiRef.current = askAi;
+  const addSlideRef = useRef(addSlide);
+  addSlideRef.current = addSlide;
+
+  useEffect(() => {
+    const onPrompt = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (typeof detail === "string" && detail.trim()) {
+        setAiInput(detail);
+        // Defer a tick so state settles, then run generation directly.
+        setTimeout(() => void askAiRef.current(detail), 0);
+      }
+    };
+    const onAddSlide = () => addSlideRef.current();
+    window.addEventListener("decks-ai-prompt", onPrompt);
+    window.addEventListener("decks-add-slide", onAddSlide);
+    return () => {
+      window.removeEventListener("decks-ai-prompt", onPrompt);
+      window.removeEventListener("decks-add-slide", onAddSlide);
+    };
+  }, []);
+
   const editHandlers = slide
     ? {
         onTitle: (v: string) => deck.setTitle(safeIndex, v),

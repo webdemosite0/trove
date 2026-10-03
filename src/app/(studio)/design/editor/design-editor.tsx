@@ -318,12 +318,39 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
       setLayers(data.layers ?? []);
       setSelectedId(null);
       setPanel("none");
+      window.dispatchEvent(new CustomEvent("design-ai-done"));
     } catch {
       setSaveState("error");
+      window.dispatchEvent(new CustomEvent("design-ai-error"));
     } finally {
       setGenerating(false);
     }
   }, [aiPrompt, generating, sizeId]);
+  const generateRef = useRef(generate);
+  generateRef.current = generate;
+
+  /* ── External prompts from the studio chat panel ── */
+  useEffect(() => {
+    function onExternalPrompt(e: Event) {
+      const prompt = (e as CustomEvent<string>).detail;
+      if (prompt) {
+        setAiPrompt(prompt);
+        setPanel("ai");
+        setTimeout(() => generateRef.current(), 50);
+      }
+    }
+    function onExternalSize(e: Event) {
+      const id = (e as CustomEvent<string>).detail;
+      if (id) setSizeId(id);
+    }
+    window.addEventListener("design-ai-prompt", onExternalPrompt);
+    window.addEventListener("design-ai-size", onExternalSize);
+    return () => {
+      window.removeEventListener("design-ai-prompt", onExternalPrompt);
+      window.removeEventListener("design-ai-size", onExternalSize);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ── Export PNG ── */
   const exportPNG = useCallback(() => {

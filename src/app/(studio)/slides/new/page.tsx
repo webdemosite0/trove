@@ -1,4 +1,4 @@
-import { DeckEditor } from "../editor/deck-editor";
+import { DecksStudio } from "@/components/studio/decks-studio";
 
 export const metadata = { title: "New deck" };
 
@@ -9,8 +9,8 @@ export default async function NewDeckPage({
 }) {
   const { q } = await searchParams;
   return (
-    <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-      <DeckEditor initialPrompt={typeof q === "string" ? q : ""} />
+    <div className="h-full min-h-0 overflow-hidden">
+      <DecksStudio initialPrompt={typeof q === "string" ? q : ""} />
     </div>
   );
 }

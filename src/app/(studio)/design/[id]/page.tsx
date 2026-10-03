@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import { DesignEditor } from "../editor/design-editor";
+import { DesignStudio } from "@/components/studio/design-studio";
 import { getDesignDoc } from "@/lib/design-docs";
 import { currentUser } from "@/lib/auth";
 
 export const metadata = { title: "Design editor" };
 
-/** Design editor — canvas, layers, export. */
+/** Design editor — split view: canvas preview left, chat + customize right. */
 export default async function DesignEditorPage({
   params,
 }: {
@@ -18,7 +18,7 @@ export default async function DesignEditorPage({
   if (!doc) notFound();
   return (
     <div className="h-full min-h-0 overflow-hidden">
-      <DesignEditor doc={doc} />
+      <DesignStudio doc={doc} />
     </div>
   );
 }

@@ -75,7 +75,13 @@ export function SiteBuilder({ initialProject = null }: { initialProject?: SitePr
   const generate = useCallback(
     async (rawPrompt: string) => {
       const p = rawPrompt.trim();
-      if (!p || generating) return;
+      if (!p || generating) {
+        // Still notify listeners so a chat panel waiting on completion doesn't hang.
+        window.dispatchEvent(
+          new CustomEvent("websites-generation-done", { detail: { ok: false, reason: "busy" } }),
+        );
+        return;
+      }
       setStatus("generating");
       setError(null);
       setMessage(null);
@@ -101,6 +107,9 @@ export function SiteBuilder({ initialProject = null }: { initialProject?: SitePr
         setMessage((data.message as string) || "Your website is ready.");
         setView("preview");
         setPrompt("");
+        window.dispatchEvent(
+          new CustomEvent("websites-generation-done", { detail: { ok: true } }),
+        );
         // If this was a brand-new project, move to its canonical URL.
         if (!projectId && data.projectId) {
           router.replace(`/websites/${data.projectId}`);
@@ -108,12 +117,29 @@ export function SiteBuilder({ initialProject = null }: { initialProject?: SitePr
       } catch (e) {
         setError(e instanceof Error ? e.message : "Generation failed.");
         setStatus("error");
+        window.dispatchEvent(
+          new CustomEvent("websites-generation-done", { detail: { ok: false } }),
+        );
         return;
       }
       setStatus("idle");
     },
     [generating, projectId, name, html, router],
   );
+
+  // Latest generate for the external studio chat panel (avoids stale closures).
+  const generateRef = useRef(generate);
+  generateRef.current = generate;
+
+  // Listen for AI prompts dispatched from the right-side studio chat.
+  useEffect(() => {
+    const onExternalPrompt = (e: Event) => {
+      const p = (e as CustomEvent<string>).detail;
+      if (typeof p === "string" && p.trim()) generateRef.current(p);
+    };
+    window.addEventListener("websites-ai-prompt", onExternalPrompt);
+    return () => window.removeEventListener("websites-ai-prompt", onExternalPrompt);
+  }, []);
 
   const download = useCallback(() => {
     if (!html) return;
