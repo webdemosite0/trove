@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   FiFolder,
@@ -7,6 +8,11 @@ import {
 } from "@/components/ui/icons";
 import { BrandLockup } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/shell/theme";
+
+/** Auth pages (login/signup) must never appear in search results. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const BENEFITS = [
   {

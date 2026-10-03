@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
 import { CommandPalette } from "@/components/shell/command-palette";
@@ -18,6 +19,11 @@ import { getProfile } from "@/app/actions/profile";
 import { getBusinessProfile } from "@/lib/business-profile";
 import { getManualInstructions } from "@/lib/user-prefs";
 import { subscriptionFor } from "@/lib/billing";
+
+/** Authenticated app pages must never appear in search results. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 
 export default async function ShellLayout({
