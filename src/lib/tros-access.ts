@@ -1,4 +1,6 @@
-/** Whether this account may use Tros (Team plan only). */
+const TROS_PLANS = new Set(["pro", "team"]);
+
+/** Whether this account may use Tros (Pro or Team plan). */
 export function userHasTrosAccess(user: {
   plan?: string | null;
   effectivePlan?: string | null;
@@ -6,7 +8,6 @@ export function userHasTrosAccess(user: {
 } | null | undefined): boolean {
   if (!user) return false;
   if (user.teamPlanActive) return true;
-  if (user.effectivePlan === "team") return true;
-  if (user.plan === "team") return true;
-  return false;
+  const effective = (user.effectivePlan || user.plan || "").toLowerCase();
+  return TROS_PLANS.has(effective);
 }

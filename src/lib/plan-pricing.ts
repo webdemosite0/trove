@@ -37,6 +37,13 @@ export const PLAN_COMPARISON: PlanCompareRow[] = [
   { group: "tools", label: "Chat, docs, sheets, decks", free: true, pro: true, team: true },
   { group: "tools", label: "Design, research, code", free: true, pro: true, team: true },
   { group: "tools", label: "Agents, reminders, integrations", free: true, pro: true, team: true },
+  {
+    group: "tools",
+    label: "Tros (desktop specialists)",
+    free: false,
+    pro: true,
+    team: true,
+  },
   { group: "team", label: "Private Team workspace", free: false, pro: false, team: true },
   { group: "team", label: "Invite members & roles", free: false, pro: false, team: true },
   { group: "team", label: "Shared projects", free: false, pro: false, team: true },
