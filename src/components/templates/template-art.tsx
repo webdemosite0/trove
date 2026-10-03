@@ -73,28 +73,6 @@ function DeckPeek({ deck }: { deck: TemplateDeck }) {
   );
 }
 
-function SitePeek() {
-  return (
-    <PeekShell tone="#0284c7">
-      <div className="h-full overflow-hidden rounded-md bg-white shadow-sm">
-        <div className="flex items-center gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-1">
-          <span className="size-1.5 rounded-full bg-zinc-300" />
-          <span className="size-1.5 rounded-full bg-zinc-300" />
-          <span className="size-1.5 rounded-full bg-zinc-300" />
-        </div>
-        <div className="bg-gradient-to-br from-amber-100 via-orange-50 to-stone-100 p-3">
-          <div className="mx-auto h-2 w-2/3 rounded bg-stone-800/70" />
-          <div className="mx-auto mt-1.5 h-1.5 w-1/2 rounded bg-stone-400/50" />
-          <div className="mt-2 grid grid-cols-3 gap-1.5">
-            <div className="h-8 rounded bg-white/80" />
-            <div className="h-8 rounded bg-white/80" />
-            <div className="h-8 rounded bg-white/80" />
-          </div>
-        </div>
-      </div>
-    </PeekShell>
-  );
-}
 
 function ResearchPeek({ research }: { research: TemplateResearch }) {
   const f = research.findings[0];
@@ -113,7 +91,6 @@ export function TemplatePeek({ template }: { template: Template }) {
   if (template.kind === "doc" && template.doc) return <DocPeek doc={template.doc} />;
   if (template.kind === "sheet" && template.sheet) return <SheetPeek sheet={template.sheet} />;
   if (template.kind === "deck" && template.deck) return <DeckPeek deck={template.deck} />;
-  if (template.kind === "site") return <SitePeek />;
   if (template.kind === "research" && template.research) return <ResearchPeek research={template.research} />;
   return null;
 }
@@ -260,11 +237,6 @@ export function TemplateFull({ template }: { template: Template }) {
   if (template.kind === "doc" && template.doc) return <DocView doc={template.doc} />;
   if (template.kind === "sheet" && template.sheet) return <SheetView sheet={template.sheet} />;
   if (template.kind === "deck" && template.deck) return <DeckView deck={template.deck} />;
-  if (template.kind === "site" && template.siteHtml)
-    return (
-      <iframe title={template.title} srcDoc={template.siteHtml} sandbox="allow-same-origin"
-        className="h-[60vh] w-full border-0 bg-white" loading="lazy" />
-    );
   if (template.kind === "research" && template.research) return <ResearchView research={template.research} />;
   return null;
 }
@@ -273,7 +245,6 @@ const KIND_ICON: Record<TemplateKind, "doc" | "sheet" | "deck" | "note" | "code"
   doc: "doc",
   sheet: "sheet",
   deck: "deck",
-  site: "doc",
   research: "note",
 };
 
@@ -281,7 +252,6 @@ const KIND_LABEL: Record<TemplateKind, string> = {
   doc: "Document",
   sheet: "Spreadsheet",
   deck: "Deck",
-  site: "Website",
   research: "Research",
 };
 
