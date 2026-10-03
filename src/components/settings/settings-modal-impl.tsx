@@ -248,7 +248,9 @@ export function SettingsModal({
                 <p className="text-[15px] font-semibold">Wallet</p>
                 <p className="mt-1 text-[13px] text-ink-3">Plan: {String(planName)}</p>
                 <div className="mt-3">
-                  <BillingPortalButton />
+                  <BillingPortalButton className="rounded-full bg-sunk px-4 py-2 text-[13px] font-medium text-ink hover:bg-hover">
+                    Manage billing
+                  </BillingPortalButton>
                 </div>
                 <Link
                   href="/plans"
