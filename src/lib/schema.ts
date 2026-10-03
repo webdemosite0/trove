@@ -372,12 +372,27 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS tro_scheduled_tasks_agent ON tro_scheduled_tasks (agent_id, next_run_at)`,
   `CREATE TABLE IF NOT EXISTS tro_skills (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, slug TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', instructions TEXT NOT NULL DEFAULT '', icon TEXT NOT NULL DEFAULT '✨', source TEXT NOT NULL DEFAULT 'custom', connector TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(user_id, slug))`,
   `CREATE INDEX IF NOT EXISTS tro_skills_user ON tro_skills (user_id, slug)`,
+  // Tro task activity feed: persistent, truthful event log per agent.
+  // kind: task_created|task_started|task_progress|task_waiting|task_done|task_failed|task_cancelled|task_retried|delegated|delegate_result|artifact_saved|approval_requested|approval_resolved|tool_used|note
+  // status: queued|working|waiting|done|failed|cancelled
+  `CREATE TABLE IF NOT EXISTS tro_task_events (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, task_id TEXT, kind TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'working', title TEXT NOT NULL DEFAULT '', detail TEXT NOT NULL DEFAULT '', actor_name TEXT NOT NULL DEFAULT '', target_agent_id TEXT, target_agent_name TEXT, artifact_id TEXT, verified INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_task_events_agent ON tro_task_events (agent_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS tro_task_events_user ON tro_task_events (user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS tro_task_events_task ON tro_task_events (task_id, created_at DESC)`,
   // Canva-style design docs: size id, layers JSON, background, thumbnail data URL.
   `CREATE TABLE IF NOT EXISTS design_docs (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL DEFAULT 'Untitled design', category TEXT NOT NULL DEFAULT 'custom', size_id TEXT NOT NULL DEFAULT 'ig-post', layers TEXT NOT NULL DEFAULT '[]', background TEXT NOT NULL DEFAULT '#ffffff', thumbnail TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS design_docs_user ON design_docs (user_id, updated_at DESC)`,
   // Studio documents: real docs with title + HTML content, per user.
   `CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS documents_by_user ON documents (user_id, updated_at DESC)`,
+  // Edit Tro screen: selectable mascot species per Tro.
+  `ALTER TABLE agents ADD COLUMN species TEXT`,
+  // Tro knowledge base: uploaded reference documents per Tro.
+  `CREATE TABLE IF NOT EXISTS tro_knowledge (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT 'upload', created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_knowledge_agent ON tro_knowledge (agent_id, created_at DESC)`,
+  // Tro memory: kind is 'preference' (about the user) or 'task' (task history note).
+  `CREATE TABLE IF NOT EXISTS tro_memories (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT 'preference', content TEXT NOT NULL DEFAULT '', enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_memories_agent ON tro_memories (agent_id, kind, updated_at DESC)`,
 ];
 
 export const REPAIRS = `

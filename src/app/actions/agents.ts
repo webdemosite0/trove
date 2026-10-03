@@ -11,6 +11,7 @@ export interface AgentRow {
   instructions: string;
   tools: string;
   accent: string;
+  species: string | null;
   parent_id: string | null;
   created_at: number;
 }
@@ -31,6 +32,7 @@ export async function listAgents(): Promise<AgentRow[]> {
     instructions: String(r.instructions),
     tools: String(r.tools),
     accent: String(r.accent),
+    species: r.species == null ? null : String(r.species),
     parent_id: r.parent_id == null ? null : String(r.parent_id),
     created_at: Number(r.created_at),
   }));
@@ -151,6 +153,48 @@ export async function createAgent(
   revalidatePath("/agents");
   revalidatePath("/tros");
   return { ok: true, id };
+}
+
+export async function updateAgent(
+  id: string,
+  input: {
+    name: string;
+    role: string;
+    instructions: string;
+    tools: string[];
+    accent: string;
+    species?: string | null;
+  },
+): Promise<{ ok: boolean; error?: string }> {
+  const user = await currentUser();
+  if (!user) return { ok: false, error: "Log in to edit this Tro." };
+
+  const name = input.name.trim();
+  const role = input.role.trim();
+  const instructions = input.instructions.trim();
+  if (name.length < 2) return { ok: false, error: "Give the Tro a name." };
+  if (role.length < 2) return { ok: false, error: "Describe the Tro's role." };
+  if (instructions.length < 20) {
+    return { ok: false, error: "Instructions need at least 20 characters." };
+  }
+
+  await run(
+    `UPDATE agents SET name = ?, role = ?, instructions = ?, tools = ?, accent = ?, species = ?
+     WHERE id = ? AND user_id = ?`,
+    [
+      name,
+      role,
+      instructions,
+      JSON.stringify(input.tools),
+      input.accent || "#3b82f6",
+      input.species || null,
+      id,
+      user.id,
+    ],
+  );
+  revalidatePath("/tros");
+  revalidatePath(`/tros/${id}`);
+  return { ok: true };
 }
 
 export async function deleteAgent(id: string) {
