@@ -123,30 +123,44 @@ export function PlansView({
     return () => clearTimeout(t);
   }, [waiting, paidNow, router]);
 
+  async function go(path: string, body?: unknown) {
+    setError(null);
+    try {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body ?? {}),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        setError(data.error || `Request failed (${res.status})`);
+        return;
+      }
+      window.location.assign(data.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   function onChoose(planId: string) {
     if (!signedIn) {
       router.push("/login?next=/plans");
       return;
     }
-    setError(null);
-    setBusyId(planId);
-    startTransition(async () => {
-      try {
-        const res = await choosePlan(planId, interval);
-        if (res && typeof res === "object" && "url" in res && res.url) {
-          window.location.assign(String(res.url));
-          return;
-        }
-        if (res && typeof res === "object" && "error" in res && res.error) {
-          setError(String(res.error));
-        }
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Could not start checkout");
-      } finally {
+    if (planId === "free") {
+      setBusyId("free");
+      startTransition(async () => {
+        const res = await choosePlan("free");
+        if (res && "error" in res && res.error) setError(res.error);
+        else router.refresh();
         setBusyId(null);
-      }
-    });
+      });
+      return;
+    }
+    setBusyId(planId);
+    void go("/api/billing/checkout", { plan: planId, interval }).finally(() =>
+      setBusyId(null),
+    );
   }
 
   return (
@@ -173,7 +187,7 @@ export function PlansView({
       ) : null}
       {error ? (
         <div className="mt-6">
-          <FailureNote message={error} />
+          <FailureNote error={error} />
         </div>
       ) : null}
 
@@ -241,7 +255,7 @@ export function PlansView({
           const buyable = purchasable[t.id]?.[interval] ?? false;
           const businessOnlyLocked =
             t.id === "team" && signedIn && !teamEligible && !teamPlanActive;
-          const busy = pending && busyId === t.id;
+          const busy = (pending || busyId === t.id) && busyId === t.id;
 
           return (
             <div
