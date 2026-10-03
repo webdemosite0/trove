@@ -1,12 +1,11 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { AgentChat } from "./agent-chat";
 import { currentUser } from "@/lib/auth";
 import { one, str, num } from "@/lib/db";
 import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { listAgents, type AgentRow } from "@/app/actions/agents";
-import { isDesktopShell } from "@/lib/desktop-shell";
-import { userHasTrosAccess } from "@/lib/tros-access";
+import { isMobile } from "@/lib/device";
 import { TrosDesktopOnly } from "../desktop-only";
 
 export const metadata = { title: "Tro" };
@@ -28,22 +27,12 @@ export default async function TroPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ c?: string }>;
 }) {
-  const user = await currentUser();
-  if (!user) redirect("/login");
-
-  if (!userHasTrosAccess(user)) {
-    redirect("/dashboard?settings=tros");
-  }
-
-  if (!(await isDesktopShell())) {
-    return (
-      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-        <TrosDesktopOnly />
-      </div>
-    );
-  }
-
   const [{ id }, { c }] = await Promise.all([params, searchParams]);
+
+  if (await isMobile()) return <TrosDesktopOnly />;
+
+  const user = await currentUser();
+  if (!user) notFound();
 
   const row = await one(
     `SELECT * FROM agents WHERE id = ? AND user_id = ?`,
@@ -58,6 +47,7 @@ export default async function TroPage({
     instructions: str(row.instructions),
     tools: str(row.tools),
     accent: str(row.accent),
+    species: row.species == null ? null : str(row.species),
     parent_id: row.parent_id == null ? null : str(row.parent_id),
     created_at: num(row.created_at),
   };

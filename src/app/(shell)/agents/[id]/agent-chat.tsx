@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap, FiUsers, FiSettings } from "@/components/ui/icons";
 import { ThinkingBall } from "@/components/chat/thinking";
 import { TroTasksPanel } from "@/components/agents/tro-tasks-panel";
 import { TroSkillsPanel } from "@/components/agents/tro-skills-panel";
+import { TaskFeed } from "@/components/tro/task-feed";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -302,7 +303,11 @@ export function AgentChat({
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [computer, setComputer] = useState<ComputerState>(IDLE_COMPUTER);
   const [computerBusy, setComputerBusy] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
+  /** Tro library sidebar. Starts open on an empty chat, auto-collapses once
+      the conversation begins so chat gets the room; the header toggle brings it back. */
+  const [libraryOpen, setLibraryOpen] = useState(() => turns.length === 0);
+  const hadTurns = useRef(turns.length > 0);
   const { openSettings } = useNav();
   const [browserExpanded, setBrowserExpanded] = useState(false);
   type PanelTab = "desktop" | "files" | "activity" | "connectors" | "tasks" | "skills";
@@ -328,6 +333,14 @@ export function AgentChat({
       .getElementById(`ask-${turnId}-${askIdx}`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
+
+  // Auto-collapse the Tro library when the conversation starts; the user can
+  // re-open it with the header toggle and it stays open afterwards.
+  useEffect(() => {
+    const active = turns.length > 0;
+    if (active && !hadTurns.current) setLibraryOpen(false);
+    hadTurns.current = active;
+  }, [turns.length]);
 
   const [artifacts, setArtifacts] = useState<SavedArtifact[]>([]);
   const [artifactsLoaded, setArtifactsLoaded] = useState(false);
@@ -1219,9 +1232,29 @@ export function AgentChat({
           ? "Connected"
           : "Offline";
 
+  /**
+   * Plain-language status summary: agent state · task state · tool state.
+   * e.g. "Waiting for trip details · Browser disconnected" — never merges
+   * unrelated states into one vague label.
+   */
+  const statusSummary = useMemo(() => {
+    const parts: string[] = [busy ? "Working" : "Ready"];
+    if (pendingApprovals.length > 0) {
+      parts.push(`Approval needed (${pendingApprovals.length})`);
+    }
+    parts.push(
+      computerConnected
+        ? "Browser connected"
+        : computerBusy || computer.status === "starting" || computer.status === "working"
+          ? "Connecting browser…"
+          : "Browser disconnected",
+    );
+    return parts.join(" · ");
+  }, [busy, pendingApprovals.length, computerConnected, computerBusy, computer.status]);
+
   return (
     <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
-      {agents.length > 0 ? (
+      {agents.length > 0 && libraryOpen ? (
         <div className="hidden w-[272px] shrink-0 border-r border-line/70 xl:block">
           <TroListPanel
             agents={agents}
@@ -1239,6 +1272,18 @@ export function AgentChat({
             <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink">
               <Ico icon={FiArrowLeft} motion="nudge" size={17} />
             </Link>
+            <button
+              type="button"
+              onClick={() => setLibraryOpen((v) => !v)}
+              aria-expanded={libraryOpen}
+              aria-label={libraryOpen ? "Hide Tro list" : "Show Tro list"}
+              className={cn(
+                "hidden h-9 w-9 shrink-0 place-items-center rounded-xl transition xl:grid",
+                libraryOpen ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
+              )}
+            >
+              <Ico icon={FiUsers} motion="pop" size={16} />
+            </button>
             <span className="relative shrink-0 pt-1">
               {busy ? (
                 <span className="absolute -top-[2px] left-1/2 z-10 -translate-x-1/2" role="status" aria-label={`${agent.name} is working`}>
@@ -1257,14 +1302,14 @@ export function AgentChat({
                   {SPECIES_META[speciesFromSeed(agent.id)].label}
                 </span>
               </h1>
-              <p className="truncate text-[12px] text-ink-3">
+              <p className="truncate text-[12px] text-ink-3" title={statusSummary}>
                 {busy ? (
                   <span className="inline-flex items-center gap-1.5">
                     <ThinkingBall size={14} />
-                    <span>Working</span>
+                    <span className="truncate">{statusSummary}</span>
                   </span>
                 ) : (
-                  agent.role
+                  <span className="truncate">{statusSummary}</span>
                 )}
               </p>
             </div>
@@ -1295,6 +1340,14 @@ export function AgentChat({
             >
               <FiSidebar size={17} />
             </button>
+            <a
+              href={`/tros/${agent.id}/edit`}
+              aria-label="Edit Tro settings"
+              title="Edit Tro"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink"
+            >
+              <FiSettings size={17} />
+            </a>
           </div>
         </header>
 
@@ -1386,6 +1439,27 @@ export function AgentChat({
 
         <div className="relative z-20 shrink-0 border-t border-line/50 bg-canvas/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:px-10">
           <div className="mx-auto max-w-[720px]">
+            {pendingApprovals.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => scrollToApproval(pendingApprovals[0].turnId, pendingApprovals[0].askIdx)}
+                className="mb-2 flex w-full items-center gap-2.5 rounded-2xl border border-caution/40 bg-caution/10 px-3.5 py-2.5 text-left transition hover:bg-caution/15"
+              >
+                <span className="relative flex size-2 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-caution opacity-70" />
+                  <span className="relative inline-flex size-2 rounded-full bg-caution" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] font-semibold text-ink">
+                    Approval needed{pendingApprovals.length > 1 ? ` (${pendingApprovals.length})` : ""} — review above
+                  </span>
+                  <span className="block truncate text-[11.5px] text-ink-3">
+                    {pendingApprovals[0].title}
+                  </span>
+                </span>
+                <Ico icon={FiArrowRight} motion="nudge" size={14} className="shrink-0 text-ink-3" />
+              </button>
+            ) : null}
             <Composer onSend={send} disabled={busy} placeholder={busy ? "Working…" : `Message ${agent.name}…`} />
           </div>
         </div>
@@ -1652,10 +1726,9 @@ export function AgentChat({
             <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
               <Ico icon={FiActivity} size={11} className="text-ink-3" /> Activity
             </p>
-            {activity.length === 0 ? (
-              <p className="text-[12px] text-ink-4">Tasks appear here as {agent.name.split(" ")[0]} works.</p>
-            ) : (
-              <ul className="relative space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-line">
+            {/* Live in-session events (ephemeral) */}
+            {activity.length > 0 ? (
+              <ul className="relative mb-3 space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-line">
                 {[...activity].reverse().map((a) => (
                   <li key={a.id} className="relative flex items-start gap-2.5 rounded-lg py-1.5 pl-1">
                     <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-raised", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
@@ -1666,7 +1739,9 @@ export function AgentChat({
                   </li>
                 ))}
               </ul>
-            )}
+            ) : null}
+            {/* Persistent task feed (delegation, artifacts, approvals) */}
+            <TaskFeed agentId={agent.id} limit={30} compact />
           </section>
           ) : null}
           {panelTab === "files" ? (
