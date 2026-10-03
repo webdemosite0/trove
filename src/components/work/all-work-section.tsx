@@ -12,7 +12,6 @@ const META: Record<WorkKind, { label: string; badge: string }> = {
   code: { label: "Code", badge: "</>" },
   agent: { label: "Agent", badge: "AI" },
   team: { label: "Team task", badge: "TM" },
-  site: { label: "Website", badge: "WE" },
 };
 
 function dateLabel(ts: number) {
@@ -41,28 +40,6 @@ function TextLines({ text }: { text: string }) {
 }
 
 function Preview({ item }: { item: WorkItem }) {
-  if (item.kind === "site" && item.hasVisualPreview) {
-    return (
-      <div className="relative aspect-[16/10] overflow-hidden bg-white">
-        <iframe
-          title={`${item.title} preview`}
-          src={`/api/work/site-preview?id=${encodeURIComponent(item.id)}`}
-          loading="lazy"
-          sandbox=""
-          tabIndex={-1}
-          aria-hidden
-          className="pointer-events-none absolute left-0 top-0 border-0 bg-white"
-          style={{
-            width: 1200,
-            height: 750,
-            transform: "scale(0.305)",
-            transformOrigin: "top left",
-          }}
-        />
-        <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/[0.045]" />
-      </div>
-    );
-  }
 
   if (item.kind === "sheets") {
     return (
