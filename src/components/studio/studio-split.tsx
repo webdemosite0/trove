@@ -6,36 +6,32 @@ import { Thinking } from "@/components/chat/thinking";
 import { cn } from "@/lib/utils";
 
 /**
- * Studio layout with three states:
- * 1. Empty: centered chat box (like the homepage)
- * 2. Generating: loading animation
- * 3. Done: split view — preview left, chat + customize right
- *
- * Uses the real chat Composer for an identical chat experience.
+ * Studio layout: chat on the left, preview on the right.
+ * Single chat throughout — empty state, generating, and done all
+ * share the same left chat panel.
  */
 export function StudioSplit({
   preview,
-  emptyPreview,
   onPrompt,
   suggestions = [],
   customize,
   title,
   placeholder,
   hasContent = false,
+  emptyMessage = "Describe what to create — the preview will appear here.",
 }: {
-  /** The live preview / editor rendered on the left (after generation) */
+  /** The live preview / editor rendered on the right (after generation) */
   preview: React.ReactNode;
-  /** Shown in the center before anything is generated */
-  emptyPreview?: React.ReactNode;
   /** Called with the user's prompt; should return a promise */
   onPrompt: (prompt: string) => Promise<void>;
   suggestions?: string[];
-  /** Customization controls rendered above the chat in the right panel */
+  /** Customization controls rendered above the chat in the left panel */
   customize?: React.ReactNode;
   title: string;
   placeholder?: string;
-  /** Whether content exists (controls empty vs split view) */
+  /** Whether content already exists */
   hasContent?: boolean;
+  emptyMessage?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [started, setStarted] = useState(hasContent);
@@ -57,59 +53,10 @@ export function StudioSplit({
     }
   }
 
-  // State 1: Empty — centered chat
-  if (!started) {
-    return (
-      <div className="flex h-full min-h-0 flex-col items-center justify-center bg-canvas px-5">
-        <div className="w-full max-w-2xl">
-          {emptyPreview ?? (
-            <div className="mb-6 flex justify-center">
-              <Thinking size={72} />
-            </div>
-          )}
-          <h1 className="text-center text-[28px] font-semibold tracking-tight text-ink sm:text-[36px]">
-            {title}
-          </h1>
-          <div className="mt-6">
-            <Composer
-              onSend={(v) => submit(v)}
-              placeholder={placeholder ?? "Describe what to create…"}
-              autoFocus
-              busy={busy}
-            />
-          </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                onClick={() => submit(s)}
-                className="rounded-full border border-line bg-raised px-4 py-2 text-[13px] text-ink-2 transition hover:border-accent/40 hover:text-ink"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // State 2 & 3: Split view (generating shows loading in preview)
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas lg:flex-row">
-      {/* Left: preview */}
-      <div className="relative min-h-0 flex-1 overflow-hidden border-b border-line lg:border-b-0 lg:border-r">
-        {preview}
-        {busy && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-canvas/80 backdrop-blur-sm">
-            <Thinking size={64} />
-            <p className="mt-4 text-[15px] font-medium text-ink-2">Creating…</p>
-          </div>
-        )}
-      </div>
-
-      {/* Right: chat + customize */}
-      <div className="flex h-[45%] w-full flex-col bg-raised lg:h-full lg:w-[380px] lg:shrink-0">
+      {/* Left: chat + customize (single chat) */}
+      <div className="flex h-[45%] w-full flex-col bg-raised lg:h-full lg:w-[380px] lg:shrink-0 lg:border-r lg:border-line">
         <div className="border-b border-line px-4 py-3">
           <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
         </div>
@@ -119,19 +66,39 @@ export function StudioSplit({
         ) : null}
 
         <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={cn(
-                "max-w-[90%] rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed",
-                m.role === "user"
-                  ? "ml-auto bg-accent text-white"
-                  : "bg-sunk text-ink-2",
-              )}
-            >
-              {m.text}
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center pt-6 text-center">
+              <Thinking size={48} />
+              <p className="mt-3 max-w-[240px] text-[13px] leading-relaxed text-ink-3">
+                {emptyMessage}
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => submit(s)}
+                    className="rounded-full border border-line bg-sunk px-3 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:text-ink"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
-          ))}
+          ) : (
+            messages.map((m, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "max-w-[90%] rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed",
+                  m.role === "user"
+                    ? "ml-auto bg-accent text-white"
+                    : "bg-sunk text-ink-2",
+                )}
+              >
+                {m.text}
+              </div>
+            ))
+          )}
           {busy && (
             <div className="flex items-center gap-2 px-1">
               <Thinking size={20} />
@@ -143,12 +110,34 @@ export function StudioSplit({
         <div className="border-t border-line p-3">
           <Composer
             onSend={(v) => submit(v)}
-            placeholder="Describe what to create or change…"
+            placeholder={placeholder ?? "Describe what to create or change…"}
             compact
             busy={busy}
             allowAttachments={false}
           />
         </div>
+      </div>
+
+      {/* Right: preview */}
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        {!started ? (
+          <div className="flex h-full flex-col items-center justify-center px-8 text-center">
+            <Thinking size={72} />
+            <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-ink-3">
+              {emptyMessage}
+            </p>
+          </div>
+        ) : (
+          <>
+            {preview}
+            {busy && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-canvas/80 backdrop-blur-sm">
+                <Thinking size={64} />
+                <p className="mt-4 text-[15px] font-medium text-ink-2">Creating…</p>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

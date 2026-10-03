@@ -69,7 +69,7 @@ export function WebsitesStudio({
 
   return (
     <StudioSplit
-      title="Describe your website"
+      title="Website"
       placeholder="Build a landing page for…"
       hasContent={!!initialProject?.html}
       preview={<SiteBuilder initialProject={initialProject} />}

@@ -32,7 +32,7 @@ export function DocsStudio({ initial }: { initial: Doc | null }) {
 
   return (
     <StudioSplit
-      title="What should we write?"
+      title="Document"
       placeholder="Describe the document you need…"
       hasContent={!!initial?.content}
       preview={<DocEditor initial={initial} />}

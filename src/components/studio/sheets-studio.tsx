@@ -45,7 +45,7 @@ export function SheetsStudio({
 
   return (
     <StudioSplit
-      title="What should we track?"
+      title="Spreadsheet"
       placeholder="Describe the spreadsheet you need…"
       hasContent={!!initial?.grid?.length}
       preview={<SheetEditor sheetId={sheetId} initial={initial} hideAiBar />}
