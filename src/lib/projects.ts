@@ -128,14 +128,11 @@ function projectHref(id: string) {
 
 async function syncRecentSite(userId: string, id: string, name: string, now: number) {
   const href = projectHref(id);
-  const oldProjectHref = `/websites/project/${encodeURIComponent(id)}/preview`;
-  const legacyHref = `/websites?c=${encodeURIComponent(id)}`;
-  const legacyPreviewHref = `/websites/preview?c=${encodeURIComponent(id)}`;
 
   try {
     await run(
-      `DELETE FROM recents WHERE user_id = ? AND kind = 'site' AND href IN (?, ?, ?, ?)`,
-      [userId, href, oldProjectHref, legacyHref, legacyPreviewHref],
+      `DELETE FROM recents WHERE user_id = ? AND kind = 'site' AND href = ?`,
+      [userId, href],
     );
     await run(
       `INSERT INTO recents (id, user_id, kind, title, href, created_at) VALUES (?, ?, 'site', ?, ?, ?)`,
@@ -357,7 +354,7 @@ export async function deleteProject(id: string): Promise<boolean> {
   return true;
 }
 
-/** Remove empty legacy website-builder shells so Projects starts clean. */
+/** Remove empty legacy project shells so Projects starts clean. */
 export async function purgeLegacyDefaultProjects(): Promise<number> {
   const user = await currentUser();
   if (!user) return 0;

@@ -404,7 +404,7 @@ export function ProjectsView({
         title="Clear all projects?"
       >
         <p className="text-[14px] text-ink-3">
-          Deletes every project on your account, including old website-builder leftovers.
+          Deletes every project on your account permanently.
           This cannot be undone.
         </p>
         <div className="mt-5 flex justify-end gap-2">

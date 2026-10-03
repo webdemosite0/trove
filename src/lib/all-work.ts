@@ -39,7 +39,6 @@ function safeKind(value: unknown): WorkKind {
     "code",
     "agent",
     "team",
-    "site",
   ]);
   return allowed.has(kind) ? kind : "chat";
 }
@@ -48,8 +47,7 @@ function safeKind(value: unknown): WorkKind {
  * Canonical library for everything a user has created.
  *
  * Conversations are the source of truth for chat/docs/sheets/slides/research/etc.
- * Builder projects are the source of truth for websites. Agents are stored in
- * their own table. Recents are only used as a fallback for older work that
+ * Agents are stored in their own table. Recents are only used as a fallback for older work that
  * predates canonical saving.
  */
 export async function listAllWork(limit = 48): Promise<WorkItem[]> {
@@ -59,7 +57,7 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
   const safeLimit = Math.min(200, Math.max(1, Math.floor(limit)));
   await ensureProjectColumns().catch(() => undefined);
 
-  const [conversations, sites, agents, legacy] = await Promise.all([
+  const [conversations, agents, legacy] = await Promise.all([
     all(
       `SELECT c.id, c.kind, c.title, c.updated_at,
               (
@@ -72,15 +70,6 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
          FROM conversations c
         WHERE c.user_id = ? AND c.kind <> 'site'
         ORDER BY c.updated_at DESC
-        LIMIT ?`,
-      [user.id, safeLimit],
-    ).catch(() => []),
-    all(
-      `SELECT id, name, prompt, status, updated_at,
-              CASE WHEN preview_html IS NOT NULL AND length(preview_html) > 20 THEN 1 ELSE 0 END AS has_preview
-         FROM builder_projects
-        WHERE user_id = ?
-        ORDER BY updated_at DESC
         LIMIT ?`,
       [user.id, safeLimit],
     ).catch(() => []),
@@ -123,23 +112,6 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
     });
   }
 
-  for (const row of sites) {
-    const id = str(row.id);
-    const key = `site:${id}`;
-    if (!id || seen.has(key)) continue;
-    seen.add(key);
-    items.push({
-      id,
-      kind: "site",
-      title: str(row.name) || "Untitled site",
-      href: `/project/${encodeURIComponent(id)}/chat`,
-      updatedAt: num(row.updated_at),
-      excerpt: excerpt(row.prompt) || "Website project",
-      hasVisualPreview: num(row.has_preview) === 1,
-      source: "site",
-    });
-  }
-
   for (const row of agents) {
     const id = str(row.id);
     const key = `agent:${id}`;
@@ -161,7 +133,7 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
   // canonical save paths existed.
   for (const row of legacy) {
     const kind = safeKind(row.kind);
-    if (kind === "site" || kind === "agent") continue;
+    if (kind === "agent") continue;
     const href = str(row.href);
     const title = str(row.title);
     const key = `legacy:${kind}:${href || title}`;

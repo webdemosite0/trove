@@ -45,7 +45,6 @@ const KIND_META: Record<RecentKind, { Icon: typeof TbFileText; tone: string; lab
   code: { Icon: TbCode, tone: "#06b6d4", label: "Code" },
   agent: { Icon: TbRobot, tone: "#f43f5e", label: "Tro" },
   team: { Icon: TbUsers, tone: "#6366f1", label: "Team" },
-  site: { Icon: TbWorld, tone: "#8b5cf6", label: "Site" },
 };
 
 const CREATE_TILES = [
@@ -65,7 +64,6 @@ const CREATE_TILES = [
     tone: "#f43f5e",
     large: true,
   },
-  { label: "Websites", desc: "Sites with live preview", href: "/websites", Icon: TbWorld, tone: "#8b5cf6" },
   { label: "Documents", desc: "Exportable as Word", href: "/documents", Icon: TbFileText, tone: "#3b82f6" },
   { label: "Spreadsheets", desc: "Real formulas", href: "/spreadsheets", Icon: TbTable, tone: "#22c55e" },
   { label: "Decks", desc: "Presentations with a point", href: "/slides", Icon: TbPresentation, tone: "#f97316" },

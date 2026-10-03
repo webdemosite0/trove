@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 
 const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> = {
   chat: { label: "Chat", icon: TbMessageCircle, tone: "#a78bfa" },
-  site: { label: "Site", icon: TbWorld, tone: "#38bdf8" },
   agent: { label: "Agent", icon: TbRobot, tone: "#c084fc" },
   team: { label: "Team", icon: TbUsers, tone: "#f472b6" },
   code: { label: "Code", icon: TbCode, tone: "#34d399" },
@@ -35,7 +34,6 @@ const META: Record<RecentKind, { label: string; icon: IconType; tone: string }> 
 };
 
 const PATH_KINDS: { match: (p: string) => boolean; kinds: RecentKind[] | "hide" | "all" }[] = [
-  { match: (p) => p.startsWith("/websites"), kinds: ["site"] },
   { match: (p) => p.startsWith("/chat"), kinds: "hide" },
   { match: (p) => p.startsWith("/plans"), kinds: "hide" },
   { match: (p) => p.startsWith("/settings"), kinds: "hide" },
@@ -57,66 +55,6 @@ function kindsForPath(pathname: string): RecentKind[] | "all" | "hide" {
   return "all";
 }
 
-function SiteRecentCard({ recent }: { recent: Recent }) {
-  const projectId = recent.conversationId;
-  const href = projectId
-    ? `/websites/preview?c=${encodeURIComponent(projectId)}`
-    : recent.href || "/websites";
-  const previewSrc = projectId
-    ? `/api/builder/projects/${encodeURIComponent(projectId)}/preview`
-    : null;
-
-  return (
-    <div className="group relative h-full overflow-hidden rounded-[18px] border border-line/80 bg-canvas/55 transition duration-200 hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-[0_18px_50px_-30px_rgba(124,92,255,0.5)]">
-      <Link
-        href={href}
-        className="absolute inset-0 z-20 rounded-[18px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        aria-label={`Open ${recent.title || "website"} preview`}
-      />
-
-      <div className="relative aspect-[16/10] overflow-hidden border-b border-line/70 bg-sunk">
-        {previewSrc ? (
-          <iframe
-            title={`${recent.title || "Website"} preview`}
-            src={previewSrc}
-            loading="lazy"
-            sandbox="allow-scripts"
-            referrerPolicy="no-referrer"
-            tabIndex={-1}
-            className="pointer-events-none absolute left-0 top-0 h-[400%] w-[400%] origin-top-left scale-25 border-0 bg-white"
-          />
-        ) : (
-          <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_30%_25%,rgba(56,189,248,0.18),transparent_45%),linear-gradient(145deg,rgba(124,92,255,0.12),transparent)]">
-            <TbWorld size={24} className="text-sky-400/80" />
-          </div>
-        )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-white/[0.03]" />
-        <div className="pointer-events-none absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded-full border border-white/10 bg-black/35 px-2 py-1 text-[10px] font-medium text-white/90 backdrop-blur-md">
-          <span className="size-1.5 rounded-full bg-emerald-400" />
-          Preview
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 p-3.5">
-        <span className="grid size-9 shrink-0 place-items-center rounded-[11px] border border-sky-400/15 bg-sky-400/10 text-sky-400 transition group-hover:scale-105">
-          <TbWorld size={16} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13.5px] font-semibold text-ink transition group-hover:text-accent">
-            {recent.title || "Untitled site"}
-          </span>
-          <span className="mt-0.5 flex items-center gap-1.5 text-[11.5px] text-ink-4">
-            <span>Website</span>
-            <span className="opacity-40">·</span>
-            <span className="tabular-nums">{relativeTime(recent.createdAt)}</span>
-          </span>
-        </span>
-        <FiArrowRight size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-accent" />
-      </div>
-    </div>
-  );
-}
-
 export function YourWork({
   items,
   className,
@@ -135,27 +73,7 @@ export function YourWork({
   const pathname = usePathname() || "/";
   const search = useSearchParams();
   const hasThread = Boolean(search?.get("c"));
-  const onSites = pathname.startsWith("/websites");
-
-  // Hide while Sites builder is active (asking / planning / building / ready)
-  const [builderBusy, setBuilderBusy] = useState(false);
-  useEffect(() => {
-    if (!onSites) {
-      setBuilderBusy(false);
-      return;
-    }
-    const sync = () => setBuilderBusy(document.body.hasAttribute("data-builder-phase"));
-    sync();
-    const obs = new MutationObserver(sync);
-    obs.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["data-builder-phase"],
-    });
-    return () => obs.disconnect();
-  }, [onSites]);
-
   if (!force && hasThread) return null;
-  if (!force && onSites && builderBusy) return null;
 
   const auto = kindsForPath(pathname);
   if (!force && auto === "hide") return null;
@@ -185,7 +103,7 @@ export function YourWork({
     );
   }
 
-  const heading = onSites ? "Your sites" : title;
+  const heading = title;
 
   return (
     <section
@@ -212,7 +130,7 @@ export function YourWork({
           </Link>
         </header>
 
-        <ul className={cn("grid gap-2", onSites ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4")}>
+        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {shown.map((r, i) => {
             const m = META[r.kind] ?? META.chat;
             const Icon = m.icon;
@@ -222,10 +140,7 @@ export function YourWork({
                 className="nx-in min-w-0"
                 style={{ animationDelay: `${i * 40}ms`, animationFillMode: "backwards" }}
               >
-                {r.kind === "site" ? (
-                  <SiteRecentCard recent={r} />
-                ) : (
-                  <Link
+                <Link
                     href={r.href || "/chat"}
                     className="group flex h-full items-start gap-3 rounded-[16px] border border-line/80 bg-canvas/50 p-3 transition duration-200 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-hover/40 hover:shadow-[0_12px_40px_-24px_rgba(124,92,255,0.45)]"
                   >
@@ -249,7 +164,6 @@ export function YourWork({
                       </span>
                     </span>
                   </Link>
-                )}
               </li>
             );
           })}

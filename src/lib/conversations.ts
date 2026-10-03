@@ -48,7 +48,6 @@ export function hrefFor(kind: RecentKind, id: string, path?: unknown): string {
     research: "/research",
     code: "/chat",
     team: "/team",
-    site: "/chat",
     agent: "/agents",
   };
   const base = safePath(path) ?? known[kind] ?? "/chat";
