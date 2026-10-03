@@ -68,7 +68,12 @@ export function StudioSplit({
         <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center pt-6 text-center">
-              <Thinking size={48} />
+<div className="grid size-12 place-items-center rounded-full bg-accent/10">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="1.5">
+                  <path d="M12 3v3m0 12v3m-9-9h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1m0-12.8l-2.1 2.1M7.7 16.3l-2.1 2.1" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="3.5"/>
+                </svg>
+              </div>
               <p className="mt-3 max-w-[240px] text-[13px] leading-relaxed text-ink-3">
                 {emptyMessage}
               </p>
@@ -122,7 +127,12 @@ export function StudioSplit({
       <div className="relative min-h-0 flex-1 overflow-hidden">
         {!started ? (
           <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-            <Thinking size={72} />
+<div className="grid size-16 place-items-center rounded-full bg-accent/10">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="1.5">
+                  <path d="M12 3v3m0 12v3m-9-9h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1m0-12.8l-2.1 2.1M7.7 16.3l-2.1 2.1" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="3.5"/>
+                </svg>
+              </div>
             <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-ink-3">
               {emptyMessage}
             </p>
