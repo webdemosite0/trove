@@ -369,31 +369,39 @@ export function AgentChat({
     if (!fresh.length) return;
     (async () => {
       for (const { fp, block: b } of fresh) {
+        let saved: SavedArtifact | null = null;
+        for (let attempt = 0; attempt < 3 && !saved; attempt++) {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 1500 * attempt));
+          try {
+            const res = await fetch("/api/tro/artifacts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                agentId: agent.id,
+                kind: b.kind,
+                title: b.title,
+                content: b.content,
+              }),
+            });
+            const data = await res.json().catch(() => null);
+            if (res.ok && data?.artifact) {
+              saved = data.artifact as SavedArtifact;
+            }
+          } catch {
+            /* network failed — retry */
+          }
+        }
         try {
-          const res = await fetch("/api/tro/artifacts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              agentId: agent.id,
-              kind: b.kind,
-              title: b.title,
-              content: b.content,
-            }),
-          });
-          const data = await res.json().catch(() => null);
-          if (res.ok && data?.artifact) {
-            const saved = data.artifact as SavedArtifact;
+          if (saved) {
             savedPrints.current.add(fp);
             setArtifacts((prev) =>
-              prev.some((a) => a.id === saved.id) ? prev : [saved, ...prev],
+              prev.some((a) => a.id === saved!.id) ? prev : [saved!, ...prev],
             );
             // Pop the new file into the Files tab preview, Claude-style.
             setPreviewArtifact(saved);
             setPanelTab("files");
             if (!panelOpen) setPanelOpen(true);
           }
-        } catch {
-          /* network failed — stays unmarked so the next turn retries */
         } finally {
           inflightPrints.current.delete(fp);
         }
