@@ -17,9 +17,7 @@ interface Action {
 const GROUPS: { label: string; actions: Action[] }[] = [
   {
     label: "Build",
-    actions: [
-      { href: "/agents", label: "Agents", icon: TbRobot, key: "2" },
-    ],
+    actions: [{ href: "/tros", label: "Tros", icon: TbRobot, key: "2" }],
   },
   {
     label: "Create",
@@ -70,7 +68,10 @@ export function QuickActions({ className }: { className?: string }) {
                   "hover:-translate-y-[1px] hover:border-accent/40 hover:bg-accent/[0.04] hover:text-ink",
                 )}
               >
-                <a.icon size={17} className="shrink-0 text-ink-4 transition-colors group-hover:text-accent" />
+                <a.icon
+                  size={17}
+                  className="shrink-0 text-ink-4 transition-colors group-hover:text-accent"
+                />
                 {a.label}
                 <kbd className="ml-1 rounded-[var(--r-chip)] border border-line bg-sunk px-1.5 py-0.5 font-sans text-[10.5px] tabular-nums text-ink-4">
                   ⌘{a.key}
