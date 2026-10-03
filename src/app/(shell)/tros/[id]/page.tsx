@@ -6,7 +6,7 @@ import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { listAgents, type AgentRow } from "@/app/actions/agents";
 import { isMobile } from "@/lib/device";
-import { TrosDesktopOnly } from "../desktop-only";
+import { MobileTroChat } from "@/components/mobile/tro-chat";
 
 export const metadata = { title: "Tro" };
 
@@ -29,8 +29,6 @@ export default async function TroPage({
 }) {
   const [{ id }, { c }] = await Promise.all([params, searchParams]);
 
-  if (await isMobile()) return <TrosDesktopOnly />;
-
   const user = await currentUser();
   if (!user) notFound();
 
@@ -50,6 +48,14 @@ export default async function TroPage({
     parent_id: row.parent_id == null ? null : str(row.parent_id),
     created_at: num(row.created_at),
   };
+
+  if (await isMobile()) {
+    return (
+      <div className="h-full min-h-0 overflow-hidden">
+        <MobileTroChat agent={agent} />
+      </div>
+    );
+  }
 
   const recents = await listRecents("agent", 40);
   const forAgent = recents.filter(
