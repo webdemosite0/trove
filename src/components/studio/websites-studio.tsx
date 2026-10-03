@@ -69,7 +69,9 @@ export function WebsitesStudio({
 
   return (
     <StudioSplit
-      title="Website"
+      title="Describe your website"
+      placeholder="Build a landing page for…"
+      hasContent={!!initialProject?.html}
       preview={<SiteBuilder initialProject={initialProject} />}
       onPrompt={handlePrompt}
       suggestions={CHAT_SUGGESTIONS}

@@ -44,7 +44,9 @@ export function DesignStudio({ doc }: { doc: DesignDoc }) {
 
   return (
     <StudioSplit
-      title="Design"
+      title="What should we design?"
+      placeholder="Describe the design you need…"
+      hasContent={doc.layers.length > 0}
       preview={<DesignEditor doc={doc} />}
       onPrompt={handlePrompt}
       suggestions={[

@@ -36,7 +36,9 @@ export function DecksStudio({
 
   return (
     <StudioSplit
-      title="Deck"
+      title="What should we present?"
+      placeholder="Describe the deck you need…"
+      hasContent={!!restored?.slides?.length}
       preview={
         <DeckEditor restored={restored} initialPrompt={initialPrompt} />
       }
