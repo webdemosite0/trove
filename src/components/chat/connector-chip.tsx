@@ -66,7 +66,7 @@ export function ConnectorChip({
         tone === "dark"
           ? "border border-white/10 bg-[#2a2a2c] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
           : tone === "light"
-            ? "border border-black/[0.08] bg-white text-ink shadow-sm"
+            ? "border border-black/[0.08] bg-white text-[#101014] shadow-sm dark:border-white/10 dark:bg-[#2a2a2c] dark:text-white"
             : "border border-line bg-sunk text-ink shadow-sm",
         className,
       )}
