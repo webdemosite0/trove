@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu } from "@/components/ui/icons";
 import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
@@ -437,6 +437,9 @@ export function AgentChat({
     async (url: string) => {
       pushActivity("Navigating", url, "run");
       if (!computerRef.current.sessionId) await startComputer();
+      // Entering focus mode when browsing starts — like Claude's browser panel.
+      setBrowserExpanded(true);
+      if (!panelOpen) setPanelOpen(true);
       const data = await browserAction("navigate", { url });
       pushActivity("Opened page", data.title || data.pageUrl || url, "ok");
       try {
@@ -446,7 +449,7 @@ export function AgentChat({
       }
       return data;
     },
-    [browserAction, pushActivity, startComputer],
+    [browserAction, pushActivity, startComputer, panelOpen],
   );
 
   useEffect(() => {
@@ -1034,7 +1037,10 @@ export function AgentChat({
 
       <aside
         className={cn(
-          "absolute inset-y-0 right-0 z-40 flex w-[min(100vw-1.5rem,340px)] flex-col border-l border-line bg-raised/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
+          "absolute inset-y-0 right-0 z-40 flex flex-col border-l border-line bg-raised/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
+          browserExpanded
+            ? "w-[min(100vw-1.5rem,780px)]"
+            : "w-[min(100vw-1.5rem,340px)]",
           panelOpen ? "translate-x-0" : "translate-x-full lg:hidden",
         )}
       >
@@ -1106,7 +1112,7 @@ export function AgentChat({
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {pendingApprovals.length > 0 ? (
-            <section className="border-b border-line px-4 py-3">
+            <section className={cn("border-b border-line px-4 py-3", browserExpanded && "hidden")}>
               <button
                 type="button"
                 onClick={() => scrollToApproval(pendingApprovals[0].turnId, pendingApprovals[0].askIdx)}
@@ -1128,7 +1134,7 @@ export function AgentChat({
               </button>
             </section>
           ) : null}
-          <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "60ms" }}>
+          <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={FiMonitor} size={11} className="text-ink-3" /> Desktop
@@ -1137,6 +1143,36 @@ export function AgentChat({
                 {browserExpanded ? "Shrink" : "Expand"}
               </button>
             </div>
+            {browserExpanded && computerConnected ? (
+              <form
+                className="mb-2 flex items-center gap-1.5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const input = e.currentTarget.querySelector("input");
+                  const url = input?.value.trim();
+                  if (url) void navigateComputer(url);
+                }}
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-canvas/60 px-3 py-1.5">
+                  <FiGlobe size={13} className="shrink-0 text-ink-4" />
+                  <input
+                    type="text"
+                    defaultValue={computer.pageUrl || ""}
+                    key={computer.pageUrl || "empty"}
+                    placeholder="Enter a URL…"
+                    disabled={busy || computerBusy}
+                    className="min-w-0 flex-1 bg-transparent text-[12.5px] text-ink placeholder:text-ink-4 focus:outline-none disabled:opacity-40"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={busy || computerBusy}
+                  className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+                >
+                  Go
+                </button>
+              </form>
+            ) : null}
             <div className={cn("space-y-1.5", busy && "pointer-events-none opacity-55")}>
               <div className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas/60 px-2.5 py-2">
                 <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3")}>
@@ -1150,8 +1186,8 @@ export function AgentChat({
                   </p>
                 </div>
               </div>
-              <div className={cn("overflow-hidden rounded-xl border border-line bg-canvas/40 transition-all duration-300", browserExpanded && "ring-1 ring-white/10")}>
-                <div className={cn("relative bg-sunk transition-all duration-300", browserExpanded ? "aspect-[16/11] min-h-[200px]" : "aspect-[16/9]")}>
+              <div className={cn("overflow-hidden rounded-xl border border-line bg-canvas/40 transition-all duration-300", browserExpanded && "flex min-h-0 flex-1 flex-col ring-1 ring-white/10")}>
+                <div className={cn("relative bg-sunk transition-all duration-300", browserExpanded ? "min-h-0 flex-1" : "aspect-[16/9]")}>
                   {computer.screenshotBase64 ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`data:image/jpeg;base64,${computer.screenshotBase64}`} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
@@ -1188,7 +1224,7 @@ export function AgentChat({
             </div>
           </section>
 
-          <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
+          <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "hidden")} style={{ ["--app-delay" as string]: "120ms" }}>
             <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
               <Ico icon={FiActivity} size={11} className="text-ink-3" /> Activity
             </p>
@@ -1209,7 +1245,7 @@ export function AgentChat({
             )}
           </section>
 
-          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
+          <section id="panel-library" className={cn("app-block-in scroll-mt-4 border-t border-line px-4 py-3", browserExpanded && "hidden")} style={{ ["--app-delay" as string]: "160ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={FiFolder} size={11} className="text-ink-3" /> Library
@@ -1284,7 +1320,7 @@ export function AgentChat({
             )}
           </section>
 
-          <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
+          <section className={cn("app-block-in border-t border-line px-4 py-3", browserExpanded && "hidden")} style={{ ["--app-delay" as string]: "240ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={TbPlugConnected} size={11} className="text-ink-3" /> Connectors
