@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useVisibleInterval } from "@/lib/use-visible-interval";
 import { Thinking } from "@/components/chat/thinking";
 import { TroPngIcon, type TroPngIconName } from "@/components/tro/tro-png-icons";
 
@@ -149,10 +150,10 @@ export function TaskFeed({
 
   useEffect(() => {
     void load();
-    if (pollMs <= 0) return;
-    const t = setInterval(() => void load(), pollMs);
-    return () => clearInterval(t);
-  }, [load, pollMs]);
+  }, [load]);
+
+  // Visibility-aware: pauses while the tab is hidden.
+  useVisibleInterval(load, pollMs, pollMs > 0);
 
   if (events === null) {
     return (

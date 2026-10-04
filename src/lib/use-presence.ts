@@ -1,30 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useVisibleInterval } from "./use-visible-interval";
 
 /** Live set of Tro ids currently working (polled from /api/tro/presence). */
 export function useTroPresence(enabled = true, intervalMs = 15000): Set<string> {
   const [working, setWorking] = useState<Set<string>>(() => new Set());
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    const poll = async () => {
-      try {
-        const res = await fetch("/api/tro/presence", { cache: "no-store" });
-        const data = await res.json().catch(() => null);
-        if (!cancelled && res.ok && Array.isArray(data?.working)) {
-          setWorking(new Set<string>(data.working.map(String)));
-        }
-      } catch {
-        /* presence is best-effort */
+
+  const poll = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tro/presence", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (res.ok && Array.isArray(data?.working)) {
+        setWorking(new Set<string>(data.working.map(String)));
       }
-    };
-    void poll();
-    const iv = setInterval(poll, intervalMs);
-    return () => {
-      cancelled = true;
-      clearInterval(iv);
-    };
-  }, [enabled, intervalMs]);
+    } catch {
+      /* presence is best-effort */
+    }
+  }, []);
+
+  // Pauses while the tab is hidden; refreshes immediately on return.
+  useVisibleInterval(poll, intervalMs, enabled);
+
   return working;
 }
