@@ -378,6 +378,15 @@ export const MIGRATIONS: string[] = [
   // Studio documents: real docs with title + HTML content, per user.
   `CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS documents_by_user ON documents (user_id, updated_at DESC)`,
+  // extension_pairing_codes: single-use 6-digit codes, 10-min expiry, code -> user_id.
+  `CREATE TABLE IF NOT EXISTS extension_pairing_codes (code TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`,
+  // extension_connections: one row per paired browser. token_hash is SHA-256 of the secret token.
+  `CREATE TABLE IF NOT EXISTS extension_connections (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, token_hash TEXT NOT NULL UNIQUE, label TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS extension_connections_user ON extension_connections (user_id, last_seen_at DESC)`,
+  // extension_commands: queue. kind: tabs|read|navigate|click|type|screenshot|scroll. status: pending|dispatched|done|failed.
+  `CREATE TABLE IF NOT EXISTS extension_commands (id TEXT PRIMARY KEY, connection_id TEXT NOT NULL REFERENCES extension_connections(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL, payload TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'pending', result TEXT NOT NULL DEFAULT '', error TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS extension_commands_queue ON extension_commands (connection_id, status, created_at)`,
+  `CREATE INDEX IF NOT EXISTS extension_commands_user ON extension_commands (user_id, created_at DESC)`,
 ];
 
 export const REPAIRS = `

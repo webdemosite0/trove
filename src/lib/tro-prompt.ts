@@ -1,6 +1,8 @@
 // Shared system-prompt builder for Tros — used by the chat API and by
 // Tro-to-Tro delegation, so a worker Tro runs with the same brain as the UI one.
 
+import { buildLocalBrowserSection } from "@/lib/local-browser-block";
+
 export interface TroPromptAgent {
   name: string;
   role: string;
@@ -93,6 +95,8 @@ When the user asks for a ride — "@yango book me a car", "get me an inDrive fro
 3. Pick the vehicle type the user asked for (economy car, rickshaw/tuk-tuk, bike, etc.). If they didn't specify, show the options and fares and ask.
 4. Read the fare estimate back to the user and ASK FOR CONFIRMATION before tapping confirm/book — a ride costs real money. Never complete a booking without their explicit go-ahead in this conversation.
 5. After they confirm, complete the booking and report the driver, car, plate, and ETA from the screen.
+
+${buildLocalBrowserSection()}
 
 ASKING QUESTIONS
 When a decision genuinely blocks you, ask with a structured card — not prose. End your reply with exactly one fenced block and nothing after it:

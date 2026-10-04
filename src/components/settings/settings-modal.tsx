@@ -24,6 +24,7 @@ import {
   FiSmartphone,
 } from "@/components/ui/icons";
 import { IntegrationsView } from "@/components/integrations/integrations-view";
+import { BrowserExtensionCard } from "@/components/settings/browser-extension-card";
 import { TrosSettingsSection } from "@/components/settings/tros-section";
 import { useTheme } from "@/components/shell/theme";
 import { logOut } from "@/app/actions/auth";
@@ -286,6 +287,7 @@ export function SettingsModal({
 
             {section === "integrations" ? (
               <div data-theme="dark" className="rounded-2xl">
+                <BrowserExtensionCard />
                 {integrations ? (
                   <IntegrationsView
                     bare
