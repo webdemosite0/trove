@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/icons";
 import { SearchIcon } from "@/components/animate-ui/icons";
 import { cn } from "@/lib/utils";
+import { useIsWindows } from "@/lib/use-is-windows";
 
 interface Command {
   id: string;
@@ -136,6 +137,7 @@ function Row({
 
 export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
   const router = useRouter();
+  const isWindows = useIsWindows();
   const { openSettings } = useNav();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -288,7 +290,7 @@ export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
                       tone={cmd.tone}
                       label={cmd.label}
                       hint={cmd.hint}
-                      keys={cmd.keys}
+                      keys={cmd.keys === "⌘K" && isWindows ? "Ctrl+K" : cmd.keys}
                       onGo={() => go(cmd.href)}
                       onHover={() => setActive(i)}
                     />
