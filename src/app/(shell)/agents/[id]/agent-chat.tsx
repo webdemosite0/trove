@@ -12,6 +12,7 @@ import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
 import { ArtifactIcon } from "@/components/ui/artifact-icon";
+import { BrandSheetView } from "@/components/agents/brand-sheet";
 import { Ico } from "@/components/ui/ico";
 import { Tooltip } from "@/components/ui/tooltip";
 import { FailureNote } from "@/components/ui/failure-note";
@@ -84,6 +85,7 @@ const ARTIFACT_LABEL: Record<ArtifactKind, string> = {
   note: "Note",
   code: "Code",
   website: "Website",
+  brand: "Brand sheet",
 };
 
 const ARTIFACT_EXT: Record<ArtifactKind, string> = {
@@ -93,6 +95,7 @@ const ARTIFACT_EXT: Record<ArtifactKind, string> = {
   note: "md",
   code: "txt",
   website: "html",
+  brand: "json",
 };
 
 /** Card rendered under a chat turn for an artifact the Tro produced. */
@@ -208,7 +211,9 @@ function ArtifactPreview({
         </button>
       </div>
       <div className="max-h-[320px] overflow-y-auto">
-        {artifact.kind === "website" ? (
+        {artifact.kind === "brand" ? (
+          <BrandSheetView content={artifact.content} compact />
+        ) : artifact.kind === "website" ? (
           <iframe
             title={artifact.title}
             srcDoc={artifact.content}
@@ -433,7 +438,12 @@ export function AgentChat({
   }
 
   function downloadArtifact(a: SavedArtifact) {
-    const mime = a.kind === "website" ? "text/html;charset=utf-8" : "text/plain;charset=utf-8";
+    const mime =
+      a.kind === "website"
+        ? "text/html;charset=utf-8"
+        : a.kind === "brand"
+          ? "application/json;charset=utf-8"
+          : "text/plain;charset=utf-8";
     const blob = new Blob([a.content], { type: mime });
     const url = URL.createObjectURL(blob);
     const el = document.createElement("a");
@@ -1892,16 +1902,18 @@ export function AgentChat({
                   </>
                 ) : (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditText(viewer.content);
-                        setEditing(true);
-                      }}
-                      className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
-                    >
-                      Edit
-                    </button>
+                    {viewer.kind === "brand" ? null : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditText(viewer.content);
+                          setEditing(true);
+                        }}
+                        className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
+                      >
+                        Edit
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => downloadArtifact(viewer)}
@@ -1925,6 +1937,10 @@ export function AgentChat({
               spellCheck={false}
               className="mt-4 w-full resize-y rounded-2xl border border-line bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none focus:border-accent/50"
             />
+          ) : viewer.kind === "brand" ? (
+            <div className="mt-4 max-h-[70vh] overflow-y-auto rounded-2xl border border-line bg-canvas/40">
+              <BrandSheetView content={viewer.content} />
+            </div>
           ) : viewer.kind === "website" ? (
             <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white">
               <iframe
