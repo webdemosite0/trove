@@ -17,6 +17,7 @@ import {
 import { withLinkedText } from "@/components/chat/linked-text";
 import type { TeamChatMessage } from "@/lib/team-chat";
 import { cn } from "@/lib/utils";
+import { useVisibleInterval } from "@/lib/use-visible-interval";
 
 type TeamMeta = {
   id: string;
@@ -405,20 +406,12 @@ export function TeamChatPanel({
     scrollToBottom();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (!available) return;
-    if (variant === "dock" && !dockOpen && !mobileOpen) return;
-
-    const timer = window.setInterval(() => void load(true), 10_000);
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void load(true);
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [available, dockOpen, load, mobileOpen, variant]);
+  // Visibility-aware polling: pauses while the tab is hidden.
+  useVisibleInterval(
+    () => void load(true),
+    10_000,
+    available === true && !(variant === "dock" && !dockOpen && !mobileOpen),
+  );
 
   useEffect(() => {
     if (mobileOpen) {
