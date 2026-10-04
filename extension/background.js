@@ -92,6 +92,39 @@ async function activeTab() {
   return tabs[0] || null;
 }
 
+/**
+ * Trove works in its own dedicated tab — never hijacks the tab the user is
+ * on. Returns the existing work tab, or creates one (grouped under "Trove").
+ */
+async function getWorkTab() {
+  const { troveTabId } = await chrome.storage.local.get("troveTabId");
+  if (typeof troveTabId === "number") {
+    try {
+      const tab = await chrome.tabs.get(troveTabId);
+      if (tab) return tab;
+    } catch {
+      /* tab was closed — fall through and create a new one */
+    }
+  }
+  const tab = await chrome.tabs.create({ url: "about:blank", active: false });
+  await chrome.storage.local.set({ troveTabId: tab.id });
+  // Group it so the user's tab bar stays tidy.
+  try {
+    const groupId = await chrome.tabs.group({ tabIds: [tab.id] });
+    await chrome.tabGroups.update(groupId, { title: "Trove", color: "purple" });
+  } catch {
+    /* tab groups unavailable — the tab still works ungrouped */
+  }
+  return tab;
+}
+
+// Forget the work tab when the user closes it, so the next command
+// creates a fresh one instead of pointing at a dead tab id.
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const { troveTabId } = await chrome.storage.local.get("troveTabId");
+  if (troveTabId === tabId) await chrome.storage.local.remove("troveTabId");
+});
+
 function isRunnableUrl(url) {
   return typeof url === "string" && /^(https?|file):/i.test(url);
 }
@@ -150,18 +183,48 @@ async function runCommand(token, cmd) {
       case "navigate": {
         const url = String(p.url || "");
         if (!/^https?:\/\//i.test(url)) return fail("navigate needs a full http(s) URL");
-        const tab = await activeTab();
-        if (!tab) return fail("no active tab");
+        // Never hijack the user's current tab — work happens in Trove's own tab.
+        const tab = await getWorkTab();
         await chrome.tabs.update(tab.id, { url });
-        return done({ url });
+        // Bring the work tab into view so the user can watch the cursor.
+        try {
+          await chrome.tabs.update(tab.id, { active: true });
+          await chrome.windows.update(tab.windowId, { focused: true });
+        } catch {
+          /* best effort */
+        }
+        // Show the cursor on the new page so the user sees Trove acting —
+        // navigate alone is silent otherwise.
+        try {
+          await new Promise((r) => setTimeout(r, 1200)); // let the page start loading
+          await sendToTab(tab.id, {
+            type: "trove-cmd",
+            kind: "pulse",
+            payload: {},
+            label: `opening ${new URL(url).hostname}…`,
+          });
+        } catch {
+          /* page may not be injectable — not fatal */
+        }
+        return done({ url, workTab: true });
       }
       case "read":
       case "click":
       case "type":
       case "scroll":
       case "screenshot": {
-        const tab = await activeTab();
-        if (!tab) return fail("no active tab");
+        // Prefer the Trove work tab; fall back to the active tab when the
+        // user asked about the page they're looking at ("read this tab").
+        let tab = null;
+        const { troveTabId } = await chrome.storage.local.get("troveTabId");
+        if (typeof troveTabId === "number") {
+          try {
+            tab = await chrome.tabs.get(troveTabId);
+          } catch {
+            tab = null;
+          }
+        }
+        if (!tab) tab = await activeTab();
         if (!isRunnableUrl(tab.url)) {
           return fail("cannot run on this page (browser internal page)");
         }

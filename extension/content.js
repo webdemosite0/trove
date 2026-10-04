@@ -121,6 +121,15 @@
 
   async function handle(kind, payload, label) {
     switch (kind) {
+      case "pulse": {
+        // Visual feedback only — shows the cursor briefly with a label.
+        // Used after navigate so the user sees Trove acting.
+        const x = Number(payload.x) || window.innerWidth / 2;
+        const y = Number(payload.y) || window.innerHeight * 0.4;
+        showCursor(x, y, label || "working…");
+        hideCursorSoon(1800);
+        return { ok: true, result: { pulsed: true } };
+      }
       case "read": {
         return {
           ok: true,
