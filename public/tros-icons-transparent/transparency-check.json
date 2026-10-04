@@ -1,0 +1,366 @@
+{
+  "count": 36,
+  "all_transparent": true,
+  "icons": [
+    {
+      "file": "01-home.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "02-library.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "03-chat.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "04-team.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "05-artifacts.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "06-search.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "07-new-tro.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "08-profile.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "09-instructions.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "10-knowledge.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "11-memory.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "12-tools.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "13-tasks.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "14-activity.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "15-schedule.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "16-notifications.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "17-approvals.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "18-permissions.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "19-browser.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "20-desktop.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "21-files.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "22-connect.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "23-code.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "24-research.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "25-document.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "26-spreadsheet.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "27-deck.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "28-website.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "29-download.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "30-share.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "31-ready.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "32-working.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "33-waiting.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "34-failed.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "35-retry.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    },
+    {
+      "file": "36-stop.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "has_transparency": true,
+      "contains_visible_pixels": true
+    }
+  ]
+}
