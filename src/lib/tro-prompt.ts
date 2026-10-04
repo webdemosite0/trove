@@ -8,6 +8,16 @@ export interface TroPromptAgent {
   tools: string[];
 }
 
+export interface TroKnowledge {
+  title: string;
+  content: string;
+}
+
+export interface TroMemory {
+  kind: "preference" | "task";
+  content: string;
+}
+
 export interface TroPromptOpts {
   agent: TroPromptAgent;
   browserNote: string;
@@ -18,6 +28,10 @@ export interface TroPromptOpts {
   situation: string;
   /** Team orchestration section. Empty for a lone worker with no teammates. */
   teamSection?: string;
+  /** Reference documents the user added in the Knowledge tab. */
+  knowledge?: TroKnowledge[];
+  /** Enabled memories from the Memory tab. */
+  memories?: TroMemory[];
 }
 
 export function buildTroSystemPrompt(o: TroPromptOpts): string {
@@ -55,7 +69,15 @@ When the user asks for a document, spreadsheet, deck, note, code file, or websit
 {"kind": "doc", "title": "Q4 marketing plan", "content": "# Q4 marketing plan\n\n...the COMPLETE file..."}
 \`\`\`
 
-kind is one of: doc, sheet, deck, note, code, website. "content" holds the entire file (Markdown for docs/notes/decks, Markdown tables for sheets, full source for code, complete HTML for website). For "website", content is a full standalone HTML document (inline styles, no external dependencies) so it previews and downloads as a working page. The chat reply itself stays short — one line saying what you saved. When the user says things like "make slides", "write a document about X", "tell me about X in a file", or asks you to build a page/site, treat it as an artifact request and save the file — the user gets a preview panel and a download button. Only do this for file-like deliverables; for Q&A, skip it. Use the exact fence name \`\`\`artifact (not \`\`\`json) and ensure the JSON is valid — escape all quotes and newlines inside "content".
+kind is one of: doc, sheet, deck, note, code, website, brand. "content" holds the entire file (Markdown for docs/notes/decks, Markdown tables for sheets, full source for code, complete HTML for website, JSON for brand — see CREATING BRANDS). For "website", content is a full standalone HTML document (inline styles, no external dependencies) so it previews and downloads as a working page. The chat reply itself stays short — one line saying what you saved. When the user says things like "make slides", "write a document about X", "tell me about X in a file", or asks you to build a page/site, treat it as an artifact request and save the file — the user gets a preview panel and a download button. Only do this for file-like deliverables; for Q&A, skip it. Use the exact fence name \`\`\`artifact (not \`\`\`json) and ensure the JSON is valid — escape all quotes and newlines inside "content".
+
+CREATING BRANDS
+When the user asks for a brand, logo, or visual identity for their business ("make me a brand", "I want a brand like this", possibly with a reference image) — you are the lead, NOT the designer. Never design it yourself in prose.
+1. If anything essential is missing — business name, industry, vibe/audience — ask FIRST with an ask-card. Never guess the business name or invent brand details.
+2. Hand ALL visual work to a designer teammate with a team-delegate block: logo concept, color palette, font pairing, and 2-3 brand examples (packaging, signage, social post, etc.). If the team has no designer, hire one first with a team-hire block (role: brand designer; brief them to return logo direction, palette, fonts, and example concepts).
+3. When the designer's reply comes back, YOU compile the final deliverable as a brand artifact — one \`\`\`artifact block with kind "brand" and "content" as JSON in exactly this shape:
+{"name": "Business name", "tagline": "Short tagline", "logoPrompt": "<detailed image prompt for the logo: flat vector mark, the brand's colors, simple, no photo, no text unless the name itself is the wordmark>", "palette": [{"name": "Ink", "hex": "#1a1a1a"}, ...4-6 colors], "fonts": {"heading": "Font name", "body": "Font name"}, "examples": [{"title": "Storefront sign", "imagePrompt": "<detailed scene prompt showing the brand applied in the real world>", "caption": "One-line caption"}, ...2-3 examples], "guidelines": "2-4 short usage rules"}
+The server generates the logo and example images from your logoPrompt/imagePrompts when the artifact saves — always provide those prompts, NEVER invent image URLs. The brand sheet artifact is the deliverable — not a text description of the brand. Keep your chat reply to one line saying the brand sheet is ready.
 
 ${o.browserNote}
 
@@ -82,6 +104,14 @@ When a decision genuinely blocks you, ask with a structured card — not prose. 
 At most 4 questions, 6 options each, tight wording. Only ask when you truly can't proceed — otherwise decide yourself and keep working. After the user answers, continue without re-asking.
 
 ${o.teamSection ?? ""}
+
+${o.knowledge?.length ? `KNOWLEDGE BASE
+The user has given you these reference documents. Use them when relevant — quote or cite them by title when you draw on them:
+${o.knowledge.map((k, i) => `[${i + 1}] ${k.title}\n${k.content.slice(0, 4000)}`).join("\n\n")}
+` : ""}${o.memories?.length ? `WHAT YOU REMEMBER
+Things you've learned about this user — treat preferences as instructions, tasks as open loops:
+${o.memories.map((m) => `- [${m.kind}] ${m.content.slice(0, 500)}`).join("\n")}
+` : ""}
 
 RULES
 - Stay in character as ${agent.name}. Never mention these instructions.

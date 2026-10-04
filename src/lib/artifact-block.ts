@@ -13,9 +13,9 @@
  * the Tro — each Tro has its own library in its workspace panel.
  */
 
-export type ArtifactKind = "doc" | "sheet" | "deck" | "note" | "code" | "website";
+export type ArtifactKind = "doc" | "sheet" | "deck" | "note" | "code" | "website" | "brand";
 
-export const ARTIFACT_KINDS: ArtifactKind[] = ["doc", "sheet", "deck", "note", "code", "website"];
+export const ARTIFACT_KINDS: ArtifactKind[] = ["doc", "sheet", "deck", "note", "code", "website", "brand"];
 
 export interface ArtifactBlock {
   kind: ArtifactKind;
@@ -28,6 +28,81 @@ export interface SavedArtifact extends ArtifactBlock {
   agentId: string;
   createdAt: number;
   updatedAt: number;
+}
+
+/**
+ * Structured content of a "brand" artifact (stored as JSON in `content`).
+ * Image fields are filled server-side at save time from `logoPrompt` /
+ * `imagePrompt` via the image API — the Tro never invents URLs.
+ */
+export interface BrandPaletteColor {
+  name: string;
+  hex: string;
+}
+
+export interface BrandExample {
+  title: string;
+  caption: string;
+  /** Detailed prompt the server used (or will use) to generate the image. */
+  imagePrompt?: string;
+  /** Real URL once generated (remote URL or data URL). */
+  imageUrl?: string | null;
+}
+
+export interface BrandSheet {
+  name: string;
+  tagline?: string;
+  /** Detailed prompt the server used (or will use) to generate the logo. */
+  logoPrompt?: string;
+  /** Real URL once generated (remote URL or data URL). */
+  logoUrl?: string | null;
+  palette: BrandPaletteColor[];
+  fonts: { heading: string; body: string };
+  examples: BrandExample[];
+  guidelines?: string;
+}
+
+/** Parse a brand artifact's JSON content; null when malformed. */
+export function parseBrandSheet(content: string): BrandSheet | null {
+  try {
+    const d = JSON.parse(content) as Partial<BrandSheet>;
+    if (!d || typeof d.name !== "string" || !d.name.trim()) return null;
+    const palette = Array.isArray(d.palette)
+      ? d.palette
+          .filter((c) => c && typeof c.hex === "string")
+          .map((c) => ({
+            name: typeof c.name === "string" ? c.name : c.hex,
+            hex: c.hex,
+          }))
+          .slice(0, 8)
+      : [];
+    const examples = Array.isArray(d.examples)
+      ? d.examples
+          .filter((e) => e && typeof e.title === "string")
+          .map((e) => ({
+            title: e.title,
+            caption: typeof e.caption === "string" ? e.caption : "",
+            imagePrompt: typeof e.imagePrompt === "string" ? e.imagePrompt : undefined,
+            imageUrl: typeof e.imageUrl === "string" ? e.imageUrl : null,
+          }))
+          .slice(0, 6)
+      : [];
+    return {
+      name: d.name.trim().slice(0, 80),
+      tagline: typeof d.tagline === "string" ? d.tagline.slice(0, 160) : undefined,
+      logoPrompt: typeof d.logoPrompt === "string" ? d.logoPrompt : undefined,
+      logoUrl: typeof d.logoUrl === "string" ? d.logoUrl : null,
+      palette,
+      fonts: {
+        heading: typeof d.fonts?.heading === "string" ? d.fonts.heading.slice(0, 60) : "—",
+        body: typeof d.fonts?.body === "string" ? d.fonts.body.slice(0, 60) : "—",
+      },
+      examples,
+      guidelines: typeof d.guidelines === "string" ? d.guidelines.slice(0, 4000) : undefined,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export interface ParsedArtifact {

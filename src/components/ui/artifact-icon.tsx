@@ -107,6 +107,18 @@ function WebsiteIcon() {
   );
 }
 
+function BrandIcon() {
+  return (
+    <g>
+      <rect x="2.5" y="2.5" width="6.5" height="6.5" rx="1.8" fill="currentColor" opacity=".95" className="art-cell art-cell-1" />
+      <rect x="10" y="2.5" width="6.5" height="6.5" rx="1.8" fill="currentColor" opacity=".55" className="art-cell art-cell-2" />
+      <rect x="2.5" y="10" width="6.5" height="6.5" rx="1.8" fill="currentColor" opacity=".7" className="art-cell art-cell-3" />
+      <rect x="10" y="10" width="6.5" height="6.5" rx="3.25" fill="none" stroke="currentColor" strokeWidth="1.6" opacity=".9" />
+      <circle cx="13.25" cy="13.25" r="1.4" fill="currentColor" className="art-cell art-cell-4" />
+    </g>
+  );
+}
+
 export function ArtifactIcon({
   kind,
   size = 16,
@@ -126,6 +138,7 @@ export function ArtifactIcon({
         {kind === "note" && <NoteIcon />}
         {kind === "code" && <CodeIcon />}
         {kind === "website" && <WebsiteIcon />}
+        {kind === "brand" && <BrandIcon />}
       </svg>
     </span>
   );
