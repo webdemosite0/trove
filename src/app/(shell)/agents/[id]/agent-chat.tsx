@@ -49,6 +49,11 @@ import {
   browserToolLabel,
   type BrowserToolCall,
 } from "@/lib/browser-tool-block";
+import {
+  parseLocalBrowser,
+  localBrowserLabel,
+  type LocalBrowserCall,
+} from "@/lib/local-browser-block";
 import { useTroPresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
 
@@ -684,6 +689,91 @@ export function AgentChat({
     [browserAction, startComputer, panelOpen],
   );
 
+  /**
+   * Execute one local-browser op emitted by the Tro: enqueue it for the
+   * paired browser extension, poll until it resolves, and return a compact
+   * text result to feed back into the conversation.
+   */
+  const runLocalBrowserCall = useCallback(
+    async (call: LocalBrowserCall): Promise<string> => {
+      const truncate = (s: string, n: number) =>
+        s.length > n ? s.slice(0, n) + `\n…(truncated, ${s.length - n} more chars)` : s;
+      const payload: Record<string, unknown> = {};
+      if (call.url) payload.url = call.url;
+      if (call.selector) payload.selector = call.selector;
+      if (call.text) payload.text = call.text;
+      if (call.direction) payload.direction = call.direction;
+      if (call.submit) payload.submit = true;
+      payload.label = localBrowserLabel(call);
+
+      let commandId: string;
+      try {
+        const res = await fetch("/api/extension/enqueue", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ kind: call.op, payload }),
+        });
+        const data = (await res.json().catch(() => null)) as {
+          commandId?: string;
+          error?: string;
+        } | null;
+        if (res.status === 409) {
+          return (
+            data?.error ||
+            "No local browser connected — ask the user to install the Trove extension from Settings → Browser."
+          );
+        }
+        if (!res.ok || !data?.commandId) {
+          return `Local browser action failed: ${data?.error || res.statusText || "enqueue failed"}.`;
+        }
+        commandId = data.commandId;
+      } catch (e) {
+        return `Local browser action failed: ${e instanceof Error ? e.message : "network error"}.`;
+      }
+
+      // Poll for the result (extension runs it in the user's active tab).
+      const deadline = Date.now() + 60000;
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 1500));
+        try {
+          const res = await fetch(
+            `/api/extension/command/${encodeURIComponent(commandId)}`,
+            { cache: "no-store" },
+          );
+          const data = (await res.json().catch(() => null)) as {
+            status?: string;
+            result?: unknown;
+            error?: string;
+          } | null;
+          if (!data) continue;
+          if (data.status === "done" || data.status === "failed") {
+            if (data.status === "failed") {
+              return `Local browser action failed: ${data.error || "extension reported failure"}.`;
+            }
+            const r = data.result as Record<string, unknown> | null;
+            if (!r) return "Done in your browser.";
+            if (call.op === "tabs" && Array.isArray(r.tabs)) {
+              const tabs = (r.tabs as { title: string; url: string; active: boolean }[]).slice(0, 15);
+              return `Your open tabs:\n${tabs.map((t, i) => `${i + 1}. ${t.title || "(untitled)"} — ${t.url}${t.active ? " (active)" : ""}`).join("\n")}`;
+            }
+            if (call.op === "read") {
+              const text = truncate(String(r.text ?? "(no text)"), 5000);
+              return `Tab: ${r.title || ""}\nURL: ${r.url || ""}\n\n${text}`;
+            }
+            if (call.op === "screenshot") {
+              return `Captured your tab (${r.title || r.url || "active tab"}). Screenshot saved — describe what you see from the read output if needed.`;
+            }
+            return `Done in your browser.${r.url ? `\nURL: ${r.url}` : ""}`;
+          }
+        } catch {
+          /* keep polling */
+        }
+      }
+      return "Local browser action timed out after 60s — the extension may be offline.";
+    },
+    [],
+  );
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -1003,6 +1093,53 @@ export function AgentChat({
           setTurns((t) =>
             t.map((x) => (x.id === browseTurnId ? { ...x, text: strippedBrowse } : x)),
           );
+        }
+
+        // Local browser: the Tro drives the USER's own browser via the Trove
+        // extension with fenced local-browser blocks. Enqueue them, wait for
+        // the extension, feed results back — same loop shape as above.
+        {
+          let localRound = 0;
+          let parsed = parseLocalBrowser(full);
+          let localTurnId = replyId;
+          while (parsed.calls.length > 0 && localRound < 3) {
+            localRound++;
+            const shown = parsed.text;
+            setTurns((t) =>
+              t.map((x) => (x.id === localTurnId ? { ...x, text: shown } : x)),
+            );
+            const outcomes: string[] = [];
+            for (const call of parsed.calls.slice(0, 3)) {
+              const label = localBrowserLabel(call);
+              pushActivity("Local browser", label, "run");
+              const result = await runLocalBrowserCall(call);
+              const failed = /failed|timed out|No local browser/i.test(result.slice(0, 80));
+              outcomes.push(`**${label}**:\n\n${result}`);
+              pushActivity(label, failed ? "Failed" : "Done", failed ? "warn" : "ok");
+            }
+            const followUpId = nextId.current++;
+            setTurns((t) => [
+              ...t,
+              { id: followUpId, role: "model" as const, text: "" },
+            ]);
+            const followUpMsgs = [
+              ...history.map(({ role, text: body }) => ({
+                role,
+                text: body,
+              })),
+              { role: "model" as const, text: shown },
+              {
+                role: "user" as const,
+                text:
+                  `Local browser results — use them to continue your task:\n\n${outcomes.join("\n\n---\n\n")}\n\n` +
+                  `Keep going with local-browser blocks if you need more steps, or answer the user from what you found. ` +
+                  `Never mention tool blocks or protocols. If an action failed, say what happened plainly.`,
+              },
+            ];
+            full = await streamTurn(followUpMsgs, followUpId);
+            parsed = parseLocalBrowser(full);
+            localTurnId = followUpId;
+          }
         }
 
         // Team orchestration: this Tro may have delegated work to teammates
