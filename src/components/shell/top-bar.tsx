@@ -8,8 +8,6 @@ import { Ico } from "@/components/ui/ico";
 import { CreditMeter } from "@/components/shell/credit-meter";
 import { NotificationsPanel } from "@/components/shell/notifications-panel";
 import type { Balance } from "@/lib/types";
-import { useIsDesktopClient } from "@/lib/is-desktop-client";
-import { useModKLabel } from "@/lib/use-is-windows";
 
 export function TopBar({
   initial,
@@ -21,8 +19,6 @@ export function TopBar({
   balance?: Balance | null;
 }) {
   const { setOpen, setSettingsOpen, openSettings } = useNav();
-  const isDesktop = useIsDesktopClient();
-  const modK = useModKLabel();
 
   const openPalette = () =>
     window.dispatchEvent(
@@ -52,13 +48,12 @@ export function TopBar({
           Jump to…
         </span>
         <kbd className="hidden shrink-0 rounded-[var(--r-tight)] border border-line px-1.5 py-0.5 text-[10.5px] tabular-nums text-ink-4 sm:inline">
-          {modK}
+          ⌘K
         </kbd>
       </button>
 
       <span className="flex-1" />
 
-      {!isDesktop ? (
       <button
         type="button"
         onClick={() => openSettings("download")}
@@ -75,7 +70,6 @@ export function TopBar({
         <span className="hidden sm:inline">Download</span>
         <span className="hidden font-semibold text-ink md:inline">Trove</span>
       </button>
-      ) : null}
 
       <NotificationsPanel due={due} />
 
