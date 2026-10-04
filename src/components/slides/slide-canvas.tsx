@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Slide } from "@/lib/slides";
 import {
@@ -210,9 +210,13 @@ function Bullets({
 
 function PhotoFrame({ image, thumb }: { image?: string; thumb?: boolean }) {
   const isUrl = image && (/^https?:\/\//i.test(image) || image.startsWith("data:image/"));
+  // If the remote image fails (rate limits, downtime), fall back to the
+  // styled placeholder instead of a broken-image icon.
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [image]);
   return (
     <div className={cn("relative overflow-hidden bg-sunk", thumb ? "min-h-[40%]" : "min-h-0")}>
-      {isUrl ? (
+      {isUrl && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={image}
@@ -220,6 +224,7 @@ function PhotoFrame({ image, thumb }: { image?: string; thumb?: boolean }) {
           className="h-full w-full object-cover"
           loading="lazy"
           decoding="async"
+          onError={() => setFailed(true)}
         />
       ) : (
         <div className="flex h-full min-h-[18cqw] flex-col items-center justify-center gap-[1.2cqw] bg-gradient-to-br from-indigo-500/20 via-violet-500/10 to-pink-500/15 px-[4cqw] text-center">
@@ -227,7 +232,7 @@ function PhotoFrame({ image, thumb }: { image?: string; thumb?: boolean }) {
             Photo
           </span>
           <p className="max-w-[36ch] text-[2.2cqw] leading-snug text-ink-3">
-            {image || "Visual panel"}
+            {image && !/^https?:\/\//i.test(image) ? image : "Visual panel"}
           </p>
         </div>
       )}
