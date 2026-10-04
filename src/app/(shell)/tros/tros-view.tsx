@@ -279,7 +279,7 @@ const STATE_META: Record<AgentState, { label: string; dot: string; badge: string
 
 function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
-    <div className="mb-3 px-1">
+    <div className="mb-2 px-1">
       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">{children}</p>
       {hint ? <p className="mt-1 text-[12.5px] text-ink-3">{hint}</p> : null}
     </div>
@@ -287,6 +287,29 @@ function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: st
 }
 
 /* ------------------------------ compact roster row ----------------------------- */
+
+/* Role display: prefer a meaningful role, otherwise derive a one-line summary
+   from the Tro's own instructions. Never shows "name / name". */
+function roleSummary(agent: AgentRow): { text: string; dim: boolean } {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const role = (agent.role || "").trim();
+  if (role && norm(role) !== norm(agent.name || "")) {
+    return { text: role, dim: false };
+  }
+  const raw = (agent.instructions || "").trim();
+  if (raw) {
+    const clean = raw
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/[#>*_`~|[\]()]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const m = clean.match(/^(.{20,}?[.!?])(\s|$)/);
+    let summary = m ? m[1].trim() : clean.slice(0, 90).trim();
+    if (!m && clean.length > 90) summary = summary.slice(0, 87).trimEnd() + "…";
+    if (summary) return { text: summary, dim: true };
+  }
+  return { text: "No description yet", dim: true };
+}
 
 function RosterRow({
   agent,
@@ -302,6 +325,7 @@ function RosterRow({
   className?: string;
 }) {
   const meta = STATE_META[state];
+  const summary = roleSummary(agent);
   const context =
     task && task.status === "working" ? (
       <span className="truncate text-violet-500/90">Working on: {task.title || "a task"}</span>
@@ -316,7 +340,7 @@ function RosterRow({
     <Link
       href={`/tros/${agent.id}`}
       className={cn(
-        "group flex items-center gap-3 px-4 py-2 transition hover:bg-hover/60",
+        "group flex items-center gap-3 px-4 py-1.5 transition hover:bg-hover/60",
         divider && "border-t border-line/60",
         className,
       )}
@@ -331,7 +355,7 @@ function RosterRow({
           </span>
         ) : null}
         <Bot
-          size={34}
+          size={30}
           seed={agent.id}
           accent={agent.accent}
           state={state === "working" ? "working" : "idle"}
@@ -344,7 +368,7 @@ function RosterRow({
             {meta.label}
           </span>
         </span>
-        <span className="block truncate text-[12px] text-ink-2">{agent.role}</span>
+        <span className={cn("block truncate text-[12px]", summary.dim ? "text-ink-4" : "text-ink-2")}>{summary.text}</span>
         <span className="block truncate text-[11.5px]">{context}</span>
       </span>
       <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
@@ -532,10 +556,6 @@ export function TrosView({
       >
         <TroListPanel
           agents={agents}
-          onNew={() => {
-            setNavOpen(false);
-            setDraft(BLANK_DRAFT);
-          }}
           onDelete={setDeletingId}
           workingIds={presence}
           className="h-full"
@@ -613,7 +633,7 @@ export function TrosView({
 
         <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(ellipse_at_50%_0%,rgba(139,92,246,0.12),transparent_55%)]" />
-          <div className="relative mx-auto w-full max-w-[860px] space-y-8 px-4 py-6 sm:px-6">
+          <div className="relative mx-auto w-full max-w-[860px] space-y-6 px-4 py-5 sm:px-6">
 
             {/* Active tasks — needs attention + live work, always visible */}
             <section id="active-work" aria-label="Active tasks">
@@ -621,7 +641,7 @@ export function TrosView({
                 Active tasks
               </SectionTitle>
               {attention.length > 0 || pendingApprovals.length > 0 ? (
-                <div id="needs-attention" className="mb-5">
+                <div id="needs-attention" className="mb-4">
                   <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">
                     Needs attention
                   </p>
@@ -790,7 +810,7 @@ export function TrosView({
 
             {/* Team overview */}
             <section id="roster" aria-label="Team overview" className="scroll-mt-20">
-              <div className="mb-3 flex items-end justify-between px-1">
+              <div className="mb-2 flex items-end justify-between px-1">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Team overview</p>
                   <p className="mt-1 text-[12.5px] text-ink-3">
@@ -822,7 +842,7 @@ export function TrosView({
                   ))}
                 </div>
               ) : (
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {managers.map((m) => {
                     const reports = ordered.filter((c) => c.parent_id === m.id);
                     return (
@@ -848,7 +868,7 @@ export function TrosView({
                   })}
                   {independents.length > 0 ? (
                     <div>
-                      <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                      <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">
                         Independent
                       </p>
                       <div className="overflow-hidden rounded-2xl border border-line bg-raised/50">
