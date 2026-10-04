@@ -5,7 +5,7 @@ import { localTimeZone } from "@/lib/context";
 import { useVisibleInterval } from "@/lib/use-visible-interval";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap, FiUsers, FiSettings } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap, FiUsers, FiSettings, FiMenu, FiChevronDown, FiChevronRight, FiSearch, FiEdit2 } from "@/components/ui/icons";
 import { ThinkingBall } from "@/components/chat/thinking";
 import { TroTasksPanel } from "@/components/agents/tro-tasks-panel";
 import { TroSkillsPanel } from "@/components/agents/tro-skills-panel";
@@ -19,7 +19,6 @@ import { TroPngIcon, type TroPngIconName } from "@/components/tro/tro-png-icons"
 import { Tooltip } from "@/components/ui/tooltip";
 import { FailureNote } from "@/components/ui/failure-note";
 import { Modal } from "@/components/ui/modal";
-import { TroListPanel } from "../../tros/tro-list";
 import { useNav } from "@/components/shell/nav-state";
 import { ApprovalPrompt } from "@/components/agents/approval-prompt";
 import { extractAskBlocks, stripAskBlocks, type AskBlock } from "@/lib/ask-block";
@@ -113,50 +112,54 @@ function ArtifactCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-3 py-2.5 transition hover:border-line-strong">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
-        <ArtifactIcon kind={block.kind} size={17} />
-      </span>
-      <button
-        type="button"
-        onClick={onOpen}
-        disabled={!saved}
-        className="min-w-0 flex-1 text-left disabled:cursor-default"
-      >
-        <span className="block truncate text-[13px] font-semibold text-ink">{block.title}</span>
-        <span className="block text-[11px] text-ink-4">
-          {ARTIFACT_LABEL[block.kind]} · {saved ? "Saved to library" : "Saving…"}
+    <div className="mt-3 overflow-hidden rounded-2xl border border-[#e9e4f7] bg-white shadow-[0_2px_12px_-6px_rgba(109,40,217,0.12)]">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#f0ebfd] text-[#6d28d9]">
+          <ArtifactIcon kind={block.kind} size={18} />
         </span>
-      </button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-bold text-[#1e1b2e]">{block.title}</p>
+          <p className="text-[12px] text-[#8b87a3]">
+            {ARTIFACT_LABEL[block.kind]} · {saved ? "Saved to library" : "Saving…"}
+          </p>
+        </div>
+        {saved ? (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="shrink-0 text-[13px] font-semibold text-[#6d28d9] transition hover:underline"
+          >
+            Open ↗
+          </button>
+        ) : (
+          <span
+            className="size-4 shrink-0 animate-spin rounded-full border-2 border-[#d9d2ef] border-t-[#6d28d9]"
+            aria-label="Saving artifact"
+          />
+        )}
+      </div>
       {saved ? (
-        <span className="flex shrink-0 items-center gap-1">
-          <Tooltip label="Download artifact">
-            <button
-              type="button"
-              onClick={onDownload}
-              aria-label="Download artifact"
-              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
-            >
-              <FiDownload size={14} />
-            </button>
-          </Tooltip>
-          <Tooltip label="Delete artifact">
-            <button
-              type="button"
-              onClick={onDelete}
-              aria-label="Delete artifact"
-              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-critical/10 hover:text-critical"
-            >
-              <FiTrash2 size={14} />
-            </button>
-          </Tooltip>
-        </span>
-      ) : (
-        <span
-          className="size-4 shrink-0 animate-spin rounded-full border-2 border-line-strong border-t-accent"
-          aria-label="Saving artifact"
-        />
-      )}
+        <div className="flex items-center justify-end gap-1 border-t border-[#f5f3ff] px-3 py-1.5">
+          <button
+            type="button"
+            onClick={onDownload}
+            aria-label="Download artifact"
+            title="Download"
+            className="grid size-8 place-items-center rounded-lg text-[#8b87a3] transition hover:bg-[#f5f3ff] hover:text-[#1e1b2e]"
+          >
+            <FiDownload size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="Delete artifact"
+            title="Delete"
+            className="grid size-8 place-items-center rounded-lg text-[#8b87a3] transition hover:bg-[#fce8ee] hover:text-[#c2325a]"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -305,15 +308,13 @@ export function AgentChat({
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [computer, setComputer] = useState<ComputerState>(IDLE_COMPUTER);
   const [computerBusy, setComputerBusy] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
-  /** Tro library sidebar. Starts open on an empty chat, auto-collapses once
-      the conversation begins so chat gets the room; the header toggle brings it back. */
-  const [libraryOpen, setLibraryOpen] = useState(() => turns.length === 0);
-  const hadTurns = useRef(turns.length > 0);
+  const [panelOpen, setPanelOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1280);
+  const [navOpen, setNavOpen] = useState(false);
+  const [knowledgeCount, setKnowledgeCount] = useState<number | null>(null);
   const { openSettings } = useNav();
   const [browserExpanded, setBrowserExpanded] = useState(false);
-  type PanelTab = "desktop" | "files" | "activity" | "connectors" | "tasks" | "skills";
-  const [panelTab, setPanelTab] = useState<PanelTab>("desktop");
+  type PanelTab = "about" | "desktop" | "files" | "activity" | "connectors" | "tasks" | "skills";
+  const [panelTab, setPanelTab] = useState<PanelTab>("about");
   /** Inline artifact preview shown at the top of the Files tab (Claude-style). */
   const [previewArtifact, setPreviewArtifact] = useState<SavedArtifact | null>(null);
   const pendingApprovals = useMemo(() => {
@@ -335,14 +336,6 @@ export function AgentChat({
       .getElementById(`ask-${turnId}-${askIdx}`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
-
-  // Auto-collapse the Tro library when the conversation starts; the user can
-  // re-open it with the header toggle and it stays open afterwards.
-  useEffect(() => {
-    const active = turns.length > 0;
-    if (active && !hadTurns.current) setLibraryOpen(false);
-    hadTurns.current = active;
-  }, [turns.length]);
 
   const [artifacts, setArtifacts] = useState<SavedArtifact[]>([]);
   const [artifactsLoaded, setArtifactsLoaded] = useState(false);
@@ -371,6 +364,25 @@ export function AgentChat({
         /* library stays empty */
       } finally {
         if (!cancelled) setArtifactsLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [agent.id]);
+
+  // Knowledge file count for the About panel (best-effort).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/tro/knowledge?agentId=${encodeURIComponent(agent.id)}`);
+        const data = await res.json().catch(() => null);
+        if (!cancelled && res.ok && Array.isArray(data?.sources)) {
+          setKnowledgeCount(data.sources.length);
+        }
+      } catch {
+        /* count stays unknown */
       }
     })();
     return () => {
@@ -1252,777 +1264,911 @@ export function AgentChat({
     );
     return parts.join(" · ");
   }, [busy, pendingApprovals.length, computerConnected, computerBusy, computer.status]);
+  /* ================= New shell helpers (layout only — no behavior change) ================= */
+  const newChat = () => {
+    setTurns([]);
+    setError(null);
+    setActivity([]);
+    reset();
+    nextId.current = 0;
+  };
+  const openFilesTab = () => {
+    setPanelTab("files");
+    setPanelOpen(true);
+  };
+  const firstName = agent.name.split(" ")[0];
+  const roleSummary = agent.role?.trim() ? agent.role.trim() : statusSummary;
+  const latestActivity = activity.length > 0 ? activity[0] : null;
+  const aboutBlurb = (() => {
+    const t = (agent.instructions || "")
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/[#*`_>\[\]()]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!t) return "";
+    if (t.length <= 150) return t;
+    return t.slice(0, 150).replace(/\s+\S*$/, "") + "…";
+  })();
+
+  const rightTabs = (
+    [
+      { id: "about", label: "About", png: "profile", badge: undefined as number | undefined },
+      { id: "activity", label: "Activity", png: "activity", badge: activity.filter((a) => a.tone === "run").length || undefined },
+      { id: "files", label: "Files", png: "files", badge: artifacts.length || undefined },
+      { id: "desktop", label: "Desktop", png: "desktop", badge: undefined as number | undefined },
+      { id: "connectors", label: "Connect", png: "connect", badge: undefined as number | undefined },
+      { id: "tasks", label: "Tasks", png: "tasks", badge: undefined as number | undefined },
+      { id: "skills", label: "Skills", png: "tools", badge: undefined as number | undefined },
+    ] as const
+  );
+
+  const navRowCls =
+    "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-medium text-[#5b5678] transition hover:bg-[#f5f3ff] hover:text-[#1e1b2e]";
+
+  const leftRail = (
+    <div className="flex h-full min-h-0 flex-col bg-white">
+      <div className="flex shrink-0 items-center gap-2.5 px-5 pb-4 pt-5">
+        <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[#111827] text-[15px] font-extrabold tracking-tight text-white">
+          Tr
+        </span>
+        <span className="text-[19px] font-bold tracking-tight text-[#111827]">Tros</span>
+      </div>
+      <div className="shrink-0 px-4">
+        <button
+          type="button"
+          onClick={() => {
+            newChat();
+            setNavOpen(false);
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 py-2.5 text-[14px] font-semibold text-white shadow-[0_4px_14px_-4px_rgba(109,40,217,0.5)] transition hover:bg-[#5b21b6] active:scale-[0.99]"
+        >
+          <FiPlus size={16} strokeWidth={2.5} /> New conversation
+        </button>
+      </div>
+      <nav className="mt-4 shrink-0 space-y-0.5 px-3" aria-label="Tros">
+        <Link href="/tros" onClick={() => setNavOpen(false)} className={navRowCls}>
+          <FiGlobe size={17} className="shrink-0" /> Explore Tros
+        </Link>
+        <Link href="/tros" onClick={() => setNavOpen(false)} className={navRowCls}>
+          <FiUsers size={17} className="shrink-0" /> Your crew
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            openFilesTab();
+            setNavOpen(false);
+          }}
+          className={navRowCls}
+        >
+          <FiFolder size={17} className="shrink-0" /> Artifacts
+        </button>
+      </nav>
+      <div className="mt-5 flex min-h-0 flex-1 flex-col">
+        <p className="shrink-0 px-5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8b87a3]">
+          Your Tros
+        </p>
+        <ul className="mt-1.5 min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3">
+          {agents.map((a) => {
+            const active = a.id === agent.id;
+            const working = teamPresence.has(a.id);
+            return (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!active) router.push(`/tros/${a.id}`);
+                    setNavOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-left transition",
+                    active ? "bg-[#f0ebfd]" : "hover:bg-[#f5f3ff]",
+                  )}
+                >
+                  <Bot size={30} accent={a.accent} seed={a.id} state={working ? "working" : "idle"} />
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-[14px]",
+                      active ? "font-semibold text-[#1e1b2e]" : "font-medium text-[#3f3f4a]",
+                    )}
+                  >
+                    {a.name}
+                  </span>
+                  {working ? (
+                    <span className="size-2 shrink-0 animate-pulse rounded-full bg-[#6d28d9]" aria-label="Working" />
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="mt-4 flex shrink-0 items-center justify-between px-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8b87a3]">Recent chats</p>
+          <FiSearch size={14} className="text-[#8b87a3]" />
+        </div>
+        <ul className="mt-1.5 max-h-[168px] shrink-0 space-y-0.5 overflow-y-auto px-3 pb-2">
+          {recents.slice(0, 8).map((r) => (
+            <li key={r.id}>
+              <Link
+                href={r.href}
+                onClick={() => setNavOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-[14px] font-medium text-[#3f3f4a] transition hover:bg-[#f5f3ff]"
+              >
+                <FiMessageSquare size={15} className="shrink-0 text-[#8b87a3]" />
+                <span className="truncate">{r.title}</span>
+              </Link>
+            </li>
+          ))}
+          {recents.length === 0 ? (
+            <li className="px-2.5 py-2 text-[13px] text-[#8b87a3]">No recent chats yet</li>
+          ) : null}
+        </ul>
+      </div>
+      <div className="shrink-0 border-t border-[#e9e4f7] p-3">
+        <button
+          type="button"
+          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-[#f5f3ff]"
+        >
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#ede9fe] text-[13px] font-bold text-[#6d28d9]">
+            A
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-[#1e1b2e]">Arayan</span>
+          <FiChevronDown size={15} className="shrink-0 text-[#8b87a3]" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const aboutTab = (
+    <div className="px-5 py-5">
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8b87a3]">
+        About {firstName}
+      </p>
+      <div className="mt-3 flex justify-center overflow-hidden rounded-2xl bg-[#f0ebfd] px-4 py-6">
+        <Bot size={128} accent={agent.accent} seed={agent.id} state="idle" />
+      </div>
+      <h2 className="mt-4 text-[20px] font-bold tracking-tight text-[#1e1b2e]">{agent.name}</h2>
+      {agent.role?.trim() ? (
+        <p className="mt-0.5 text-[14px] text-[#5b5678]">{agent.role.trim()}</p>
+      ) : null}
+      {aboutBlurb ? (
+        <p className="mt-2 text-[13.5px] leading-relaxed text-[#3f3f4a]">{aboutBlurb}</p>
+      ) : null}
+      <div className="mt-4 space-y-1">
+        <Link
+          href={`/tros/${agent.id}/edit`}
+          className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-[#f5f3ff]"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f5f3ff] text-[#6d28d9] transition group-hover:bg-[#ede9fe]">
+            <TroPngIcon name="knowledge" size={17} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-semibold text-[#1e1b2e]">Knowledge</span>
+            <span className="block text-[12.5px] text-[#8b87a3]">
+              {knowledgeCount === null
+                ? "Knowledge base"
+                : `${knowledgeCount} brand file${knowledgeCount === 1 ? "" : "s"}`}
+            </span>
+          </span>
+          <FiChevronRight size={16} className="shrink-0 text-[#8b87a3]" />
+        </Link>
+        <Link
+          href={`/tros/${agent.id}/edit`}
+          className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-[#f5f3ff]"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f5f3ff] text-[#6d28d9] transition group-hover:bg-[#ede9fe]">
+            <TroPngIcon name="memory" size={17} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-semibold text-[#1e1b2e]">Memory</span>
+            <span className="block text-[12.5px] text-[#8b87a3]">Your preferences</span>
+          </span>
+          <FiChevronRight size={16} className="shrink-0 text-[#8b87a3]" />
+        </Link>
+        <button
+          type="button"
+          onClick={() => setPanelTab("connectors")}
+          className="group flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-[#f5f3ff]"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f5f3ff] text-[#6d28d9] transition group-hover:bg-[#ede9fe]">
+            <TroPngIcon name="connect" size={17} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-semibold text-[#1e1b2e]">Connections</span>
+            <span className="block truncate text-[12.5px] text-[#8b87a3]">
+              {connectors === null
+                ? "Checking…"
+                : connectors.length === 0
+                  ? "Nothing connected"
+                  : connectors.length === 1
+                    ? connectors[0].label
+                    : `${connectors.length} connected`}
+            </span>
+          </span>
+          <FiChevronRight size={16} className="shrink-0 text-[#8b87a3]" />
+        </button>
+      </div>
+      <Link
+        href={`/tros/${agent.id}/edit`}
+        className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[#d9d2ef] bg-white px-4 py-2.5 text-[14px] font-semibold text-[#1e1b2e] transition hover:bg-[#f5f3ff]"
+      >
+        <FiEdit2 size={15} /> Edit Tro
+      </Link>
+    </div>
+  );
 
   return (
-    <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
-      {agents.length > 0 && libraryOpen ? (
-        <div className="hidden w-[272px] shrink-0 border-r border-line/70 xl:block">
-          <TroListPanel
-            agents={agents}
-            activeId={agent.id}
-            onNew={() => router.push("/tros?new=1")}
-            onDelete={setDeletingId}
-            workingIds={teamPresence}
-            className="h-full"
+    <div
+      data-tro-light
+      className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-[#faf9ff] text-[#1e1b2e]"
+    >
+      {/* ============ LEFT RAIL (desktop) ============ */}
+      <aside className="hidden w-[248px] shrink-0 border-r border-[#e9e4f7] lg:block">
+        {leftRail}
+      </aside>
+
+      {/* ============ LEFT RAIL (mobile drawer) ============ */}
+      {navOpen ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setNavOpen(false)}
+            className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           />
-        </div>
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-[#e9e4f7] bg-white shadow-2xl lg:hidden">
+            {leftRail}
+          </aside>
+        </>
       ) : null}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="shrink-0 border-b border-line/80 bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
-          <div className="flex h-14 items-center gap-3">
-            <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink">
-              <Ico icon={FiArrowLeft} motion="nudge" size={17} />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setLibraryOpen((v) => !v)}
-              aria-expanded={libraryOpen}
-              aria-label={libraryOpen ? "Hide Tro list" : "Show Tro list"}
-              className={cn(
-                "hidden h-9 w-9 shrink-0 place-items-center rounded-xl transition xl:grid",
-                libraryOpen ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
-              )}
-            >
-              <Ico icon={FiUsers} motion="pop" size={16} />
-            </button>
-            <span className="relative shrink-0 pt-1">
-              {busy ? (
-                <span className="absolute -top-[2px] left-1/2 z-10 -translate-x-1/2" role="status" aria-label={`${agent.name} is working`}>
-                  <span className="relative flex size-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
-                    <span className="relative inline-flex size-2 rounded-full bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.7)]" />
-                  </span>
-                </span>
-              ) : null}
-              <Bot size={36} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-ink">
-                <span className="truncate">{agent.name}</span>
-                <span className="shrink-0 rounded-full bg-violet-500/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-violet-500">
-                  {SPECIES_META[speciesFromSeed(agent.id)].label}
-                </span>
-              </h1>
-              <p className="truncate text-[12px] text-ink-3" title={statusSummary}>
-                {busy ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <ThinkingBall size={14} />
-                    <span className="truncate">{statusSummary}</span>
-                  </span>
-                ) : (
-                  <span className="truncate">{statusSummary}</span>
-                )}
-              </p>
-            </div>
-            {turns.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setTurns([]);
-                  setError(null);
-                  setActivity([]);
-                  reset();
-                  nextId.current = 0;
-                }}
-                className="chip group shrink-0 !px-3 !py-1.5 !text-[12.5px]"
-              >
-                <Ico icon={FiPlus} motion="open" size={13} /> New
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setPanelOpen((v) => !v)}
-              aria-expanded={panelOpen}
-              aria-label={panelOpen ? "Close task panel" : "Open task panel"}
-              className={cn(
-                "grid h-9 w-9 shrink-0 place-items-center rounded-xl transition",
-                panelOpen ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
-              )}
-            >
-              <FiSidebar size={17} />
-            </button>
-            <a
-              href={`/tros/${agent.id}/edit`}
-              aria-label="Edit Tro settings"
-              title="Edit Tro"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink"
-            >
-              <FiSettings size={17} />
-            </a>
+
+      {/* ============ CENTER (chat) ============ */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center gap-3 border-b border-[#e9e4f7] bg-white/85 px-3 py-2.5 backdrop-blur-md lg:px-5">
+          <button
+            type="button"
+            onClick={() => setNavOpen(true)}
+            aria-label="Open navigation"
+            className="grid size-9 shrink-0 place-items-center rounded-xl text-[#5b5678] transition hover:bg-[#f5f3ff] lg:hidden"
+          >
+            <FiMenu size={18} />
+          </button>
+          <Bot size={40} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-[16px] font-bold tracking-tight">{agent.name}</h1>
+            <p className="truncate text-[12.5px] text-[#5b5678]" title={statusSummary}>
+              {roleSummary}
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={newChat}
+            className="hidden shrink-0 items-center gap-1.5 rounded-full border border-[#d9d2ef] bg-white px-3.5 py-1.5 text-[13px] font-semibold transition hover:bg-[#f5f3ff] sm:inline-flex"
+          >
+            <FiPlus size={14} /> New chat
+          </button>
+          <Link
+            href={`/tros/${agent.id}/edit`}
+            aria-label="Tro settings"
+            title="Tro settings"
+            className="grid size-9 shrink-0 place-items-center rounded-xl text-[#5b5678] transition hover:bg-[#f5f3ff] hover:text-[#1e1b2e]"
+          >
+            <FiSettings size={17} />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setPanelOpen((v) => !v)}
+            aria-expanded={panelOpen}
+            aria-label={panelOpen ? "Close panel" : "Open panel"}
+            className={cn(
+              "grid size-9 shrink-0 place-items-center rounded-xl transition",
+              panelOpen
+                ? "bg-[#ede9fe] text-[#6d28d9]"
+                : "text-[#5b5678] hover:bg-[#f5f3ff] hover:text-[#1e1b2e]",
+            )}
+          >
+            <FiSidebar size={17} />
+          </button>
         </header>
 
-        <div className="app-page-in min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-6 lg:px-10">
-          <div className="mx-auto max-w-[720px] space-y-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 lg:px-8">
+          <div className="mx-auto max-w-[760px]">
             {turns.length === 0 ? (
-              <div className="py-10 text-center">
-                <Bot size={88} accent={agent.accent} seed={agent.id} state="idle" />
-                <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">Chat with {agent.name.split(" ")[0]}</h2>
-                <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">{agent.instructions}</p>
-                <p className="mx-auto mt-4 flex max-w-[46ch] items-center justify-center gap-1.5 text-[11.5px] text-ink-4">
-                  <Ico icon={FiMessageSquare} size={12} className="shrink-0 text-violet-500" />
-                  <span>{agent.name.split(" ")[0]} asks you questions when it needs input — just answer and it carries on.</span>
-                </p>
-                <div className="mx-auto mt-6 flex max-w-[520px] flex-wrap justify-center gap-2">
-                  {["What can you help me with?", "Help me plan this week", "Draft something for me"].map((s) => (
+              <div className="tro-msg-in py-8 text-center">
+                <div className="flex justify-center">
+                  <Bot size={96} accent={agent.accent} seed={agent.id} state="idle" />
+                </div>
+                <h2 className="mt-5 text-[22px] font-bold tracking-tight">
+                  Chat with {firstName}
+                </h2>
+                {agent.role?.trim() ? (
+                  <p className="mt-1 text-[14px] text-[#5b5678]">{agent.role.trim()}</p>
+                ) : null}
+                <div className="mx-auto mt-6 flex max-w-[580px] flex-wrap justify-center gap-2">
+                  {[
+                    { label: "What can you help me with?", prompt: "What can you help me with?" },
+                    { label: "Help me plan this week", prompt: "Help me plan this week" },
+                    { label: "Draft something for me", prompt: "Draft something for me" },
+                  ].map((s) => (
                     <button
-                      key={s}
+                      key={s.label}
                       type="button"
-                      onClick={() => void send(s)}
-                      className="rounded-full border border-line bg-raised/60 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-violet-500/40 hover:text-ink"
+                      onClick={() => void send(s.prompt)}
+                      className="rounded-full border border-[#d9d2ef] bg-white px-4 py-2 text-[13px] font-medium text-[#3f3f4a] transition hover:border-[#6d28d9]/50 hover:text-[#6d28d9]"
                     >
-                      {s}
+                      {s.label}
                     </button>
                   ))}
                 </div>
                 <Recents className="mx-auto mt-10 max-w-[520px] text-left" label="Earlier sessions" items={recents} />
               </div>
             ) : (
-              turns.map((t, i) => {
-                const asks = t.role === "model" && !busy ? extractAskBlocks(t.text) : [];
-                const artBlocks = t.role === "model" ? extractArtifactBlocks(t.text) : [];
-                const text = stripArtifactBlocks(asks.length ? stripAskBlocks(t.text) : t.text);
-                return (
-                  <div key={t.id}>
-                    <Message
-                      role={t.role}
-                      text={text}
-                      pending={busy && i === turns.length - 1 && t.role === "model"}
-                      onRegenerate={t.role === "model" ? retry : undefined}
-                      assistantName={agent.name}
-                      assistantSeed={agent.id}
-                      assistantAccent={agent.accent}
-                    />
-                    {asks.map((a, ai) =>
-                      answeredAsks.has(`${t.id}:${ai}`) ? null : (
-                        <div key={ai} id={`ask-${t.id}-${ai}`} className="scroll-mt-24">
-                        <ApprovalPrompt
-                          title={a.block.title}
-                          questions={a.block.questions}
-                          onApprove={answerAsk(t.id, ai, a.block)}
-                          onSkip={() => markAskAnswered(`${t.id}:${ai}`)}
-                        />
-                        </div>
-                      ),
-                    )}
-                    {artBlocks.map((p, pi) => {
-                      const fp = artifactFingerprint(p.block);
-                      const saved = artifacts.find((a) => artifactFingerprint(a) === fp) ?? null;
-                      return (
-                        <ArtifactCard
-                          key={`art-${pi}`}
-                          block={p.block}
-                          saved={saved}
-                          onOpen={() => {
-                            if (saved) {
-                              setPreviewArtifact(saved);
-                              setPanelTab("files");
-                              if (!panelOpen) setPanelOpen(true);
-                            }
-                          }}
-                          onDownload={() => {
-                            if (saved) downloadArtifact(saved);
-                          }}
-                          onDelete={() => {
-                            if (saved) void deleteArtifact(saved.id);
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })
+              <div className="space-y-5">
+                {turns.map((t, i) => {
+                  const asks = t.role === "model" && !busy ? extractAskBlocks(t.text) : [];
+                  const artBlocks = t.role === "model" ? extractArtifactBlocks(t.text) : [];
+                  const text = stripArtifactBlocks(asks.length ? stripAskBlocks(t.text) : t.text);
+                  return (
+                    <div key={t.id} className="tro-msg-in">
+                      <Message
+                        role={t.role}
+                        text={text}
+                        pending={busy && i === turns.length - 1 && t.role === "model"}
+                        onRegenerate={t.role === "model" ? retry : undefined}
+                        assistantName={agent.name}
+                        assistantSeed={agent.id}
+                        assistantAccent={agent.accent}
+                      />
+                      {asks.map((a, ai) =>
+                        answeredAsks.has(`${t.id}:${ai}`) ? null : (
+                          <div key={ai} id={`ask-${t.id}-${ai}`} className="scroll-mt-24">
+                            <ApprovalPrompt
+                              title={a.block.title}
+                              questions={a.block.questions}
+                              onApprove={answerAsk(t.id, ai, a.block)}
+                              onSkip={() => markAskAnswered(`${t.id}:${ai}`)}
+                            />
+                          </div>
+                        ),
+                      )}
+                      {artBlocks.map((p, pi) => {
+                        const fp = artifactFingerprint(p.block);
+                        const saved = artifacts.find((a) => artifactFingerprint(a) === fp) ?? null;
+                        return (
+                          <ArtifactCard
+                            key={`art-${pi}`}
+                            block={p.block}
+                            saved={saved}
+                            onOpen={() => {
+                              if (saved) {
+                                setPreviewArtifact(saved);
+                                setPanelTab("files");
+                                if (!panelOpen) setPanelOpen(true);
+                              }
+                            }}
+                            onDownload={() => {
+                              if (saved) downloadArtifact(saved);
+                            }}
+                            onDelete={() => {
+                              if (saved) void deleteArtifact(saved.id);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
             )}
-            {error ? <FailureNote error={error} onRetry={retry} /> : null}
+            {busy ? (
+              <div className="tro-msg-in mt-5 inline-flex items-center gap-2.5 rounded-full bg-[#f0ebfd] py-2 pl-3 pr-4">
+                <span
+                  className="size-4 shrink-0 animate-spin rounded-full border-2 border-[#d9d2ef] border-t-[#6d28d9]"
+                  role="status"
+                  aria-label="Working"
+                />
+                <span className="text-[13px] font-medium text-[#5b5678]">
+                  {latestActivity?.label || "Working…"}
+                </span>
+              </div>
+            ) : null}
+            {error ? (
+              <div className="mt-4">
+                <FailureNote error={error} onRetry={retry} />
+              </div>
+            ) : null}
             <div ref={bottom} />
           </div>
         </div>
 
-        <div className="relative z-20 shrink-0 border-t border-line/50 bg-canvas/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:px-10">
-          <div className="mx-auto max-w-[720px]">
+        <div className="shrink-0 px-4 pb-4 lg:px-8">
+          <div className="mx-auto max-w-[760px]">
             {pendingApprovals.length > 0 ? (
               <button
                 type="button"
                 onClick={() => scrollToApproval(pendingApprovals[0].turnId, pendingApprovals[0].askIdx)}
-                className="mb-2 flex w-full items-center gap-2.5 rounded-2xl border border-caution/40 bg-caution/10 px-3.5 py-2.5 text-left transition hover:bg-caution/15"
+                className="mb-2.5 flex w-full items-center gap-2.5 rounded-2xl border border-[#f5d9a8] bg-[#fef6e7] px-3.5 py-2.5 text-left transition hover:bg-[#fdf0d5]"
               >
                 <span className="relative flex size-2 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-caution opacity-70" />
-                  <span className="relative inline-flex size-2 rounded-full bg-caution" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#b45309] opacity-70" />
+                  <span className="relative inline-flex size-2 rounded-full bg-[#b45309]" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] font-semibold text-ink">
+                  <span className="block text-[12.5px] font-semibold text-[#1e1b2e]">
                     Approval needed{pendingApprovals.length > 1 ? ` (${pendingApprovals.length})` : ""} — review above
                   </span>
-                  <span className="block truncate text-[11.5px] text-ink-3">
+                  <span className="block truncate text-[11.5px] text-[#5b5678]">
                     {pendingApprovals[0].title}
                   </span>
                 </span>
-                <Ico icon={FiArrowRight} motion="nudge" size={14} className="shrink-0 text-ink-3" />
+                <FiArrowRight size={14} className="shrink-0 text-[#8b87a3]" />
               </button>
             ) : null}
-            <Composer onSend={send} disabled={busy} placeholder={busy ? "Working…" : `Message ${agent.name}…`} />
+            <Composer
+              onSend={send}
+              disabled={busy}
+              placeholder={busy ? "Working…" : `Message ${firstName}…`}
+            />
           </div>
         </div>
       </div>
 
+      {/* ============ RIGHT PANEL ============ */}
       <button
         type="button"
         aria-label="Close panel"
         onClick={() => setPanelOpen(false)}
         className={cn(
-          "absolute inset-0 z-30 bg-black/35 transition-opacity duration-300 lg:hidden",
+          "fixed inset-0 z-30 bg-black/30 transition-opacity xl:hidden",
           panelOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       />
-
       <aside
         className={cn(
-          "absolute inset-y-0 right-0 z-40 flex flex-col border-l border-line bg-raised/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
-          browserExpanded
-            ? "w-[min(100vw-1.5rem,780px)]"
-            : "w-[min(100vw-1.5rem,340px)]",
-          panelOpen ? "translate-x-0" : "translate-x-full lg:hidden",
+          "flex flex-col border-l border-[#e9e4f7] bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "fixed inset-y-0 right-0 z-40 w-[min(100vw-3rem,320px)] shadow-2xl",
+          "xl:static xl:z-0 xl:shadow-none",
+          browserExpanded && panelTab === "desktop" ? "xl:w-[720px]" : "xl:w-[300px]",
+          panelOpen ? "translate-x-0" : "translate-x-full xl:hidden",
         )}
       >
-        {/* Panel header — Tro identity, live status, quick actions */}
-        <div className="relative shrink-0 border-b border-line px-4 pb-3.5 pt-4">
+        <div className="shrink-0 border-b border-[#e9e4f7] px-2 pt-2">
           <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-20"
-            style={{
-              background: `linear-gradient(to bottom, color-mix(in oklab, ${agent.accent} 14%, transparent), transparent)`,
-            }}
-          />
-          <div className="relative flex items-center gap-3">
-            <Bot size={44} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-semibold tracking-tight text-ink">{agent.name}</p>
-              <p className="truncate text-[11.5px] text-ink-3">{agent.role}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium">
-                <span className="relative flex size-1.5">
-                  {busy ? (
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70" />
-                  ) : null}
-                  <span className={cn("relative inline-flex size-1.5 rounded-full", busy ? "bg-accent" : "bg-positive")} />
-                </span>
-                <span className={busy ? "text-accent" : "text-positive"}>
-                  {busy ? "Working…" : "Ready"}
-                </span>
-              </p>
-            </div>
-            <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink">
-              <FiX size={16} />
-            </button>
-          </div>
-          <div className="relative mt-3 flex gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                setTurns([]);
-                setError(null);
-                setActivity([]);
-                reset();
-                nextId.current = 0;
-              }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
-            >
-              <Ico icon={FiPlus} motion="open" size={13} /> New chat
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPanelTab("files");
-                if (!panelOpen) setPanelOpen(true);
-              }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
-            >
-              <Ico icon={FiBookOpen} motion="lift" size={13} /> Library
-              {artifacts.length > 0 ? (
-                <span className="rounded-full bg-accent/15 px-1.5 text-[10px] font-bold text-accent">
-                  {artifacts.length}
-                </span>
-              ) : null}
-            </button>
-            <button
-              type="button"
-              onClick={() => openSettings("integrations")}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
-            >
-              <Ico icon={TbPlugConnected} motion="pop" size={13} /> Connect
-            </button>
+            role="tablist"
+            aria-label="Panel sections"
+            className="scrollbar-none flex items-center gap-0.5 overflow-x-auto"
+          >
+            {rightTabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={panelTab === t.id}
+                onClick={() => setPanelTab(t.id)}
+                className={cn(
+                  "relative flex shrink-0 items-center gap-1.5 rounded-t-xl px-2.5 py-2 text-[12px] font-semibold transition",
+                  panelTab === t.id
+                    ? "text-[#6d28d9]"
+                    : "text-[#8b87a3] hover:text-[#3f3f4a]",
+                )}
+              >
+                <TroPngIcon name={t.png} size={15} />
+                {t.label}
+                {t.badge ? (
+                  <span className="grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-[#6d28d9] px-1 text-[10px] font-bold text-white">
+                    {t.badge > 99 ? "99+" : t.badge}
+                  </span>
+                ) : null}
+                <span
+                  className={cn(
+                    "absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#6d28d9] transition-opacity",
+                    panelTab === t.id ? "opacity-100" : "opacity-0",
+                  )}
+                />
+              </button>
+            ))}
           </div>
         </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {pendingApprovals.length > 0 ? (
-            <section className={cn("border-b border-line px-4 py-3", browserExpanded && "hidden")}>
-              <button
-                type="button"
-                onClick={() => scrollToApproval(pendingApprovals[0].turnId, pendingApprovals[0].askIdx)}
-                className="flex w-full items-center gap-2.5 rounded-[var(--r-control)] border border-caution/40 bg-caution/10 px-3 py-2.5 text-left transition hover:bg-caution/15"
-              >
-                <span className="relative flex size-2 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-caution opacity-70" />
-                  <span className="relative inline-flex size-2 rounded-full bg-caution" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] font-semibold text-ink">
-                    Approval needed{pendingApprovals.length > 1 ? ` (${pendingApprovals.length})` : ""}
-                  </span>
-                  <span className="block truncate text-[11.5px] text-ink-3">
-                    {pendingApprovals[0].title} — tap to answer
-                  </span>
-                </span>
-                <FiArrowRight size={14} className="shrink-0 text-ink-3" />
-              </button>
-            </section>
-          ) : null}
-          {/* Panel tabs — separate sections instead of one long stack.
-              Horizontally scrollable so 5 tabs never squeeze/glitch in a narrow panel. */}
-          <div className="sticky top-0 z-10 shrink-0 border-b border-line bg-raised/95 px-2 pt-2">
-            <div
-              role="tablist"
-              aria-label="Panel sections"
-              className="flex items-center gap-1"
-            >
-              {(
-                [
-                  { id: "desktop", label: "Desktop", png: "desktop", badge: undefined as number | undefined },
-                  { id: "files", label: "Files", png: "files", badge: artifacts.length || undefined },
-                  { id: "activity", label: "Activity", png: "activity", badge: activity.filter((a) => a.tone === "run").length || undefined },
-                  { id: "connectors", label: "Connectors", png: "connect", badge: undefined as number | undefined },
-                  { id: "tasks", label: "Tasks", png: "tasks", badge: undefined as number | undefined },
-                  { id: "skills", label: "Skills", png: "tools", badge: undefined as number | undefined },
-                ] as const
-              ).map((t) => (
-                <Tooltip key={t.id} label={t.label} side="bottom">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={panelTab === t.id}
-                    aria-label={t.label}
-                    onClick={() => setPanelTab(t.id)}
-                    className={cn(
-                      "relative grid size-9 shrink-0 place-items-center rounded-xl transition",
-                      panelTab === t.id ? "bg-hover text-ink" : "text-ink-4 hover:bg-hover hover:text-ink-2",
-                    )}
-                  >
-                    <TroPngIcon name={t.png as TroPngIconName} size={16} className="dark:brightness-0 dark:invert" />
-                    {t.badge ? (
-                      <span className="absolute -right-0.5 -top-0.5 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
-                        {t.badge > 99 ? "99+" : t.badge}
-                      </span>
+          {panelTab === "about" ? aboutTab : null}
+                    {panelTab === "desktop" ? (
+                    <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                          <TroPngIcon name="desktop" size={11} className="dark:brightness-0 dark:invert" /> Desktop
+                        </p>
+                        <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
+                          {browserExpanded ? "Shrink" : "Expand"}
+                        </button>
+                      </div>
+                      {browserExpanded && computerConnected ? (
+                        <form
+                          className="mb-2 flex items-center gap-1.5"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const input = e.currentTarget.querySelector("input");
+                            const url = input?.value.trim();
+                            if (url) void navigateComputer(url);
+                          }}
+                        >
+                          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-canvas/60 px-3 py-1.5">
+                            <FiGlobe size={13} className="shrink-0 text-ink-4" />
+                            <input
+                              type="text"
+                              defaultValue={computer.pageUrl || ""}
+                              key={computer.pageUrl || "empty"}
+                              placeholder="Enter a URL…"
+                              disabled={busy || computerBusy}
+                              className="min-w-0 flex-1 bg-transparent text-[12.5px] text-ink placeholder:text-ink-4 focus:outline-none disabled:opacity-40"
+                            />
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={busy || computerBusy}
+                            className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+                          >
+                            Go
+                          </button>
+                        </form>
+                      ) : null}
+                      <div className={cn("space-y-1.5", busy && "pointer-events-none opacity-55")}>
+                        <div className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas/60 px-2.5 py-2">
+                          <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3")}>
+                            <TroPngIcon name="desktop" size={15} className="dark:brightness-0 dark:invert" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[12.5px] font-medium text-ink">{agent.name.split(" ")[0]}'s desktop</p>
+                            <p className={cn("text-[11px]", computerConnected ? "text-positive" : "text-ink-4")}>
+                              {computerBusy && !computerConnected ? "Connecting…" : computerLabel}
+                              {computer.pageUrl ? ` · ${computer.title || computer.pageUrl}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className={cn("overflow-hidden rounded-xl border border-line bg-canvas/40 transition-all duration-300", browserExpanded && "flex min-h-0 flex-1 flex-col ring-1 ring-white/10")}>
+                          <div className={cn("relative bg-sunk transition-all duration-300", browserExpanded ? "min-h-0 flex-1" : "aspect-[16/9]")}>
+                            {computer.screenshotBase64 ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={`data:image/jpeg;base64,${computer.screenshotBase64}`} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center px-3 text-center text-[11px] text-ink-4">
+                                {computer.error || (computerConnected ? "Ready — paste a URL or ask to research" : "Connecting cloud browser…")}
+                              </div>
+                            )}
+                            {busy ? (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-2.5 py-1.5">
+                                <p className="text-[10px] font-medium text-white/90">Tro is working — controls locked</p>
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 border-t border-line px-2.5 py-2">
+                            {computer.liveUrl ? (
+                              <a href={computer.liveUrl} target="_blank" rel="noreferrer" className={cn("rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover", (busy || computerBusy) && "pointer-events-none opacity-40")}>
+                                Live
+                              </a>
+                            ) : null}
+                            <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("back").catch(() => undefined)} aria-label="Go back" title="Back" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                              ← Back
+                            </button>
+                            <button type="button" disabled={busy || computerBusy || !computerConnected || !computer.pageUrl} onClick={() => { if (computer.pageUrl) void navigateComputer(computer.pageUrl).catch(() => undefined); }} aria-label="Reload page" title="Reload page" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                              ⟳ Reload
+                            </button>
+                            <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                              Snap
+                            </button>
+                            <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                              {browserExpanded ? "Shrink" : "Expand"}
+                            </button>
+                            {computerConnected ? (
+                              <button type="button" disabled={busy || computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                                Stop
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
                     ) : null}
-                    <span
-                      className={cn(
-                        "absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent transition-opacity",
-                        panelTab === t.id ? "opacity-100" : "opacity-0",
+                    {panelTab === "activity" ? (
+                    <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
+                      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                        <TroPngIcon name="activity" size={11} className="dark:brightness-0 dark:invert" /> Activity
+                      </p>
+                      {/* Live in-session events (ephemeral) */}
+                      {activity.length > 0 ? (
+                        <ul className="relative mb-3 space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-line">
+                          {[...activity].reverse().map((a) => (
+                            <li key={a.id} className="relative flex items-start gap-2.5 rounded-lg py-1.5 pl-1">
+                              <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-raised", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-[12.5px] font-medium text-ink">{a.label}</span>
+                                {a.detail ? <span className="block truncate text-[11px] text-ink-3">{a.detail}</span> : null}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {/* Persistent task feed (delegation, artifacts, approvals) */}
+                      <TaskFeed agentId={agent.id} limit={30} compact />
+                    </section>
+                    ) : null}
+                    {panelTab === "files" ? (
+                    <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
+                      {previewArtifact ? (
+                        <ArtifactPreview
+                          artifact={previewArtifact}
+                          agentName={agent.name}
+                          onClose={() => setPreviewArtifact(null)}
+                          onExpand={() => openArtifact(previewArtifact)}
+                          onDownload={() => downloadArtifact(previewArtifact)}
+                          onDelete={() => {
+                            void deleteArtifact(previewArtifact.id);
+                            setPreviewArtifact(null);
+                          }}
+                        />
+                      ) : null}
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                          <TroPngIcon name="files" size={11} className="dark:brightness-0 dark:invert" /> Library
+                        </p>
+                        {artifacts.length > 0 ? (
+                          <span className="rounded-full bg-accent/12 px-2 py-0.5 text-[10px] font-bold text-accent">
+                            {artifacts.length}
+                          </span>
+                        ) : null}
+                      </div>
+                      {!artifactsLoaded ? (
+                        <div className="space-y-1.5">
+                          {[0, 1].map((i) => (
+                            <div key={i} className="h-11 animate-pulse rounded-xl bg-sunk" />
+                          ))}
+                        </div>
+                      ) : artifacts.length === 0 ? (
+                        <p className="text-[12px] leading-relaxed text-ink-4">
+                          Nothing saved yet. Ask {agent.name.split(" ")[0]} to draft a doc, plan, or snippet —
+                          it lands here as a real file.
+                        </p>
+                      ) : (
+                        <ul className="space-y-1">
+                          {artifacts.map((a) => {
+                            return (
+                              <li key={a.id}>
+                                <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-hover">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewArtifact(a)}
+                                    className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                                  >
+                                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
+                                      <ArtifactIcon kind={a.kind} size={15} />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate text-[12.5px] font-medium text-ink">{a.title}</span>
+                                      <span className="block text-[11px] text-ink-4">
+                                        {ARTIFACT_LABEL[a.kind]} ·{" "}
+                                        {new Date(a.createdAt).toLocaleDateString(undefined, {
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
+                                      </span>
+                                    </span>
+                                  </button>
+                                  <span className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+                                    <button
+                                      type="button"
+                                      onClick={() => downloadArtifact(a)}
+                                      aria-label={`Download ${a.title}`}
+                                      title="Download"
+                                      className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-canvas hover:text-ink"
+                                    >
+                                      <FiDownload size={13} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void deleteArtifact(a.id)}
+                                      aria-label={`Delete ${a.title}`}
+                                      title="Delete"
+                                      className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-critical/10 hover:text-critical"
+                                    >
+                                      <FiTrash2 size={13} />
+                                    </button>
+                                  </span>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
                       )}
-                    />
-                  </button>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-          {panelTab === "desktop" ? (
-          <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-                <TroPngIcon name="desktop" size={11} className="dark:brightness-0 dark:invert" /> Desktop
-              </p>
-              <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
-                {browserExpanded ? "Shrink" : "Expand"}
-              </button>
-            </div>
-            {browserExpanded && computerConnected ? (
-              <form
-                className="mb-2 flex items-center gap-1.5"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const input = e.currentTarget.querySelector("input");
-                  const url = input?.value.trim();
-                  if (url) void navigateComputer(url);
-                }}
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-canvas/60 px-3 py-1.5">
-                  <FiGlobe size={13} className="shrink-0 text-ink-4" />
-                  <input
-                    type="text"
-                    defaultValue={computer.pageUrl || ""}
-                    key={computer.pageUrl || "empty"}
-                    placeholder="Enter a URL…"
-                    disabled={busy || computerBusy}
-                    className="min-w-0 flex-1 bg-transparent text-[12.5px] text-ink placeholder:text-ink-4 focus:outline-none disabled:opacity-40"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={busy || computerBusy}
-                  className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
-                >
-                  Go
-                </button>
-              </form>
-            ) : null}
-            <div className={cn("space-y-1.5", busy && "pointer-events-none opacity-55")}>
-              <div className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas/60 px-2.5 py-2">
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3")}>
-                  <TroPngIcon name="desktop" size={15} className="dark:brightness-0 dark:invert" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[12.5px] font-medium text-ink">{agent.name.split(" ")[0]}'s desktop</p>
-                  <p className={cn("text-[11px]", computerConnected ? "text-positive" : "text-ink-4")}>
-                    {computerBusy && !computerConnected ? "Connecting…" : computerLabel}
-                    {computer.pageUrl ? ` · ${computer.title || computer.pageUrl}` : ""}
-                  </p>
-                </div>
-              </div>
-              <div className={cn("overflow-hidden rounded-xl border border-line bg-canvas/40 transition-all duration-300", browserExpanded && "flex min-h-0 flex-1 flex-col ring-1 ring-white/10")}>
-                <div className={cn("relative bg-sunk transition-all duration-300", browserExpanded ? "min-h-0 flex-1" : "aspect-[16/9]")}>
-                  {computer.screenshotBase64 ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`data:image/jpeg;base64,${computer.screenshotBase64}`} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center px-3 text-center text-[11px] text-ink-4">
-                      {computer.error || (computerConnected ? "Ready — paste a URL or ask to research" : "Connecting cloud browser…")}
-                    </div>
-                  )}
-                  {busy ? (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-2.5 py-1.5">
-                      <p className="text-[10px] font-medium text-white/90">Tro is working — controls locked</p>
-                    </div>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-1.5 border-t border-line px-2.5 py-2">
-                  {computer.liveUrl ? (
-                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className={cn("rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover", (busy || computerBusy) && "pointer-events-none opacity-40")}>
-                      Live
-                    </a>
-                  ) : null}
-                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("back").catch(() => undefined)} aria-label="Go back" title="Back" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
-                    ← Back
-                  </button>
-                  <button type="button" disabled={busy || computerBusy || !computerConnected || !computer.pageUrl} onClick={() => { if (computer.pageUrl) void navigateComputer(computer.pageUrl).catch(() => undefined); }} aria-label="Reload page" title="Reload page" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
-                    ⟳ Reload
-                  </button>
-                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
-                    Snap
-                  </button>
-                  <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
-                    {browserExpanded ? "Shrink" : "Expand"}
-                  </button>
-                  {computerConnected ? (
-                    <button type="button" disabled={busy || computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
-                      Stop
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </section>
-          ) : null}
-          {panelTab === "activity" ? (
-          <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
-            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-              <TroPngIcon name="activity" size={11} className="dark:brightness-0 dark:invert" /> Activity
-            </p>
-            {/* Live in-session events (ephemeral) */}
-            {activity.length > 0 ? (
-              <ul className="relative mb-3 space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-line">
-                {[...activity].reverse().map((a) => (
-                  <li key={a.id} className="relative flex items-start gap-2.5 rounded-lg py-1.5 pl-1">
-                    <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-raised", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[12.5px] font-medium text-ink">{a.label}</span>
-                      {a.detail ? <span className="block truncate text-[11px] text-ink-3">{a.detail}</span> : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {/* Persistent task feed (delegation, artifacts, approvals) */}
-            <TaskFeed agentId={agent.id} limit={30} compact />
-          </section>
-          ) : null}
-          {panelTab === "files" ? (
-          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
-            {previewArtifact ? (
-              <ArtifactPreview
-                artifact={previewArtifact}
-                agentName={agent.name}
-                onClose={() => setPreviewArtifact(null)}
-                onExpand={() => openArtifact(previewArtifact)}
-                onDownload={() => downloadArtifact(previewArtifact)}
-                onDelete={() => {
-                  void deleteArtifact(previewArtifact.id);
-                  setPreviewArtifact(null);
-                }}
-              />
-            ) : null}
-            <div className="mb-2 flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-                <TroPngIcon name="files" size={11} className="dark:brightness-0 dark:invert" /> Library
-              </p>
-              {artifacts.length > 0 ? (
-                <span className="rounded-full bg-accent/12 px-2 py-0.5 text-[10px] font-bold text-accent">
-                  {artifacts.length}
-                </span>
-              ) : null}
-            </div>
-            {!artifactsLoaded ? (
-              <div className="space-y-1.5">
-                {[0, 1].map((i) => (
-                  <div key={i} className="h-11 animate-pulse rounded-xl bg-sunk" />
-                ))}
-              </div>
-            ) : artifacts.length === 0 ? (
-              <p className="text-[12px] leading-relaxed text-ink-4">
-                Nothing saved yet. Ask {agent.name.split(" ")[0]} to draft a doc, plan, or snippet —
-                it lands here as a real file.
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {artifacts.map((a) => {
-                  return (
-                    <li key={a.id}>
-                      <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-hover">
+                    </section>
+                    ) : null}
+                    {panelTab === "connectors" ? (
+                    <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                          <TroPngIcon name="connect" size={11} className="dark:brightness-0 dark:invert" /> Connectors
+                          <span className="relative flex size-1.5" title="Live">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+                            <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
+                          </span>
+                        </p>
                         <button
                           type="button"
-                          onClick={() => setPreviewArtifact(a)}
-                          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                          onClick={() => openSettings("integrations")}
+                          className="text-[10px] font-semibold text-ink-3 transition hover:text-ink"
                         >
-                          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
-                            <ArtifactIcon kind={a.kind} size={15} />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[12.5px] font-medium text-ink">{a.title}</span>
-                            <span className="block text-[11px] text-ink-4">
-                              {ARTIFACT_LABEL[a.kind]} ·{" "}
-                              {new Date(a.createdAt).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </span>
-                          </span>
+                          Manage
                         </button>
-                        <span className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
-                          <button
-                            type="button"
-                            onClick={() => downloadArtifact(a)}
-                            aria-label={`Download ${a.title}`}
-                            title="Download"
-                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-canvas hover:text-ink"
-                          >
-                            <FiDownload size={13} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void deleteArtifact(a.id)}
-                            aria-label={`Delete ${a.title}`}
-                            title="Delete"
-                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-critical/10 hover:text-critical"
-                          >
-                            <FiTrash2 size={13} />
-                          </button>
-                        </span>
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-          ) : null}
-          {panelTab === "connectors" ? (
-          <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-                <TroPngIcon name="connect" size={11} className="dark:brightness-0 dark:invert" /> Connectors
-                <span className="relative flex size-1.5" title="Live">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
-                  <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
-                </span>
-              </p>
-              <button
-                type="button"
-                onClick={() => openSettings("integrations")}
-                className="text-[10px] font-semibold text-ink-3 transition hover:text-ink"
-              >
-                Manage
-              </button>
-            </div>
-            {connectors === null ? (
-              <p className="text-[12px] text-ink-4">Checking connected apps…</p>
-            ) : connectors.length === 0 ? (
-              <p className="text-[12px] leading-relaxed text-ink-4">
-                Nothing connected yet.{" "}
-                <button
-                  type="button"
-                  onClick={() => openSettings("integrations")}
-                  className="font-medium text-ink-2 underline decoration-ink-4 underline-offset-2 hover:text-ink"
-                >
-                  Connect an app
-                </button>{" "}
-                and {agent.name.split(" ")[0]} can use it.
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {connectors.map((c) => (
-                  <li key={c.service} className="flex items-center gap-2 rounded-lg px-1.5 py-1.5">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-positive/15 text-positive">
-                      <TroPngIcon name="connect" size={13} className="dark:brightness-0 dark:invert" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[12.5px] font-medium text-ink">{c.label}</span>
-                      {c.account ? <span className="block truncate text-[11px] text-ink-3">{c.account}</span> : null}
-                    </span>
-                    <span className="size-1.5 shrink-0 rounded-full bg-positive" aria-label="Connected" />
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-2 text-[11px] leading-relaxed text-ink-4">
-              Mention <span className="font-semibold text-ink-3">@slack</span> or{" "}
-              <span className="font-semibold text-ink-3">@github</span> in chat and {agent.name.split(" ")[0]} pulls
-              live data.
-            </p>
-          </section>
-          ) : null}
+                      {connectors === null ? (
+                        <p className="text-[12px] text-ink-4">Checking connected apps…</p>
+                      ) : connectors.length === 0 ? (
+                        <p className="text-[12px] leading-relaxed text-ink-4">
+                          Nothing connected yet.{" "}
+                          <button
+                            type="button"
+                            onClick={() => openSettings("integrations")}
+                            className="font-medium text-ink-2 underline decoration-ink-4 underline-offset-2 hover:text-ink"
+                          >
+                            Connect an app
+                          </button>{" "}
+                          and {agent.name.split(" ")[0]} can use it.
+                        </p>
+                      ) : (
+                        <ul className="space-y-1">
+                          {connectors.map((c) => (
+                            <li key={c.service} className="flex items-center gap-2 rounded-lg px-1.5 py-1.5">
+                              <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-positive/15 text-positive">
+                                <TroPngIcon name="connect" size={13} className="dark:brightness-0 dark:invert" />
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[12.5px] font-medium text-ink">{c.label}</span>
+                                {c.account ? <span className="block truncate text-[11px] text-ink-3">{c.account}</span> : null}
+                              </span>
+                              <span className="size-1.5 shrink-0 rounded-full bg-positive" aria-label="Connected" />
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="mt-2 text-[11px] leading-relaxed text-ink-4">
+                        Mention <span className="font-semibold text-ink-3">@slack</span> or{" "}
+                        <span className="font-semibold text-ink-3">@github</span> in chat and {agent.name.split(" ")[0]} pulls
+                        live data.
+                      </p>
+                    </section>
+                    ) : null}
 
-          {panelTab === "tasks" ? (
-            <TroTasksPanel agentId={agent.id} agentName={agent.name} />
-          ) : null}
-          {panelTab === "skills" ? <TroSkillsPanel /> : null}
+                    {panelTab === "tasks" ? (
+                      <TroTasksPanel agentId={agent.id} agentName={agent.name} />
+                    ) : null}
+                    {panelTab === "skills" ? <TroSkillsPanel /> : null}
 
-          <p className="flex items-center gap-1.5 px-4 py-3 text-[10.5px] leading-relaxed text-ink-4">
-            <Ico icon={FiCpu} size={11} className="shrink-0" />
-            <span className="truncate">
-              {["Cloud browser", "Web search", "Documents", "Spreadsheets", "Slides", ...tools.slice(0, 3)].join(" · ")}
-            </span>
-          </p>
+                    <p className="flex items-center gap-1.5 px-4 py-3 text-[10.5px] leading-relaxed text-ink-4">
+                      <Ico icon={FiCpu} size={11} className="shrink-0" />
+                      <span className="truncate">
+                        {["Cloud browser", "Web search", "Documents", "Spreadsheets", "Slides", ...tools.slice(0, 3)].join(" · ")}
+                      </span>
+                    </p>
         </div>
       </aside>
 
       <Modal
-        open={Boolean(deleting)}
-        onClose={() => setDeletingId(null)}
-        title={deleting ? `Delete ${deleting.name}?` : "Delete Tro?"}
-        description="This removes the Tro and its instructions. Past conversations are kept."
-      >
-        <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={() => setDeletingId(null)} className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover">
-            Cancel
-          </button>
-          {deleting ? (
-            <form
-              action={async () => {
-                await deleteAgent(deleting.id);
-                if (deleting.id === agent.id) router.push("/tros");
-                else setDeletingId(null);
-              }}
+              open={Boolean(deleting)}
+              onClose={() => setDeletingId(null)}
+              title={deleting ? `Delete ${deleting.name}?` : "Delete Tro?"}
+              description="This removes the Tro and its instructions. Past conversations are kept."
             >
-              <button type="submit" className="rounded-full bg-critical px-4 py-2 text-[13px] font-semibold text-white">
-                Delete Tro
-              </button>
-            </form>
-          ) : null}
-        </div>
-      </Modal>
-
-      <Modal
-        open={viewer !== null}
-        onClose={() => setViewer(null)}
-        title={viewer?.title ?? "Artifact"}
-        description={
-          viewer ? `${ARTIFACT_LABEL[viewer.kind]} · saved by ${agent.name.split(" ")[0]}` : undefined
-        }
-        size="lg"
-        footer={
-          viewer ? (
-            <div className="flex w-full items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => void deleteArtifact(viewer.id)}
-                className="rounded-full px-4 py-2 text-[13px] font-medium text-critical transition hover:bg-critical/10"
-              >
-                Delete
-              </button>
-              <div className="flex items-center gap-2">
-                {editing ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setEditing(false)}
-                      className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
-                    >
-                      Cancel
+              <div className="mt-5 flex justify-end gap-2">
+                <button type="button" onClick={() => setDeletingId(null)} className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover">
+                  Cancel
+                </button>
+                {deleting ? (
+                  <form
+                    action={async () => {
+                      await deleteAgent(deleting.id);
+                      if (deleting.id === agent.id) router.push("/tros");
+                      else setDeletingId(null);
+                    }}
+                  >
+                    <button type="submit" className="rounded-full bg-critical px-4 py-2 text-[13px] font-semibold text-white">
+                      Delete Tro
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => void saveArtifactEdit()}
-                      className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-canvas"
-                    >
-                      Save
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditText(viewer.content);
-                        setEditing(true);
-                      }}
-                      className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => downloadArtifact(viewer)}
-                      className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-canvas"
-                    >
-                      Download
-                    </button>
-                  </>
-                )}
+                  </form>
+                ) : null}
               </div>
-            </div>
-          ) : undefined
-        }
-      >
-        {viewer ? (
-          editing ? (
-            <textarea
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              rows={18}
-              spellCheck={false}
-              className="mt-4 w-full resize-y rounded-2xl border border-line bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none focus:border-accent/50"
-            />
-          ) : viewer.kind === "website" ? (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white">
-              <iframe
-                title={viewer.title}
-                srcDoc={viewer.content}
-                sandbox="allow-same-origin"
-                className="h-[60vh] w-full"
-              />
-            </div>
-          ) : viewer.kind === "code" ? (
-            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 p-4">
-              <pre className="whitespace-pre-wrap break-words font-mono text-[12.5px] leading-relaxed text-ink">
-                {viewer.content}
-              </pre>
-            </div>
-          ) : (
-            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 px-5 py-4">
-              <Markdown text={viewer.content} compact />
-            </div>
-          )
-        ) : null}
-      </Modal>
+            </Modal>
+
+            <Modal
+              open={viewer !== null}
+              onClose={() => setViewer(null)}
+              title={viewer?.title ?? "Artifact"}
+              description={
+                viewer ? `${ARTIFACT_LABEL[viewer.kind]} · saved by ${agent.name.split(" ")[0]}` : undefined
+              }
+              size="lg"
+              footer={
+                viewer ? (
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void deleteArtifact(viewer.id)}
+                      className="rounded-full px-4 py-2 text-[13px] font-medium text-critical transition hover:bg-critical/10"
+                    >
+                      Delete
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {editing ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setEditing(false)}
+                            className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void saveArtifactEdit()}
+                            className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-canvas"
+                          >
+                            Save
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditText(viewer.content);
+                              setEditing(true);
+                            }}
+                            className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadArtifact(viewer)}
+                            className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-canvas"
+                          >
+                            Download
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ) : undefined
+              }
+            >
+              {viewer ? (
+                editing ? (
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    rows={18}
+                    spellCheck={false}
+                    className="mt-4 w-full resize-y rounded-2xl border border-line bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none focus:border-accent/50"
+                  />
+                ) : viewer.kind === "website" ? (
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white">
+                    <iframe
+                      title={viewer.title}
+                      srcDoc={viewer.content}
+                      sandbox="allow-same-origin"
+                      className="h-[60vh] w-full"
+                    />
+                  </div>
+                ) : viewer.kind === "code" ? (
+                  <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 p-4">
+                    <pre className="whitespace-pre-wrap break-words font-mono text-[12.5px] leading-relaxed text-ink">
+                      {viewer.content}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 px-5 py-4">
+                    <Markdown text={viewer.content} compact />
+                  </div>
+                )
+              ) : null}
+            </Modal>
     </div>
   );
 }
+
