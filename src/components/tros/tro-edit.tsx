@@ -7,20 +7,21 @@ import { Composer } from "@/components/chat/composer";
 import { Thinking } from "@/components/chat/thinking";
 import { updateAgent, type AgentRow } from "@/app/actions/agents";
 import { cn } from "@/lib/utils";
+import { TroPngIcon, type TroPngIconName } from "@/components/tro/tro-png-icons";
 
 const field =
   "w-full rounded-2xl border border-line-strong bg-sunk/80 px-4 py-3 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-[14px]";
 
-const TABS = [
-  { id: "profile", label: "Profile" },
-  { id: "instructions", label: "Instructions" },
-  { id: "knowledge", label: "Knowledge" },
-  { id: "memory", label: "Memory" },
-  { id: "tools", label: "Tools" },
-  { id: "test", label: "Test" },
-] as const;
+const TABS: { id: TabId; label: string; png: TroPngIconName }[] = [
+  { id: "profile", label: "Profile", png: "profile" },
+  { id: "instructions", label: "Instructions", png: "instructions" },
+  { id: "knowledge", label: "Knowledge", png: "knowledge" },
+  { id: "memory", label: "Memory", png: "memory" },
+  { id: "tools", label: "Tools", png: "tools" },
+  { id: "test", label: "Test", png: "chat" },
+];
 
-type TabId = (typeof TABS)[number]["id"];
+type TabId = "profile" | "instructions" | "knowledge" | "memory" | "tools" | "test";
 
 const AVAILABLE_TOOLS = [
   "Search the web",
@@ -152,12 +153,13 @@ export function TroEdit({ agent }: { agent: AgentRow }) {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "whitespace-nowrap border-b-2 px-4 py-3 text-[14px] font-medium transition",
+              "inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-3 text-[14px] font-medium transition",
               tab === t.id
                 ? "border-accent text-ink"
                 : "border-transparent text-ink-3 hover:text-ink-2",
             )}
           >
+            <TroPngIcon name={t.png} size={15} className="dark:brightness-0 dark:invert" />
             {t.label}
           </button>
         ))}
