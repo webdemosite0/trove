@@ -9,6 +9,7 @@ import {
   useTransition,
 } from "react";
 import Link from "next/link";
+import { useVisibleInterval } from "@/lib/use-visible-interval";
 import {
   FiBell,
   FiBellOff,
@@ -54,10 +55,15 @@ function formatDue(ts: number) {
   return sameDay ? `Today ${time}` : `${d.toLocaleDateString([], { month: "short", day: "numeric" })} ${time}`;
 }
 
-/** Notification.permission is external browser state. */
+/** Notification.permission is external browser state. Re-check on focus/visibility
+ *  instead of polling — it only changes when the user answers the prompt. */
 function subscribePermission(onChange: () => void) {
-  const t = setInterval(onChange, 2000);
-  return () => clearInterval(t);
+  window.addEventListener("focus", onChange);
+  document.addEventListener("visibilitychange", onChange);
+  return () => {
+    window.removeEventListener("focus", onChange);
+    document.removeEventListener("visibilitychange", onChange);
+  };
 }
 
 function readPermission(): Permission {
@@ -103,12 +109,9 @@ export function RemindersView({
       .sort((a, b) => a.due_at - b.due_at);
   }, [initial, added, removed, toggled]);
 
-  /* the reminder loop — one clock drives both firing and "overdue" styling */
-  useEffect(() => {
-    const tick = () => setNow(Date.now());
-    const t = setInterval(tick, 10_000);
-    return () => clearInterval(t);
-  }, []);
+  /* the reminder loop — one clock drives both firing and "overdue" styling.
+     Pauses while the tab is hidden (no visible UI to update). */
+  useVisibleInterval(() => setNow(Date.now()), 10_000);
 
   useEffect(() => {
     const due = reminders.filter(
