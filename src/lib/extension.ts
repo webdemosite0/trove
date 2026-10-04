@@ -69,3 +69,20 @@ export function bearerToken(req: Request): string | null {
 export function newCommandId(): string {
   return uid("xcmd_");
 }
+
+/**
+ * Self-healing table check. The MIGRATIONS runner should create these, but
+ * if a deploy raced the migration (or it was skipped), the routes call this
+ * first so pairing never fails on a missing table.
+ */
+export async function ensureExtensionTables(): Promise<void> {
+  await run(
+    `CREATE TABLE IF NOT EXISTS extension_pairing_codes (code TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`,
+  );
+  await run(
+    `CREATE TABLE IF NOT EXISTS extension_connections (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, token_hash TEXT NOT NULL UNIQUE, label TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL)`,
+  );
+  await run(
+    `CREATE TABLE IF NOT EXISTS extension_commands (id TEXT PRIMARY KEY, connection_id TEXT NOT NULL REFERENCES extension_connections(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL, payload TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'pending', result TEXT NOT NULL DEFAULT '', error TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  );
+}

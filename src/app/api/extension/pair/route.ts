@@ -1,6 +1,6 @@
 import { currentUser } from "@/lib/auth";
 import { run } from "@/lib/db";
-import { newPairingCode } from "@/lib/extension";
+import { ensureExtensionTables, newPairingCode } from "@/lib/extension";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +14,8 @@ const CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 export async function POST() {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Sign in." }, { status: 401 });
+
+  await ensureExtensionTables();
 
   const code = newPairingCode();
   const now = Date.now();
