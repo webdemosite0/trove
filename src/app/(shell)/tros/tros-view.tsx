@@ -30,6 +30,7 @@ import {
   type AgentRow,
 } from "@/app/actions/agents";
 import { Ico } from "@/components/ui/ico";
+import { TroPngIcon, type TroPngIconName } from "@/components/tro/tro-png-icons";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 import { TroListPanel } from "./tro-list";
@@ -520,7 +521,7 @@ export function TrosView({
           </div>
           <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 sm:max-w-[420px]">
             <div className="relative min-w-0 flex-1 sm:max-w-[240px]">
-              <Ico icon={FiSearch} size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+              <TroPngIcon name="search" size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 dark:brightness-0 dark:invert" />
               <input
                 ref={searchRef}
                 value={query}
@@ -560,7 +561,7 @@ export function TrosView({
                       className="group flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 transition hover:border-amber-500/50 hover:bg-amber-500/[0.1]"
                     >
                       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-amber-500">
-                        <Ico icon={FiAlertCircle} size={16} />
+                        <TroPngIcon name="approvals" size={16} className="dark:brightness-0 dark:invert" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13.5px] font-semibold text-ink">
@@ -579,10 +580,10 @@ export function TrosView({
                   {attention.map((a) => {
                     const meta =
                       a.kind === "failed"
-                        ? { icon: FiAlertCircle, tone: "red", label: "Failed" }
+                        ? { png: "failed", tone: "red", label: "Failed" }
                         : a.kind === "paused"
-                          ? { icon: FiClock, tone: "ink", label: "Paused" }
-                          : { icon: FiClock, tone: "amber", label: "Overdue" };
+                          ? { png: "waiting", tone: "ink", label: "Paused" }
+                          : { png: "waiting", tone: "amber", label: "Overdue" };
                     return (
                       <Link
                         key={`${a.kind}-${a.id}`}
@@ -604,7 +605,7 @@ export function TrosView({
                                 : "bg-amber-500/15 text-amber-500",
                           )}
                         >
-                          <Ico icon={meta.icon} size={16} />
+                          <TroPngIcon name={meta.png as TroPngIconName} size={16} className="dark:brightness-0 dark:invert" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[13.5px] font-semibold text-ink">
@@ -691,7 +692,7 @@ export function TrosView({
                         </div>
                         <div className="mt-3 flex items-center justify-between border-t border-line/60 pt-2.5">
                           <span className="inline-flex items-center gap-1 text-[11.5px] text-ink-4">
-                            <Ico icon={FiClock} size={12} />
+                            <TroPngIcon name="waiting" size={12} className="dark:brightness-0 dark:invert" />
                             {timeAgo(t.createdAt)} elapsed
                           </span>
                           <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-violet-500">
@@ -785,7 +786,7 @@ export function TrosView({
                             {parent ? <span>Reports to {parent.name}</span> : null}
                             {reports.length > 0 ? (
                               <span className="inline-flex items-center gap-1 text-blue-500/90">
-                                <Ico icon={FiLayers} size={11} /> Leads {reports.length}
+                                <TroPngIcon name="team" size={11} className="dark:brightness-0 dark:invert" /> Leads {reports.length}
                               </span>
                             ) : null}
                             {active ? <span>Active {timeAgo(active)} ago</span> : null}
@@ -814,7 +815,7 @@ export function TrosView({
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500">
-                          <Ico icon={FiFileText} size={15} />
+                          <TroPngIcon name="artifacts" size={15} className="dark:brightness-0 dark:invert" />
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[13.5px] font-semibold text-ink">{art.title}</p>
@@ -823,7 +824,7 @@ export function TrosView({
                       </div>
                       <div className="mt-2.5 flex items-center justify-between border-t border-line/60 pt-2.5 text-[11.5px] text-ink-4">
                         <span className="inline-flex items-center gap-1 truncate">
-                          <Ico icon={FiCheck} size={12} className="text-emerald-500" />
+                          <TroPngIcon name="ready" size={12} className="dark:brightness-0 dark:invert" />
                           {art.agentName}
                         </span>
                         <span className="shrink-0">{timeAgo(art.updatedAt)} ago</span>
