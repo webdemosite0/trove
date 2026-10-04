@@ -113,7 +113,7 @@ function NavLink({
           aria-label={item.label}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "mx-auto flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+            "mx-auto flex h-9 w-9 items-center justify-center rounded-xl transition-all",
             active
               ? "bg-accent/15 text-ink ring-1 ring-accent/40"
               : "text-ink-2 hover:bg-hover hover:text-ink",
@@ -512,13 +512,13 @@ export function Sidebar({
   // AND opens the floating panel (via onRailNavigate).
   const railBody = () => (
     <div className="flex h-full min-h-0 w-full flex-col">
-      <div className="flex shrink-0 flex-col items-center pt-3">
+      <div className="flex shrink-0 flex-col items-center pt-2">
         <Tooltip label="Open sidebar" side="right">
           <button
             type="button"
             onClick={() => setCollapsed(false)}
             aria-label="Open sidebar"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
           >
             <FiSidebar size={19} />
           </button>
@@ -540,7 +540,7 @@ export function Sidebar({
         ))}
         {createItems.length > 0 ? (
           <>
-            <div className="my-2 w-8 shrink-0 border-t border-line" aria-hidden="true" />
+            <div className="my-1.5 w-6 shrink-0 border-t border-line" aria-hidden="true" />
             {createItems.map((item) => (
               <NavLink
                 key={item.href + item.label}
@@ -552,7 +552,7 @@ export function Sidebar({
             ))}
           </>
         ) : null}
-        <div className="my-2 w-8 shrink-0 border-t border-line" aria-hidden="true" />
+        <div className="my-1.5 w-6 shrink-0 border-t border-line" aria-hidden="true" />
         {MORE.map((item) => (
           <NavLink
             key={item.href + item.label}
@@ -564,13 +564,13 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="flex w-full shrink-0 flex-col items-center gap-1 border-t border-line p-2">
+      <div className="flex w-full shrink-0 flex-col items-center gap-1 border-t border-line p-1.5">
         <Tooltip label="Settings" side="right">
           <button
             type="button"
             onClick={() => openSettings("general")}
             aria-label="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
           >
             <FiSettings size={19} />
           </button>
@@ -598,7 +598,7 @@ export function Sidebar({
       <>
         <aside
           aria-label="Primary"
-          className="sticky top-0 hidden h-dvh w-16 shrink-0 flex-col border-r border-line bg-rail lg:flex"
+          className="sticky top-0 hidden h-dvh w-[52px] shrink-0 flex-col border-r border-line bg-rail lg:flex"
         >
           {railBody()}
         </aside>
@@ -614,7 +614,7 @@ export function Sidebar({
             <aside
               role="dialog"
               aria-label="Sidebar"
-              className="sidebar-panel-in absolute inset-y-0 left-16 flex w-[280px] flex-col overflow-hidden border-r border-line bg-rail shadow-2xl"
+              className="sidebar-panel-in absolute inset-y-0 left-[52px] flex w-[280px] flex-col overflow-hidden border-r border-line bg-rail shadow-2xl"
             >
               {body({ compact: false, panel: true, onNavigate: closePanel })}
             </aside>
