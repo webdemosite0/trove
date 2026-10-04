@@ -127,60 +127,6 @@
   color-scheme: dark;
 }
 
-/* Tro workspace "light world" — a scoped lavender palette that makes the Tro
- * workspace feel like its own calm, premium surface regardless of the app's
- * theme. All theme-token utilities (bg-canvas, text-ink, …) resolve to these
- * values inside [data-tro-light], so existing components render correctly. */
-[data-tro-light] {
-  --color-canvas: #faf9ff;
-  --color-rail: #ffffff;
-  --color-sunk: #f5f3ff;
-  --color-raised: #ffffff;
-  --color-hover: #ede9fe;
-  --color-ink: #1e1b2e;
-  --color-ink-2: #2e2a45;
-  --color-ink-3: #5b5678;
-  --color-ink-4: #8b87a3;
-  --color-line: #e9e4f7;
-  --color-line-strong: #d9d2ef;
-  --color-accent: #6d28d9;
-  --color-accent-soft: #f0ebfd;
-  --color-violet: #6d28d9;
-  --color-positive: #0b6553;
-  --color-positive-soft: #e7f5f0;
-  --color-caution: #b45309;
-  --color-critical: #c2325a;
-  --color-critical-soft: #fce8ee;
-  --shade: #1a1f36;
-  --ground: #ffffff;
-  --btn-a: #6d28d9;
-  --btn-b: #5b21b6;
-  --btn-ink: #ffffff;
-  --btn-glow: rgb(109 40 217 / 0.35);
-  --focus-ring: rgb(109 40 217 / 0.28);
-  --focus-line: rgb(109 40 217 / 0.7);
-  color-scheme: light;
-}
-
-/* Inside the Tro light world, never apply dark-mode icon inversion — the
- * charcoal PNG icons are already correct on the light surfaces. */
-[data-tro-light] .dark\:brightness-0,
-[data-tro-light] .dark\:invert {
-  filter: none !important;
-}
-
-/* Gentle entrance for chat messages in the Tro workspace. */
-@keyframes tro-msg-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-[data-tro-light] .tro-msg-in {
-  animation: tro-msg-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  [data-tro-light] .tro-msg-in { animation: none; }
-}
-
 @layer base {
   * { border-color: var(--color-line); }
 }

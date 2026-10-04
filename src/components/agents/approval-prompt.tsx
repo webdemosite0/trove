@@ -6,10 +6,8 @@ import {
 } from "@/components/chat/approval-card";
 
 /**
- * Clarification prompt — the Tro asks the user for input (a question with
- * options), the user submits answers, and the Tro carries on.
- * "Approve" is reserved for consequential actions with visible scope;
- * clarification forms use "Submit answers".
+ * Agent / tool approval prompt — human-in-the-loop questions
+ * before executing a sensitive action.
  */
 export function ApprovalPrompt({
   title,
@@ -36,8 +34,8 @@ export function ApprovalPrompt({
         labels={{
           skip: "Skip",
           continue: "Continue",
-          send: "Submit answers",
-          sentMessage: "Answers sent",
+          send: "Approve",
+          sentMessage: "Approved",
           customPlaceholder: "Something else…",
         }}
         onSubmitted={(answers, custom) => onApprove?.(answers, custom)}

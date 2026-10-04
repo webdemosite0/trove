@@ -1,7 +1,6 @@
 import { currentUser } from "@/lib/auth";
 import { one, all, run, uid, str, num } from "@/lib/db";
 import { ARTIFACT_KINDS, type ArtifactKind } from "@/lib/artifact-block";
-import { logTaskEvent } from "@/lib/tro-activity";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,19 +69,6 @@ export async function POST(req: Request) {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [id, user.id, agentId, kind, title, content, now, now],
   );
-  // Feed: artifact saved — verified because the row exists.
-  const agentRow = (await one(`SELECT name FROM agents WHERE id = ?`, [agentId])) as Record<string, unknown> | null;
-  await logTaskEvent({
-    userId: user.id,
-    agentId,
-    kind: "artifact_saved",
-    status: "done",
-    title: `Saved ${kind}: ${title || "Untitled"}`,
-    detail: `${content.length} characters`,
-    actorName: agentRow ? str(agentRow.name) : "",
-    artifactId: id,
-    verified: true,
-  });
   return Response.json({
     artifact: {
       id,
