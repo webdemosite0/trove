@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import { useVisibleInterval } from "@/lib/use-visible-interval";
 import Link from "next/link";
@@ -164,6 +164,27 @@ function ArtifactCard({
   );
 }
 
+/** Follow-up suggestion chips shown under the most recent artifact card. */
+function artifactSuggestions(kind: string, title: string): string[] {
+  const short = title.length > 34 ? title.slice(0, 34).replace(/\s+\S*$/, "") + "\u2026" : title;
+  switch (kind) {
+    case "doc":
+      return [`Summarize ${short}`, "Turn into a deck", "Translate to another language"];
+    case "sheet":
+      return ["Chart the key trends", "Add a summary row", "Explain the formulas"];
+    case "deck":
+      return ["Rehearse talking points", "Export the outline", "Tighten the narrative"];
+    case "code":
+      return ["Explain how this works", "Add error handling", "Write tests"];
+    case "website":
+      return ["Preview on mobile", "Change the color scheme", "Add a contact section"];
+    case "note":
+      return ["Expand this into a doc", "Set a reminder", "Share the takeaways"];
+    default:
+      return [`Summarize ${short}`, "Refine this further", "Export it for me"];
+  }
+}
+
 const IDLE_COMPUTER: ComputerState = {
   configured: true,
   sessionId: null,
@@ -311,6 +332,7 @@ export function AgentChat({
   const [panelOpen, setPanelOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1280);
   const [navOpen, setNavOpen] = useState(false);
   const [knowledgeCount, setKnowledgeCount] = useState<number | null>(null);
+  const [dismissedChipFp, setDismissedChipFp] = useState<string | null>(null);
   const { openSettings } = useNav();
   const [browserExpanded, setBrowserExpanded] = useState(false);
   type PanelTab = "about" | "desktop" | "files" | "activity" | "connectors" | "tasks" | "skills";
@@ -330,6 +352,22 @@ export function AgentChat({
     }
     return out;
   }, [turns, busy, answeredAsks]);
+  /** The most recent artifact block across all turns — gets contextual follow-up chips. */
+  const latestArtifact = useMemo(() => {
+    for (let i = turns.length - 1; i >= 0; i--) {
+      const t = turns[i];
+      if (t.role !== "model") continue;
+      const blocks = extractArtifactBlocks(t.text);
+      if (blocks.length) {
+        const last = blocks[blocks.length - 1].block;
+        return { turnId: t.id, fp: artifactFingerprint(last), block: last };
+      }
+    }
+    return null;
+  }, [turns]);
+  const latestArtifactFpRef = useRef<string | null>(null);
+  latestArtifactFpRef.current = latestArtifact?.fp ?? null;
+
 
   function scrollToApproval(turnId: number, askIdx: number) {
     document
@@ -790,6 +828,7 @@ export function AgentChat({
     async (raw: string, attachments?: Attachment[], base?: Turn[]) => {
       const text = raw.trim() || (attachments?.length ? "See the attached files." : "");
       if (!text || busy) return;
+      setDismissedChipFp(latestArtifactFpRef.current);
       stickToBottom.current = true;
       pushActivity("New task", text.slice(0, 80), "run");
       if (!panelOpen) setPanelOpen(true);
@@ -1435,7 +1474,7 @@ export function AgentChat({
       ) : null}
       <div className="mt-4 space-y-1">
         <Link
-          href={`/tros/${agent.id}/edit`}
+          href={`/tros/${agent.id}/edit?tab=knowledge`}
           className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-[#f5f3ff]"
         >
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f5f3ff] text-[#6d28d9] transition group-hover:bg-[#ede9fe]">
@@ -1452,7 +1491,7 @@ export function AgentChat({
           <FiChevronRight size={16} className="shrink-0 text-[#8b87a3]" />
         </Link>
         <Link
-          href={`/tros/${agent.id}/edit`}
+          href={`/tros/${agent.id}/edit?tab=memory`}
           className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-[#f5f3ff]"
         >
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f5f3ff] text-[#6d28d9] transition group-hover:bg-[#ede9fe]">
@@ -1633,25 +1672,45 @@ export function AgentChat({
                       {artBlocks.map((p, pi) => {
                         const fp = artifactFingerprint(p.block);
                         const saved = artifacts.find((a) => artifactFingerprint(a) === fp) ?? null;
+                        const isLatestArtifact =
+                          latestArtifact !== null &&
+                          fp === latestArtifact.fp &&
+                          t.id === latestArtifact.turnId;
+                        const showChips = isLatestArtifact && fp !== dismissedChipFp;
                         return (
-                          <ArtifactCard
-                            key={`art-${pi}`}
-                            block={p.block}
-                            saved={saved}
-                            onOpen={() => {
-                              if (saved) {
-                                setPreviewArtifact(saved);
-                                setPanelTab("files");
-                                if (!panelOpen) setPanelOpen(true);
-                              }
-                            }}
-                            onDownload={() => {
-                              if (saved) downloadArtifact(saved);
-                            }}
-                            onDelete={() => {
-                              if (saved) void deleteArtifact(saved.id);
-                            }}
-                          />
+                          <Fragment key={`art-${pi}`}>
+                            <ArtifactCard
+                              block={p.block}
+                              saved={saved}
+                              onOpen={() => {
+                                if (saved) {
+                                  setPreviewArtifact(saved);
+                                  setPanelTab("files");
+                                  if (!panelOpen) setPanelOpen(true);
+                                }
+                              }}
+                              onDownload={() => {
+                                if (saved) downloadArtifact(saved);
+                              }}
+                              onDelete={() => {
+                                if (saved) void deleteArtifact(saved.id);
+                              }}
+                            />
+                            {showChips ? (
+                              <div className="mt-2.5 flex flex-wrap gap-2">
+                                {artifactSuggestions(p.block.kind, p.block.title).map((s) => (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => void send(s)}
+                                    className="rounded-full border border-[#d9d2ef] bg-white px-4 py-2 text-[13px] font-medium text-[#3f3f4a] transition hover:border-[#6d28d9]/50 hover:text-[#6d28d9]"
+                                  >
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </Fragment>
                         );
                       })}
                     </div>
