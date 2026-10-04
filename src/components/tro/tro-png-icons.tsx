@@ -1,5 +1,8 @@
 // Tro icon set — PNG assets (transparent) served from /tros-icons-transparent/.
 // Original generated icon concepts, uploaded as-is. Usage: <TroPngIcon name="home" size={24} />
+// Rendered with next/image so the 1254px sources are served as optimized,
+// correctly-sized variants instead of full ~220KB files.
+import Image from "next/image";
 
 const ICON_FILES: Record<string, string> = {
   "home": "01-home.png",
@@ -54,7 +57,7 @@ export function TroPngIcon({
   alt?: string;
 }) {
   return (
-    <img
+    <Image
       src={`/tros-icons-transparent/${ICON_FILES[name]}`}
       width={size}
       height={size}
