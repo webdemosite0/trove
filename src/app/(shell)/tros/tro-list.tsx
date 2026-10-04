@@ -42,7 +42,7 @@ export function TroListPanel({
 }: {
   agents: AgentRow[];
   activeId?: string;
-  onNew?: () => void;
+  onNew: () => void;
   onDelete: (id: string) => void;
   onHoverAgent?: (a: AgentRow | null) => void;
   searchRef?: RefObject<HTMLInputElement | null>;
@@ -159,17 +159,15 @@ export function TroListPanel({
   return (
     <div className={cn("flex min-h-0 flex-col bg-canvas", className)}>
       <div className="shrink-0 px-3 pt-3">
-        {onNew ? (
-          <button
-            type="button"
-            onClick={onNew}
-            title="New Tro (N)"
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2.5 text-[13.5px] font-semibold text-ink shadow-sm transition duration-200 hover:-translate-y-px hover:border-violet-500/40 hover:bg-hover hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
-          >
-            <Ico icon={FiPlus} motion="open" size={15} /> New Tro
-          </button>
-        ) : null}
-        <div className={cn("relative", onNew && "mt-2")}>
+        <button
+          type="button"
+          onClick={onNew}
+          title="New Tro (N)"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2.5 text-[13.5px] font-semibold text-ink shadow-sm transition duration-200 hover:-translate-y-px hover:border-violet-500/40 hover:bg-hover hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+        >
+          <Ico icon={FiPlus} motion="open" size={15} /> New Tro
+        </button>
+        <div className="relative mt-2">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4">
             <Ico icon={FiSearch} size={14} />
           </span>
