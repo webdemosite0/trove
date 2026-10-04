@@ -286,6 +286,72 @@ function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: st
   );
 }
 
+/* ------------------------------ compact roster row ----------------------------- */
+
+function RosterRow({
+  agent,
+  state,
+  task,
+  divider,
+  className,
+}: {
+  agent: AgentRow;
+  state: AgentState;
+  task: OverviewTask | undefined;
+  divider?: boolean;
+  className?: string;
+}) {
+  const meta = STATE_META[state];
+  const context =
+    task && task.status === "working" ? (
+      <span className="truncate text-violet-500/90">Working on: {task.title || "a task"}</span>
+    ) : task && task.status === "waiting" ? (
+      <span className="truncate text-amber-500/90">Waiting on: {task.title || "input"}</span>
+    ) : task ? (
+      <span className="truncate text-ink-3">Queued: {task.title || "a task"}</span>
+    ) : (
+      <span className="text-ink-4">No active task</span>
+    );
+  return (
+    <Link
+      href={`/tros/${agent.id}`}
+      className={cn(
+        "group flex items-center gap-3 px-4 py-2 transition hover:bg-hover/60",
+        divider && "border-t border-line/60",
+        className,
+      )}
+    >
+      <span className="relative shrink-0">
+        {state === "working" ? (
+          <span className="absolute -top-[2px] left-1/2 z-10 -translate-x-1/2">
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-blue-500" />
+            </span>
+          </span>
+        ) : null}
+        <Bot
+          size={34}
+          seed={agent.id}
+          accent={agent.accent}
+          state={state === "working" ? "working" : "idle"}
+        />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-[13.5px] font-semibold text-ink">{agent.name}</span>
+          <span className={cn("shrink-0 rounded-full border px-2 py-px text-[10px] font-bold", meta.badge)}>
+            {meta.label}
+          </span>
+        </span>
+        <span className="block truncate text-[12px] text-ink-2">{agent.role}</span>
+        <span className="block truncate text-[11.5px]">{context}</span>
+      </span>
+      <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+    </Link>
+  );
+}
+
 /* --------------------------------- main view --------------------------------- */
 
 export function TrosView({
@@ -373,7 +439,6 @@ export function TrosView({
   const pendingApprovals = overview?.pendingApprovals ?? [];
   const attention = overview?.attention ?? [];
   const recentArtifacts = overview?.recentArtifacts ?? [];
-  const agentActivity = overview?.agentActivity ?? {};
 
   const workingCount = agents.filter((a) => presence.has(a.id)).length;
 
@@ -386,8 +451,6 @@ export function TrosView({
   };
   const agentTask = (id: string): OverviewTask | undefined =>
     activeTasks.find((t) => t.agentId === id);
-  const lastActive = (a: AgentRow): number | null =>
-    agentActivity[a.id] ?? (a.created_at || null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -405,10 +468,26 @@ export function TrosView({
     return [...filtered].sort((x, y) => {
       const r = rank[agentState(x.id)] - rank[agentState(y.id)];
       if (r !== 0) return r;
-      return (lastActive(y) ?? 0) - (lastActive(x) ?? 0);
+      return (overview?.agentActivity?.[y.id] ?? y.created_at ?? 0) - (overview?.agentActivity?.[x.id] ?? x.created_at ?? 0);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtered, presence, overview]);
+
+  // Group the roster by reporting lines: managers with nested reports, then independents.
+  const managers = useMemo(
+    () => ordered.filter((a) => agents.some((c) => c.parent_id === a.id)),
+    [ordered, agents],
+  );
+  const managerIds = useMemo(() => new Set(managers.map((m) => m.id)), [managers]);
+  const independents = useMemo(
+    () => ordered.filter((a) => !a.parent_id && !managerIds.has(a.id)),
+    [ordered, managerIds],
+  );
+
+  const assignTask = () => {
+    document.getElementById("roster")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => searchRef.current?.focus({ preventScroll: true }), 450);
+  };
 
   if (!signedIn) {
     return (
@@ -435,17 +514,6 @@ export function TrosView({
 
   return (
     <div className="relative flex h-full min-h-0 bg-canvas">
-      {/* Tro list — desktop */}
-      <aside className="hidden w-[300px] shrink-0 border-r border-line/70 lg:block">
-        <TroListPanel
-          agents={agents}
-          onNew={() => setDraft(BLANK_DRAFT)}
-          onDelete={setDeletingId}
-          workingIds={presence}
-          className="h-full"
-        />
-      </aside>
-
       {/* Tro list — mobile drawer */}
       <button
         type="button"
@@ -547,13 +615,17 @@ export function TrosView({
           <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(ellipse_at_50%_0%,rgba(139,92,246,0.12),transparent_55%)]" />
           <div className="relative mx-auto w-full max-w-[860px] space-y-8 px-4 py-6 sm:px-6">
 
-            {/* Needs attention — only when present */}
-            {attention.length > 0 || pendingApprovals.length > 0 ? (
-              <section id="needs-attention" aria-label="Needs attention">
-                <SectionTitle hint="Blocked work and waiting approvals — clear these first.">
-                  Needs attention
-                </SectionTitle>
-                <div className="space-y-2">
+            {/* Active tasks — needs attention + live work, always visible */}
+            <section id="active-work" aria-label="Active tasks">
+              <SectionTitle hint="Live work across the crew — clear blockers first.">
+                Active tasks
+              </SectionTitle>
+              {attention.length > 0 || pendingApprovals.length > 0 ? (
+                <div id="needs-attention" className="mb-5">
+                  <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                    Needs attention
+                  </p>
+                  <div className="space-y-2">
                   {pendingApprovals.map((p) => (
                     <Link
                       key={p.id}
@@ -631,16 +703,10 @@ export function TrosView({
                       </Link>
                     );
                   })}
+                  </div>
                 </div>
-              </section>
-            ) : null}
-
-            {/* Active work */}
-            {activeTasks.length > 0 ? (
-              <section id="active-work" aria-label="Active work">
-                <SectionTitle hint="What the crew is doing right now.">
-                  Active work
-                </SectionTitle>
+              ) : null}
+              {activeTasks.length > 0 ? (
                 <div className="grid gap-2.5 sm:grid-cols-2">
                   {activeTasks.slice(0, 6).map((t) => {
                     const agent = byId.get(t.agentId);
@@ -704,11 +770,26 @@ export function TrosView({
                     );
                   })}
                 </div>
-              </section>
-            ) : null}
+              ) : null}
+              {attention.length === 0 && pendingApprovals.length === 0 && activeTasks.length === 0 ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-line px-5 py-4">
+                  <span className="inline-flex items-center gap-2.5 text-[13.5px] text-ink-2">
+                    <TroPngIcon name="ready" size={18} className="shrink-0 opacity-60 dark:brightness-0 dark:invert" />
+                    All quiet — no active tasks.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={assignTask}
+                    className="btn-grad shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03]"
+                  >
+                    Assign a task
+                  </button>
+                </div>
+              ) : null}
+            </section>
 
             {/* Team overview */}
-            <section aria-label="Team overview">
+            <section id="roster" aria-label="Team overview" className="scroll-mt-20">
               <div className="mb-3 flex items-end justify-between px-1">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Team overview</p>
@@ -724,78 +805,65 @@ export function TrosView({
                   </p>
                   <p className="mt-1 text-[12.5px] text-ink-3">
                     {agents.length === 0
-                      ? "Hire your first specialist to get started."
+                      ? "Use the New Tro button above to hire your first specialist."
                       : "Try a different search."}
                   </p>
-                  {agents.length === 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => setDraft(BLANK_DRAFT)}
-                      className="btn-grad mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-semibold text-white"
-                    >
-                      <Ico icon={FiPlus} size={14} /> New Tro
-                    </button>
-                  ) : null}
+                </div>
+              ) : query ? (
+                <div className="overflow-hidden rounded-2xl border border-line bg-raised/50">
+                  {ordered.map((a, i) => (
+                    <RosterRow
+                      key={a.id}
+                      agent={a}
+                      state={agentState(a.id)}
+                      task={agentTask(a.id)}
+                      divider={i > 0}
+                    />
+                  ))}
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-2xl border border-line bg-raised/50">
-                  {ordered.map((a, i) => {
-                    const state = agentState(a.id);
-                    const meta = STATE_META[state];
-                    const task = agentTask(a.id);
-                    const active = lastActive(a);
-                    const parent = a.parent_id ? byId.get(a.parent_id) : null;
-                    const reports = agents.filter((c) => c.parent_id === a.id);
+                <div className="space-y-5">
+                  {managers.map((m) => {
+                    const reports = ordered.filter((c) => c.parent_id === m.id);
                     return (
-                      <Link
-                        key={a.id}
-                        href={`/tros/${a.id}`}
-                        className={cn(
-                          "group flex items-center gap-3.5 px-4 py-3 transition hover:bg-hover/60",
-                          i > 0 && "border-t border-line/60",
-                        )}
-                      >
-                        <span className="relative shrink-0">
-                          {state === "working" ? (
-                            <span className="absolute -top-[3px] left-1/2 z-10 -translate-x-1/2">
-                              <span className="relative flex size-2">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
-                                <span className="relative inline-flex size-2 rounded-full bg-blue-500" />
-                              </span>
-                            </span>
-                          ) : null}
-                          <Bot
-                            size={44}
-                            seed={a.id}
-                            accent={a.accent}
-                            state={state === "working" ? "working" : "idle"}
-                          />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                            <span className="truncate text-[14px] font-semibold text-ink">{a.name}</span>
-                            <span className={cn("rounded-full border px-2 py-px text-[10px] font-bold", meta.badge)}>
-                              {meta.label}
-                            </span>
-                          </span>
-                          <span className="mt-0.5 block truncate text-[12.5px] text-ink-2">{a.role}</span>
-                          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-ink-4">
-                            {task ? (
-                              <span className="truncate text-violet-500/90">On: {task.title}</span>
-                            ) : null}
-                            {parent ? <span>Reports to {parent.name}</span> : null}
-                            {reports.length > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-blue-500/90">
-                                <TroPngIcon name="team" size={11} className="dark:brightness-0 dark:invert" /> Leads {reports.length}
-                              </span>
-                            ) : null}
-                            {active ? <span>Active {timeAgo(active)} ago</span> : null}
-                          </span>
-                        </span>
-                        <Ico icon={FiArrowRight} size={15} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
-                      </Link>
+                      <div key={m.id} className="overflow-hidden rounded-2xl border border-line bg-raised/50">
+                        <RosterRow agent={m} state={agentState(m.id)} task={agentTask(m.id)} />
+                        {reports.length > 0 ? (
+                          <div className="border-t border-line/60 bg-sunk/30">
+                            {reports.map((r, j) => (
+                              <div key={r.id} className="ml-4 border-l-2 border-violet-500/25">
+                                <RosterRow
+                                  agent={r}
+                                  state={agentState(r.id)}
+                                  task={agentTask(r.id)}
+                                  divider={j > 0}
+                                  className="pl-3"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     );
                   })}
+                  {independents.length > 0 ? (
+                    <div>
+                      <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                        Independent
+                      </p>
+                      <div className="overflow-hidden rounded-2xl border border-line bg-raised/50">
+                        {independents.map((a, i) => (
+                          <RosterRow
+                            key={a.id}
+                            agent={a}
+                            state={agentState(a.id)}
+                            task={agentTask(a.id)}
+                            divider={i > 0}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </section>
