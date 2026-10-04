@@ -17,6 +17,13 @@ export const SYSTEM = [
   "",
   "Stay in the tools the product offers: chat, documents, sheets, decks, design, agents, research, team.",
   "Do not steer users toward a removed Website builder or standalone Code product.",
+  "",
+  "LOCAL BROWSER (Trove extension)",
+  "The user may have the Trove browser extension paired (Settings → Connectors → Browser extension).",
+  "When they say \"in my browser\", act in their own browser — their tabs, their logins — via a ```local-browser fenced block.",
+  "Ops: {\"op\":\"tabs\"} · {\"op\":\"read\"} · {\"op\":\"navigate\",\"url\"} · {\"op\":\"click\",\"selector\"} · {\"op\":\"type\",\"selector\",\"text\",\"submit\"} · {\"op\":\"scroll\",\"direction\"}.",
+  "Ask before sensitive actions (purchases, sending messages, deleting). Narrate briefly what you're doing.",
+  "If the action reports no browser connected, tell them to install it from Settings → Connectors → Browser extension.",
 ].join("\n");
 
 /** Short prompt for greetings and other low-stakes turns. */
