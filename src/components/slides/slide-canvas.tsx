@@ -13,7 +13,25 @@ import { Editable } from "@/components/slides/editable";
 /**
  * Slide canvas applies each deck's Theme (accent, font, pattern, canvas/ink).
  * Layouts change structure; theme changes look and feel.
+ *
+ * Contrast guard: if the deck sets a dark canvas without a matching ink,
+ * force a dark context so text-ink etc. resolve to light colors (and vice
+ * versa). Otherwise a dark AI-generated theme renders dark-on-dark in
+ * light mode.
  */
+function isDarkColor(hex: string | undefined): boolean | null {
+  if (!hex) return null;
+  const m = hex.trim().match(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i);
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  // Relative luminance (sRGB)
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum < 0.4;
+}
 
 type EditHandlers = {
   onTitle: (v: string) => void;
@@ -42,6 +60,11 @@ export const SlideCanvas = memo(function SlideCanvas({
   const hasPhoto = Boolean(slide.image) || layout === "photo" || layout === "split";
   const theme = slide.theme || DEFAULT_THEME;
   const accent = theme.accent || DEFAULT_THEME.accent;
+  // If the deck picked a canvas but no ink, match the text to the canvas
+  // so a dark AI-generated theme doesn't render dark-on-dark in light mode.
+  const canvasDark = isDarkColor(theme.canvas);
+  const autoInk =
+    theme.ink || (canvasDark === true ? "#ececec" : canvasDark === false ? "#1a1a1e" : undefined);
 
   return (
     <div
@@ -55,7 +78,17 @@ export const SlideCanvas = memo(function SlideCanvas({
         // Drive accents / ink from the deck theme for this slide.
         ["--color-accent" as string]: accent,
         ["--slide-accent" as string]: accent,
-        color: theme.ink || undefined,
+        // When we auto-derived ink from a dark/light canvas, push it into
+        // the ink variables too so text-ink/text-ink-2/etc. stay readable.
+        ...(autoInk && !theme.ink
+          ? {
+              ["--color-ink" as string]: autoInk,
+              ["--color-ink-2" as string]: canvasDark === true ? "#d4d4d8" : "#3f3f46",
+              ["--color-ink-3" as string]: canvasDark === true ? "#a1a1aa" : "#71717a",
+              ["--color-ink-4" as string]: canvasDark === true ? "#71717a" : "#a1a1aa",
+            }
+          : null),
+        color: theme.ink || autoInk || undefined,
         background: patternBackground(theme.pattern, accent, theme.canvas),
       }}
     >
