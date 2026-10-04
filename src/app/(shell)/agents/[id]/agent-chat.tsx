@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
+import { useVisibleInterval } from "@/lib/use-visible-interval";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap, FiUsers, FiSettings } from "@/components/ui/icons";
@@ -733,19 +734,18 @@ export function AgentChat({
   }, []);
 
   // Live "working" presence — powers the blue dot above this Tro everywhere.
+  // Pauses while the tab is hidden; the DELETE on unmount still clears it.
+  const beat = useCallback(() => {
+    fetch("/api/tro/presence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agentId: agent.id }),
+    }).catch(() => {});
+  }, [agent.id]);
+  useVisibleInterval(beat, 20000, busy);
   useEffect(() => {
     if (!busy) return;
-    const beat = () => {
-      fetch("/api/tro/presence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agentId: agent.id }),
-      }).catch(() => {});
-    };
-    beat();
-    const iv = setInterval(beat, 20000);
     return () => {
-      clearInterval(iv);
       fetch(`/api/tro/presence?agentId=${encodeURIComponent(agent.id)}`, {
         method: "DELETE",
       }).catch(() => {});
