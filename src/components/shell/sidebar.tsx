@@ -23,6 +23,8 @@ import {
  
   TbRobot,
   TbUsers,
+  TbBell,
+  TbPuzzle,
   TbHelpCircle,
 } from "@/components/ui/icons";
 import { logOut } from "@/app/actions/auth";
@@ -71,6 +73,12 @@ const TROS: NavItem[] = [
   { href: "/tros/artifacts", label: "Artifacts", icon: FiLayers },
 ];
 
+const MORE: NavItem[] = [
+  { href: "/reminders", label: "Reminders", icon: TbBell },
+  { href: "/team", label: "Team", icon: TbUsers },
+  { href: "/skills", label: "Skills", icon: TbPuzzle },
+];
+
 function isActive(pathname: string, href: string) {
   const base = href.split("?")[0] || href;
   if (pathname === base) return true;
@@ -105,13 +113,13 @@ function NavLink({
           aria-label={item.label}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "mx-auto flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
+            "mx-auto flex h-10 w-10 items-center justify-center rounded-xl transition-all",
             active
-              ? "bg-hover text-ink ring-1 ring-line"
-              : "text-ink-3 hover:bg-hover hover:text-ink",
+              ? "bg-accent/15 text-ink ring-1 ring-accent/40"
+              : "text-ink-2 hover:bg-hover hover:text-ink",
           )}
         >
-          <Icon size={18} />
+          <Icon size={19} />
         </Link>
       </Tooltip>
     );
@@ -510,29 +518,16 @@ export function Sidebar({
             type="button"
             onClick={() => setCollapsed(false)}
             aria-label="Open sidebar"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
           >
-            <FiSidebar size={18} />
+            <FiSidebar size={19} />
           </button>
-        </Tooltip>
-      </div>
-
-      <div className="flex shrink-0 flex-col items-center px-2 py-2">
-        <Tooltip label={isTros ? "New Tro" : "New chat"} side="right">
-          <Link
-            href={isTros ? "/tros?new=1" : "/chat"}
-            onClick={onRailNavigate}
-            aria-label={isTros ? "New Tro" : "New chat"}
-            className="btn-grad flex h-10 w-10 items-center justify-center rounded-xl"
-          >
-            <FiPlus size={18} />
-          </Link>
         </Tooltip>
       </div>
 
       <nav
         aria-label="Primary"
-        className="flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto overflow-x-hidden px-2 pb-2"
+        className="flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto px-2 pb-2"
       >
         {mainItems.map((item) => (
           <NavLink
@@ -557,6 +552,16 @@ export function Sidebar({
             ))}
           </>
         ) : null}
+        <div className="my-2 w-8 shrink-0 border-t border-line" aria-hidden="true" />
+        {MORE.map((item) => (
+          <NavLink
+            key={item.href + item.label}
+            item={item}
+            pathname={pathname}
+            compact
+            onNavigate={onRailNavigate}
+          />
+        ))}
       </nav>
 
       <div className="flex w-full shrink-0 flex-col items-center gap-1 border-t border-line p-2">
@@ -565,9 +570,9 @@ export function Sidebar({
             type="button"
             onClick={() => openSettings("general")}
             aria-label="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-3 transition-colors hover:bg-hover hover:text-ink"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
           >
-            <FiSettings size={18} />
+            <FiSettings size={19} />
           </button>
         </Tooltip>
         {user ? (
