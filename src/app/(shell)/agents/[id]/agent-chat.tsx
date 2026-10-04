@@ -14,6 +14,7 @@ import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
 import { ArtifactIcon } from "@/components/ui/artifact-icon";
 import { Ico } from "@/components/ui/ico";
+import { TroPngIcon, type TroPngIconName } from "@/components/tro/tro-png-icons";
 import { Tooltip } from "@/components/ui/tooltip";
 import { FailureNote } from "@/components/ui/failure-note";
 import { Modal } from "@/components/ui/modal";
@@ -1587,12 +1588,12 @@ export function AgentChat({
             >
               {(
                 [
-                  { id: "desktop", label: "Desktop", icon: FiMonitor, badge: undefined as number | undefined },
-                  { id: "files", label: "Files", icon: FiFolder, badge: artifacts.length || undefined },
-                  { id: "activity", label: "Activity", icon: FiActivity, badge: activity.filter((a) => a.tone === "run").length || undefined },
-                  { id: "connectors", label: "Connectors", icon: TbPlugConnected, badge: undefined as number | undefined },
-                  { id: "tasks", label: "Tasks", icon: FiClock, badge: undefined as number | undefined },
-                  { id: "skills", label: "Skills", icon: FiZap, badge: undefined as number | undefined },
+                  { id: "desktop", label: "Desktop", png: "desktop", badge: undefined as number | undefined },
+                  { id: "files", label: "Files", png: "files", badge: artifacts.length || undefined },
+                  { id: "activity", label: "Activity", png: "activity", badge: activity.filter((a) => a.tone === "run").length || undefined },
+                  { id: "connectors", label: "Connectors", png: "connect", badge: undefined as number | undefined },
+                  { id: "tasks", label: "Tasks", png: "tasks", badge: undefined as number | undefined },
+                  { id: "skills", label: "Skills", png: "tools", badge: undefined as number | undefined },
                 ] as const
               ).map((t) => (
                 <Tooltip key={t.id} label={t.label} side="bottom">
@@ -1607,7 +1608,7 @@ export function AgentChat({
                       panelTab === t.id ? "bg-hover text-ink" : "text-ink-4 hover:bg-hover hover:text-ink-2",
                     )}
                   >
-                    <Ico icon={t.icon} size={16} />
+                    <TroPngIcon name={t.png as TroPngIconName} size={16} className="dark:brightness-0 dark:invert" />
                     {t.badge ? (
                       <span className="absolute -right-0.5 -top-0.5 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
                         {t.badge > 99 ? "99+" : t.badge}
@@ -1628,7 +1629,7 @@ export function AgentChat({
           <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-                <Ico icon={FiMonitor} size={11} className="text-ink-3" /> Desktop
+                <TroPngIcon name="desktop" size={11} className="dark:brightness-0 dark:invert" /> Desktop
               </p>
               <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
                 {browserExpanded ? "Shrink" : "Expand"}
@@ -1667,7 +1668,7 @@ export function AgentChat({
             <div className={cn("space-y-1.5", busy && "pointer-events-none opacity-55")}>
               <div className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas/60 px-2.5 py-2">
                 <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3")}>
-                  <FiMonitor size={15} />
+                  <TroPngIcon name="desktop" size={15} className="dark:brightness-0 dark:invert" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[12.5px] font-medium text-ink">{agent.name.split(" ")[0]}'s desktop</p>
@@ -1724,7 +1725,7 @@ export function AgentChat({
           {panelTab === "activity" ? (
           <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
             <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-              <Ico icon={FiActivity} size={11} className="text-ink-3" /> Activity
+              <TroPngIcon name="activity" size={11} className="dark:brightness-0 dark:invert" /> Activity
             </p>
             {/* Live in-session events (ephemeral) */}
             {activity.length > 0 ? (
@@ -1761,7 +1762,7 @@ export function AgentChat({
             ) : null}
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-                <Ico icon={FiFolder} size={11} className="text-ink-3" /> Library
+                <TroPngIcon name="files" size={11} className="dark:brightness-0 dark:invert" /> Library
               </p>
               {artifacts.length > 0 ? (
                 <span className="rounded-full bg-accent/12 px-2 py-0.5 text-[10px] font-bold text-accent">
@@ -1837,7 +1838,7 @@ export function AgentChat({
           <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-                <Ico icon={TbPlugConnected} size={11} className="text-ink-3" /> Connectors
+                <TroPngIcon name="connect" size={11} className="dark:brightness-0 dark:invert" /> Connectors
                 <span className="relative flex size-1.5" title="Live">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
                   <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
@@ -1870,7 +1871,7 @@ export function AgentChat({
                 {connectors.map((c) => (
                   <li key={c.service} className="flex items-center gap-2 rounded-lg px-1.5 py-1.5">
                     <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-positive/15 text-positive">
-                      <Ico icon={TbPlugConnected} size={13} />
+                      <TroPngIcon name="connect" size={13} className="dark:brightness-0 dark:invert" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-medium text-ink">{c.label}</span>

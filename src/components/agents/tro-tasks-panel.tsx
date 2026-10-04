@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FiBell, FiClock, FiPlus, FiRepeat, FiTrash2, FiX, FiZap } from "react-icons/fi";
 import { cn } from "@/lib/utils";
+import { TroPngIcon } from "@/components/tro/tro-png-icons";
 
 export interface ScheduledTask {
   id: string;
@@ -104,7 +105,7 @@ export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentNa
     <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
       <div className="mb-2 flex items-center justify-between">
         <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
-          <FiClock size={11} className="text-ink-3" /> Scheduled tasks
+          <TroPngIcon name="schedule" size={11} className="dark:brightness-0 dark:invert" /> Scheduled tasks
         </p>
         <button
           type="button"
@@ -158,7 +159,7 @@ export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentNa
                     t.kind === "task" ? "bg-accent/15 text-accent" : "bg-amber-500/15 text-amber-500",
                   )}
                 >
-                  {t.kind === "task" ? <FiZap size={13} /> : <FiBell size={13} />}
+                  {t.kind === "task" ? <TroPngIcon name="tasks" size={13} className="dark:brightness-0 dark:invert" /> : <TroPngIcon name="notifications" size={13} className="dark:brightness-0 dark:invert" />}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[12.5px] font-medium text-ink">{t.title}</p>
@@ -166,7 +167,7 @@ export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentNa
                     <span className="font-medium text-ink-2">{formatNext(t)}</span>
                     {t.cronExpr ? (
                       <span className="inline-flex items-center gap-0.5">
-                        <FiRepeat size={10} /> {t.cronExpr}
+                        <TroPngIcon name="retry" size={10} className="dark:brightness-0 dark:invert" /> {t.cronExpr}
                       </span>
                     ) : null}
                   </p>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Thinking } from "@/components/chat/thinking";
+import { TroPngIcon, type TroPngIconName } from "@/components/tro/tro-png-icons";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -55,6 +56,23 @@ const STATUS_META: Record<TaskStatus, { label: string; dot: string; ring: string
   done: { label: "Done", dot: "bg-ok", ring: "ring-ok/30" },
   failed: { label: "Failed", dot: "bg-critical", ring: "ring-critical/30" },
   cancelled: { label: "Cancelled", dot: "bg-ink-3", ring: "ring-ink-3/30" },
+};
+
+const STATUS_PNG: Record<TaskStatus, TroPngIconName> = {
+  queued: "waiting",
+  working: "working",
+  waiting: "waiting",
+  done: "ready",
+  failed: "failed",
+  cancelled: "stop",
+};
+
+const KIND_PNG: Partial<Record<TaskEventKind, TroPngIconName>> = {
+  delegated: "team",
+  delegate_result: "team",
+  artifact_saved: "artifacts",
+  approval_requested: "approvals",
+  approval_resolved: "approvals",
 };
 
 const KIND_ICON: Partial<Record<TaskEventKind, string>> = {
@@ -197,6 +215,7 @@ function EventRow({
   onRetryTask?: (taskId: string) => void;
 }) {
   const meta = STATUS_META[ev.status];
+  const kindPng = KIND_PNG[ev.kind];
   const icon = KIND_ICON[ev.kind] ?? "•";
   const live = ev.status === "working" || ev.status === "queued" || ev.status === "waiting";
 
@@ -215,12 +234,18 @@ function EventRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-[13.5px] font-medium leading-snug text-ink">
-            <span className="mr-1.5 inline-block w-4 text-center text-[11px] text-ink-4">{icon}</span>
+            <span className="mr-1.5 inline-flex w-4 items-center justify-center text-[11px] text-ink-4">
+              {kindPng ? (
+                <TroPngIcon name={kindPng} size={13} className="dark:brightness-0 dark:invert" />
+              ) : (
+                icon
+              )}
+            </span>
             {ev.title}
           </span>
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide",
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide",
               ev.status === "done" && "bg-ok/10 text-ok",
               ev.status === "working" && "bg-info/10 text-info",
               ev.status === "waiting" && "bg-warn/10 text-warn",
@@ -229,6 +254,7 @@ function EventRow({
               ev.status === "cancelled" && "bg-sunk text-ink-4",
             )}
           >
+            <TroPngIcon name={STATUS_PNG[ev.status]} size={11} className="dark:brightness-0 dark:invert" />
             {meta.label}
           </span>
         </div>
