@@ -421,7 +421,7 @@ export function Composer({
           onClick={() => voice.toggle()}
           className={cn(
             "grid place-items-center rounded-full text-ink-3 transition hover:bg-hover hover:text-ink",
-            compact ? "size-8" : "size-9",
+            "size-11",
             voice.listening && "bg-accent/15 text-accent",
             locked && "pointer-events-none opacity-40",
           )}
@@ -436,7 +436,7 @@ export function Composer({
             aria-label="Stop generating"
             className={cn(
               "grid place-items-center rounded-full bg-sunk text-ink transition hover:bg-hover",
-              compact ? "size-8" : "size-9",
+              "size-11",
             )}
           >
             <Ico icon={FiSquare} motion="pop" size={compact ? 14 : 15} />
@@ -449,7 +449,7 @@ export function Composer({
             aria-label="Send"
             className={cn(
               "hover-glow grid place-items-center rounded-full transition-all duration-200",
-              compact ? "size-8" : "size-9",
+              "size-11",
               ready
                 ? "btn-grad text-white shadow-[0_8px_24px_-8px_var(--btn-glow)] hover:shadow-[0_10px_28px_-6px_var(--btn-glow)] active:scale-95"
                 : "bg-sunk text-ink-4",

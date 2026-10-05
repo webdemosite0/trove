@@ -246,13 +246,13 @@ export function SheetGrid({
         <table className="border-collapse" style={{ minWidth: "100%" }}>
           <thead>
             <tr>
-              <th className="sticky left-0 top-0 z-20 h-9 min-w-[44px] border-b border-r border-line bg-sunk" />
+              <th className="sticky left-0 top-0 z-20 h-11 min-w-[44px] border-b border-r border-line bg-sunk" />
               {Array.from({ length: cols }, (_, c) => (
                 <th
                   key={c}
                   onClick={() => setSel((s) => (s ? { r: s.r, c } : { r: 0, c }))}
                   className={cn(
-                    "sticky top-0 z-10 h-9 min-w-[96px] cursor-pointer border-b border-r border-line bg-sunk px-2 text-center text-[11.5px] font-semibold uppercase tracking-wide text-ink-3 sm:min-w-[128px]",
+                    "sticky top-0 z-10 h-11 min-w-[96px] cursor-pointer border-b border-r border-line bg-sunk px-2 text-center text-[11.5px] font-semibold uppercase tracking-wide text-ink-3 sm:min-w-[128px]",
                     sel?.c === c && "bg-accent/10 text-accent",
                   )}
                 >
@@ -267,7 +267,7 @@ export function SheetGrid({
                 <td
                   onClick={() => setSel((s) => (s ? { r, c: s.c } : { r, c: 0 }))}
                   className={cn(
-                    "sticky left-0 z-10 h-9 cursor-pointer border-b border-r border-line bg-sunk px-2 text-center text-[11.5px] font-medium tabular-nums text-ink-3",
+                    "sticky left-0 z-10 h-11 cursor-pointer border-b border-r border-line bg-sunk px-2 text-center text-[11.5px] font-medium tabular-nums text-ink-3",
                     sel?.r === r && "bg-accent/10 text-accent",
                   )}
                 >

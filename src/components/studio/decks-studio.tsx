@@ -70,7 +70,7 @@ export function DecksStudio({
                   key={t}
                   type="button"
                   onClick={() => restyle(t)}
-                  className="rounded-full border border-line bg-sunk px-3 py-1.5 text-[12px] font-medium capitalize text-ink-2 transition hover:border-accent/40 hover:text-ink"
+                  className="rounded-full border border-line bg-sunk px-4 py-2.5 text-[12px] font-medium capitalize text-ink-2 transition hover:border-accent/40 hover:text-ink"
                 >
                   {t}
                 </button>

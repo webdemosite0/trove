@@ -563,7 +563,7 @@ export function TeamChatPanel({
           setUnread(0);
           void load(true);
         }}
-        className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-40 grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
+        className="fixed right-4 top-[4.5rem] z-40 grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
         aria-label="Open Team chat"
       >
         <FiUsers size={19} />
