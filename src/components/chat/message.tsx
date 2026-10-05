@@ -16,6 +16,7 @@ import { Bot } from "@/components/agents/bot";
 import { Thinking } from "@/components/chat/thinking";
 import { cn } from "@/lib/utils";
 import type { Attachment } from "@/lib/attachments";
+import { softenTruncatedMarkdown } from "@/lib/truncation";
 
 // Re-export for legacy imports (team panel, tools, etc.)
 export { withLinkedText } from "@/components/chat/linked-text";
@@ -55,7 +56,7 @@ export function Message({
   onContinue?: () => void;
   /** Retry a truncated reply from scratch (QA-02). */
   onRetry?: () => void;
-  /** The provider cut this reply off at the token limit — not a clean completion. */
+  /** The reply was cut off before it finished (token limit or a mid-stream failure) — not a clean completion. */
   truncated?: boolean;
   thinkMs?: number;
   searchQuery?: string;
@@ -180,7 +181,7 @@ export function Message({
       ) : null}
       {text ? (
         <div className="max-w-none text-[15px] leading-[1.75] text-ink">
-          <Markdown text={text} />
+          <Markdown text={truncated ? softenTruncatedMarkdown(text) : text} />
           {pending ? (
             <span
               className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 rounded-full bg-ink"
@@ -217,7 +218,7 @@ export function Message({
             </p>
           </div>
           <p className="mt-1 text-[13px] leading-relaxed text-ink-3">
-            It hit the reply length limit before finishing, so it isn&apos;t a
+            It was cut off before it finished, so it isn&apos;t a
             complete answer.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">

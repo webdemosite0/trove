@@ -386,6 +386,9 @@ export const MIGRATIONS: string[] = [
   `CREATE TABLE IF NOT EXISTS tro_scheduled_tasks (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, title TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'reminder', instruction TEXT NOT NULL DEFAULT '', run_at INTEGER, cron_expr TEXT, timezone TEXT NOT NULL DEFAULT 'UTC', active INTEGER NOT NULL DEFAULT 1, last_run_at INTEGER, next_run_at INTEGER, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS tro_scheduled_tasks_due ON tro_scheduled_tasks (active, next_run_at)`,
   `CREATE INDEX IF NOT EXISTS tro_scheduled_tasks_agent ON tro_scheduled_tasks (agent_id, next_run_at)`,
+  // Scheduler heartbeat: written by /api/cron/tro-schedules on every run so the
+  // Tro Tasks tab can show whether the minutely cron is actually firing.
+  `CREATE TABLE IF NOT EXISTS scheduler_health (id TEXT PRIMARY KEY, last_run_at INTEGER, last_fired INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS tro_skills (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, slug TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', instructions TEXT NOT NULL DEFAULT '', icon TEXT NOT NULL DEFAULT '✨', source TEXT NOT NULL DEFAULT 'custom', connector TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(user_id, slug))`,
   `CREATE INDEX IF NOT EXISTS tro_skills_user ON tro_skills (user_id, slug)`,
   // Tro task activity feed: persistent, truthful event log per agent.

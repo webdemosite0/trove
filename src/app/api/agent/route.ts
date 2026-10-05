@@ -12,6 +12,7 @@ import { buildTroBrowserToolSection } from "@/lib/browser-tool-block";
 import { buildTroScheduleSection } from "@/lib/schedule-block";
 import { buildTroSystemPrompt, buildTeamSection } from "@/lib/tro-prompt";
 import { temperatureFor, hintFor } from "@/lib/modes";
+import { TRUNCATION_MARKER, isIncompleteFinish } from "@/lib/truncation";
 
 export const runtime = "nodejs";
 
@@ -209,9 +210,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // The provider's finish reason tells us the reply was cut off — by the
+    // token limit ("length"/"MAX_TOKENS") or by a mid-stream failure after
+    // text was already emitted ("stream_error"). The stream is plain text
+    // with no metadata channel, so an incomplete reply is signalled with a
+    // trailer the client strips before showing or saving it. A truncated
+    // reply must never be presented as a clean completion.
+    let finishReason: string | null = null;
     const stream = await streamText({
       onUsage: (u) =>
         account && spend(account.userId, "agent", u.totalTokens),
+      onFinishReason: (reason) => {
+        finishReason = reason;
+      },
       turns,
       system: [system, mode ? hintFor(mode) : "", planMode ? PLAN_MODE_HINT : ""]
         .filter(Boolean)
@@ -219,7 +230,18 @@ export async function POST(req: NextRequest) {
       temperature: mode ? temperatureFor(mode) : 0.75,
       extraParts: attachments.length ? toParts(attachments) : undefined,
     });
-    return new Response(stream, {
+    const withTrailer = stream.pipeThrough(
+      new TransformStream<Uint8Array, Uint8Array>({
+        flush(controller) {
+          if (isIncompleteFinish(finishReason)) {
+            controller.enqueue(
+              new TextEncoder().encode(`\n\n${TRUNCATION_MARKER}\n`),
+            );
+          }
+        },
+      }),
+    );
+    return new Response(withTrailer, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-store",

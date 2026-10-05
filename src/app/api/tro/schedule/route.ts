@@ -61,7 +61,17 @@ export async function GET(req: Request) {
     `SELECT * FROM tro_scheduled_tasks WHERE user_id = ? AND agent_id = ? ORDER BY next_run_at ASC NULLS LAST, created_at DESC LIMIT 100`,
     [user.id, agentId],
   );
-  return Response.json({ tasks: rows.map((r) => rowToTask(r as Record<string, unknown>)) });
+  // Scheduler heartbeat written by /api/cron/tro-schedules on every run.
+  const healthRow = await one(
+    `SELECT last_run_at, last_fired FROM scheduler_health WHERE id = 'tro-schedules'`,
+  ).catch(() => null);
+  const health = healthRow
+    ? {
+        lastRunAt: num((healthRow as Record<string, unknown>).last_run_at),
+        lastFired: num((healthRow as Record<string, unknown>).last_fired),
+      }
+    : null;
+  return Response.json({ tasks: rows.map((r) => rowToTask(r as Record<string, unknown>)), health });
 }
 
 /**

@@ -116,10 +116,18 @@ export async function disconnectService(service: string): Promise<void> {
 export async function listConnections(): Promise<Connection[]> {
   const user = await currentUser();
   if (!user) return [];
+  return listConnectionsFor(user.id);
+}
 
+/**
+ * Same as listConnections but for contexts without a session (e.g. the
+ * /api/cron/tro-schedules runner), where currentUser() is unavailable.
+ */
+export async function listConnectionsFor(userId: string): Promise<Connection[]> {
+  if (!userId) return [];
   const rows = await all(
     `SELECT service, kind, account, hint, verified_at, secret FROM connections WHERE user_id = ?`,
-    [user.id],
+    [userId],
   );
 
   return rows.map((r) => ({

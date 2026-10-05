@@ -1,6 +1,6 @@
 import "server-only";
 
-import { listConnections, secretFor, type Connection } from "@/lib/connections";
+import { listConnections, listConnectionsFor, secretFor, type Connection } from "@/lib/connections";
 import { SERVICES } from "@/lib/services";
 import { canResolveConnectorToolkit } from "@/lib/tro-connector-tools";
 import {
@@ -212,7 +212,7 @@ async function githubContext(connected: boolean) {
 
 export async function buildChatConnectorContext(
   mentionScopeText: string,
-  opts?: { connectorTools?: boolean },
+  opts?: { connectorTools?: boolean; userId?: string },
 ): Promise<ChatConnectorContext> {
   // mentionScopeText should cover recent conversation history, not just the
   // latest message — otherwise follow-ups like "again send" lose the tools
@@ -222,7 +222,11 @@ export async function buildChatConnectorContext(
 
   let connections: Connection[] = [];
   try {
-    connections = await listConnections();
+    // Cron / server contexts have no session: currentUser() is null there, so
+    // they pass the user id explicitly instead of getting an empty list.
+    connections = opts?.userId
+      ? await listConnectionsFor(opts.userId)
+      : await listConnections();
   } catch {
     connections = [];
   }

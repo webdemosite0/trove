@@ -1,1 +1,1 @@
-{"$schema":"https://openapi.vercel.sh/vercel.json","crons":[{"path":"/api/cron/tro-schedules","schedule":"0 0 * * *"}]}
+{"$comment":"Minutely cron needs Vercel Pro — on Hobby this runs at most once daily. On Hobby, set CRON_SECRET in Vercel env vars and add a free every-minute ping at cron-job.org → https://troveai.site/api/cron/tro-schedules?secret=YOUR_CRON_SECRET","$schema":"https://openapi.vercel.sh/vercel.json","crons":[{"path":"/api/cron/tro-schedules","schedule":"* * * * *"}]}

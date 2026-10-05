@@ -14,7 +14,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/cron/tro-schedules — fires due Tro scheduled tasks.
- * Called by Vercel Cron every minute. Authenticates via CRON_SECRET.
+ * Runs every minute (Vercel Cron on Pro; cron-job.org ping on Hobby — see
+ * vercel.json). Authenticates via CRON_SECRET (?secret= or Bearer), with the
+ * Vercel Cron user-agent as a fallback when no secret is configured.
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET?.trim();
@@ -66,7 +68,33 @@ export async function GET(req: Request) {
       results.push({ id, ok: false, detail });
     }
   }
+
+  // Heartbeat: even a run with zero due tasks proves the scheduler is alive.
+  // The Tro Tasks tab reads this to show whether scheduling is actually live.
+  await run(
+    `INSERT INTO scheduler_health (id, last_run_at, last_fired, updated_at)
+     VALUES ('tro-schedules', ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET last_run_at = excluded.last_run_at,
+       last_fired = excluded.last_fired, updated_at = excluded.updated_at`,
+    [now, results.length, Date.now()],
+  ).catch((e) => console.error("tro-schedules: health write failed", e));
+
   return Response.json({ ok: true, fired: results.length, results });
+}
+
+/**
+ * Scheduled tasks are usually written without @mentions ("send an email at
+ * 5pm to Sara"), but connector tools only load for mentioned services. Map
+ * the obvious keywords to service mentions so a scheduled task can really
+ * act — harmless when the service isn't connected (buildTroConnectorToolSection
+ * drops unconnected services).
+ */
+function expandConnectorScope(instruction: string): string {
+  const mentions: string[] = [];
+  if (/\b(e-?mails?|gmail)\b/i.test(instruction)) mentions.push("@gmail");
+  if (/\bcalendar\b/i.test(instruction)) mentions.push("@google-calendar");
+  if (/\bdrive\b/i.test(instruction)) mentions.push("@google-drive");
+  return mentions.length ? `${instruction}\n${mentions.join(" ")}` : instruction;
 }
 
 async function fireTask(row: Record<string, unknown>) {
@@ -101,8 +129,12 @@ async function fireTask(row: Record<string, unknown>) {
     tools = [];
   }
   const timeZone = safeTimeZone(str(agentRow.timezone) || "UTC");
-  const connectorContext = await buildChatConnectorContext(instruction, {
+  // No session exists in the cron context, so the user id is passed
+  // explicitly — otherwise listConnections() sees no user and the scheduled
+  // run would think nothing is connected.
+  const connectorContext = await buildChatConnectorContext(expandConnectorScope(instruction), {
     connectorTools: true,
+    userId,
   }).catch(() => ({ requested: [] as string[], connectedNote: "", liveContext: "" }));
   let connectorToolSection = "";
   try {
@@ -181,10 +213,35 @@ async function fireTask(row: Record<string, unknown>) {
     }
   }
   full = stripConnectorToolBlocks(full).trim() || "Done.";
+  const outcome = full.slice(0, 2000);
 
   await run(
     `INSERT INTO reminders (id, user_id, title, note, due_at, done, notified, created_at)
      VALUES (?, ?, ?, ?, ?, 0, 0, ?)`,
-    [uid("rem"), userId, `⏰ ${title}`, full.slice(0, 2000), now, now],
+    [uid("rem"), userId, `⏰ ${title}`, outcome, now, now],
+  );
+
+  // Proactive delivery: post the Tro's reply as a REAL message in its chat
+  // thread, so when the user opens the Tro it has already "answered" —
+  // no message from the user required. The thread is a normal agent
+  // conversation, so it shows up in the Tro's thread list via recents.
+  const agentName = str(agentRow.name) || "Tro";
+  const convoId = uid("conv");
+  const threadTitle = `${agentName}: ⏰ ${title}`.slice(0, 90);
+  const href = `/tros/${agentId}?c=${encodeURIComponent(convoId)}`;
+  await run(
+    `INSERT INTO conversations (id, user_id, kind, title, workspace_id, created_at, updated_at)
+     VALUES (?, ?, 'agent', ?, NULL, ?, ?)`,
+    [convoId, userId, threadTitle, now, now],
+  );
+  await run(
+    `INSERT INTO messages (id, conversation_id, role, text, seq, created_at)
+     VALUES (?, ?, 'model', ?, 0, ?)`,
+    [uid("msg"), convoId, `⏰ ${title}\n\n${outcome}`, now],
+  );
+  await run(
+    `INSERT INTO recents (id, user_id, kind, title, href, workspace_id, created_at)
+     VALUES (?, ?, 'agent', ?, ?, NULL, ?)`,
+    [uid("rec"), userId, threadTitle, href, now],
   );
 }

@@ -18,7 +18,7 @@ import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analy
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 import { SYSTEM, SYSTEM_FAST } from "@/lib/chat-system";
-import { TRUNCATION_MARKER, isTruncationFinish } from "@/lib/truncation";
+import { TRUNCATION_MARKER, isIncompleteFinish } from "@/lib/truncation";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -368,7 +368,7 @@ async function handle(req: NextRequest) {
           // The stream is plain text with no metadata channel, so a
           // truncation is signalled with a trailer the client strips before
           // showing or saving the reply.
-          if (isTruncationFinish(finishReason)) {
+          if (isIncompleteFinish(finishReason)) {
             controller.enqueue(
               new TextEncoder().encode(`\n\n${TRUNCATION_MARKER}\n`),
             );

@@ -13,6 +13,14 @@ export async function GET(req: Request) {
   }
 
   const only = new URL(req.url).searchParams.get("only");
+  if (only === "due") {
+    const due = await countDueReminders(user.id);
+    return Response.json(
+      { due },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   if (only === "balance") {
     const balance = await balanceFor(user.id, user.plan, { email: user.email }).catch(
       () => null,

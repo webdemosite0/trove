@@ -26,7 +26,38 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
   const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
+  // Live due-reminder count: the server-rendered `due` prop is a snapshot,
+  // so a reminder firing while the page is open would never light the bell.
+  // Poll lightly + refetch on window focus so it appears without a reload.
+  const [liveDue, setLiveDue] = useState(due);
   const root = useRef<HTMLDivElement>(null);
+
+  const loadDue = useCallback(() => {
+    void fetch("/api/shell-meta?only=due", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return (await res.json()) as { due?: number };
+      })
+      .then((data) => {
+        if (data && typeof data.due === "number") setLiveDue(data.due);
+      })
+      .catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    setLiveDue(due);
+  }, [due]);
+
+  useEffect(() => {
+    loadDue();
+    const id = window.setInterval(loadDue, 30_000);
+    const onFocus = () => loadDue();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadDue]);
 
   const load = useCallback(() => {
     void fetch("/api/team", { cache: "no-store" })
@@ -88,7 +119,7 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
     }
   }
 
-  const count = invites.length + (due > 0 ? 1 : 0);
+  const count = invites.length + (liveDue > 0 ? 1 : 0);
 
   return (
     <div ref={root} className="relative">
@@ -136,7 +167,7 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
           </div>
 
           <div className="max-h-[360px] overflow-y-auto p-2">
-            {invites.length === 0 && due === 0 ? (
+            {invites.length === 0 && liveDue === 0 ? (
               <p className="px-2 py-6 text-center text-[12.5px] text-ink-4">
                 No notifications
               </p>
@@ -182,7 +213,7 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
               </div>
             ))}
 
-            {due > 0 ? (
+            {liveDue > 0 ? (
               <Link
                 href="/reminders"
                 onClick={() => setOpen(false)}
@@ -198,7 +229,7 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold text-ink">Reminders</span>
                   <span className="text-[11.5px] text-ink-4">
-                    {due} due
+                    {liveDue} due
                   </span>
                 </span>
               </Link>
