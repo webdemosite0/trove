@@ -3,6 +3,10 @@
 import { useCallback } from "react";
 import { StudioSplit } from "@/components/studio/studio-split";
 import { SheetEditor } from "@/app/(studio)/spreadsheets/sheet-editor";
+import {
+  waitForStudioResult,
+  type StudioGenResult,
+} from "@/lib/studio-events";
 
 const SUGGESTIONS = [
   "A 12-month SaaS revenue forecast",
@@ -27,20 +31,15 @@ export function SheetsStudio({
   sheetId?: string | null;
   initial?: { title: string; grid: string[][]; prompt?: string } | null;
 }) {
-  const handlePrompt = useCallback((prompt: string) => {
-    return new Promise<void>((resolve) => {
-      let settled = false;
-      const done = () => {
-        if (settled) return;
-        settled = true;
-        window.removeEventListener("sheets-ai-done", done);
-        resolve();
-      };
-      window.addEventListener("sheets-ai-done", done);
-      // Safety net so the chat never hangs if the editor is gone.
-      setTimeout(done, 120000);
-      window.dispatchEvent(new CustomEvent("sheets-ai-prompt", { detail: prompt }));
-    });
+  // QA-01: wait for the editor's real completion event (with its
+  // ok/applied/error payload). A timeout is a failure, never a silent "Done".
+  const handlePrompt = useCallback((prompt: string): Promise<StudioGenResult> => {
+    const waiting = waitForStudioResult(
+      "sheets-ai-done",
+      "The spreadsheet editor didn't respond in time.",
+    );
+    window.dispatchEvent(new CustomEvent("sheets-ai-prompt", { detail: prompt }));
+    return waiting;
   }, []);
 
   return (

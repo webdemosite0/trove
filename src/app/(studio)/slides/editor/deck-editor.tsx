@@ -37,6 +37,7 @@ import { downloadPptx } from "@/lib/pptx";
 import { deleteSaved } from "@/app/actions/library";
 import { localTimeZone } from "@/lib/context";
 import { cn } from "@/lib/utils";
+import type { StudioGenResult } from "@/lib/studio-events";
 
 export interface RestoredDeck {
   id: string;
@@ -201,10 +202,17 @@ export function DeckEditor({
   }, [slides, deck.edited]);
 
   /* -------------------------------- AI build -------------------------------- */
+  // QA-01: returns a truthful result (ok/applied/error) so the studio chat
+  // panel only says "Done" when slides were actually generated and loaded.
   const askAi = useCallback(
-    async (value: string) => {
+    async (value: string): Promise<StudioGenResult> => {
       const v = value.trim();
-      if (!v || busy) return;
+      if (!v || busy) {
+        return {
+          ok: false,
+          error: "Still working — wait a moment.",
+        };
+      }
       setBusy(true);
       setError(null);
       setAiSheetOpen(false);
@@ -247,9 +255,12 @@ export function DeckEditor({
         const newPrompt = prompt || v;
         if (!prompt) setPrompt(newPrompt);
         persist(next, newTitle, newPrompt);
+        return { ok: true, applied: true, count: next.length };
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong.");
+        const message = e instanceof Error ? e.message : "Something went wrong.";
+        setError(message);
         setAiSheetOpen(true);
+        return { ok: false, error: message };
       } finally {
         setBusy(false);
       }
@@ -364,7 +375,19 @@ export function DeckEditor({
       if (typeof detail === "string" && detail.trim()) {
         setAiInput(detail);
         // Defer a tick so state settles, then run generation directly.
-        setTimeout(() => void askAiRef.current(detail), 0);
+        // QA-01: forward the real result (ok/applied/error) as decks-ai-done
+        // so the sidebar never declares success before slides exist.
+        setTimeout(
+          () =>
+            void askAiRef.current(detail).then((result) => {
+              window.dispatchEvent(
+                new CustomEvent<StudioGenResult>("decks-ai-done", {
+                  detail: result,
+                }),
+              );
+            }),
+          0,
+        );
       }
     };
     const onAddSlide = () => addSlideRef.current();

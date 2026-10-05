@@ -5,6 +5,10 @@ import { StudioSplit } from "@/components/studio/studio-split";
 import { DesignEditor } from "@/app/(studio)/design/editor/design-editor";
 import { CANVAS_SIZES, type DesignDoc } from "@/lib/design-model";
 import { cn } from "@/lib/utils";
+import {
+  studioResultOf,
+  type StudioGenResult,
+} from "@/lib/studio-events";
 
 /**
  * Design studio: canvas preview left, chat + customize right.
@@ -12,20 +16,39 @@ import { cn } from "@/lib/utils";
 export function DesignStudio({ doc }: { doc: DesignDoc }) {
   const [sizeId, setSizeId] = useState(doc.sizeId);
 
-  async function handlePrompt(prompt: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const done = () => {
+  // QA-01: resolve with the editor's real result (ok/applied/error). A
+  // timeout is a failure, never a silent "Done".
+  async function handlePrompt(prompt: string): Promise<StudioGenResult> {
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (r: StudioGenResult) => {
+        if (settled) return;
+        settled = true;
         cleanup();
-        resolve();
+        resolve(r);
       };
-      const failed = () => {
-        cleanup();
-        reject(new Error("Generation failed"));
+      const done = (e: Event) => {
+        finish(
+          studioResultOf(e) ?? {
+            ok: false,
+            error: "The editor finished without reporting a result.",
+          },
+        );
+      };
+      const failed = (e: Event) => {
+        const r = studioResultOf(e);
+        finish(
+          r && !r.ok
+            ? r
+            : { ok: false, error: "Design generation failed." },
+        );
       };
       const timeout = setTimeout(() => {
-        cleanup();
-        resolve(); // Don't hang the chat forever.
-      }, 60000);
+        finish({
+          ok: false,
+          error: "The design editor didn't respond in time.",
+        });
+      }, 180_000);
       function cleanup() {
         clearTimeout(timeout);
         window.removeEventListener("design-ai-done", done);

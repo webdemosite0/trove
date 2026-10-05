@@ -20,6 +20,7 @@ import { parseMarkdownTable } from "@/lib/export";
 import { downloadCsv, downloadXlsx } from "@/lib/export";
 import { useSaved } from "@/lib/use-saved";
 import { localTimeZone } from "@/lib/context";
+import type { StudioGenResult } from "@/lib/studio-events";
 
 const AI_EXAMPLES = [
   "A 12-month SaaS revenue forecast",
@@ -50,6 +51,9 @@ export function SheetEditor({
   const { save } = useSaved("sheets", sheetId);
 
   const [title, setTitle] = useState(initial?.title ?? "Untitled sheet");
+  // QA-05: set when the grid initializer restores a local draft, so the
+  // starter-idea auto-run below never regenerates over a user's saved work.
+  const restoredDraftRef = useRef(false);
   const [grid, setGrid] = useState<string[][]>(() => {
     if (initial?.grid?.length) return normalizeGrid(initial.grid);
     // restore local draft for brand-new sheets
@@ -58,6 +62,7 @@ export function SheetEditor({
       if (raw) {
         const doc = decodeSheet(raw);
         if (doc?.grid?.length) {
+          restoredDraftRef.current = true;
           return doc.grid;
         }
       }
@@ -73,6 +78,22 @@ export function SheetEditor({
   const [savedFlash, setSavedFlash] = useState(false);
   const dirtyRef = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * QA-05 request ownership: every generation request gets a unique sequence
+   * number (genSeqRef) and every manual grid edit bumps editSeqRef. A result
+   * is applied only if no newer request was issued and no manual edit
+   * happened since it started — otherwise it waits for explicit Apply.
+   */
+  const genSeqRef = useRef(0);
+  const editSeqRef = useRef(0);
+  /** A generated grid that arrived stale (user edited meanwhile). */
+  const [pendingGen, setPendingGen] = useState<{
+    grid: string[][];
+    title: string;
+    prompt: string;
+  } | null>(null);
+  const titleRef = useRef(title);
+  titleRef.current = title;
 
   const dims = useMemo(() => gridDims(grid), [grid]);
   const fileStem = useMemo(
@@ -126,9 +147,18 @@ export function SheetEditor({
   );
 
   const runAi = useCallback(
-    async (text: string) => {
+    async (text: string): Promise<StudioGenResult> => {
       const q = text.trim();
-      if (!q || busy) return;
+      if (!q || busy) {
+        return {
+          ok: false,
+          error: "Still building the previous request — wait a moment.",
+        };
+      }
+      // QA-05: tag this request; capture the manual-edit baseline so a late
+      // result can't silently clobber newer edits.
+      const myGen = ++genSeqRef.current;
+      const baselineEdit = editSeqRef.current;
       setBusy(true);
       setError(null);
       setAiOpen(false);
@@ -168,18 +198,32 @@ export function SheetEditor({
         const table = parseMarkdownTable(out);
         if (!table.length) throw new Error("Couldn't parse a table from the response.");
         const next = normalizeGrid(table);
-        setGrid(next);
         const derivedTitle =
           q.length > 48 ? q.slice(0, 48).trimEnd() + "…" : q;
-        // Read the current title synchronously via a ref-style snapshot
-        setTitle((t) => {
-          const finalTitle = t === "Untitled sheet" ? derivedTitle : t;
-          void doSave(next, finalTitle, q);
-          return finalTitle;
-        });
+        const finalTitle =
+          titleRef.current === "Untitled sheet" ? derivedTitle : titleRef.current;
+        // QA-05: only apply if this request is still the newest and no manual
+        // edit happened while it was in flight. Otherwise hold the result for
+        // explicit user Apply — never silently replace their edits.
+        if (
+          genSeqRef.current !== myGen ||
+          editSeqRef.current !== baselineEdit
+        ) {
+          setPendingGen({ grid: next, title: finalTitle, prompt: q });
+          return { ok: true, applied: false, stale: true };
+        }
+        setPendingGen(null);
+        setGrid(next);
+        if (titleRef.current === "Untitled sheet") setTitle(finalTitle);
+        await doSave(next, finalTitle, q);
+        return { ok: true, applied: true };
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong.");
+        const message = e instanceof Error ? e.message : "Something went wrong.";
+        setError(message);
         setAiOpen(true);
+        // QA-01: a failed/empty generation must surface as a failure, never
+        // as a silent "Done" with a blank grid.
+        return { ok: false, error: message };
       } finally {
         setBusy(false);
       }
@@ -187,9 +231,21 @@ export function SheetEditor({
     [busy, doSave],
   );
 
+  /** Apply a stale generation result the user explicitly accepted (QA-05). */
+  const applyPendingGen = useCallback(async () => {
+    if (!pendingGen) return;
+    const { grid: next, title: t, prompt: p } = pendingGen;
+    setPendingGen(null);
+    setGrid(next);
+    const finalTitle = titleRef.current === "Untitled sheet" ? t : titleRef.current;
+    if (titleRef.current === "Untitled sheet") setTitle(t);
+    await doSave(next, finalTitle, p);
+  }, [pendingGen, doSave]);
+
   const onGridChange = useCallback((next: string[][]) => {
     setGrid(next);
     dirtyRef.current = true;
+    editSeqRef.current += 1; // QA-05: manual edit — supersedes in-flight generations
   }, []);
 
   // Auto-generate when arriving with ?q= (starter ideas from the list view)
@@ -197,6 +253,12 @@ export function SheetEditor({
   useEffect(() => {
     if (initial?.prompt && !autoRan.current) {
       autoRan.current = true;
+      // QA-05: a (re)load must never regenerate over existing content. The
+      // starter-idea auto-run is only for brand-new, empty sheets — opening
+      // a saved sheet (or restoring a draft with manual edits) must not
+      // trigger a generation that would overwrite it on arrival.
+      if (restoredDraftRef.current) return;
+      if ((initial?.grid?.length ?? 0) > 0) return;
       setAiOpen(false);
       void runAi(initial.prompt);
     }
@@ -212,8 +274,12 @@ export function SheetEditor({
     function onExternalPrompt(e: Event) {
       const prompt = (e as CustomEvent<string>).detail;
       if (typeof prompt !== "string" || !prompt.trim()) return;
-      void runAiRef.current(prompt).finally(() => {
-        window.dispatchEvent(new CustomEvent("sheets-ai-done"));
+      // QA-01: forward the editor's real result (ok/applied/error) so the
+      // sidebar never declares success on a failed or empty generation.
+      void runAiRef.current(prompt).then((result) => {
+        window.dispatchEvent(
+          new CustomEvent<StudioGenResult>("sheets-ai-done", { detail: result }),
+        );
       });
     }
     function onAddRow() {
@@ -222,14 +288,17 @@ export function SheetEditor({
         return [...g, Array.from({ length: cols }, () => "")];
       });
       dirtyRef.current = true;
+      editSeqRef.current += 1; // QA-05: manual edit
     }
     function onAddCol() {
       setGrid((g) => g.map((row) => [...row, ""]));
       dirtyRef.current = true;
+      editSeqRef.current += 1; // QA-05: manual edit
     }
     function onClear() {
       setGrid(blankGrid(20, 8));
       dirtyRef.current = true;
+      editSeqRef.current += 1; // QA-05: manual edit
     }
     window.addEventListener("sheets-ai-prompt", onExternalPrompt);
     window.addEventListener("sheets-add-row", onAddRow);
@@ -352,6 +421,35 @@ export function SheetEditor({
       {error ? (
         <div className="shrink-0 px-3 pt-2 sm:px-4">
           <FailureNote error={error} onRetry={() => void runAi(prompt)} />
+        </div>
+      ) : null}
+      {/* QA-05: a generation result that arrived stale (user edited or a newer
+          request superseded it) waits for explicit Apply — never silently
+          replaces their work. */}
+      {pendingGen ? (
+        <div className="shrink-0 px-3 pt-2 sm:px-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-[13px] text-ink-2">
+            <span>
+              A generated sheet arrived after your edits. Apply it, or keep
+              what you have.
+            </span>
+            <span className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => void applyPendingGen()}
+                className="rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition hover:brightness-110 active:scale-95"
+              >
+                Apply generated
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingGen(null)}
+                className="rounded-full border border-line bg-canvas px-3.5 py-1.5 text-[12.5px] font-medium text-ink-3 transition hover:text-ink active:scale-95"
+              >
+                Discard
+              </button>
+            </span>
+          </div>
         </div>
       ) : null}
 

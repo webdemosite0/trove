@@ -5,6 +5,10 @@ import {
   DeckEditor,
   type RestoredDeck,
 } from "@/app/(studio)/slides/editor/deck-editor";
+import {
+  waitForStudioResult,
+  type StudioGenResult,
+} from "@/lib/studio-events";
 
 /**
  * Decks studio: deck editor preview on the left, chat + customize on the right.
@@ -18,12 +22,18 @@ export function DecksStudio({
   restored?: RestoredDeck | null;
   initialPrompt?: string;
 }) {
-  async function handlePrompt(prompt: string) {
+  // QA-01: wait for the editor's real completion event (with its
+  // ok/applied/error payload) instead of declaring success on dispatch.
+  // A timeout is a failure, never a silent "Done".
+  async function handlePrompt(prompt: string): Promise<StudioGenResult> {
+    const waiting = waitForStudioResult(
+      "decks-ai-done",
+      "The deck editor didn't respond in time.",
+    );
     window.dispatchEvent(
       new CustomEvent("decks-ai-prompt", { detail: prompt }),
     );
-    // Give the editor a tick to pick up the event before we resolve.
-    await new Promise((r) => setTimeout(r, 100));
+    return waiting;
   }
 
   function addSlide() {

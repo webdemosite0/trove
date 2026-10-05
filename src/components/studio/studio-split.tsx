@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Composer } from "@/components/chat/composer";
 import { Thinking } from "@/components/chat/thinking";
 import { cn } from "@/lib/utils";
+import type { StudioGenResult } from "@/lib/studio-events";
 
 /**
  * Studio layout: chat on the left, preview on the right.
@@ -22,8 +23,12 @@ export function StudioSplit({
 }: {
   /** The live preview / editor rendered on the right (after generation) */
   preview: React.ReactNode;
-  /** Called with the user's prompt; should return a promise */
-  onPrompt: (prompt: string) => Promise<void>;
+  /**
+   * Called with the user's prompt. Must resolve with a StudioGenResult that
+   * truthfully reports whether content was generated AND applied — the
+   * sidebar only says "Done" when the editor confirms it (QA-01).
+   */
+  onPrompt: (prompt: string) => Promise<StudioGenResult>;
   suggestions?: string[];
   /** Customization controls rendered above the chat in the left panel */
   customize?: React.ReactNode;
@@ -44,8 +49,22 @@ export function StudioSplit({
     if (!started) setStarted(true);
     setMessages((m) => [...m, { role: "user", text: q }]);
     try {
-      await onPrompt(q);
-      setMessages((m) => [...m, { role: "ai", text: "Done — preview updated." }]);
+      const result = await onPrompt(q);
+      // QA-01: only claim success when the editor confirms the content was
+      // actually generated and applied. Anything else gets a real message.
+      setMessages((m) => [
+        ...m,
+        {
+          role: "ai",
+          text: result.ok
+            ? result.stale
+              ? "Generated, but you edited the preview meanwhile — review it there and apply it if you want it."
+              : result.applied
+                ? "Done — preview updated."
+                : "Generated, but it wasn't applied to the preview. Check the preview and try again if needed."
+            : `Couldn't do that: ${result.error} Try again or rephrase.`,
+        },
+      ]);
     } catch {
       setMessages((m) => [...m, { role: "ai", text: "Something went wrong. Try again." }]);
     } finally {

@@ -2,6 +2,10 @@
 
 import { StudioSplit } from "@/components/studio/studio-split";
 import { DocEditor } from "@/components/docs/doc-editor";
+import {
+  studioResultOf,
+  type StudioGenResult,
+} from "@/lib/studio-events";
 import type { Doc } from "@/lib/documents";
 
 const TONES = ["Professional", "Casual", "Formal"] as const;
@@ -13,20 +17,44 @@ const TONES = ["Professional", "Casual", "Formal"] as const;
  * and signals completion so the chat panel can resolve its busy state.
  */
 export function DocsStudio({ initial }: { initial: Doc | null }) {
-  function dispatchPrompt(detail: { prompt: string; rewrite?: boolean; tone?: string }) {
+  function dispatchPrompt(detail: {
+    prompt: string;
+    rewrite?: boolean;
+    tone?: string;
+    reqId?: string;
+  }) {
     window.dispatchEvent(new CustomEvent("docs-ai-prompt", { detail }));
   }
 
-  async function handlePrompt(prompt: string) {
-    await new Promise<void>((resolve) => {
-      const timer = setTimeout(resolve, 120_000); // safety net
-      function onDone() {
+  async function handlePrompt(prompt: string): Promise<StudioGenResult> {
+    // QA-05: tag this request so a late/stale editor event from an
+    // overlapping generation can't resolve the wrong prompt.
+    const reqId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    return new Promise<StudioGenResult>((resolve) => {
+      let settled = false;
+      // QA-01: a timeout is a failure, not a success — never report "Done"
+      // when the editor never confirmed the content was applied.
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("docs-ai-finished", onDone);
+        resolve({
+          ok: false,
+          error: "The document editor didn't respond in time.",
+        });
+      }, 180_000);
+      function onDone(e: Event) {
+        if (settled) return;
+        const result = studioResultOf(e);
+        // Ignore events for other requests (e.g. tone-rewrite buttons).
+        if (!result || result.reqId !== reqId) return;
+        settled = true;
         clearTimeout(timer);
         window.removeEventListener("docs-ai-finished", onDone);
-        resolve();
+        resolve(result);
       }
       window.addEventListener("docs-ai-finished", onDone);
-      dispatchPrompt({ prompt });
+      dispatchPrompt({ prompt, reqId });
     });
   }
 
@@ -63,8 +91,7 @@ export function DocsStudio({ initial }: { initial: Doc | null }) {
             ))}
           </div>
           <p className="text-[12px] leading-relaxed text-ink-4">
-            Pick a tone to rewrite the current draft, then choose Insert or
-            Replace in the preview.
+            Pick a tone to rewrite the current draft — it applies automatically.
           </p>
         </div>
       }

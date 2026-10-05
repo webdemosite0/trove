@@ -6,8 +6,16 @@ import { useRouter } from "next/navigation";
 import { Thinking } from "@/components/chat/thinking";
 import { cn } from "@/lib/utils";
 import type { Doc } from "@/lib/documents";
+import type { StudioGenResult } from "@/lib/studio-events";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
+
+/** Notify the studio chat panel how generation ended (QA-01). */
+function finishDocs(result: StudioGenResult) {
+  window.dispatchEvent(
+    new CustomEvent<StudioGenResult>("docs-ai-finished", { detail: result }),
+  );
+}
 
 /** Notion-style document editor: title, rich text, autosave, AI drafting. */
 export function DocEditor({ initial }: { initial: Doc | null }) {
@@ -42,8 +50,9 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
   // Detail: { prompt: string; rewrite?: boolean; tone?: string }.
   useEffect(() => {
     function onExternalPrompt(e: Event) {
-      const detail = (e as CustomEvent<{ prompt: string; rewrite?: boolean; tone?: string }>).detail;
+      const detail = (e as CustomEvent<{ prompt: string; rewrite?: boolean; tone?: string; reqId?: string }>).detail;
       if (!detail) return;
+      const reqId = detail.reqId ?? null;
       let prompt = detail.prompt;
       if (detail.rewrite) {
         const html = bodyRef.current?.innerHTML?.trim() ?? "";
@@ -56,9 +65,10 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       setAiPrompt(prompt);
       setAiOpen(true);
       autoInsertRef.current = true; // external trigger: auto-insert on success
-      // Defer so state settles before runAi reads it.
+      // Defer so state settles before runAi reads it. runAi reports its own
+      // outcome via docs-ai-finished (tagged with reqId).
       setTimeout(() => {
-        void runAiRef.current?.();
+        void runAiRef.current?.(reqId);
       }, 50);
     }
     window.addEventListener("docs-ai-prompt", onExternalPrompt);
@@ -140,14 +150,24 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
   }
 
   /** AI drafting: stream from /api/chat, show the Thinking ball until text arrives. */
-  const runAiRef = useRef<(() => Promise<void>) | null>(null);
+  const runAiRef = useRef<
+    ((reqId?: string | null) => Promise<StudioGenResult>) | null
+  >(null);
+  // Set by onExternalPrompt: sidebar chat prompts auto-insert on success.
   const autoInsertRef = useRef(false);
-  async function runAi() {
+  async function runAi(reqId: string | null = null): Promise<StudioGenResult> {
     const prompt = aiPrompt.trim();
-    if (!prompt || aiBusy) return;
+    if (!prompt || aiBusy) {
+      return {
+        ok: false,
+        error: "Already writing — wait a moment.",
+        reqId: reqId ?? undefined,
+      };
+    }
     setAiBusy(true);
     setAiError(null);
     setAiResult("");
+    const shouldAutoInsert = autoInsertRef.current;
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -176,9 +196,10 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       }
       if (!full.trim()) throw new Error("The AI returned nothing. Try again.");
       // Auto-insert when triggered from the studio chat panel.
-      if (autoInsertRef.current) {
+      if (shouldAutoInsert) {
         autoInsertRef.current = false;
-        // Defer so aiResult state settles, then insert.
+        // Defer so aiResult state settles, then insert — and only report
+        // success AFTER the content actually landed in the document (QA-01).
         setTimeout(() => {
           const el = bodyRef.current;
           if (el && full.trim()) {
@@ -189,14 +210,26 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
             scheduleSave();
             updateWordCount();
           }
+          if (reqId) finishDocs({ ok: true, applied: true, reqId });
         }, 100);
+        return { ok: true, applied: true, reqId: reqId ?? undefined };
       }
+      if (reqId) finishDocs({ ok: true, applied: false, reqId });
+      return { ok: true, applied: false, reqId: reqId ?? undefined };
     } catch (e) {
-      setAiError(e instanceof Error ? e.message : "Generation failed.");
+      const message = e instanceof Error ? e.message : "Generation failed.";
+      setAiError(message);
+      autoInsertRef.current = false;
+      // QA-01: a failed generation must surface as a failure, never as "Done".
+      const r: StudioGenResult = {
+        ok: false,
+        error: message,
+        reqId: reqId ?? undefined,
+      };
+      if (reqId) finishDocs(r);
+      return r;
     } finally {
       setAiBusy(false);
-      // Notify external listeners (e.g. the studio chat panel) that generation ended.
-      window.dispatchEvent(new CustomEvent("docs-ai-finished"));
     }
   }
 
