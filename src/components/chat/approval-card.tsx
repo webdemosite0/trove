@@ -189,6 +189,16 @@ export function ApprovalCard({
   const [custom, setCustom] = useState<Record<number, string>>({});
   const [sent, setSent] = useState(false);
   const [open, setOpen] = useState(true);
+  // Latest answers/custom, readable from timers. The radio auto-advance timer
+  // is created in the click handler's render scope, so a plain closure over
+  // `answers`/`custom` is stale when it fires — the just-picked option would
+  // be lost and the question submitted as "(skipped)".
+  const answersRef = useRef(answers);
+  const customRef = useRef(custom);
+  useEffect(() => {
+    answersRef.current = answers;
+    customRef.current = custom;
+  });
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const questionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const measured = useRef(false);
@@ -243,7 +253,8 @@ export function ApprovalCard({
   const send = () => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
     setSent(true);
-    onSubmitted?.(answers, custom);
+    // Refs, not state: the auto-advance timer holds a stale closure.
+    onSubmitted?.(answersRef.current, customRef.current);
   };
 
   const advance = () => {
