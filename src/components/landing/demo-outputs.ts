@@ -4,7 +4,7 @@
  * demo is that Trove ships files you keep, not answers you scroll past.
  */
 
-export type ScenarioId = "memo" | "sheet";
+export type ScenarioId = "site" | "memo" | "sheet";
 
 export interface Scenario {
   id: ScenarioId;
@@ -16,6 +16,19 @@ export interface Scenario {
 }
 
 export const SCENARIOS: Scenario[] = [
+  {
+    id: "site",
+    tab: "Website",
+    fileName: "ember-and-oak.html",
+    prompt: "Launch site for Ember & Oak — our small-batch roastery. Warm, premium, with the three house roasts and a subscription CTA.",
+    steps: [
+      "Reading the brief",
+      "Laying out sections",
+      "Writing the copy",
+      "Polishing the design",
+    ],
+    doneLine: "Site built — preview is live below.",
+  },
   {
     id: "memo",
     tab: "Investor memo",
@@ -45,6 +58,61 @@ export const SCENARIOS: Scenario[] = [
 ];
 
 /** Full standalone landing page rendered inside the demo's browser frame. */
+export const SITE_HTML = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ember &amp; Oak — Small-batch coffee, roasted close to home</title>
+<style>
+*{margin:0;box-sizing:border-box}body{font-family:-apple-system,'Segoe UI',Inter,sans-serif;background:#FAF7F1;color:#241A10;line-height:1.55}
+.wrap{max-width:960px;margin:0 auto;padding:0 28px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:22px 0;border-bottom:1px solid #E7DCCB}
+.brand{font-family:Georgia,'Times New Roman',serif;font-size:21px;letter-spacing:.02em}.brand b{color:#B4552D}
+.nav{display:flex;gap:26px;font-size:13.5px;color:#6B5D4C}.nav a{color:inherit;text-decoration:none}
+.cta{background:#241A10;color:#FAF7F1;border:0;border-radius:999px;padding:10px 22px;font-size:13.5px;font-weight:600;cursor:pointer}
+.hero{padding:84px 0 60px;text-align:center}
+.kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#B4552D;font-weight:700}
+.hero h1{font-family:Georgia,serif;font-size:52px;line-height:1.08;letter-spacing:-.01em;margin:18px 0 16px;font-weight:400}
+.hero h1 em{font-style:italic;color:#B4552D}
+.hero p{max-width:560px;margin:0 auto;color:#6B5D4C;font-size:16.5px}
+.btns{display:flex;gap:12px;justify-content:center;margin-top:30px}
+.btn2{border:1px solid #D8C9B2;background:transparent;border-radius:999px;padding:10px 22px;font-size:13.5px;font-weight:600;color:#241A10;cursor:pointer}
+.roasts{padding:30px 0 70px}.roasts h2{font-family:Georgia,serif;font-size:30px;font-weight:400;text-align:center;margin-bottom:8px}
+.sub{text-align:center;color:#6B5D4C;font-size:14.5px;margin-bottom:34px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:#fff;border:1px solid #EAE0CE;border-radius:14px;padding:26px 22px}
+.swatch{height:64px;border-radius:10px;margin-bottom:18px}
+.card h3{font-family:Georgia,serif;font-size:19px;font-weight:400;margin-bottom:6px}
+.notes{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#A08B6F;font-weight:700;margin-bottom:10px}
+.card p{font-size:13.5px;color:#6B5D4C;margin-bottom:16px}
+.price{font-size:15px;font-weight:700}.price span{font-weight:400;color:#8A7B6C;font-size:12.5px}
+.story{background:#241A10;color:#F3EDE2;border-radius:20px;padding:56px 48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;margin:10px 0 70px}
+.story h2{font-family:Georgia,serif;font-size:32px;font-weight:400;line-height:1.2;margin-bottom:14px}
+.story p{color:#C9BBA6;font-size:14.5px;margin-bottom:12px}
+.badge{display:inline-block;border:1px solid #4A3A28;border-radius:999px;padding:6px 14px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#D8B98A;margin-bottom:18px}
+.sub-band{text-align:center;padding:20px 0 80px}.sub-band h2{font-family:Georgia,serif;font-size:30px;font-weight:400;margin-bottom:10px}
+.sub-band p{color:#6B5D4C;font-size:14.5px;max-width:480px;margin:0 auto 24px}
+footer{border-top:1px solid #E7DCCB;padding:26px 0 40px;display:flex;justify-content:space-between;font-size:12.5px;color:#8A7B6C}
+@media(max-width:640px){.hero{padding:52px 0 40px}.hero h1{font-size:36px}.grid{grid-template-columns:1fr}.story{grid-template-columns:1fr;padding:36px 28px}.nav{display:none}.top{padding:16px 0}.wrap{padding:0 20px}}
+</style></head><body>
+<div class="wrap">
+<div class="top"><div class="brand">Ember <b>&amp;</b> Oak</div>
+<div class="nav"><a href="#">Roasts</a><a href="#">Our story</a><a href="#">Wholesale</a><a href="#">Journal</a></div>
+<button class="cta">Subscribe</button></div>
+<div class="hero"><div class="kicker">Roasted every Tuesday · Portland, OR</div>
+<h1>Coffee, roasted <em>twelve miles</em> from your door.</h1>
+<p>Three house roasts, bought directly from six farms we visit every year. Roasted in 12kg batches, shipped within 48 hours — never warehoused, never stale.</p>
+<div class="btns"><button class="cta">Shop the roasts</button><button class="btn2">Start a subscription</button></div></div>
+<div class="roasts"><h2>The house roasts</h2><div class="sub">The only three coffees we roast. We'd rather do three perfectly than thirty adequately.</div>
+<div class="grid">
+<div class="card"><div class="swatch" style="background:linear-gradient(135deg,#8A5A33,#5C3A1E)"></div><h3>First Light</h3><div class="notes">Washed · Ethiopia</div><p>Bergamot, white peach, black tea. Our brightest coffee — built for slow mornings and pour-overs.</p><div class="price">$22 <span>/ 12 oz</span></div></div>
+<div class="card"><div class="swatch" style="background:linear-gradient(135deg,#6E4423,#3E2712)"></div><h3>Ember Blend</h3><div class="notes">Natural · Brazil + Colombia</div><p>Dark chocolate, toasted hazelnut, a whisper of smoke. The espresso that converted a thousand drip drinkers.</p><div class="price">$20 <span>/ 12 oz</span></div></div>
+<div class="card"><div class="swatch" style="background:linear-gradient(135deg,#4E3018,#2A1A0C)"></div><h3>Night Oak</h3><div class="notes">Decaf · Colombia, Swiss Water</div><p>Cocoa, molasses, dried fig. Proof that decaf was never the problem — stale decaf was.</p><div class="price">$21 <span>/ 12 oz</span></div></div>
+</div></div>
+<div class="story"><div><div class="badge">Our story</div><h2>A roastery built on twelve kilograms at a time.</h2><p>We started in 2019 with a secondhand 12kg roaster and a stubborn belief: coffee tastes better when the distance from farm to cup is short and the roast date is yesterday.</p><p>Seven years later we still roast every Tuesday, still buy from the same six farms, and still cup every single batch before it ships.</p></div>
+<div style="background:linear-gradient(135deg,#B4552D,#7A3A1E);border-radius:14px;min-height:280px;display:flex;align-items:flex-end;padding:24px;color:#FAF7F1;font-family:Georgia,serif;font-size:20px;font-style:italic">"The Ember Blend ruined every other espresso for me."</div></div>
+<div class="sub-band"><h2>Never run out again.</h2><p>Subscriptions ship on your schedule, pause anytime, and save 15%. Your Tuesday roast, every Tuesday.</p><button class="cta">Build my subscription</button></div>
+<footer><span>© 2026 Ember &amp; Oak Roasting Co.</span><span>Portland, Oregon · Roasted Tuesdays</span></footer>
+</div></body></html>`;
+
 export interface MemoSection {
   heading?: string;
   body?: string;
