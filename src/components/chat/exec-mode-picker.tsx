@@ -105,14 +105,14 @@ export function ExecModePicker({
           items.current[(i - 1 + OPTIONS.length) % OPTIONS.length]?.focus();
         } else if (e.key === "Tab") setOpen(false);
       }}
-      className="nx-in fixed z-[200] overflow-hidden rounded-2xl border border-white/10 bg-[#1b1b1f] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.7)]"
+      className="nx-in fixed z-[200] overflow-hidden rounded-2xl border border-line bg-canvas shadow-[0_24px_60px_-12px_rgba(0,0,0,0.7)]"
       style={
         coords
           ? { left: coords.left, bottom: coords.bottom, width: coords.width }
           : undefined
       }
     >
-      <div className="border-b border-white/[0.06] px-3.5 py-2.5">
+      <div className="border-b border-line px-3.5 py-2.5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
           Execution mode
         </p>
@@ -138,13 +138,13 @@ export function ExecModePicker({
               }}
               className={cn(
                 "flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors",
-                active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]",
+                active ? "bg-ink/[0.06]" : "hover:bg-ink/[0.04]",
               )}
             >
               <span
                 className={cn(
                   "mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl",
-                  active ? "bg-accent text-white shadow-sm" : "bg-white/[0.06] text-ink-2",
+                  active ? "bg-accent text-white shadow-sm" : "bg-ink/[0.06] text-ink-2",
                 )}
               >
                 <Icon size={15} className={active ? "text-white" : "text-ink-2"} />
@@ -175,11 +175,11 @@ export function ExecModePicker({
         title="Execution mode"
         className={cn(
           "flex items-center gap-1.5 rounded-full border border-transparent px-2.5 py-1.5 text-[12.5px] text-ink-3 transition-all",
-          "hover:border-white/10 hover:bg-white/[0.05] hover:text-ink disabled:opacity-40",
-          open && "border-white/10 bg-white/[0.05] text-ink",
+          "hover:border-line hover:bg-ink/[0.05] hover:text-ink disabled:opacity-40",
+          open && "border-line bg-ink/[0.05] text-ink",
         )}
       >
-        <span className="grid size-6 place-items-center rounded-full bg-white/[0.07] text-ink-2">
+        <span className="grid size-6 place-items-center rounded-full bg-ink/[0.07] text-ink-2">
           <Glyph size={13} />
         </span>
         <span className="font-medium">{value === "execute" ? "Execute" : "Plan"}</span>

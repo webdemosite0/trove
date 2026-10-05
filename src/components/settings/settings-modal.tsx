@@ -735,7 +735,7 @@ function WalletPane({
             <Link
               href="/plans"
               onClick={onClose}
-              className="shrink-0 rounded-full bg-sunk px-4 py-2 text-center text-[13.5px] font-medium text-white transition hover:bg-hover"
+              className="shrink-0 rounded-full bg-sunk px-4 py-2 text-center text-[13.5px] font-medium text-ink transition hover:bg-hover"
             >
               View plans
             </Link>

@@ -1,5 +1,6 @@
 import "server-only";
 import { webSearch, formatResults } from "@/lib/search";
+import { STREAM_ERROR_FINISH } from "@/lib/truncation";
 
 const API = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -156,6 +157,16 @@ async function callWithFallback(path: string, body: unknown, onAttempt?: OnAttem
     for (const model of models) {
       if (exhausted.has(model)) continue;
 
+      // The connect timeout must NOT govern the response body: a total-request
+      // AbortSignal.timeout aborts a healthy SSE stream mid-read (the reply
+      // just stops ~9s in and looks like a clean finish — the silent-truncation
+      // bug). Bound only the connect phase with a manual controller; the read
+      // loop below carries its own idle watchdog for the body.
+      const isStreaming = path.startsWith("streamGenerateContent");
+      const connectController = isStreaming ? new AbortController() : null;
+      const connectTimer = connectController
+        ? setTimeout(() => connectController.abort(), timeoutMs)
+        : undefined;
       let res: Response;
       try {
         res = await fetch(`${API}/${model}:${path}`, {
@@ -164,13 +175,17 @@ async function callWithFallback(path: string, body: unknown, onAttempt?: OnAttem
           body: JSON.stringify(body),
           // A congested model can hang for a minute. Cut it loose and try the
           // next one rather than making the whole request wait.
-          signal: AbortSignal.timeout(timeoutMs),
+          signal: connectController
+            ? connectController.signal
+            : AbortSignal.timeout(timeoutMs),
         });
       } catch {
         console.warn(`gemini: ${model} timed out (pass ${pass + 1})`);
         note(503, "");
         try { onAttempt?.({ model, status: 0, pass: pass + 1 }); } catch {}
         continue;
+      } finally {
+        if (connectTimer !== undefined) clearTimeout(connectTimer);
       }
 
       if (res.ok) return res;
@@ -329,6 +344,33 @@ export async function streamText({
 }
 
 /**
+ * Each SSE read gets its own idle budget now that the connect timeout no
+ * longer bounds the body. A stream that connects but then goes quiet must
+ * not hang the request forever — a stall surfaces as a stream error, which
+ * the caller reports honestly (partial text kept and flagged, never a clean
+ * finish; nothing emitted yet → hard error).
+ */
+const STREAM_IDLE_TIMEOUT_MS = 60_000;
+
+async function readWithIdleTimeout(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  ms: number,
+): Promise<ReadableStreamReadResult<Uint8Array>> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const watchdog = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`Gemini stream stalled: no data for ${ms / 1000}s`)),
+        ms,
+      );
+    });
+    return await Promise.race([reader.read(), watchdog]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/**
  * The streaming half, over an already-built conversation.
  *
  * Split out so the search tool loop can stream its final answer through
@@ -426,7 +468,7 @@ async function streamFromContents({
       const reader = upstream.body!.getReader();
       try {
         for (;;) {
-          const { done, value } = await reader.read();
+          const { done, value } = await readWithIdleTimeout(reader, STREAM_IDLE_TIMEOUT_MS);
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
@@ -493,7 +535,19 @@ async function streamFromContents({
               : new Error("The model returned an empty response."),
           );
         } else {
-          if (finishReason && onFinishReason) {
+          if (failure && onFinishReason) {
+            // The stream died AFTER emitting text (network drop, stall, or an
+            // abort that escaped the guards above). The partial reply is real
+            // output, but it is NOT a clean completion — report it distinctly
+            // so the caller flags the turn instead of presenting it as
+            // finished. This was the silent-truncation path: it used to close
+            // here with no signal at all.
+            try {
+              onFinishReason(STREAM_ERROR_FINISH);
+            } catch (e) {
+              console.error("Gemini finish-reason callback failed", e);
+            }
+          } else if (finishReason && onFinishReason) {
             try {
               onFinishReason(finishReason);
             } catch (e) {

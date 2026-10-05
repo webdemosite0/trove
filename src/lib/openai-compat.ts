@@ -252,10 +252,15 @@ export async function compatStream(opts: {
     stream: true,
   };
   if (opts.jsonMode) body.response_format = { type: "json_object" };
-  const post = () =>
-    fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+  // The connect timeout must NOT govern the response body: a total-request
+  // AbortSignal.timeout aborts a healthy SSE stream mid-read. Bound only the
+  // connect phase; the read loop below carries its own idle watchdog.
+  const post = () => {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), COMPAT_STREAM_CONNECT_TIMEOUT_MS);
+    return fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
-      signal: AbortSignal.timeout(COMPAT_STREAM_CONNECT_TIMEOUT_MS),
+      signal: ac.signal,
       headers: {
         "Content-Type": "application/json",
         Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
@@ -267,7 +272,8 @@ export async function compatStream(opts: {
           : {}),
       },
       body: JSON.stringify(body),
-    });
+    }).finally(() => clearTimeout(timer));
+  };
   let res: Response;
   try {
     res = await post();
@@ -317,10 +323,32 @@ export async function compatStream(opts: {
     }
   };
 
+  /**
+   * Each SSE read gets its own idle budget now that the connect timeout no
+   * longer bounds the body. A stall rejects the pending read, which errors
+   * the stream — a hard, visible failure (the client's red Retry card), never
+   * a silent partial presented as complete.
+   */
+  const COMPAT_STREAM_IDLE_TIMEOUT_MS = 60_000;
+  const readWithIdleTimeout = async (): Promise<ReadableStreamReadResult<Uint8Array>> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const watchdog = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`${provider.label} stream stalled: no data for 60s`)),
+          COMPAT_STREAM_IDLE_TIMEOUT_MS,
+        );
+      });
+      return await Promise.race([reader.read(), watchdog]);
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
+    }
+  };
+
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await readWithIdleTimeout();
         if (done) {
           reportFinishReason();
           controller.close();

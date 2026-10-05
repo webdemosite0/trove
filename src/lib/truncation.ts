@@ -26,6 +26,41 @@ export function isTruncationFinish(reason: string | null | undefined): boolean {
 }
 
 /**
+ * Pseudo finish reason reported when a stream died mid-way (network error,
+ * upstream abort, stall) AFTER some text was already emitted.
+ *
+ * Unlike a clean provider finish, there is no "length"/"MAX_TOKENS" frame to
+ * read — the partial text simply stops. Callers treat it the same as a
+ * truncation: the reply is incomplete and must never be presented as a clean
+ * completion. Compared case-insensitively like the real finish reasons.
+ */
+export const STREAM_ERROR_FINISH = "stream_error";
+
+/** True when the finish reason means the reply is incomplete for any cause. */
+export function isIncompleteFinish(reason: string | null | undefined): boolean {
+  if (!reason) return false;
+  return (
+    isTruncationFinish(reason) ||
+    reason.trim().toLowerCase() === STREAM_ERROR_FINISH
+  );
+}
+
+/**
+ * Make a cut-off reply render gracefully.
+ *
+ * A reply truncated mid-emphasis ("- **Scheduling") leaves a dangling bold
+ * opener, which the markdown renderer shows as raw `**`. When the `**`
+ * count is odd, closing it at the end turns the fragment into bold text
+ * instead of visible syntax — closer to what the model intended and honest
+ * about the cut (the Continue/Retry card still says it was cut off).
+ */
+export function softenTruncatedMarkdown(text: string): string {
+  const opens = text.match(/\*\*/g)?.length ?? 0;
+  if (opens % 2 === 1) return `${text}**`;
+  return text;
+}
+
+/**
  * Split a streamed body into its visible text and whether it was truncated.
  * Only a marker at the very end counts — the model writing the same string
  * mid-answer must not be misread.

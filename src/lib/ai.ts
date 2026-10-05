@@ -425,6 +425,7 @@ export async function streamText(
           temperature,
           maxOutputTokens,
           onUsage: opts.onUsage,
+          onFinishReason: opts.onFinishReason,
           jsonMode,
         });
         noteProviderSuccess(provider.id);

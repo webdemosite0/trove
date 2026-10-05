@@ -39,14 +39,14 @@ export function ConnectorMenu({
     return (
       <div
         className={cn(
-          "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-2xl border border-white/10 bg-[#1c1c1e]/95 p-3 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
+          "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-2xl border border-line bg-raised/95 p-3 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
           className,
         )}
       >
-        <p className="px-1 text-[11px] font-medium uppercase tracking-[0.12em] text-white/40">
+        <p className="px-1 text-[11px] font-medium uppercase tracking-[0.12em] text-ink-4">
           Connectors
         </p>
-        <p className="mt-2 px-1 text-[13px] text-white/55">
+        <p className="mt-2 px-1 text-[13px] text-ink-3">
           No connected apps yet. Open Apps to connect GitHub, Vercel, and more.
         </p>
       </div>
@@ -56,13 +56,13 @@ export function ConnectorMenu({
   return (
     <div
       className={cn(
-        "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-2xl border border-white/10 bg-[#1c1c1e]/95 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
+        "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-2xl border border-line bg-raised/95 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
         className,
       )}
       role="listbox"
       aria-label="Connectors"
     >
-      <p className="px-3.5 pb-1.5 pt-3 text-[11px] font-medium uppercase tracking-[0.12em] text-white/40">
+      <p className="px-3.5 pb-1.5 pt-3 text-[11px] font-medium uppercase tracking-[0.12em] text-ink-4">
         Connectors
       </p>
       <ul className="max-h-[260px] overflow-y-auto px-1.5 pb-2">
@@ -76,20 +76,20 @@ export function ConnectorMenu({
               onClick={() => onPick(item)}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition",
-                i === active ? "bg-white/10" : "hover:bg-white/[0.06]",
+                i === active ? "bg-ink/10" : "hover:bg-ink/[0.06]",
               )}
             >
               <ServiceMark id={item.id} name={item.name} size={32} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-medium text-white">
+                <span className="block truncate text-[14px] font-medium text-ink">
                   {item.name}
                 </span>
                 {item.account ? (
-                  <span className="block truncate text-[11.5px] text-white/45">
+                  <span className="block truncate text-[11.5px] text-ink-4">
                     {item.account}
                   </span>
                 ) : (
-                  <span className="block truncate text-[11.5px] text-white/35">
+                  <span className="block truncate text-[11.5px] text-ink-4">
                     @{item.id}
                   </span>
                 )}

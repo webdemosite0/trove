@@ -55,7 +55,7 @@ export function PermissionModal({
         role="dialog"
         aria-modal="true"
         aria-label={`Connect ${name}`}
-        className="relative flex max-h-[88dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-line bg-[#171719] shadow-[var(--elev)]"
+        className="relative flex max-h-[88dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-line bg-canvas shadow-[var(--elev)]"
       >
         {/* Top bar: Back left, X right */}
         <div className="flex items-center justify-between px-5 pt-4">
