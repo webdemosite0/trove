@@ -47,7 +47,7 @@ export default async function NewTroPage({
   }
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto overscroll-contain bg-[#0a0a0c]">
+    <div className="h-full min-h-0 overflow-y-auto overscroll-contain bg-canvas">
       <NewTroWizard
         initial={{
           name: pick(params, "name"),

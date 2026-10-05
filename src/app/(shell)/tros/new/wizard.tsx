@@ -53,8 +53,8 @@ const STEPS: { id: StepId; label: string; icon: typeof FiUser }[] = [
 ];
 
 const field =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/30 focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20";
-const labelCls = "mb-1.5 block text-[12px] font-semibold text-white/60";
+  "w-full rounded-2xl border border-line bg-ink/[0.04] px-4 py-3 text-[14px] text-ink outline-none transition placeholder:text-ink-4 focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20";
+const labelCls = "mb-1.5 block text-[12px] font-semibold text-ink-3";
 
 function titleCase(w: string): string {
   return w ? w[0]!.toUpperCase() + w.slice(1) : w;
@@ -286,11 +286,11 @@ export function NewTroWizard({
         <Link
           href="/tros"
           aria-label="Back to Tros"
-          className="grid size-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-white/70 transition hover:bg-white/10 hover:text-white"
+          className="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-ink/[0.04] text-ink-2 transition hover:bg-ink/10 hover:text-ink"
         >
           <FiArrowLeft size={17} />
         </Link>
-        <h1 className="text-[19px] font-semibold tracking-tight text-white">Create agent</h1>
+        <h1 className="text-[19px] font-semibold tracking-tight text-ink">Create agent</h1>
         <div className="ml-auto flex items-center gap-3">
           {state?.error ? (
             <p className="hidden items-center gap-1.5 text-[13px] text-red-400 sm:flex">
@@ -301,7 +301,7 @@ export function NewTroWizard({
             type="submit"
             disabled={pending || !identityValid}
             title={identityValid ? "Create this Tro" : "Finish the Identity step first (name, role, instructions)"}
-            className="btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             {pending ? <FiLoader size={15} className="animate-spin" /> : null}
             Create Agent
@@ -328,23 +328,23 @@ export function NewTroWizard({
                 className={cn(
                   "flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-medium transition",
                   current
-                    ? "bg-white text-black"
+                    ? "bg-ink text-canvas"
                     : done
-                      ? "text-white/80 hover:bg-white/10"
-                      : "text-white/40 hover:bg-white/5 hover:text-white/70",
+                      ? "text-ink-2 hover:bg-ink/10"
+                      : "text-ink-4 hover:bg-ink/5 hover:text-ink-2",
                 )}
               >
                 <span
                   className={cn(
                     "grid size-5 place-items-center rounded-full text-[11px] font-bold",
-                    current ? "bg-black/15 text-black" : done ? "bg-emerald-400/20 text-emerald-300" : "bg-white/10 text-white/50",
+                    current ? "bg-canvas/20 text-canvas" : done ? "bg-emerald-400/20 text-emerald-300" : "bg-ink/10 text-ink-3",
                   )}
                 >
                   {done ? <FiCheck size={11} /> : <Icon size={11} />}
                 </span>
                 {s.label}
               </button>
-              {i < STEPS.length - 1 ? <FiChevronRight size={14} className="mx-0.5 shrink-0 text-white/20" /> : null}
+              {i < STEPS.length - 1 ? <FiChevronRight size={14} className="mx-0.5 shrink-0 text-ink-4" /> : null}
             </div>
           );
         })}
@@ -352,7 +352,7 @@ export function NewTroWizard({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Main column */}
-        <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-7">
+        <div className="min-w-0 rounded-2xl border border-line bg-ink/[0.03] p-5 sm:p-7">
           {step === "identity" ? (
             <section aria-label="Identity">
               <StepHeading icon={FiUser} title="Identity" blurb="Name, description, and system prompt." />
@@ -366,7 +366,7 @@ export function NewTroWizard({
                   className={cn(field, "resize-y")}
                 />
               </label>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-white/40">
+              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-4">
                 Describe what this Tro should do in plain words — drafting turns it into a
                 name, role, and system prompt you can refine.
               </p>
@@ -406,7 +406,7 @@ export function NewTroWizard({
                   type="button"
                   onClick={handleHireCoworker}
                   disabled={pending}
-                  className="rounded-xl border border-white/15 bg-[#1c1c1f] px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:border-white/30 hover:bg-[#242428]"
+                  className="rounded-xl border border-line bg-raised px-5 py-2.5 text-[13.5px] font-semibold text-ink transition hover:border-line-strong hover:bg-hover"
                 >
                   Hire a coworker
                 </button>
@@ -414,37 +414,37 @@ export function NewTroWizard({
                   type="button"
                   onClick={handleDraftIdentity}
                   disabled={!(describe.trim() || name.trim() || role.trim())}
-                  className="rounded-xl bg-white px-5 py-2.5 text-[13.5px] font-semibold text-black transition hover:bg-white/85 disabled:opacity-40"
+                  className="rounded-xl bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-canvas transition hover:bg-ink/85 disabled:opacity-40"
                 >
                   Draft identity
                 </button>
               </div>
 
               <div className="my-6 flex items-center gap-3" aria-hidden>
-                <span className="h-px flex-1 bg-white/10" />
-                <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white/35">Or add an agent another way</span>
-                <span className="h-px flex-1 bg-white/10" />
+                <span className="h-px flex-1 bg-ink/10" />
+                <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-4">Or add an agent another way</span>
+                <span className="h-px flex-1 bg-ink/10" />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Link
                   href={defaultTroId ? `/tros/${defaultTroId}` : "/chat"}
-                  className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-violet-400/40 hover:bg-white/[0.06]"
+                  className="group rounded-2xl border border-line bg-ink/[0.03] p-4 transition hover:border-violet-400/40 hover:bg-ink/[0.06]"
                 >
                   <span className="grid size-9 place-items-center rounded-xl bg-violet-400/15 text-violet-300">
                     <FiMessageSquare size={16} />
                   </span>
-                  <span className="mt-3 block text-[14px] font-semibold text-white">Describe it in a thread</span>
-                  <span className="mt-1 block text-[12.5px] leading-relaxed text-white/45">
+                  <span className="mt-3 block text-[14px] font-semibold text-ink">Describe it in a thread</span>
+                  <span className="mt-1 block text-[12.5px] leading-relaxed text-ink-4">
                     Chat with a Tro that interviews you and designs the new specialist with you.
                   </span>
                 </Link>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <span className="grid size-9 place-items-center rounded-xl bg-white/10 text-white/70">
+                <div className="rounded-2xl border border-line bg-ink/[0.03] p-4">
+                  <span className="grid size-9 place-items-center rounded-xl bg-ink/10 text-ink-2">
                     <FiUpload size={16} />
                   </span>
-                  <span className="mt-3 block text-[14px] font-semibold text-white">Import an agent</span>
-                  <span className="mt-1 block text-[12.5px] leading-relaxed text-white/45">
+                  <span className="mt-3 block text-[14px] font-semibold text-ink">Import an agent</span>
+                  <span className="mt-1 block text-[12.5px] leading-relaxed text-ink-4">
                     Paste a JSON definition — name, role, instructions, tools, and look.
                   </span>
                   <button
@@ -469,7 +469,7 @@ export function NewTroWizard({
                         type="button"
                         onClick={handleImport}
                         disabled={!importText.trim()}
-                        className="mt-2 rounded-xl bg-white px-4 py-2 text-[13px] font-semibold text-black transition hover:bg-white/85 disabled:opacity-40"
+                        className="mt-2 rounded-xl bg-ink px-4 py-2 text-[13px] font-semibold text-canvas transition hover:bg-ink/85 disabled:opacity-40"
                       >
                         Import
                       </button>
@@ -496,27 +496,27 @@ export function NewTroWizard({
                         "rounded-2xl border p-4 text-left transition",
                         on
                           ? "border-violet-400/60 bg-violet-400/10"
-                          : "border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.05]",
+                          : "border-line bg-ink/[0.03] hover:border-line-strong hover:bg-ink/[0.05]",
                       )}
                     >
                       <span className="flex items-center justify-between">
-                        <span className="text-[14.5px] font-semibold text-white">{m.label}</span>
+                        <span className="text-[14.5px] font-semibold text-ink">{m.label}</span>
                         <span
                           className={cn(
                             "grid size-5 place-items-center rounded-full border transition",
-                            on ? "border-violet-300 bg-violet-300 text-black" : "border-white/25 text-transparent",
+                            on ? "border-violet-300 bg-violet-300 text-canvas" : "border-line-strong text-transparent",
                           )}
                         >
                           <FiCheck size={12} />
                         </span>
                       </span>
-                      <span className="mt-1 block text-[13px] leading-relaxed text-white/55">{m.blurb}</span>
-                      <span className="mt-2 block text-[11.5px] text-white/35">Temperature {m.temperature.toFixed(1)}</span>
+                      <span className="mt-1 block text-[13px] leading-relaxed text-ink-3">{m.blurb}</span>
+                      <span className="mt-2 block text-[11.5px] text-ink-4">Temperature {m.temperature.toFixed(1)}</span>
                     </button>
                   );
                 })}
               </div>
-              <p className="mt-4 text-[12.5px] leading-relaxed text-white/40">
+              <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
                 The mode is stored with the Tro and shapes every reply — Fast for quick answers,
                 Deep for reasoning that shows its work.
               </p>
@@ -538,7 +538,7 @@ export function NewTroWizard({
                       aria-pressed={on}
                       className={cn(
                         "rounded-full px-3.5 py-1.5 text-[12.5px] font-medium transition",
-                        on ? "bg-violet-400/20 text-violet-200" : "bg-white/[0.06] text-white/50 hover:text-white",
+                        on ? "bg-violet-400/20 text-violet-200" : "bg-ink/[0.06] text-ink-3 hover:text-ink",
                       )}
                     >
                       {tool}
@@ -552,14 +552,14 @@ export function NewTroWizard({
                   {connectors.map((c) => (
                     <li
                       key={c.service}
-                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                      className="flex items-center gap-3 rounded-2xl border border-line bg-ink/[0.03] px-4 py-3"
                     >
                       <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300">
                         <FiCheck size={14} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13.5px] font-semibold text-white">{c.label}</span>
-                        {c.account ? <span className="block truncate text-[12px] text-white/40">{c.account}</span> : null}
+                        <span className="block truncate text-[13.5px] font-semibold text-ink">{c.label}</span>
+                        {c.account ? <span className="block truncate text-[12px] text-ink-4">{c.account}</span> : null}
                       </span>
                       <span className="shrink-0 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[10.5px] font-bold text-emerald-300">
                         Connected
@@ -568,14 +568,14 @@ export function NewTroWizard({
                   ))}
                 </ul>
               ) : (
-                <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-5 text-center">
-                  <p className="text-[13px] text-white/55">No integrations connected yet.</p>
+                <div className="rounded-2xl border border-dashed border-line bg-ink/[0.02] px-4 py-5 text-center">
+                  <p className="text-[13px] text-ink-3">No integrations connected yet.</p>
                   <Link href="/settings" className="mt-1.5 inline-block text-[13px] font-semibold text-violet-300 hover:text-violet-200">
                     Connect in Settings →
                   </Link>
                 </div>
               )}
-              <p className="mt-3 text-[12.5px] leading-relaxed text-white/40">
+              <p className="mt-3 text-[12.5px] leading-relaxed text-ink-4">
                 Connected integrations are available to every Tro — @mention one in chat and this
                 Tro can act through it.
               </p>
@@ -594,14 +594,14 @@ export function NewTroWizard({
                     "rounded-2xl border p-4 text-left transition",
                     invocation === "thread"
                       ? "border-violet-400/60 bg-violet-400/10"
-                      : "border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.05]",
+                      : "border-line bg-ink/[0.03] hover:border-line-strong hover:bg-ink/[0.05]",
                   )}
                 >
                   <span className="flex items-center gap-2.5">
                     <FiMessageSquare size={16} className="text-violet-300" />
-                    <span className="text-[14px] font-semibold text-white">Open a chat thread</span>
+                    <span className="text-[14px] font-semibold text-ink">Open a chat thread</span>
                   </span>
-                  <span className="mt-1.5 block text-[12.5px] leading-relaxed text-white/50">
+                  <span className="mt-1.5 block text-[12.5px] leading-relaxed text-ink-3">
                     After creation, start chatting with this Tro right away.
                   </span>
                 </button>
@@ -613,14 +613,14 @@ export function NewTroWizard({
                     "rounded-2xl border p-4 text-left transition",
                     invocation === "none"
                       ? "border-violet-400/60 bg-violet-400/10"
-                      : "border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.05]",
+                      : "border-line bg-ink/[0.03] hover:border-line-strong hover:bg-ink/[0.05]",
                   )}
                 >
                   <span className="flex items-center gap-2.5">
-                    <FiClock size={16} className="text-white/60" />
-                    <span className="text-[14px] font-semibold text-white">Create only</span>
+                    <FiClock size={16} className="text-ink-3" />
+                    <span className="text-[14px] font-semibold text-ink">Create only</span>
                   </span>
-                  <span className="mt-1.5 block text-[12.5px] leading-relaxed text-white/50">
+                  <span className="mt-1.5 block text-[12.5px] leading-relaxed text-ink-3">
                     Just hire the Tro — find it on the Tros home whenever you need it.
                   </span>
                 </button>
@@ -636,9 +636,9 @@ export function NewTroWizard({
                     onChange={(e) => setParentId(e.target.value)}
                     className={cn(field, "appearance-none")}
                   >
-                    <option value="" className="bg-[#141416]">No manager — works solo</option>
+                    <option value="" className="bg-raised">No manager — works solo</option>
                     {team.map((t) => (
-                      <option key={t.id} value={t.id} className="bg-[#141416]">
+                      <option key={t.id} value={t.id} className="bg-raised">
                         {t.name}
                       </option>
                     ))}
@@ -647,7 +647,7 @@ export function NewTroWizard({
               ) : (
                 <input type="hidden" name="parent_id" value="" />
               )}
-              <p className="mt-4 text-[12.5px] leading-relaxed text-white/40">
+              <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
                 Scheduled tasks and reminders can be set up any time from the Tro's Tasks tab after hiring.
               </p>
             </section>
@@ -676,7 +676,7 @@ export function NewTroWizard({
                   className={cn(field, "resize-y")}
                 />
               </label>
-              <p className="mt-4 text-[12.5px] leading-relaxed text-white/40">
+              <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
                 Both are optional. After hiring, you can add documents in the Tro's Knowledge tab
                 and long-term memories in its Memory tab.
               </p>
@@ -684,12 +684,12 @@ export function NewTroWizard({
           ) : null}
 
           {/* Step nav */}
-          <div className="mt-8 flex items-center justify-between border-t border-white/10 pt-5">
+          <div className="mt-8 flex items-center justify-between border-t border-line pt-5">
             <button
               type="button"
               onClick={() => setStep(STEPS[Math.max(0, stepIdx - 1)]!.id)}
               disabled={stepIdx === 0}
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[13.5px] font-medium text-white/60 transition hover:bg-white/5 hover:text-white disabled:opacity-30"
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[13.5px] font-medium text-ink-3 transition hover:bg-ink/5 hover:text-ink disabled:opacity-30"
             >
               <FiArrowLeft size={14} /> Back
             </button>
@@ -697,7 +697,7 @@ export function NewTroWizard({
               <button
                 type="button"
                 onClick={() => setStep(STEPS[stepIdx + 1]!.id)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-white px-5 py-2 text-[13.5px] font-semibold text-black transition hover:bg-white/85"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-ink px-5 py-2 text-[13.5px] font-semibold text-canvas transition hover:bg-ink/85"
               >
                 Continue <FiChevronRight size={14} />
               </button>
@@ -705,7 +705,7 @@ export function NewTroWizard({
               <button
                 type="submit"
                 disabled={pending || !identityValid}
-                className="btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2 text-[13.5px] font-semibold text-white transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2 text-[13.5px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {pending ? <FiLoader size={14} className="animate-spin" /> : null}
                 Create Agent
@@ -722,7 +722,7 @@ export function NewTroWizard({
 
         {/* Preview panel */}
         <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          <div className="overflow-hidden rounded-2xl border border-line bg-ink/[0.03]">
             <div className="relative h-28" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}55 60%, #0a0a0c)` }}>
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.25),transparent_60%)]" />
             </div>
@@ -732,7 +732,7 @@ export function NewTroWizard({
                   <img
                     src={speciesMeta.image}
                     alt={`${speciesMeta.label} mascot`}
-                    className="size-20 rounded-full border-2 border-[#0a0a0c] bg-[#141416] object-cover"
+                    className="size-20 rounded-full border-2 border-canvas bg-raised object-cover"
                   />
                 ) : (
                   <Bot size={80} species={species} accent={accent} state="idle" />
@@ -741,13 +741,13 @@ export function NewTroWizard({
                   type="button"
                   onClick={() => setAvatarOpen((v) => !v)}
                   aria-label="Change mascot and accent"
-                  className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border border-white/15 bg-[#1c1c1f] text-white/80 transition hover:bg-[#2a2a2f] hover:text-white"
+                  className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border border-line bg-raised text-ink-2 transition hover:bg-hover hover:text-ink"
                 >
                   <FiEdit2 size={12} />
                 </button>
               </div>
               {avatarOpen ? (
-                <div className="mt-3 rounded-2xl border border-white/10 bg-[#141416] p-3">
+                <div className="mt-3 rounded-2xl border border-line bg-raised p-3">
                   <p className={cn(labelCls, "px-1")}>Mascot</p>
                   <div className="grid grid-cols-5 gap-1.5">
                     {SPECIES.map((s) => (
@@ -758,7 +758,7 @@ export function NewTroWizard({
                         title={`${SPECIES_META[s].label} — ${SPECIES_META[s].vibe}`}
                         className={cn(
                           "rounded-xl border p-1 transition",
-                          species === s ? "border-violet-400/70 bg-violet-400/10" : "border-transparent hover:border-white/20 hover:bg-white/5",
+                          species === s ? "border-violet-400/70 bg-violet-400/10" : "border-transparent hover:border-line-strong hover:bg-ink/5",
                         )}
                       >
                         {SPECIES_META[s].image ? (
@@ -778,8 +778,8 @@ export function NewTroWizard({
                         onClick={() => { setAccent(c); setAccentTouched(true); }}
                         aria-label={`Accent ${c}`}
                         className={cn(
-                          "size-7 rounded-full ring-2 ring-offset-2 ring-offset-[#141416] transition",
-                          accent === c ? "ring-white" : "ring-transparent hover:ring-white/40",
+                          "size-7 rounded-full ring-2 ring-offset-2 ring-offset-raised transition",
+                          accent === c ? "ring-ink" : "ring-transparent hover:ring-ink/40",
                         )}
                         style={{ background: c }}
                       />
@@ -787,10 +787,10 @@ export function NewTroWizard({
                   </div>
                 </div>
               ) : null}
-              <h2 className="mt-3 truncate text-[17px] font-semibold tracking-tight text-white">
+              <h2 className="mt-3 truncate text-[17px] font-semibold tracking-tight text-ink">
                 {name.trim() || "Untitled Tro"}
               </h2>
-              <p className="truncate text-[13px] text-white/50">{role.trim() || "No role yet"}</p>
+              <p className="truncate text-[13px] text-ink-3">{role.trim() || "No role yet"}</p>
             </div>
             <dl className="mt-4 space-y-1 px-5 pb-5">
               <PreviewRow label="Model" value={activeMode.label} hint={activeMode.blurb} />
@@ -801,24 +801,24 @@ export function NewTroWizard({
               <PreviewRow label="Integrations" value={`${connectors.length} connected`} />
               <div className="rounded-xl px-1 py-2">
                 <div className="flex items-baseline justify-between">
-                  <dt className="text-[12px] font-semibold uppercase tracking-[0.12em] text-white/40">Tools</dt>
-                  <dd className="text-[12.5px] font-semibold text-white/70">{tools.length} selected</dd>
+                  <dt className="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-4">Tools</dt>
+                  <dd className="text-[12.5px] font-semibold text-ink-2">{tools.length} selected</dd>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {tools.length ? (
                     tools.map((t) => (
-                      <span key={t} className="rounded-full bg-white/[0.07] px-2.5 py-1 text-[11.5px] font-medium text-white/70">
+                      <span key={t} className="rounded-full bg-ink/[0.07] px-2.5 py-1 text-[11.5px] font-medium text-ink-2">
                         {t}
                       </span>
                     ))
                   ) : (
-                    <span className="text-[12px] text-white/35">None — chat only.</span>
+                    <span className="text-[12px] text-ink-4">None — chat only.</span>
                   )}
                 </div>
               </div>
             </dl>
           </div>
-          <p className="mt-3 px-1 text-[12px] leading-relaxed text-white/35">
+          <p className="mt-3 px-1 text-[12px] leading-relaxed text-ink-4">
             Preview updates live as you build. The Tro is created only when you press Create Agent.
           </p>
         </aside>
@@ -834,8 +834,8 @@ function StepHeading({ icon: Icon, title, blurb }: { icon: typeof FiUser; title:
         <Icon size={19} />
       </span>
       <span>
-        <span className="block text-[16px] font-semibold tracking-tight text-white">{title}</span>
-        <span className="block text-[13px] text-white/50">{blurb}</span>
+        <span className="block text-[16px] font-semibold tracking-tight text-ink">{title}</span>
+        <span className="block text-[13px] text-ink-3">{blurb}</span>
       </span>
     </div>
   );
@@ -844,10 +844,10 @@ function StepHeading({ icon: Icon, title, blurb }: { icon: typeof FiUser; title:
 function PreviewRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 rounded-xl px-1 py-2">
-      <dt className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.12em] text-white/40">{label}</dt>
+      <dt className="shrink-0 text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-4">{label}</dt>
       <dd className="min-w-0 text-right">
-        <span className="block truncate text-[13px] font-semibold text-white">{value}</span>
-        {hint ? <span className="block truncate text-[11.5px] text-white/40">{hint}</span> : null}
+        <span className="block truncate text-[13px] font-semibold text-ink">{value}</span>
+        {hint ? <span className="block truncate text-[11.5px] text-ink-4">{hint}</span> : null}
       </dd>
     </div>
   );
