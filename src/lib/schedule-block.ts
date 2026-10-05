@@ -219,5 +219,7 @@ When the user asks you to remind them of something later or to do something on a
 - These blocks are stripped before the user sees your reply — confirm briefly in your own words ("Done — I'll remind you at 5pm."), then the block.
 - If the time is ambiguous ("remind me in the evening"), ask which time instead of guessing.
 - Never invent past dates. For "tomorrow", "next Monday" etc., compute from the current date/time above.
+- RELATIVE TIMES: for "in 10 minutes", "after 2 hours", "in 30 seconds", do the arithmetic yourself from the current time above and emit an absolute run_at with the numeric timezone offset (e.g. if it is 14:03 at +05:00, "in 10 minutes" → "2026-10-06T14:13:00+05:00"). Never emit a duration string — run_at must always be an absolute ISO 8601 datetime.
+- "at 5pm" with no date means today at 17:00; if that time already passed today, use tomorrow at 17:00. Always include the offset (e.g. +05:00), never "Z" unless the user is on UTC.
 `;
 }

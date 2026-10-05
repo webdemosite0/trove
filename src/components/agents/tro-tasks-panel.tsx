@@ -18,6 +18,54 @@ export interface ScheduledTask {
   nextRunAt: number | null;
 }
 
+export interface SchedulerHealth {
+  lastRunAt: number;
+  lastFired: number;
+}
+
+const HEALTH_STALE_MS = 5 * 60_000;
+
+function SchedulerHealthBanner({ health }: { health: SchedulerHealth | null | undefined }) {
+  if (health === undefined) return null; // not loaded yet
+  const age = health ? Date.now() - health.lastRunAt : Infinity;
+  const live = health !== null && age < HEALTH_STALE_MS;
+  if (live) {
+    const ago =
+      age < 60_000
+        ? "just now"
+        : age < 3_600_000
+          ? `${Math.round(age / 60_000)}m ago`
+          : `${Math.round(age / 3_600_000)}h ago`;
+    return (
+      <p className="mb-2 flex items-center gap-1.5 rounded-lg border border-positive/25 bg-positive/8 px-2.5 py-1.5 text-[11px] text-ink-2">
+        <span className="size-1.5 shrink-0 rounded-full bg-positive" />
+        Scheduler live — checked {ago}. Reminders fire on time.
+      </p>
+    );
+  }
+  return (
+    <div className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/8 px-2.5 py-2 text-[11px] leading-relaxed text-ink-2">
+      <p className="flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-400">
+        <span className="size-1.5 shrink-0 rounded-full bg-amber-500" />
+        {health ? "Scheduler hasn't checked in — reminders may be late." : "Scheduler never ran — reminders won't fire."}
+      </p>
+      <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-ink-3">
+        <li>
+          In Vercel → Settings → Environment Variables, add{" "}
+          <span className="font-mono font-semibold text-ink-2">CRON_SECRET</span> (any long random value) and redeploy.
+        </li>
+        <li>
+          Minute-by-minute checks need Vercel Pro — on the free plan, add a free every-minute job at{" "}
+          <span className="font-semibold text-ink-2">cron-job.org</span> pointing to{" "}
+          <span className="break-all font-mono text-[10.5px] text-ink-2">
+            https://troveai.site/api/cron/tro-schedules?secret=YOUR_CRON_SECRET
+          </span>
+        </li>
+      </ol>
+    </div>
+  );
+}
+
 function formatNext(t: ScheduledTask): string {
   if (!t.active) return "Paused";
   if (!t.nextRunAt) return "—";
@@ -51,6 +99,7 @@ function formatNext(t: ScheduledTask): string {
 
 export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentName: string }) {
   const [tasks, setTasks] = useState<ScheduledTask[] | null>(null);
+  const [health, setHealth] = useState<SchedulerHealth | null | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -59,7 +108,10 @@ export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentNa
     try {
       const r = await fetch(`/api/tro/schedule?agentId=${encodeURIComponent(agentId)}`);
       const d = await r.json().catch(() => null);
-      if (r.ok && d?.tasks) setTasks(d.tasks);
+      if (r.ok && d?.tasks) {
+        setTasks(d.tasks);
+        setHealth((d.health ?? null) as SchedulerHealth | null);
+      }
     } catch {
       /* keep old list */
     }
@@ -102,6 +154,7 @@ export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentNa
 
   return (
     <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
+      <SchedulerHealthBanner health={health} />
       <div className="mb-2 flex items-center justify-between">
         <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
           <FiClock size={11} className="text-ink-3" /> Scheduled tasks
