@@ -34,6 +34,46 @@ function draftKey(id: string | null) {
 }
 
 /**
+ * Defect 3 (P1) — editor readiness handshake.
+ *
+ * The split-view chat dispatches `sheets-ai-prompt` as a window event, but on
+ * a brand-new sheet the editor only mounts AFTER the first submit (StudioSplit
+ * gates the preview on `started`, and the state update that mounts it hasn't
+ * flushed when the prompt event is dispatched synchronously in the same
+ * submit). A prompt dispatched before the listener below is registered was
+ * silently lost: `runAi` never started, no `sheets-ai-done` ever arrived,
+ * and the sidebar hung on its backstop timeout with the blank grid still
+ * showing. The editor announces readiness after its listeners are
+ * registered; the studio waits for it before dispatching.
+ */
+let sheetsEditorReady = false;
+
+export function isSheetsEditorReady() {
+  return sheetsEditorReady;
+}
+
+export function whenSheetsEditorReady(timeoutMs: number): Promise<boolean> {
+  if (sheetsEditorReady) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (v: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener("sheets-ai-ready", onReady);
+      resolve(v);
+    };
+    const onReady = () => finish(true);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    window.addEventListener("sheets-ai-ready", onReady);
+    // Race-free re-check: the editor's mount effect sets the flag and
+    // dispatches the event synchronously together, so neither can slip
+    // between the first check and listener registration on this thread.
+    if (sheetsEditorReady) finish(true);
+  });
+}
+
+/**
  * Full spreadsheet editor: AI generation (Thinking ball while busy),
  * working grid with formulas, save/load, CSV/XLSX export. Mobile-first.
  */
@@ -147,12 +187,21 @@ export function SheetEditor({
   );
 
   const runAi = useCallback(
-    async (text: string): Promise<StudioGenResult> => {
+    async (text: string, reqId?: string): Promise<StudioGenResult> => {
       const q = text.trim();
+      // Defect 3 (P1): stage breadcrumb — recorded as generation progresses
+      // so a timeout/failure can say WHERE it stalled. Surfaced via the
+      // `details` field the studio sidebar renders under the error.
+      const t0 = Date.now();
+      let lastSignal = "start";
+      const details = () =>
+        `reqId=${reqId ?? "local"} handler=sheets/runAi waited=${Math.round((Date.now() - t0) / 1000)}s lastSignal=${lastSignal}`;
       if (!q || busy) {
         return {
           ok: false,
           error: "Still building the previous request — wait a moment.",
+          reqId,
+          details: details(),
         };
       }
       // QA-05: tag this request; capture the manual-edit baseline so a late
@@ -164,9 +213,18 @@ export function SheetEditor({
       setAiOpen(false);
       try {
         const ctrl = new AbortController();
+        // Defect 3 (P1): 90s is a TOTAL budget for the AI round-trip, not
+        // just time-to-first-byte. The timer used to be cleared when response
+        // headers arrived, leaving the body-read loop below unbounded — a
+        // stalled upstream stream hung runAi forever, `sheets-ai-done` was
+        // never dispatched, and the sidebar could only report its own
+        // backstop timeout with no clue where it stalled. Aborting also
+        // rejects a pending reader.read(), so the budget covers a stalled
+        // stream as well as a slow connect.
         const timeout = setTimeout(() => ctrl.abort(), 90000); // 90s max
         let res: Response;
         try {
+          lastSignal = "api-fetch";
           res = await fetch("/api/tool", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -177,53 +235,70 @@ export function SheetEditor({
               messages: [{ role: "user", text: q }],
             }),
           });
+          lastSignal = "api-headers";
         } catch (e) {
-          clearTimeout(timeout);
           throw new Error(e instanceof Error && e.name === "AbortError" ? "Generation timed out. Try again." : "Network error. Try again.");
         }
-        clearTimeout(timeout);
-        if (!res.ok || !res.body) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.error ?? `Failed (${res.status}).`);
+        try {
+          if (!res.ok || !res.body) {
+            const data = await res.json().catch(() => null);
+            throw new Error(data?.error ?? `Failed (${res.status}).`);
+          }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let out = "";
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            out += decoder.decode(value, { stream: true });
+            lastSignal = `streaming:${out.length}b`;
+          }
+          lastSignal = "stream-done";
+          if (!out.trim()) throw new Error("The model returned nothing. Try again.");
+          const table = parseMarkdownTable(out);
+          if (!table.length) throw new Error("Couldn't parse a table from the response.");
+          lastSignal = `parsed:${table.length}x${table[0]?.length ?? 0}`;
+          const next = normalizeGrid(table);
+          const derivedTitle =
+            q.length > 48 ? q.slice(0, 48).trimEnd() + "…" : q;
+          const finalTitle =
+            titleRef.current === "Untitled sheet" ? derivedTitle : titleRef.current;
+          // QA-05: only apply if this request is still the newest and no manual
+          // edit happened while it was in flight. Otherwise hold the result for
+          // explicit user Apply — never silently replace their edits.
+          if (
+            genSeqRef.current !== myGen ||
+            editSeqRef.current !== baselineEdit
+          ) {
+            setPendingGen({ grid: next, title: finalTitle, prompt: q });
+            return { ok: true, applied: false, stale: true, reqId };
+          }
+          setPendingGen(null);
+          setGrid(next);
+          if (titleRef.current === "Untitled sheet") setTitle(finalTitle);
+          lastSignal = "saving";
+          // Saving is best-effort bookkeeping: the grid above is already
+          // applied and visible, so never let a slow save hold the
+          // completion signal hostage — race it and move on.
+          const savedInTime = await Promise.race([
+            doSave(next, finalTitle, q).then(
+              () => true,
+              () => false,
+            ),
+            new Promise<boolean>((r) => setTimeout(() => r(false), 15000)),
+          ]);
+          lastSignal = savedInTime ? "saved" : "save-timed-out";
+          return { ok: true, applied: true, reqId };
+        } finally {
+          clearTimeout(timeout);
         }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let out = "";
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          out += decoder.decode(value, { stream: true });
-        }
-        if (!out.trim()) throw new Error("The model returned nothing. Try again.");
-        const table = parseMarkdownTable(out);
-        if (!table.length) throw new Error("Couldn't parse a table from the response.");
-        const next = normalizeGrid(table);
-        const derivedTitle =
-          q.length > 48 ? q.slice(0, 48).trimEnd() + "…" : q;
-        const finalTitle =
-          titleRef.current === "Untitled sheet" ? derivedTitle : titleRef.current;
-        // QA-05: only apply if this request is still the newest and no manual
-        // edit happened while it was in flight. Otherwise hold the result for
-        // explicit user Apply — never silently replace their edits.
-        if (
-          genSeqRef.current !== myGen ||
-          editSeqRef.current !== baselineEdit
-        ) {
-          setPendingGen({ grid: next, title: finalTitle, prompt: q });
-          return { ok: true, applied: false, stale: true };
-        }
-        setPendingGen(null);
-        setGrid(next);
-        if (titleRef.current === "Untitled sheet") setTitle(finalTitle);
-        await doSave(next, finalTitle, q);
-        return { ok: true, applied: true };
       } catch (e) {
         const message = e instanceof Error ? e.message : "Something went wrong.";
         setError(message);
         setAiOpen(true);
         // QA-01: a failed/empty generation must surface as a failure, never
         // as a silent "Done" with a blank grid.
-        return { ok: false, error: message };
+        return { ok: false, error: message, reqId, details: details() };
       } finally {
         setBusy(false);
       }
@@ -272,11 +347,15 @@ export function SheetEditor({
   });
   useEffect(() => {
     function onExternalPrompt(e: Event) {
-      const prompt = (e as CustomEvent<string>).detail;
+      const detail = (
+        e as CustomEvent<{ prompt: string; reqId?: string } | string>
+      ).detail;
+      const prompt = typeof detail === "string" ? detail : detail?.prompt;
+      const reqId = typeof detail === "string" ? undefined : detail?.reqId;
       if (typeof prompt !== "string" || !prompt.trim()) return;
       // QA-01: forward the editor's real result (ok/applied/error) so the
       // sidebar never declares success on a failed or empty generation.
-      void runAiRef.current(prompt).then((result) => {
+      void runAiRef.current(prompt, reqId).then((result) => {
         window.dispatchEvent(
           new CustomEvent<StudioGenResult>("sheets-ai-done", { detail: result }),
         );
@@ -304,11 +383,18 @@ export function SheetEditor({
     window.addEventListener("sheets-add-row", onAddRow);
     window.addEventListener("sheets-add-col", onAddCol);
     window.addEventListener("sheets-clear", onClear);
+    // Defect 3 (P1): announce readiness AFTER the prompt listener above is
+    // registered — the studio waits for this before dispatching, so the
+    // first prompt on a brand-new sheet (where this editor only mounts as a
+    // result of the submit) is never silently lost.
+    sheetsEditorReady = true;
+    window.dispatchEvent(new CustomEvent("sheets-ai-ready"));
     return () => {
       window.removeEventListener("sheets-ai-prompt", onExternalPrompt);
       window.removeEventListener("sheets-add-row", onAddRow);
       window.removeEventListener("sheets-add-col", onAddCol);
       window.removeEventListener("sheets-clear", onClear);
+      sheetsEditorReady = false;
     };
   }, []);
 

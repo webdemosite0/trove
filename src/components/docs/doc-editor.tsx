@@ -10,6 +10,43 @@ import type { StudioGenResult } from "@/lib/studio-events";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
+/**
+ * Defect 2 follow-up (P1): on a brand-new document the editor only mounts
+ * AFTER the first submit (StudioSplit gates the preview on `started`, and
+ * the state update that mounts it hasn't flushed when the prompt event is
+ * dispatched synchronously in the same submit). A prompt dispatched before
+ * the listener below is registered was silently lost: `runAi` never started,
+ * no `docs-ai-finished` ever arrived, and the sidebar hung on its backstop.
+ * The editor announces readiness after its listeners are registered; the
+ * studio waits for it before dispatching.
+ */
+let docsEditorReady = false;
+
+export function isDocsEditorReady() {
+  return docsEditorReady;
+}
+
+export function whenDocsEditorReady(timeoutMs: number): Promise<boolean> {
+  if (docsEditorReady) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (v: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener("docs-ai-ready", onReady);
+      resolve(v);
+    };
+    const onReady = () => finish(true);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    window.addEventListener("docs-ai-ready", onReady);
+    // Race-free re-check: the editor's mount effect sets the flag and
+    // dispatches the event synchronously together, so neither can slip
+    // between the first check and listener registration on this thread.
+    if (docsEditorReady) finish(true);
+  });
+}
+
 /** Notify the studio chat panel how generation ended (QA-01). */
 function finishDocs(result: StudioGenResult) {
   window.dispatchEvent(
@@ -90,7 +127,16 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       }, 50);
     }
     window.addEventListener("docs-ai-prompt", onExternalPrompt);
-    return () => window.removeEventListener("docs-ai-prompt", onExternalPrompt);
+    // Defect 2 follow-up (P1): announce readiness AFTER the prompt listener
+    // above is registered — the studio waits for this before dispatching, so
+    // the first prompt on a brand-new document (where this editor only mounts
+    // as a result of the submit) is never silently lost.
+    docsEditorReady = true;
+    window.dispatchEvent(new CustomEvent("docs-ai-ready"));
+    return () => {
+      window.removeEventListener("docs-ai-prompt", onExternalPrompt);
+      docsEditorReady = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -198,10 +244,20 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
     setAiError(null);
     setAiResult("");
     const shouldAutoInsert = autoInsertRef.current;
+    // Defect 2 (P1): mirror the sheets editor's 90s ceiling — a stalled
+    // /api/chat stream aborts and fails fast instead of hanging the sidebar
+    // until its 3-minute backstop. Track progress signals for the diagnostic
+    // breadcrumb on failure.
+    const startedAt = Date.now();
+    let receivedBytes = 0;
+    let lastChunkAt = startedAt;
+    const ctrl = new AbortController();
+    const genTimeout = setTimeout(() => ctrl.abort(), 90_000);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
         body: JSON.stringify({
           messages: [
             {
@@ -222,8 +278,11 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
         const { done, value } = await reader.read();
         if (done) break;
         full += decoder.decode(value, { stream: true });
+        receivedBytes += value?.byteLength ?? 0;
+        lastChunkAt = Date.now();
         setAiResult(full);
       }
+      clearTimeout(genTimeout);
       if (!full.trim()) throw new Error("The AI returned nothing. Try again.");
       // Auto-insert when triggered from the studio chat panel.
       if (shouldAutoInsert) {
@@ -248,7 +307,21 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       if (reqId) finishDocs({ ok: true, applied: false, reqId });
       return { ok: true, applied: false, reqId: reqId ?? undefined };
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Generation failed.";
+      clearTimeout(genTimeout);
+      // AbortError = our 90s ceiling fired (fetch or mid-stream read).
+      const timedOut = e instanceof Error && e.name === "AbortError";
+      const message =
+        e instanceof Error && !timedOut ? e.message : timedOut ? "Generation timed out. Try again." : "Generation failed.";
+      // Defect 2 (P1): diagnostic breadcrumb linking the chat command to the
+      // editor execution — request id, handler, elapsed, last progress.
+      console.error("[docs/runAi] document generation failed", {
+        reqId: reqId ?? null,
+        handler: "docs/runAi(/api/chat)",
+        timedOut,
+        elapsedMs: Date.now() - startedAt,
+        receivedBytes,
+        msSinceLastProgress: Date.now() - lastChunkAt,
+      });
       setAiError(message);
       autoInsertRef.current = false;
       // QA-01: a failed generation must surface as a failure, never as "Done".
@@ -256,6 +329,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
         ok: false,
         error: message,
         reqId: reqId ?? undefined,
+        details: `reqId=${reqId ?? "n/a"} handler=docs/runAi elapsed=${Math.round((Date.now() - startedAt) / 1000)}s lastProgress=${Math.round((Date.now() - lastChunkAt) / 1000)}sAgo bytes=${receivedBytes}${timedOut ? " timeout=90s" : ""}`,
       };
       if (reqId) finishDocs(r);
       return r;
