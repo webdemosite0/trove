@@ -4,13 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { localTimeZone } from "@/lib/context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap } from "@/components/ui/icons";
+import { FiArrowLeft, FiPlus, FiX, FiMonitor, FiSidebar, FiMessageSquare, FiArrowRight, FiDownload, FiTrash2, FiGlobe, TbPlugConnected, FiActivity, FiBookOpen, FiFolder, FiCpu, FiClock, FiZap, FiStar } from "@/components/ui/icons";
 import { ThinkingBall } from "@/components/chat/thinking";
 import { TroTasksPanel } from "@/components/agents/tro-tasks-panel";
 import { TroSkillsPanel } from "@/components/agents/tro-skills-panel";
-import { Bot, SPECIES_META, speciesFromSeed } from "@/components/agents/bot";
+import { Bot } from "@/components/agents/bot";
 import { Message } from "@/components/chat/message";
 import { Composer } from "@/components/chat/composer";
+import { ModePicker } from "@/components/chat/mode-picker";
+import { ExecModePicker, type ExecMode } from "@/components/chat/exec-mode-picker";
+import { modeLabel, type ModeId } from "@/lib/modes";
 import { ArtifactIcon } from "@/components/ui/artifact-icon";
 import { BrandSheetView } from "@/components/agents/brand-sheet";
 import { Ico } from "@/components/ui/ico";
@@ -61,6 +64,8 @@ interface Turn {
   id: number;
   role: "user" | "model";
   text: string;
+  /** True when this user turn was sent in Plan execution mode. */
+  plan?: boolean;
 }
 
 interface ActivityItem {
@@ -118,7 +123,7 @@ function ArtifactCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-3 py-2.5 transition hover:border-line-strong">
+    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition hover:border-white/20">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
         <ArtifactIcon kind={block.kind} size={17} />
       </span>
@@ -140,7 +145,7 @@ function ArtifactCard({
               type="button"
               onClick={onDownload}
               aria-label="Download artifact"
-              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.07] hover:text-ink"
             >
               <FiDownload size={14} />
             </button>
@@ -195,8 +200,8 @@ function ArtifactPreview({
   onDelete: () => void;
 }) {
   return (
-    <div className="mb-3 overflow-hidden rounded-2xl border border-line bg-canvas/60">
-      <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+    <div className="mb-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#141417]">
+      <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2">
         <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
           <ArtifactIcon kind={artifact.kind} size={14} />
         </span>
@@ -210,7 +215,7 @@ function ArtifactPreview({
           type="button"
           onClick={onClose}
           aria-label="Close preview"
-          className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink"
+          className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.07] hover:text-ink"
         >
           <FiX size={14} />
         </button>
@@ -235,7 +240,7 @@ function ArtifactPreview({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-t border-white/[0.06] px-3 py-2">
         <button
           type="button"
           onClick={onDelete}
@@ -247,7 +252,7 @@ function ArtifactPreview({
           <button
             type="button"
             onClick={onExpand}
-            className="rounded-full border border-line px-3 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+            className="rounded-full border border-white/10 px-3 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.06] hover:text-ink"
           >
             Full view
           </button>
@@ -282,11 +287,14 @@ export function AgentChat({
   agents = [],
   recents,
   restored,
+  firstMessage,
 }: {
   agent: AgentRow;
   agents?: AgentRow[];
   recents: Recent[];
   restored: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
+  /** Optional first user turn to auto-send on a fresh thread (e.g. ?q= from /tros). */
+  firstMessage?: string | null;
 }) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -314,6 +322,45 @@ export function AgentChat({
   const [computerBusy, setComputerBusy] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
   const { openSettings } = useNav();
+  /** Response style for this Tro's turns (Fast | Balanced | Deep | Creative). */
+  const [mode, setMode] = useState<ModeId>("balanced");
+  /** Execute vs Plan — remembered per Tro on this device. */
+  const [execMode, setExecMode] = useState<ExecMode>(() => {
+    try {
+      return window.localStorage.getItem(`tro-exec-mode:${agent.id}`) === "plan"
+        ? "plan"
+        : "execute";
+    } catch {
+      return "execute";
+    }
+  });
+  function changeExecMode(next: ExecMode) {
+    setExecMode(next);
+    try {
+      window.localStorage.setItem(`tro-exec-mode:${agent.id}`, next);
+    } catch {
+      /* ignore */
+    }
+  }
+  /** Starred Tros — client-side favorite, remembered per Tro on this device. */
+  const [starred, setStarred] = useState(() => {
+    try {
+      return window.localStorage.getItem(`tro-starred:${agent.id}`) === "1";
+    } catch {
+      return false;
+    }
+  });
+  function toggleStarred() {
+    setStarred((v) => {
+      try {
+        if (v) window.localStorage.removeItem(`tro-starred:${agent.id}`);
+        else window.localStorage.setItem(`tro-starred:${agent.id}`, "1");
+      } catch {
+        /* ignore */
+      }
+      return !v;
+    });
+  }
   const [browserExpanded, setBrowserExpanded] = useState(false);
   type PanelTab = "desktop" | "files" | "activity" | "connectors" | "tasks" | "skills";
   const [panelTab, setPanelTab] = useState<PanelTab>("desktop");
@@ -875,7 +922,10 @@ export function AgentChat({
           pushActivity("Browse skipped", e instanceof Error ? e.message : "Could not open URL", "warn");
         }
       }
-      const history = [...(base ?? turns), { id: nextId.current++, role: "user" as const, text }];
+      const history: Turn[] = [
+        ...(base ?? turns),
+        { id: nextId.current++, role: "user" as const, text, plan: execMode === "plan" },
+      ];
       setTurns(history);
       setBusy(true);
       setError(null);
@@ -917,6 +967,8 @@ export function AgentChat({
               messages: msgs,
               timeZone: localTimeZone(),
               attachments: strip(withAttachments),
+              mode,
+              plan: execMode === "plan",
               browser: held.sessionId
                 ? { sessionId: held.sessionId, pageUrl: held.pageUrl, title: held.title }
                 : null,
@@ -1314,8 +1366,31 @@ export function AgentChat({
         setBusy(false);
       }
     },
-    [agent.id, agent.name, agent.role, busy, navigateComputer, panelOpen, pushActivity, save, turns],
+    [agent.id, agent.name, agent.role, busy, navigateComputer, panelOpen, pushActivity, save, turns, mode, execMode],
   );
+
+  // Auto-send a first message (e.g. ?q= deep-linked from the Tros home
+  // composer) as the first turn of a fresh thread. Attachments stashed by the
+  // home composer under `tro-first-attachments:<agentId>` ride along. Fires
+  // once; never on restored conversations.
+  const firstSentRef = useRef(false);
+  useEffect(() => {
+    if (!firstMessage?.trim() || restored || firstSentRef.current) return;
+    firstSentRef.current = true;
+    let attachments: Attachment[] | undefined;
+    try {
+      const raw = sessionStorage.getItem(`tro-first-attachments:${agent.id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Attachment[];
+        if (Array.isArray(parsed) && parsed.length) attachments = parsed;
+        sessionStorage.removeItem(`tro-first-attachments:${agent.id}`);
+      }
+    } catch {
+      /* best-effort */
+    }
+    void send(firstMessage, attachments);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstMessage, restored, agent.id]);
 
   const markAskAnswered = useCallback((key: string) => {
     setAnsweredAsks((prev) => {
@@ -1367,13 +1442,13 @@ export function AgentChat({
           : "Offline";
 
   return (
-    <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-canvas">
+    <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-[#0d0d0f] text-ink">
       {agents.length > 0 ? (
-        <div className="hidden w-[272px] shrink-0 border-r border-line/70 xl:block">
+        <div className="hidden w-[272px] shrink-0 border-r border-white/[0.06] bg-[#0d0d0f] xl:block">
           <TroListPanel
             agents={agents}
             activeId={agent.id}
-            onNew={() => router.push("/tros?new=1")}
+            onNew={() => router.push("/tros/new")}
             onDelete={setDeletingId}
             workingIds={teamPresence}
             className="h-full"
@@ -1381,9 +1456,9 @@ export function AgentChat({
         </div>
       ) : null}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="shrink-0 border-b border-line/80 bg-canvas/90 px-4 backdrop-blur-md lg:px-6">
-          <div className="flex h-14 items-center gap-3">
-            <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 place-items-center rounded-xl text-ink-3 transition hover:bg-hover hover:text-ink">
+        <header className="shrink-0 border-b border-white/[0.06] bg-[#0d0d0f]/95 backdrop-blur-md">
+          <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
+            <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-white/[0.06] hover:text-ink">
               <Ico icon={FiArrowLeft} motion="nudge" size={17} />
             </Link>
             <span className="relative shrink-0 pt-1">
@@ -1398,10 +1473,31 @@ export function AgentChat({
               <Bot size={36} accent={agent.accent} seed={agent.id} state={busy ? "working" : "idle"} />
             </span>
             <div className="min-w-0 flex-1">
-              <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-ink">
+              <h1 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold tracking-tight text-ink">
                 <span className="truncate">{agent.name}</span>
-                <span className="shrink-0 rounded-full bg-violet-500/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-violet-500">
-                  {SPECIES_META[speciesFromSeed(agent.id)].label}
+                <button
+                  type="button"
+                  onClick={toggleStarred}
+                  aria-label={starred ? "Unstar this Tro" : "Star this Tro"}
+                  aria-pressed={starred}
+                  title={starred ? "Starred" : "Star this Tro"}
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-4 transition hover:bg-white/[0.06] hover:text-ink"
+                >
+                  <Ico icon={FiStar} motion="pop" size={15} className={starred ? "fill-amber-400 text-amber-400" : ""} />
+                </button>
+                <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 sm:inline-flex">
+                  <span className="relative flex size-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-70" />
+                    <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-2">Live</span>
+                </span>
+                {/* Trove auto-selects the model; the pill shows the response style + Auto. */}
+                <span
+                  className="hidden shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 md:inline-flex"
+                  title="Response style · model"
+                >
+                  <span className="text-[11px] font-medium text-ink-2">{modeLabel(mode)} · Auto</span>
                 </span>
               </h1>
               <p className="truncate text-[12px] text-ink-3">
@@ -1425,7 +1521,7 @@ export function AgentChat({
                   reset();
                   nextId.current = 0;
                 }}
-                className="chip group shrink-0 !px-3 !py-1.5 !text-[12.5px]"
+                className="chip group shrink-0 !border-white/10 !bg-white/[0.04] !px-3 !py-1.5 !text-[12.5px] hover:!bg-white/[0.08]"
               >
                 <Ico icon={FiPlus} motion="open" size={13} /> New
               </button>
@@ -1437,7 +1533,7 @@ export function AgentChat({
               aria-label={panelOpen ? "Close task panel" : "Open task panel"}
               className={cn(
                 "grid h-9 w-9 shrink-0 place-items-center rounded-xl transition",
-                panelOpen ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
+                panelOpen ? "bg-white/[0.08] text-ink" : "text-ink-3 hover:bg-white/[0.06] hover:text-ink",
               )}
             >
               <FiSidebar size={17} />
@@ -1453,7 +1549,7 @@ export function AgentChat({
                 <h2 className="mt-6 text-[18px] font-semibold tracking-tight text-ink">Chat with {agent.name.split(" ")[0]}</h2>
                 <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-3">{agent.instructions}</p>
                 <p className="mx-auto mt-4 flex max-w-[46ch] items-center justify-center gap-1.5 text-[11.5px] text-ink-4">
-                  <Ico icon={FiMessageSquare} size={12} className="shrink-0 text-violet-500" />
+                  <Ico icon={FiMessageSquare} size={12} className="shrink-0 text-accent" />
                   <span>{agent.name.split(" ")[0]} asks you questions when it needs input — just answer and it carries on.</span>
                 </p>
                 <div className="mx-auto mt-6 flex max-w-[520px] flex-wrap justify-center gap-2">
@@ -1462,7 +1558,7 @@ export function AgentChat({
                       key={s}
                       type="button"
                       onClick={() => void send(s)}
-                      className="rounded-full border border-line bg-raised/60 px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-violet-500/40 hover:text-ink"
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-white/25 hover:text-ink"
                     >
                       {s}
                     </button>
@@ -1480,6 +1576,8 @@ export function AgentChat({
                     <Message
                       role={t.role}
                       text={text}
+                      variant="dark"
+                      chip={t.role === "user" && t.plan ? "Plan" : undefined}
                       pending={busy && i === turns.length - 1 && t.role === "model"}
                       onRegenerate={t.role === "model" ? retry : undefined}
                       assistantName={agent.name}
@@ -1526,14 +1624,59 @@ export function AgentChat({
                 );
               })
             )}
-            {error ? <FailureNote error={error} onRetry={retry} /> : null}
+            {error ? <FailureNote error={error} onRetry={retry} variant="centered" /> : null}
             <div ref={bottom} />
           </div>
         </div>
 
-        <div className="relative z-20 shrink-0 border-t border-line/50 bg-canvas/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:px-10">
+        <div className="relative z-20 shrink-0 border-t border-white/[0.06] bg-[#0d0d0f]/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl lg:px-10">
           <div className="mx-auto max-w-[720px]">
-            <Composer onSend={send} disabled={busy} placeholder={busy ? "Working…" : `Message ${agent.name}…`} />
+            {artifactsLoaded && artifacts.length > 0 ? (
+              <div className="mb-2.5">
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+                  {artifacts.length === 1 ? "1 asset" : `${artifacts.length} assets`}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setViewer(artifacts[0])}
+                  className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-left transition hover:border-white/20"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
+                    <ArtifactIcon kind={artifacts[0].kind} size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-semibold text-ink">
+                      {artifacts[0].title}
+                    </span>
+                    <span className="block text-[11px] text-ink-4">
+                      {ARTIFACT_LABEL[artifacts[0].kind]} · tap to open
+                    </span>
+                  </span>
+                </button>
+              </div>
+            ) : null}
+            <Composer
+              dark
+              onSend={send}
+              disabled={busy}
+              placeholder={busy ? "Working…" : turns.length > 0 ? "Add a follow-up..." : `Message ${agent.name}…`}
+              leading={
+                <>
+                  <ModePicker value={mode} onChange={setMode} disabled={busy} />
+                  <ExecModePicker value={execMode} onChange={changeExecMode} disabled={busy} />
+                </>
+              }
+            />
+            {connectors !== null && connectors.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => openSettings("integrations")}
+                className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-2.5 text-left transition hover:border-white/15 hover:bg-white/[0.04]"
+              >
+                <span className="text-[13px] font-medium text-ink-2">Connect your integrations</span>
+                <FiArrowRight size={15} className="shrink-0 text-ink-3" />
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -1550,7 +1693,7 @@ export function AgentChat({
 
       <aside
         className={cn(
-          "absolute inset-y-0 right-0 z-40 flex flex-col border-l border-line bg-raised/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
+          "absolute inset-y-0 right-0 z-40 flex flex-col border-l border-white/[0.06] bg-[#101012]/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
           browserExpanded
             ? "w-[min(100vw-1.5rem,780px)]"
             : "w-[min(100vw-1.5rem,340px)]",
@@ -1558,7 +1701,7 @@ export function AgentChat({
         )}
       >
         {/* Panel header — Tro identity, live status, quick actions */}
-        <div className="relative shrink-0 border-b border-line px-4 pb-3.5 pt-4">
+        <div className="relative shrink-0 border-b border-white/[0.06] px-4 pb-3.5 pt-4">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-20"
@@ -1583,7 +1726,7 @@ export function AgentChat({
                 </span>
               </p>
             </div>
-            <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-hover hover:text-ink">
+            <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.06] hover:text-ink">
               <FiX size={16} />
             </button>
           </div>
@@ -1597,7 +1740,7 @@ export function AgentChat({
                 reset();
                 nextId.current = 0;
               }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.07] hover:text-ink"
             >
               <Ico icon={FiPlus} motion="open" size={13} /> New chat
             </button>
@@ -1607,7 +1750,7 @@ export function AgentChat({
                 setPanelTab("files");
                 if (!panelOpen) setPanelOpen(true);
               }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.07] hover:text-ink"
             >
               <Ico icon={FiBookOpen} motion="lift" size={13} /> Library
               {artifacts.length > 0 ? (
@@ -1619,7 +1762,7 @@ export function AgentChat({
             <button
               type="button"
               onClick={() => openSettings("integrations")}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-canvas/70 px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.07] hover:text-ink"
             >
               <Ico icon={TbPlugConnected} motion="pop" size={13} /> Connect
             </button>
@@ -1628,7 +1771,7 @@ export function AgentChat({
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {pendingApprovals.length > 0 ? (
-            <section className={cn("border-b border-line px-4 py-3", browserExpanded && "hidden")}>
+            <section className={cn("border-b border-white/[0.06] px-4 py-3", browserExpanded && "hidden")}>
               <button
                 type="button"
                 onClick={() => scrollToApproval(pendingApprovals[0].turnId, pendingApprovals[0].askIdx)}
@@ -1652,7 +1795,7 @@ export function AgentChat({
           ) : null}
           {/* Panel tabs — separate sections instead of one long stack.
               Horizontally scrollable so 5 tabs never squeeze/glitch in a narrow panel. */}
-          <div className="sticky top-0 z-10 shrink-0 border-b border-line bg-raised/95 px-2 pt-2">
+          <div className="sticky top-0 z-10 shrink-0 border-b border-white/[0.06] bg-[#101012]/95 px-2 pt-2">
             <div
               role="tablist"
               aria-label="Panel sections"
@@ -1677,7 +1820,7 @@ export function AgentChat({
                     onClick={() => setPanelTab(t.id)}
                     className={cn(
                       "relative grid size-9 shrink-0 place-items-center rounded-xl transition",
-                      panelTab === t.id ? "bg-hover text-ink" : "text-ink-4 hover:bg-hover hover:text-ink-2",
+                      panelTab === t.id ? "bg-white/[0.08] text-ink" : "text-ink-4 hover:bg-white/[0.05] hover:text-ink-2",
                     )}
                   >
                     <Ico icon={t.icon} size={16} />
@@ -1698,12 +1841,12 @@ export function AgentChat({
             </div>
           </div>
           {panelTab === "desktop" ? (
-          <section className={cn("app-block-in border-b border-line px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
+          <section className={cn("app-block-in border-b border-white/[0.06] px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={FiMonitor} size={11} className="text-ink-3" /> Desktop
               </p>
-              <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-hover hover:text-ink disabled:opacity-40">
+              <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-white/[0.06] hover:text-ink disabled:opacity-40">
                 {browserExpanded ? "Shrink" : "Expand"}
               </button>
             </div>
@@ -1717,7 +1860,7 @@ export function AgentChat({
                   if (url) void navigateComputer(url);
                 }}
               >
-                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-canvas/60 px-3 py-1.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5">
                   <FiGlobe size={13} className="shrink-0 text-ink-4" />
                   <input
                     type="text"
@@ -1738,8 +1881,8 @@ export function AgentChat({
               </form>
             ) : null}
             <div className={cn("space-y-1.5", busy && "pointer-events-none opacity-55")}>
-              <div className="flex items-center gap-2.5 rounded-xl border border-line bg-canvas/60 px-2.5 py-2">
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-sunk text-ink-3")}>
+              <div className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.02] px-2.5 py-2">
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-white/[0.06] text-ink-3")}>
                   <FiMonitor size={15} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -1750,8 +1893,8 @@ export function AgentChat({
                   </p>
                 </div>
               </div>
-              <div className={cn("overflow-hidden rounded-xl border border-line bg-canvas/40 transition-all duration-300", browserExpanded && "flex min-h-0 flex-1 flex-col ring-1 ring-white/10")}>
-                <div className={cn("relative bg-sunk transition-all duration-300", browserExpanded ? "min-h-0 flex-1" : "aspect-[16/9]")}>
+              <div className={cn("overflow-hidden rounded-xl border border-white/[0.07] bg-black/30 transition-all duration-300", browserExpanded && "flex min-h-0 flex-1 flex-col ring-1 ring-white/10")}>
+                <div className={cn("relative bg-black/30 transition-all duration-300", browserExpanded ? "min-h-0 flex-1" : "aspect-[16/9]")}>
                   {computer.screenshotBase64 ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`data:image/jpeg;base64,${computer.screenshotBase64}`} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
@@ -1766,26 +1909,26 @@ export function AgentChat({
                     </div>
                   ) : null}
                 </div>
-                <div className="flex flex-wrap gap-1.5 border-t border-line px-2.5 py-2">
+                <div className="flex flex-wrap gap-1.5 border-t border-white/[0.06] px-2.5 py-2">
                   {computer.liveUrl ? (
-                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className={cn("rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover", (busy || computerBusy) && "pointer-events-none opacity-40")}>
+                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className={cn("rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06]", (busy || computerBusy) && "pointer-events-none opacity-40")}>
                       Live
                     </a>
                   ) : null}
-                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("back").catch(() => undefined)} aria-label="Go back" title="Back" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("back").catch(() => undefined)} aria-label="Go back" title="Back" className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
                     ← Back
                   </button>
-                  <button type="button" disabled={busy || computerBusy || !computerConnected || !computer.pageUrl} onClick={() => { if (computer.pageUrl) void navigateComputer(computer.pageUrl).catch(() => undefined); }} aria-label="Reload page" title="Reload page" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy || !computerConnected || !computer.pageUrl} onClick={() => { if (computer.pageUrl) void navigateComputer(computer.pageUrl).catch(() => undefined); }} aria-label="Reload page" title="Reload page" className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
                     ⟳ Reload
                   </button>
-                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
                     Snap
                   </button>
-                  <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
                     {browserExpanded ? "Shrink" : "Expand"}
                   </button>
                   {computerConnected ? (
-                    <button type="button" disabled={busy || computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-hover disabled:opacity-40">
+                    <button type="button" disabled={busy || computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
                       Stop
                     </button>
                   ) : null}
@@ -1795,17 +1938,17 @@ export function AgentChat({
           </section>
           ) : null}
           {panelTab === "activity" ? (
-          <section className="app-block-in border-b border-line px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
+          <section className="app-block-in border-b border-white/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
             <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
               <Ico icon={FiActivity} size={11} className="text-ink-3" /> Activity
             </p>
             {activity.length === 0 ? (
               <p className="text-[12px] text-ink-4">Tasks appear here as {agent.name.split(" ")[0]} works.</p>
             ) : (
-              <ul className="relative space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-line">
+              <ul className="relative space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-white/10">
                 {[...activity].reverse().map((a) => (
                   <li key={a.id} className="relative flex items-start gap-2.5 rounded-lg py-1.5 pl-1">
-                    <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-raised", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
+                    <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-[#101012]", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[12.5px] font-medium text-ink">{a.label}</span>
                       {a.detail ? <span className="block truncate text-[11px] text-ink-3">{a.detail}</span> : null}
@@ -1817,7 +1960,7 @@ export function AgentChat({
           </section>
           ) : null}
           {panelTab === "files" ? (
-          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
+          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-white/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
             {previewArtifact ? (
               <ArtifactPreview
                 artifact={previewArtifact}
@@ -1844,7 +1987,7 @@ export function AgentChat({
             {!artifactsLoaded ? (
               <div className="space-y-1.5">
                 {[0, 1].map((i) => (
-                  <div key={i} className="h-11 animate-pulse rounded-xl bg-sunk" />
+                  <div key={i} className="h-11 animate-pulse rounded-xl bg-white/[0.05]" />
                 ))}
               </div>
             ) : artifacts.length === 0 ? (
@@ -1857,7 +2000,7 @@ export function AgentChat({
                 {artifacts.map((a) => {
                   return (
                     <li key={a.id}>
-                      <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-hover">
+                      <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-white/[0.04]">
                         <button
                           type="button"
                           onClick={() => setPreviewArtifact(a)}
@@ -1883,7 +2026,7 @@ export function AgentChat({
                             onClick={() => downloadArtifact(a)}
                             aria-label={`Download ${a.title}`}
                             title="Download"
-                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-canvas hover:text-ink"
+                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.07] hover:text-ink"
                           >
                             <FiDownload size={13} />
                           </button>
@@ -1906,7 +2049,7 @@ export function AgentChat({
           </section>
           ) : null}
           {panelTab === "connectors" ? (
-          <section className="app-block-in border-t border-line px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
+          <section className="app-block-in border-t border-white/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={TbPlugConnected} size={11} className="text-ink-3" /> Connectors
