@@ -102,6 +102,44 @@ function ToolButton({
   );
 }
 
+/**
+ * Lost-first-prompt race (P1, same handshake as sheets/docs): on a brand-new
+ * design the editor only mounts AFTER the first submit (StudioSplit gates the
+ * preview on `started`, and the state update that mounts it hasn't flushed
+ * when the prompt event is dispatched synchronously in the same submit). A
+ * prompt dispatched before the listener below is registered was silently
+ * lost: `generate` never started, no `design-ai-done`/`design-ai-error` ever
+ * arrived, and the sidebar hung on its backstop timeout with the blank canvas
+ * still showing. The editor announces readiness after its listeners are
+ * registered; the studio waits for it before dispatching.
+ */
+let designEditorReady = false;
+
+export function isDesignEditorReady() {
+  return designEditorReady;
+}
+
+export function whenDesignEditorReady(timeoutMs: number): Promise<boolean> {
+  if (designEditorReady) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (v: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener("design-ai-ready", onReady);
+      resolve(v);
+    };
+    const onReady = () => finish(true);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    window.addEventListener("design-ai-ready", onReady);
+    // Race-free re-check: the editor's mount effect sets the flag and
+    // dispatches the event synchronously together, so neither can slip
+    // between the first check and listener registration on this thread.
+    if (designEditorReady) finish(true);
+  });
+}
+
 export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
   const router = useRouter();
   const [name, setName] = useState(initial.name);
@@ -370,9 +408,15 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
     }
     window.addEventListener("design-ai-prompt", onExternalPrompt);
     window.addEventListener("design-ai-size", onExternalSize);
+    // Announce readiness AFTER the prompt listener above is registered — the
+    // studio waits for this before dispatching, so the first prompt on a
+    // brand-new design is never silently lost.
+    designEditorReady = true;
+    window.dispatchEvent(new CustomEvent("design-ai-ready"));
     return () => {
       window.removeEventListener("design-ai-prompt", onExternalPrompt);
       window.removeEventListener("design-ai-size", onExternalSize);
+      designEditorReady = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

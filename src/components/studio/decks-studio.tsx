@@ -3,17 +3,22 @@
 import { StudioSplit } from "@/components/studio/studio-split";
 import {
   DeckEditor,
+  whenDecksEditorReady,
   type RestoredDeck,
 } from "@/app/(studio)/slides/editor/deck-editor";
 import {
-  waitForStudioResult,
+  studioResultOf,
   type StudioGenResult,
 } from "@/lib/studio-events";
 
 /**
  * Decks studio: deck editor preview on the left, chat + customize on the right.
- * Chat prompts are dispatched as `decks-ai-prompt` window events which the
- * DeckEditor listens for and feeds into its AI generation.
+ * Chat prompts are forwarded to the editor via the `decks-ai-prompt` window
+ * event; the editor signals completion with `decks-ai-done`. The editor
+ * announces `decks-ai-ready` once its prompt listener is registered — the
+ * chat waits for it before dispatching, so the first prompt on a brand-new
+ * deck (where the editor only mounts as a result of the submit) is never
+ * silently lost (same P1 race fixed in sheets/docs).
  */
 export function DecksStudio({
   restored = null,
@@ -25,15 +30,59 @@ export function DecksStudio({
   // QA-01: wait for the editor's real completion event (with its
   // ok/applied/error payload) instead of declaring success on dispatch.
   // A timeout is a failure, never a silent "Done".
-  async function handlePrompt(prompt: string): Promise<StudioGenResult> {
-    const waiting = waitForStudioResult(
-      "decks-ai-done",
-      "The deck editor didn't respond in time.",
-    );
-    window.dispatchEvent(
-      new CustomEvent("decks-ai-prompt", { detail: prompt }),
-    );
-    return waiting;
+  function handlePrompt(prompt: string): Promise<StudioGenResult> {
+    return new Promise<StudioGenResult>((resolve) => {
+      let settled = false;
+      const startedAt = Date.now();
+      // Keep the backstop just past the editor's own timeout so a silent
+      // editor fails fast instead of hanging "Creating…" for 3 minutes.
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("decks-ai-done", onDone);
+        const waitedMs = Date.now() - startedAt;
+        // Diagnostic breadcrumb linking the chat command to the editor
+        // execution (elapsed, last progress signal).
+        console.error("[decks-studio/handlePrompt] generation timed out", {
+          handler: "decks/askAi",
+          waitedMs,
+          lastSignal: "decks-ai-done never arrived",
+        });
+        resolve({
+          ok: false,
+          error: "The deck editor didn't respond in time.",
+          details: `handler=decks/askAi waited=${Math.round(waitedMs / 1000)}s lastSignal=decks-ai-done-never-arrived`,
+        });
+      }, 100_000);
+      function onDone(e: Event) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        window.removeEventListener("decks-ai-done", onDone);
+        resolve(
+          studioResultOf(e) ?? {
+            ok: false,
+            error: "The editor finished without reporting a result.",
+          },
+        );
+      }
+      // QA-01: register the completion listener BEFORE the prompt is
+      // dispatched so it can't be missed.
+      window.addEventListener("decks-ai-done", onDone);
+      // Lost-first-prompt race (P1): on a brand-new deck the editor only
+      // mounts as a result of this submit (StudioSplit gates the preview on
+      // `started`), so dispatching the prompt event immediately would fire
+      // before its listener exists and the request would be silently lost.
+      // Wait for the editor's ready signal first; if it never comes,
+      // dispatch anyway and let the backstop above report it with
+      // diagnostics.
+      void whenDecksEditorReady(8000).then(() => {
+        if (settled) return;
+        window.dispatchEvent(
+          new CustomEvent("decks-ai-prompt", { detail: prompt }),
+        );
+      });
+    });
   }
 
   function addSlide() {

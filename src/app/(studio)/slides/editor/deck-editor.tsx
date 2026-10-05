@@ -134,6 +134,44 @@ function IconBtn({
   );
 }
 
+/**
+ * Lost-first-prompt race (P1, same handshake as sheets/docs): on a brand-new
+ * deck the editor only mounts AFTER the first submit (StudioSplit gates the
+ * preview on `started`, and the state update that mounts it hasn't flushed
+ * when the prompt event is dispatched synchronously in the same submit). A
+ * prompt dispatched before the listener below is registered was silently
+ * lost: `askAi` never started, no `decks-ai-done` ever arrived, and the
+ * sidebar hung on its backstop timeout with the blank deck still showing.
+ * The editor announces readiness after its listeners are registered; the
+ * studio waits for it before dispatching.
+ */
+let decksEditorReady = false;
+
+export function isDecksEditorReady() {
+  return decksEditorReady;
+}
+
+export function whenDecksEditorReady(timeoutMs: number): Promise<boolean> {
+  if (decksEditorReady) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (v: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener("decks-ai-ready", onReady);
+      resolve(v);
+    };
+    const onReady = () => finish(true);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    window.addEventListener("decks-ai-ready", onReady);
+    // Race-free re-check: the editor's mount effect sets the flag and
+    // dispatches the event synchronously together, so neither can slip
+    // between the first check and listener registration on this thread.
+    if (decksEditorReady) finish(true);
+  });
+}
+
 export function DeckEditor({
   restored = null,
   initialPrompt = "",
@@ -393,9 +431,15 @@ export function DeckEditor({
     const onAddSlide = () => addSlideRef.current();
     window.addEventListener("decks-ai-prompt", onPrompt);
     window.addEventListener("decks-add-slide", onAddSlide);
+    // Announce readiness AFTER the prompt listener above is registered — the
+    // studio waits for this before dispatching, so the first prompt on a
+    // brand-new deck is never silently lost.
+    decksEditorReady = true;
+    window.dispatchEvent(new CustomEvent("decks-ai-ready"));
     return () => {
       window.removeEventListener("decks-ai-prompt", onPrompt);
       window.removeEventListener("decks-add-slide", onAddSlide);
+      decksEditorReady = false;
     };
   }, []);
 
