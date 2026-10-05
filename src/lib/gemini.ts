@@ -274,6 +274,7 @@ export async function streamText({
   search = false,
   onSources,
   onFinishReason,
+  jsonMode,
 }: {
   turns: Turn[];
   system: string;
@@ -295,6 +296,13 @@ export async function streamText({
   onSources?: OnSources;
   /** Fires once when the stream ends, with the provider's finish reason. */
   onFinishReason?: OnFinishReason;
+  /**
+   * Provider-level JSON enforcement: generationConfig carries
+   * `responseMimeType: "application/json"` so the response is syntactically
+   * valid JSON. If the model/key rejects it, the request is retried once as
+   * a normal completion — fail open, the user still gets an answer.
+   */
+  jsonMode?: boolean;
 }) {
   const contents = turns.map((t) => ({
     role: t.role,
@@ -313,6 +321,7 @@ export async function streamText({
     temperature,
     maxOutputTokens,
     search,
+    jsonMode,
     onUsage,
     onSources,
     onFinishReason,
@@ -334,6 +343,7 @@ async function streamFromContents({
   maxOutputTokens,
   search = false,
   declareSearchTool = false,
+  jsonMode = false,
   onUsage,
   onSources,
   onFinishReason,
@@ -351,21 +361,46 @@ async function streamFromContents({
    * the request describing a tool the model was never given.
    */
   declareSearchTool?: boolean;
+  /** Provider-level JSON enforcement via responseMimeType. See streamText. */
+  jsonMode?: boolean;
   onUsage?: OnUsage;
   onSources?: OnSources;
   /** Fires once when the stream ends, with the provider's finish reason. */
   onFinishReason?: OnFinishReason;
 }) {
-  const upstream = await callWithFallback("streamGenerateContent?alt=sse", {
+  const buildBody = (asJson: boolean) => ({
     contents,
     systemInstruction: { parts: [{ text: system }] },
-    generationConfig: { temperature, maxOutputTokens },
+    generationConfig: {
+      temperature,
+      maxOutputTokens,
+      // Omitted entirely rather than sent as false/empty: same reasoning as
+      // the tools below — an unknown field fails the whole request on some
+      // models and would burn the fallback chain on a 400.
+      ...(asJson ? { responseMimeType: "application/json" } : {}),
+    },
     // Omitted entirely rather than sent as false: a model that does not know
     // this tool rejects the whole request for an unknown field, and the
     // fallback chain would then burn through every model on a 400.
     ...(search ? { tools: [{ google_search: {} }] } : {}),
     ...(declareSearchTool ? { tools: [SEARCH_TOOL] } : {}),
   });
+  let upstream: Response;
+  try {
+    upstream = await callWithFallback(
+      "streamGenerateContent?alt=sse",
+      buildBody(jsonMode),
+    );
+  } catch (e) {
+    if (!jsonMode) throw e;
+    // The model/key rejected JSON mode — fail open to a normal completion
+    // rather than handing the caller an error for an explicit JSON request.
+    console.warn("gemini: JSON mode rejected; retrying without it");
+    upstream = await callWithFallback(
+      "streamGenerateContent?alt=sse",
+      buildBody(false),
+    );
+  }
 
   if (!upstream.body) {
     throw new Error("The model returned an empty response.");
@@ -493,6 +528,7 @@ export async function generateText({
   onAttempt,
   search = false,
   onSources,
+  jsonMode,
 }: {
   turns: Turn[];
   system: string;
@@ -508,6 +544,13 @@ export async function generateText({
   search?: boolean;
   /** Fires with the pages the model consulted, before the text is returned. */
   onSources?: OnSources;
+  /**
+   * Provider-level JSON enforcement: generationConfig carries
+   * `responseMimeType: "application/json"` so the response is syntactically
+   * valid JSON. If the model/key rejects it, the request is retried once as
+   * a normal completion — fail open, the user still gets an answer.
+   */
+  jsonMode?: boolean;
 }) {
   const contents = turns.map((t) => ({
     role: t.role,
@@ -520,18 +563,32 @@ export async function generateText({
     if (last?.role === "user") last.parts.push(...extraParts);
   }
 
-  const res = await callWithFallback(
-    "generateContent",
-    {
-      contents,
-      systemInstruction: { parts: [{ text: system }] },
-      generationConfig: { temperature, maxOutputTokens },
-      // Omitted rather than sent as false — an unknown field fails the whole
-      // request and the fallback chain would walk every model on a 400.
-      ...(search ? { tools: [{ google_search: {} }] } : {}),
+  const buildBody = (asJson: boolean) => ({
+    contents,
+    systemInstruction: { parts: [{ text: system }] },
+    generationConfig: {
+      temperature,
+      maxOutputTokens,
+      // Omitted entirely rather than sent as false/empty: an unknown field
+      // fails the whole request on some models and would burn the fallback
+      // chain on a 400.
+      ...(asJson ? { responseMimeType: "application/json" } : {}),
     },
-    onAttempt,
-  );
+    // Omitted rather than sent as false — an unknown field fails the whole
+    // request and the fallback chain would walk every model on a 400.
+    ...(search ? { tools: [{ google_search: {} }] } : {}),
+  });
+
+  let res: Response;
+  try {
+    res = await callWithFallback("generateContent", buildBody(!!jsonMode), onAttempt);
+  } catch (e) {
+    if (!jsonMode) throw e;
+    // The model/key rejected JSON mode — fail open to a normal completion
+    // rather than handing the caller an error for an explicit JSON request.
+    console.warn("gemini: JSON mode rejected; retrying without it");
+    res = await callWithFallback("generateContent", buildBody(false), onAttempt);
+  }
 
   const json = await res.json();
 
@@ -731,6 +788,7 @@ export async function streamWithSearch({
   onUsage,
   onSearch,
   onFinishReason,
+  jsonMode,
 }: {
   turns: Turn[];
   system: string;
@@ -741,6 +799,11 @@ export async function streamWithSearch({
   onSearch?: (query: string, provider: string, count: number) => void;
   /** Fires once when the stream ends, with the provider's finish reason. */
   onFinishReason?: OnFinishReason;
+  /**
+   * Provider-level JSON enforcement on the final answer call only — the
+   * search planning rounds keep plain function calling. See streamText.
+   */
+  jsonMode?: boolean;
 }) {
   const started = buildContents(turns, extraParts);
 
@@ -757,6 +820,7 @@ export async function streamWithSearch({
     temperature,
     maxOutputTokens,
     declareSearchTool: searched,
+    jsonMode,
     onUsage,
     onFinishReason,
   });

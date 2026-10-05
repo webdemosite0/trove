@@ -48,7 +48,12 @@ export const MODES: Record<ModeId, Mode> = {
       "constraint independently — a verifier that omits a constraint proves " +
       "nothing, and an unchecked list is not a complete enumeration. " +
       "Never present code as executed unless it actually ran; if you cannot " +
-      "run it, verify by hand and say so plainly.",
+      "run it, verify by hand and say so plainly. " +
+      "When the answer must be JSON, every value is a finished literal: " +
+      "never an expression in a value slot (write the computed number, not " +
+      "`391 - 209`), all arithmetic fully worked out before you write it, and " +
+      "a counterexample must make every premise true and the conclusion " +
+      "false — rejecting a premise instead is not a counterexample.",
   },
   creative: {
     id: "creative",

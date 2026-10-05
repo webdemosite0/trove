@@ -29,6 +29,28 @@ type Common = {
   onUsage?: OnUsage;
 };
 
+/**
+ * Detects an explicit JSON-only request in the user's latest message.
+ *
+ * Phrases like "valid JSON", "JSON only", "return only JSON", "respond with
+ * JSON", "as JSON", "output JSON" (case-insensitive). When it matches, the
+ * provider layer enforces JSON at the API level (`response_format` /
+ * `responseMimeType`), which is what actually guarantees syntactic validity —
+ * a system-prompt hint alone does not. Only an explicit request opts in;
+ * ordinary chat is untouched.
+ */
+const JSON_REQUEST_RE =
+  /\b(valid json|json only|only json|return(?: only)? json|respond(?: only)? (?:in|with) json|reply(?: only)? in json|answer(?: only)? in json|output(?: only)?(?: as)? json|as json|in json(?: format)?|json format)\b/i;
+
+export function wantsJsonOutput(text: unknown): boolean {
+  return typeof text === "string" && JSON_REQUEST_RE.test(text);
+}
+
+function lastUserText(turns: Turn[]): string {
+  const t = [...turns].reverse().find((x) => x.role === "user");
+  return typeof t?.text === "string" ? t.text : "";
+}
+
 const PROVIDER_FAILURE_COOLDOWN_MS = 45_000;
 const GROUNDING_REFUSAL_COOLDOWN_MS = 10 * 60_000;
 
@@ -115,6 +137,7 @@ async function tryCompatGenerate(
     temperature: number;
     maxOutputTokens: number;
     onUsage?: OnUsage;
+    jsonMode?: boolean;
   },
   attempts: { label: string; reason: string }[],
 ): Promise<string | null> {
@@ -128,6 +151,7 @@ async function tryCompatGenerate(
         temperature: opts.temperature,
         maxOutputTokens: opts.maxOutputTokens,
         onUsage: opts.onUsage,
+        jsonMode: opts.jsonMode,
       });
       noteProviderSuccess(provider.id);
       return result;
@@ -156,12 +180,16 @@ export async function generateText(
   const maxOutputTokens = opts.maxOutputTokens ?? 8192;
   const attempts: { label: string; reason: string }[] = [];
   const preferred = opts.preferredProvider?.trim() || "auto";
+  // Explicit JSON-only request in the user's latest message → provider-level
+  // enforcement (response_format / responseMimeType), not just a prompt hint.
+  const jsonMode = wantsJsonOutput(lastUserText(opts.turns));
   const compatOpts = {
     turns: opts.turns,
     system: opts.system,
     temperature,
     maxOutputTokens,
     onUsage: opts.onUsage,
+    jsonMode,
   };
 
   if (preferred !== "auto" && preferred !== "gemini") {
@@ -183,6 +211,7 @@ export async function generateText(
           temperature,
           maxOutputTokens,
           onUsage: opts.onUsage,
+          jsonMode,
         });
         noteProviderSuccess(picked.id);
         return result;
@@ -207,6 +236,7 @@ export async function generateText(
         temperature,
         maxOutputTokens,
         onUsage: opts.onUsage,
+        jsonMode,
       });
       noteProviderSuccess(gpt.id);
       return result;
@@ -226,6 +256,7 @@ export async function generateText(
     maxOutputTokens,
     onUsage: opts.onUsage,
     extraParts: opts.extraParts,
+    jsonMode,
   };
   const ungrounded = {
     ...grounded,
@@ -268,6 +299,9 @@ export async function streamText(
   const maxOutputTokens = opts.maxOutputTokens ?? 8192;
   const attempts: { label: string; reason: string }[] = [];
   const preferred = opts.preferredProvider?.trim() || "auto";
+  // Explicit JSON-only request in the user's latest message → provider-level
+  // enforcement (response_format / responseMimeType), not just a prompt hint.
+  const jsonMode = wantsJsonOutput(lastUserText(opts.turns));
   const compat = orderedCompat();
   const slidesPick =
     preferred === "apertis" || preferred === "openrouter"
@@ -291,6 +325,7 @@ export async function streamText(
         maxOutputTokens,
         onUsage: opts.onUsage,
         onFinishReason: opts.onFinishReason,
+        jsonMode,
       });
       noteProviderSuccess(selectedCompat.id);
       return result;
@@ -317,6 +352,7 @@ export async function streamText(
         maxOutputTokens,
         onUsage: opts.onUsage,
         onFinishReason: opts.onFinishReason,
+        jsonMode,
       });
       noteProviderSuccess(gpt.id);
       return result;
@@ -337,6 +373,7 @@ export async function streamText(
     onUsage: opts.onUsage,
     extraParts: opts.extraParts,
     onFinishReason: opts.onFinishReason,
+    jsonMode,
   };
 
   if (tryGrounding) {
@@ -388,6 +425,7 @@ export async function streamText(
           temperature,
           maxOutputTokens,
           onUsage: opts.onUsage,
+          jsonMode,
         });
         noteProviderSuccess(provider.id);
         return result;

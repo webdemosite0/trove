@@ -163,30 +163,50 @@ export async function compatGenerate(opts: {
   onUsage?: OnUsage;
   /** Fires once with the provider's finish reason (non-streaming response). */
   onFinishReason?: OnFinishReason;
+  /**
+   * Provider-level JSON enforcement. When set, the request carries
+   * `response_format: { type: "json_object" }` so the model cannot emit
+   * expressions or prose in JSON value slots. A provider that rejects the
+   * flag (400/422) is retried once as a normal completion — fail open, the
+   * user still gets an answer.
+   */
+  jsonMode?: boolean;
 }): Promise<string> {
   const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage, onFinishReason } = opts;
-  const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
-    method: "POST",
-    signal: AbortSignal.timeout(COMPAT_GENERATE_TIMEOUT_MS),
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
-      ...(provider.id === "openrouter"
-        ? {
-            "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://troveai.site",
-            "X-Title": process.env.OPENROUTER_APP_NAME?.trim() || "Trove",
-          }
-        : {}),
-    },
-    body: JSON.stringify({
-      model: provider.model,
-      messages: toMessages(turns, system),
-      temperature,
-      max_tokens: maxOutputTokens,
-      stream: false,
-    }),
-  });
-  const text = await res.text();
+  const body: Record<string, unknown> = {
+    model: provider.model,
+    messages: toMessages(turns, system),
+    temperature,
+    max_tokens: maxOutputTokens,
+    stream: false,
+  };
+  if (opts.jsonMode) body.response_format = { type: "json_object" };
+  const post = () =>
+    fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+      method: "POST",
+      signal: AbortSignal.timeout(COMPAT_GENERATE_TIMEOUT_MS),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: provider.rawAuth ? provider.apiKey : `Bearer ${provider.apiKey}`,
+        ...(provider.id === "openrouter"
+          ? {
+              "HTTP-Referer": process.env.OPENROUTER_SITE_URL?.trim() || "https://troveai.site",
+              "X-Title": process.env.OPENROUTER_APP_NAME?.trim() || "Trove",
+            }
+          : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  let res = await post();
+  let text = await res.text();
+  if (!res.ok && opts.jsonMode && (res.status === 400 || res.status === 422)) {
+    // Provider does not support response_format — fail open to a normal
+    // completion rather than burning the fallback chain on a 400.
+    console.warn(`ai: ${provider.label} rejected JSON mode; retrying without it`);
+    delete body.response_format;
+    res = await post();
+    text = await res.text();
+  }
   if (!res.ok) {
     throw new Error(`${provider.label} ${res.status}: ${text.slice(0, 240)}`);
   }
@@ -215,11 +235,25 @@ export async function compatStream(opts: {
   onUsage?: OnUsage;
   /** Fires once when the stream ends, with the provider's finish reason. */
   onFinishReason?: OnFinishReason;
+  /**
+   * Provider-level JSON enforcement. When set, the request carries
+   * `response_format: { type: "json_object" }`. A provider that rejects the
+   * flag (400/422) is retried once as a normal completion — fail open, the
+   * user still gets an answer.
+   */
+  jsonMode?: boolean;
 }): Promise<ReadableStream<Uint8Array>> {
   const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage, onFinishReason } = opts;
-  let res: Response;
-  try {
-    res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+  const body: Record<string, unknown> = {
+    model: provider.model,
+    messages: toMessages(turns, system),
+    temperature,
+    max_tokens: maxOutputTokens,
+    stream: true,
+  };
+  if (opts.jsonMode) body.response_format = { type: "json_object" };
+  const post = () =>
+    fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
       signal: AbortSignal.timeout(COMPAT_STREAM_CONNECT_TIMEOUT_MS),
       headers: {
@@ -232,18 +266,28 @@ export async function compatStream(opts: {
             }
           : {}),
       },
-      body: JSON.stringify({
-        model: provider.model,
-        messages: toMessages(turns, system),
-        temperature,
-        max_tokens: maxOutputTokens,
-        stream: true,
-      }),
+      body: JSON.stringify(body),
     });
+  let res: Response;
+  try {
+    res = await post();
   } catch (e) {
     throw new Error(
       `${provider.label} connect failed: ${e instanceof Error ? e.message : String(e)}`,
     );
+  }
+  if (!res.ok && opts.jsonMode && (res.status === 400 || res.status === 422)) {
+    // Provider does not support response_format — fail open to a normal
+    // completion rather than burning the fallback chain on a 400.
+    console.warn(`ai: ${provider.label} rejected JSON mode; retrying without it`);
+    delete body.response_format;
+    try {
+      res = await post();
+    } catch (e) {
+      throw new Error(
+        `${provider.label} connect failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
   }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
