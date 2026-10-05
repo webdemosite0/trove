@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/icons";
 import { SearchIcon } from "@/components/animate-ui/icons";
 import { cn } from "@/lib/utils";
-import { useIsWindows } from "@/lib/use-is-windows";
 
 interface Command {
   id: string;
@@ -137,7 +136,12 @@ function Row({
 
 export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
   const router = useRouter();
-  const isWindows = useIsWindows();
+  const [isWindows, setIsWindows] = useState(false);
+  useEffect(() => {
+    const pf = navigator.platform || "";
+    const ua = navigator.userAgent || "";
+    setIsWindows(/win/i.test(pf) || /windows nt/i.test(ua));
+  }, []);
   const { openSettings } = useNav();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");

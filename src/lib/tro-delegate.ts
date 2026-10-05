@@ -15,7 +15,6 @@ import {
   type TeamRosterEntry,
 } from "@/lib/tro-prompt";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
-import { logTaskEvent } from "@/lib/tro-activity";
 import { temperatureFor } from "@/lib/modes";
 
 const MAX_DEPTH = 3;
@@ -187,21 +186,6 @@ export async function runDelegation(opts: {
 
   const brief = `${senderName} (a fellow Tro on your team) asked you to do this:\n\n${task}\n\nDeliver the finished work directly — no preamble about being delegated to, just do the job in your voice.`;
 
-  const taskId = `dlg_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-  // Feed: delegation started (on the sender's feed, visible in team view).
-  await logTaskEvent({
-    userId,
-    agentId: senderId,
-    kind: "delegated",
-    status: "working",
-    title: `Delegated to ${target.name}`,
-    detail: task.slice(0, 500),
-    actorName: senderName,
-    taskId,
-    targetAgentId: target.id,
-    targetAgentName: target.name,
-  });
-
   await markWorking(userId, target.id);
   try {
     let reply = await generateText({
@@ -245,36 +229,10 @@ export async function runDelegation(opts: {
       reply = nested.text;
     }
 
-    // Feed: delegation completed — verified because we hold the reply.
-    await logTaskEvent({
-      userId,
-      agentId: senderId,
-      kind: "delegate_result",
-      status: "done",
-      title: `${target.name} completed the task`,
-      detail: reply.slice(0, 500),
-      actorName: target.name,
-      taskId,
-      targetAgentId: target.id,
-      targetAgentName: target.name,
-      verified: true,
-    });
     return { ok: true, target: { id: target.id, name: target.name, role: target.role }, reply };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("tro delegate", target.id, message);
-    await logTaskEvent({
-      userId,
-      agentId: senderId,
-      kind: "task_failed",
-      status: "failed",
-      title: `Delegation to ${target.name} failed`,
-      detail: message.slice(0, 500),
-      actorName: senderName,
-      taskId,
-      targetAgentId: target.id,
-      targetAgentName: target.name,
-    });
     return { ok: false, error: `Delegation failed: ${message}` };
   } finally {
     await clearWorking(userId, target.id);
