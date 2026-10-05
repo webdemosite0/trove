@@ -59,6 +59,7 @@ import {
 } from "@/lib/local-browser-block";
 import { useTroPresence } from "@/lib/use-presence";
 import { cn } from "@/lib/utils";
+import { stripTruncationMarker } from "@/lib/truncation";
 
 interface Turn {
   id: number;
@@ -66,6 +67,13 @@ interface Turn {
   text: string;
   /** True when this user turn was sent in Plan execution mode. */
   plan?: boolean;
+  /**
+   * The provider cut this reply off before it finished (token limit or a
+   * mid-stream failure) — it is incomplete and must never be presented as a
+   * clean completion. Survives save/restore via the messages.truncated
+   * column so the cut-off card shows after a reload too.
+   */
+  truncated?: boolean;
 }
 
 interface ActivityItem {
@@ -123,7 +131,7 @@ function ArtifactCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 transition hover:border-white/20">
+    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-ink/[0.08] bg-ink/[0.03] px-3 py-2.5 transition hover:border-line-strong">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
         <ArtifactIcon kind={block.kind} size={17} />
       </span>
@@ -145,7 +153,7 @@ function ArtifactCard({
               type="button"
               onClick={onDownload}
               aria-label="Download artifact"
-              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.07] hover:text-ink"
+              className="grid size-8 place-items-center rounded-lg text-ink-3 transition hover:bg-ink/[0.07] hover:text-ink"
             >
               <FiDownload size={14} />
             </button>
@@ -200,8 +208,8 @@ function ArtifactPreview({
   onDelete: () => void;
 }) {
   return (
-    <div className="mb-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#141417]">
-      <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2">
+    <div className="mb-3 overflow-hidden rounded-2xl border border-ink/[0.08] bg-raised">
+      <div className="flex items-center gap-2 border-b border-ink/[0.06] px-3 py-2">
         <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
           <ArtifactIcon kind={artifact.kind} size={14} />
         </span>
@@ -215,7 +223,7 @@ function ArtifactPreview({
           type="button"
           onClick={onClose}
           aria-label="Close preview"
-          className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.07] hover:text-ink"
+          className="grid size-7 shrink-0 place-items-center rounded-lg text-ink-3 transition hover:bg-ink/[0.07] hover:text-ink"
         >
           <FiX size={14} />
         </button>
@@ -240,7 +248,7 @@ function ArtifactPreview({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 border-t border-white/[0.06] px-3 py-2">
+      <div className="flex items-center justify-between gap-2 border-t border-ink/[0.06] px-3 py-2">
         <button
           type="button"
           onClick={onDelete}
@@ -252,7 +260,7 @@ function ArtifactPreview({
           <button
             type="button"
             onClick={onExpand}
-            className="rounded-full border border-white/10 px-3 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.06] hover:text-ink"
+            className="rounded-full border border-line px-3 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-ink/[0.06] hover:text-ink"
           >
             Full view
           </button>
@@ -292,7 +300,7 @@ export function AgentChat({
   agent: AgentRow;
   agents?: AgentRow[];
   recents: Recent[];
-  restored: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
+  restored: { id: string; messages: { role: "user" | "model"; text: string; truncated?: boolean }[] } | null;
   /** Optional first user turn to auto-send on a fresh thread (e.g. ?q= from /tros). */
   firstMessage?: string | null;
 }) {
@@ -313,7 +321,7 @@ export function AgentChat({
   const [connectors, setConnectors] = useState<{ service: string; label: string; account: string | null }[] | null>(null);
   const { save, reset } = useSaved("agent", restored?.id ?? null);
   const [turns, setTurns] = useState<Turn[]>(() =>
-    (restored?.messages ?? []).map((m, i) => ({ id: i, role: m.role, text: m.text })),
+    (restored?.messages ?? []).map((m, i) => ({ id: i, role: m.role, text: m.text, truncated: m.truncated === true })),
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -907,6 +915,78 @@ export function AgentChat({
 
   useEffect(() => () => cancelAnimationFrame(scrollRaf.current), []);
 
+  /**
+   * Stream one assistant turn into `rid`. The /api/agent response carries a
+   * truncation trailer when the provider cut the reply off (token limit or a
+   * mid-stream failure); it is stripped here so it never shows in the UI,
+   * never reaches saved history, and never leaks into the conversation sent
+   * back to the model — and the turn is flagged `truncated` so the UI treats
+   * it as incomplete instead of presenting a partial reply as finished.
+   */
+  const streamTurn = useCallback(
+    async (
+      msgs: { role: "user" | "model"; text: string }[],
+      rid: number,
+      withAttachments?: Attachment[],
+    ): Promise<{ text: string; truncated: boolean }> => {
+      const held = computerRef.current;
+      const res = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentId: agent.id,
+          messages: msgs,
+          timeZone: localTimeZone(),
+          attachments: strip(withAttachments),
+          mode,
+          plan: execMode === "plan",
+          browser: held.sessionId
+            ? { sessionId: held.sessionId, pageUrl: held.pageUrl, title: held.title }
+            : null,
+        }),
+      });
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Request failed.");
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let out = "";
+      let buffered = "";
+      let raf = 0;
+      const flush = () => {
+        raf = 0;
+        if (!buffered) return;
+        const chunk = buffered;
+        buffered = "";
+        setTurns((t) => t.map((x) => (x.id === rid ? { ...x, text: x.text + chunk } : x)));
+      };
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const piece = decoder.decode(value, { stream: true });
+        out += piece;
+        buffered += piece;
+        if (!raf) raf = requestAnimationFrame(flush);
+      }
+      if (raf) cancelAnimationFrame(raf);
+      flush();
+      // The live updates above appended to whatever the turn already held
+      // (Continue streams into the existing cut-off text). Strip the trailer
+      // from the accumulated text and flag the turn. The return value is
+      // just this stream's new text, for the tool-block parsers.
+      setTurns((t) =>
+        t.map((x) => {
+          if (x.id !== rid) return x;
+          const cleaned = stripTruncationMarker(x.text);
+          return { ...x, text: cleaned.text, truncated: cleaned.truncated };
+        }),
+      );
+      return stripTruncationMarker(out);
+    },
+    [agent.id, mode, execMode],
+  );
+
   const send = useCallback(
     async (raw: string, attachments?: Attachment[], base?: Turn[]) => {
       const text = raw.trim() || (attachments?.length ? "See the attached files." : "");
@@ -945,69 +1025,21 @@ export function AgentChat({
           const out = "![" + caption + "](" + (data?.url as string) + ")";
           setTurns((t) => {
             const next = t.map((x) => (x.id === replyId ? { ...x, text: out } : x));
-            void save(next.map(({ role, text: body }) => ({ role, text: body })), agent.name + ": " + (history[0]?.text ?? "chat"));
+            void save(next.map(({ role, text: body, truncated }) => ({ role, text: body, truncated: truncated === true })), agent.name + ": " + (history[0]?.text ?? "chat"));
             return next;
           });
           pushActivity("Image ready", caption, "ok");
           return;
         }
         pushActivity("Thinking", agent.role, "run");
-        // Stream one assistant turn into `rid`, returning the full text.
-        const streamTurn = async (
-          msgs: { role: "user" | "model"; text: string }[],
-          rid: number,
-          withAttachments?: Attachment[],
-        ): Promise<string> => {
-          const held = computerRef.current;
-          const res = await fetch("/api/agent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              agentId: agent.id,
-              messages: msgs,
-              timeZone: localTimeZone(),
-              attachments: strip(withAttachments),
-              mode,
-              plan: execMode === "plan",
-              browser: held.sessionId
-                ? { sessionId: held.sessionId, pageUrl: held.pageUrl, title: held.title }
-                : null,
-            }),
-          });
-          if (!res.ok || !res.body) {
-            const data = await res.json().catch(() => null);
-            throw new Error(data?.error ?? "Request failed.");
-          }
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder();
-          let out = "";
-          let buffered = "";
-          let raf = 0;
-          const flush = () => {
-            raf = 0;
-            if (!buffered) return;
-            const chunk = buffered;
-            buffered = "";
-            setTurns((t) => t.map((x) => (x.id === rid ? { ...x, text: x.text + chunk } : x)));
-          };
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const piece = decoder.decode(value, { stream: true });
-            out += piece;
-            buffered += piece;
-            if (!raf) raf = requestAnimationFrame(flush);
-          }
-          if (raf) cancelAnimationFrame(raf);
-          flush();
-          return out;
-        };
 
-        let full = await streamTurn(
-          history.map(({ role, text: body }) => ({ role, text: body })),
-          replyId,
-          attachments,
-        );
+        let full = (
+          await streamTurn(
+            history.map(({ role, text: body }) => ({ role, text: body })),
+            replyId,
+            attachments,
+          )
+        ).text;
 
         // Connector tools: the Tro can call @mentioned integrations mid-turn.
         // Run any connector-tool blocks, feed the results back, and let the
@@ -1064,8 +1096,11 @@ export function AgentChat({
               }
             }
             const followUpId = nextId.current++;
+            // The follow-up continues the cut-off turn, so that turn is no
+            // longer "truncated and waiting" — the new turn carries the state.
+            const continuedId = toolTurnId;
             setTurns((t) => [
-              ...t,
+              ...t.map((x) => (x.id === continuedId ? { ...x, truncated: false } : x)),
               { id: followUpId, role: "model" as const, text: "" },
             ]);
             const followUpMsgs = [
@@ -1082,7 +1117,7 @@ export function AgentChat({
                   `If a call failed, say what happened plainly and suggest the fix.`,
               },
             ];
-            full = await streamTurn(followUpMsgs, followUpId);
+            full = (await streamTurn(followUpMsgs, followUpId)).text;
             parsed = parseConnectorToolBlocks(full);
             toolTurnId = followUpId;
           }
@@ -1117,8 +1152,11 @@ export function AgentChat({
               pushActivity(label, failed ? "Failed" : "Done", failed ? "warn" : "ok");
             }
             const followUpId = nextId.current++;
+            // The follow-up continues the cut-off turn, so that turn is no
+            // longer "truncated and waiting" — the new turn carries the state.
+            const continuedId = browseTurnId;
             setTurns((t) => [
-              ...t,
+              ...t.map((x) => (x.id === continuedId ? { ...x, truncated: false } : x)),
               { id: followUpId, role: "model" as const, text: "" },
             ]);
             const followUpMsgs = [
@@ -1135,7 +1173,7 @@ export function AgentChat({
                   `Never mention tool blocks or protocols. If an action failed, say what happened plainly.`,
               },
             ];
-            full = await streamTurn(followUpMsgs, followUpId);
+            full = (await streamTurn(followUpMsgs, followUpId)).text;
             parsed = parseBrowserToolBlocks(full);
             browseTurnId = followUpId;
           }
@@ -1170,8 +1208,11 @@ export function AgentChat({
               pushActivity(label, failed ? "Failed" : "Done", failed ? "warn" : "ok");
             }
             const followUpId = nextId.current++;
+            // The follow-up continues the cut-off turn, so that turn is no
+            // longer "truncated and waiting" — the new turn carries the state.
+            const continuedId = localTurnId;
             setTurns((t) => [
-              ...t,
+              ...t.map((x) => (x.id === continuedId ? { ...x, truncated: false } : x)),
               { id: followUpId, role: "model" as const, text: "" },
             ]);
             const followUpMsgs = [
@@ -1188,7 +1229,7 @@ export function AgentChat({
                   `Never mention tool blocks or protocols. If an action failed, say what happened plainly.`,
               },
             ];
-            full = await streamTurn(followUpMsgs, followUpId);
+            full = (await streamTurn(followUpMsgs, followUpId)).text;
             parsed = parseLocalBrowser(full);
             localTurnId = followUpId;
           }
@@ -1257,7 +1298,12 @@ export function AgentChat({
             `Team update — fold this into your reply to the user:\n\n${outcomes.join("\n\n---\n\n")}\n\n` +
             `Relay the outcome concisely in your own voice. Summarize what got done; don't paste raw teammate replies verbatim. Never mention delegation blocks or protocols.`;
           const summaryId = nextId.current++;
-          setTurns((t) => [...t, { id: summaryId, role: "model" as const, text: "" }]);
+          // The summary supersedes the reply it follows — clear any
+          // truncation flag there; the summary turn carries the state.
+          setTurns((t) => [
+            ...t.map((x) => (x.id === replyId ? { ...x, truncated: false } : x)),
+            { id: summaryId, role: "model" as const, text: "" },
+          ]);
           pushActivity("Wrapping up", "Summarizing teammate results", "run");
           const summaryMsgs = [
             ...history.map(({ role, text: body }) => ({ role, text: body })),
@@ -1266,7 +1312,7 @@ export function AgentChat({
           ];
           // One delegation round per user message — strip any further blocks.
           full = stripConnectorToolBlocks(
-            parseTeamBlocks(await streamTurn(summaryMsgs, summaryId)).text,
+            parseTeamBlocks((await streamTurn(summaryMsgs, summaryId)).text).text,
           );
           setTurns((t) => t.map((x) => (x.id === summaryId ? { ...x, text: full } : x)));
         }
@@ -1324,7 +1370,12 @@ export function AgentChat({
             /* noop */
           }
           const confirmId = nextId.current++;
-          setTurns((t) => [...t, { id: confirmId, role: "model" as const, text: "" }]);
+          // The confirmation supersedes the reply it follows — clear any
+          // truncation flag there; the confirm turn carries the state.
+          setTurns((t) => [
+            ...t.map((x) => (x.id === replyId ? { ...x, truncated: false } : x)),
+            { id: confirmId, role: "model" as const, text: "" },
+          ]);
           const confirmMsgs = [
             ...history.map(({ role, text: body }) => ({ role, text: body })),
             { role: "model" as const, text: shown },
@@ -1336,7 +1387,7 @@ export function AgentChat({
             },
           ];
           full = stripScheduleBlocks(
-            parseScheduleBlocks(await streamTurn(confirmMsgs, confirmId)).text,
+            parseScheduleBlocks((await streamTurn(confirmMsgs, confirmId)).text).text,
           );
           setTurns((t) =>
             t.map((x) => (x.id === confirmId ? { ...x, text: full } : x)),
@@ -1353,7 +1404,7 @@ export function AgentChat({
 
         setTurns((t) => {
           void save(
-            t.map(({ role, text: body }) => ({ role, text: body })),
+            t.map(({ role, text: body, truncated }) => ({ role, text: body, truncated: truncated === true })),
             agent.name + ": " + (history[0]?.text ?? "chat"),
           );
           return t;
@@ -1366,7 +1417,7 @@ export function AgentChat({
         setBusy(false);
       }
     },
-    [agent.id, agent.name, agent.role, busy, navigateComputer, panelOpen, pushActivity, save, turns, mode, execMode],
+    [agent.id, agent.name, agent.role, busy, navigateComputer, panelOpen, pushActivity, save, turns, execMode, streamTurn],
   );
 
   // Auto-send a first message (e.g. ?q= deep-linked from the Tros home
@@ -1431,6 +1482,80 @@ export function AgentChat({
     void send(lastUser.text, undefined, base);
   }, [send, turns]);
 
+  /**
+   * Continue a truncated reply: re-send the thread so far (including the cut
+   * off text) plus an instruction to pick up where it stopped, streaming the
+   * continuation into the SAME turn — never a new message. If the
+   * continuation is cut off again, the truncated flag stays and the user can
+   * continue once more. Mirrors the main chat's continueReply.
+   */
+  const continueReply = useCallback(
+    (turnId: number) => {
+      if (busy) return;
+      setError(null);
+      setBusy(true);
+      stickToBottom.current = true;
+      pushActivity("Continuing reply", undefined, "run");
+      setTurns((prev) => {
+        const idx = prev.findIndex((t) => t.id === turnId);
+        if (idx < 0) return prev;
+        const target = prev[idx];
+        if (target.role !== "model" || !target.truncated) return prev;
+        const convo: { role: "user" | "model"; text: string }[] = prev
+          .slice(0, idx + 1)
+          .map(({ role, text }) => ({ role, text }));
+        convo.push({
+          role: "user",
+          text:
+            "Continue your previous response from exactly where it stopped. " +
+            "Do not repeat anything you already said — pick up mid-sentence if necessary.",
+        });
+        const title =
+          agent.name + ": " + (prev.find((t) => t.role === "user")?.text ?? "chat");
+        // The turn already holds the cut-off text; the stream appends to it.
+        const baseText = target.text;
+        queueMicrotask(() => {
+          void (async () => {
+            try {
+              // Optimistically clear the flag while the continuation streams;
+              // streamTurn re-sets it if this attempt is cut off again.
+              setTurns((t) =>
+                t.map((x) => (x.id === turnId ? { ...x, truncated: false } : x)),
+              );
+              const { text: newText } = await streamTurn(convo, turnId);
+              // Final safety: never persist or display raw tool blocks.
+              const cleaned = stripScheduleBlocks(
+                stripConnectorToolBlocks(stripBrowserToolBlocks(baseText + newText)),
+              );
+              setTurns((t) => {
+                const next = t.map((x) =>
+                  x.id === turnId ? { ...x, text: cleaned } : x,
+                );
+                void save(
+                  next.map(({ role, text: body, truncated }) => ({
+                    role,
+                    text: body,
+                    truncated: truncated === true,
+                  })),
+                  title,
+                );
+                return next;
+              });
+              pushActivity("Task complete", undefined, "ok");
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "Something went wrong.");
+              pushActivity("Failed", e instanceof Error ? e.message : "Error", "warn");
+            } finally {
+              setBusy(false);
+            }
+          })();
+        });
+        return prev;
+      });
+    },
+    [agent.name, busy, pushActivity, save, streamTurn],
+  );
+
   const computerConnected = Boolean(computer.sessionId);
   const computerLabel =
     computer.status === "error"
@@ -1442,9 +1567,9 @@ export function AgentChat({
           : "Offline";
 
   return (
-    <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-[#0d0d0f] text-ink">
+    <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-rail text-ink">
       {agents.length > 0 ? (
-        <div className="hidden w-[272px] shrink-0 border-r border-white/[0.06] bg-[#0d0d0f] xl:block">
+        <div className="hidden w-[272px] shrink-0 border-r border-ink/[0.06] bg-rail xl:block">
           <TroListPanel
             agents={agents}
             activeId={agent.id}
@@ -1456,9 +1581,9 @@ export function AgentChat({
         </div>
       ) : null}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="shrink-0 border-b border-white/[0.06] bg-[#0d0d0f]/95 backdrop-blur-md">
+        <header className="shrink-0 border-b border-ink/[0.06] bg-rail/95 backdrop-blur-md">
           <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
-            <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-white/[0.06] hover:text-ink">
+            <Link href="/tros" aria-label="Back to Tros" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-ink/[0.06] hover:text-ink">
               <Ico icon={FiArrowLeft} motion="nudge" size={17} />
             </Link>
             <span className="relative shrink-0 pt-1">
@@ -1481,11 +1606,11 @@ export function AgentChat({
                   aria-label={starred ? "Unstar this Tro" : "Star this Tro"}
                   aria-pressed={starred}
                   title={starred ? "Starred" : "Star this Tro"}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-4 transition hover:bg-white/[0.06] hover:text-ink"
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink-4 transition hover:bg-ink/[0.06] hover:text-ink"
                 >
                   <Ico icon={FiStar} motion="pop" size={15} className={starred ? "fill-amber-400 text-amber-400" : ""} />
                 </button>
-                <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 sm:inline-flex">
+                <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-line bg-ink/[0.04] px-2 py-0.5 sm:inline-flex">
                   <span className="relative flex size-1.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-70" />
                     <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
@@ -1494,7 +1619,7 @@ export function AgentChat({
                 </span>
                 {/* Trove auto-selects the model; the pill shows the response style + Auto. */}
                 <span
-                  className="hidden shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 md:inline-flex"
+                  className="hidden shrink-0 items-center gap-1.5 rounded-full border border-line bg-ink/[0.04] px-2.5 py-0.5 md:inline-flex"
                   title="Response style · model"
                 >
                   <span className="text-[11px] font-medium text-ink-2">{modeLabel(mode)} · Auto</span>
@@ -1521,7 +1646,7 @@ export function AgentChat({
                   reset();
                   nextId.current = 0;
                 }}
-                className="chip group shrink-0 !border-white/10 !bg-white/[0.04] !px-3 !py-1.5 !text-[12.5px] hover:!bg-white/[0.08]"
+                className="chip group shrink-0 !border-line !bg-ink/[0.04] !px-3 !py-1.5 !text-[12.5px] hover:!bg-ink/[0.08]"
               >
                 <Ico icon={FiPlus} motion="open" size={13} /> New
               </button>
@@ -1533,7 +1658,7 @@ export function AgentChat({
               aria-label={panelOpen ? "Close task panel" : "Open task panel"}
               className={cn(
                 "grid h-9 w-9 shrink-0 place-items-center rounded-xl transition",
-                panelOpen ? "bg-white/[0.08] text-ink" : "text-ink-3 hover:bg-white/[0.06] hover:text-ink",
+                panelOpen ? "bg-ink/[0.08] text-ink" : "text-ink-3 hover:bg-ink/[0.06] hover:text-ink",
               )}
             >
               <FiSidebar size={17} />
@@ -1558,7 +1683,7 @@ export function AgentChat({
                       key={s}
                       type="button"
                       onClick={() => void send(s)}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-white/25 hover:text-ink"
+                      className="rounded-full border border-line bg-ink/[0.04] px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-line-strong hover:text-ink"
                     >
                       {s}
                     </button>
@@ -1570,7 +1695,10 @@ export function AgentChat({
               turns.map((t, i) => {
                 const asks = t.role === "model" && !busy ? extractAskBlocks(t.text) : [];
                 const artBlocks = t.role === "model" ? extractArtifactBlocks(t.text) : [];
-                const text = stripArtifactBlocks(asks.length ? stripAskBlocks(t.text) : t.text);
+                // stripAskBlocks removes parsed ask fences (they render as
+                // cards below) and converts unparseable ask-shaped fences
+                // into a plain-text question list — raw JSON never shows.
+                const text = stripArtifactBlocks(t.role === "model" && !busy ? stripAskBlocks(t.text) : t.text);
                 return (
                   <div key={t.id}>
                     <Message
@@ -1580,6 +1708,13 @@ export function AgentChat({
                       chip={t.role === "user" && t.plan ? "Plan" : undefined}
                       pending={busy && i === turns.length - 1 && t.role === "model"}
                       onRegenerate={t.role === "model" ? retry : undefined}
+                      truncated={t.role === "model" ? t.truncated : undefined}
+                      onContinue={
+                        t.role === "model" && t.truncated && !busy
+                          ? () => continueReply(t.id)
+                          : undefined
+                      }
+                      onRetry={t.role === "model" && t.truncated ? retry : undefined}
                       assistantName={agent.name}
                       assistantSeed={agent.id}
                       assistantAccent={agent.accent}
@@ -1629,7 +1764,7 @@ export function AgentChat({
           </div>
         </div>
 
-        <div className="relative z-20 shrink-0 border-t border-white/[0.06] bg-[#0d0d0f]/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl lg:px-10">
+        <div className="relative z-20 shrink-0 border-t border-ink/[0.06] bg-rail/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl lg:px-10">
           <div className="mx-auto max-w-[720px]">
             {artifactsLoaded && artifacts.length > 0 ? (
               <div className="mb-2.5">
@@ -1639,7 +1774,7 @@ export function AgentChat({
                 <button
                   type="button"
                   onClick={() => setViewer(artifacts[0])}
-                  className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-left transition hover:border-white/20"
+                  className="flex w-full items-center gap-3 rounded-2xl border border-ink/[0.08] bg-ink/[0.03] px-3 py-2.5 text-left transition hover:border-line-strong"
                 >
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
                     <ArtifactIcon kind={artifacts[0].kind} size={17} />
@@ -1671,7 +1806,7 @@ export function AgentChat({
               <button
                 type="button"
                 onClick={() => openSettings("integrations")}
-                className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-2.5 text-left transition hover:border-white/15 hover:bg-white/[0.04]"
+                className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-2xl border border-ink/[0.07] bg-ink/[0.02] px-4 py-2.5 text-left transition hover:border-line hover:bg-ink/[0.04]"
               >
                 <span className="text-[13px] font-medium text-ink-2">Connect your integrations</span>
                 <FiArrowRight size={15} className="shrink-0 text-ink-3" />
@@ -1693,7 +1828,7 @@ export function AgentChat({
 
       <aside
         className={cn(
-          "absolute inset-y-0 right-0 z-40 flex flex-col border-l border-white/[0.06] bg-[#101012]/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
+          "absolute inset-y-0 right-0 z-40 flex flex-col border-l border-ink/[0.06] bg-rail/95 shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:static lg:z-0 lg:shadow-none lg:backdrop-blur-none",
           browserExpanded
             ? "w-[min(100vw-1.5rem,780px)]"
             : "w-[min(100vw-1.5rem,340px)]",
@@ -1701,7 +1836,7 @@ export function AgentChat({
         )}
       >
         {/* Panel header — Tro identity, live status, quick actions */}
-        <div className="relative shrink-0 border-b border-white/[0.06] px-4 pb-3.5 pt-4">
+        <div className="relative shrink-0 border-b border-ink/[0.06] px-4 pb-3.5 pt-4">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-20"
@@ -1726,7 +1861,7 @@ export function AgentChat({
                 </span>
               </p>
             </div>
-            <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.06] hover:text-ink">
+            <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close task panel" className="grid h-8 w-8 place-items-center rounded-lg text-ink-3 transition hover:bg-ink/[0.06] hover:text-ink">
               <FiX size={16} />
             </button>
           </div>
@@ -1740,7 +1875,7 @@ export function AgentChat({
                 reset();
                 nextId.current = 0;
               }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.07] hover:text-ink"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-ink/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-ink/[0.07] hover:text-ink"
             >
               <Ico icon={FiPlus} motion="open" size={13} /> New chat
             </button>
@@ -1750,7 +1885,7 @@ export function AgentChat({
                 setPanelTab("files");
                 if (!panelOpen) setPanelOpen(true);
               }}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.07] hover:text-ink"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-ink/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-ink/[0.07] hover:text-ink"
             >
               <Ico icon={FiBookOpen} motion="lift" size={13} /> Library
               {artifacts.length > 0 ? (
@@ -1762,7 +1897,7 @@ export function AgentChat({
             <button
               type="button"
               onClick={() => openSettings("integrations")}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-white/[0.07] hover:text-ink"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-ink/[0.03] px-2 py-1.5 text-[12px] font-medium text-ink-2 transition hover:bg-ink/[0.07] hover:text-ink"
             >
               <Ico icon={TbPlugConnected} motion="pop" size={13} /> Connect
             </button>
@@ -1771,7 +1906,7 @@ export function AgentChat({
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {pendingApprovals.length > 0 ? (
-            <section className={cn("border-b border-white/[0.06] px-4 py-3", browserExpanded && "hidden")}>
+            <section className={cn("border-b border-ink/[0.06] px-4 py-3", browserExpanded && "hidden")}>
               <button
                 type="button"
                 onClick={() => scrollToApproval(pendingApprovals[0].turnId, pendingApprovals[0].askIdx)}
@@ -1795,7 +1930,7 @@ export function AgentChat({
           ) : null}
           {/* Panel tabs — separate sections instead of one long stack.
               Horizontally scrollable so 5 tabs never squeeze/glitch in a narrow panel. */}
-          <div className="sticky top-0 z-10 shrink-0 border-b border-white/[0.06] bg-[#101012]/95 px-2 pt-2">
+          <div className="sticky top-0 z-10 shrink-0 border-b border-ink/[0.06] bg-rail/95 px-2 pt-2">
             <div
               role="tablist"
               aria-label="Panel sections"
@@ -1820,7 +1955,7 @@ export function AgentChat({
                     onClick={() => setPanelTab(t.id)}
                     className={cn(
                       "relative grid size-9 shrink-0 place-items-center rounded-xl transition",
-                      panelTab === t.id ? "bg-white/[0.08] text-ink" : "text-ink-4 hover:bg-white/[0.05] hover:text-ink-2",
+                      panelTab === t.id ? "bg-ink/[0.08] text-ink" : "text-ink-4 hover:bg-ink/[0.05] hover:text-ink-2",
                     )}
                   >
                     <Ico icon={t.icon} size={16} />
@@ -1841,12 +1976,12 @@ export function AgentChat({
             </div>
           </div>
           {panelTab === "desktop" ? (
-          <section className={cn("app-block-in border-b border-white/[0.06] px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
+          <section className={cn("app-block-in border-b border-ink/[0.06] px-4 py-3", browserExpanded && "flex min-h-0 flex-1 flex-col border-b-0")} style={{ ["--app-delay" as string]: "60ms" }}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={FiMonitor} size={11} className="text-ink-3" /> Desktop
               </p>
-              <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-white/[0.06] hover:text-ink disabled:opacity-40">
+              <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-ink-3 transition hover:bg-ink/[0.06] hover:text-ink disabled:opacity-40">
                 {browserExpanded ? "Shrink" : "Expand"}
               </button>
             </div>
@@ -1860,7 +1995,7 @@ export function AgentChat({
                   if (url) void navigateComputer(url);
                 }}
               >
-                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-ink/[0.03] px-3 py-1.5">
                   <FiGlobe size={13} className="shrink-0 text-ink-4" />
                   <input
                     type="text"
@@ -1881,8 +2016,8 @@ export function AgentChat({
               </form>
             ) : null}
             <div className={cn("space-y-1.5", busy && "pointer-events-none opacity-55")}>
-              <div className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.02] px-2.5 py-2">
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-white/[0.06] text-ink-3")}>
+              <div className="flex items-center gap-2.5 rounded-xl border border-ink/[0.07] bg-ink/[0.02] px-2.5 py-2">
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", computerConnected ? "bg-positive/15 text-positive" : "bg-ink/[0.06] text-ink-3")}>
                   <FiMonitor size={15} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -1893,7 +2028,7 @@ export function AgentChat({
                   </p>
                 </div>
               </div>
-              <div className={cn("overflow-hidden rounded-xl border border-white/[0.07] bg-black/30 transition-all duration-300", browserExpanded && "flex min-h-0 flex-1 flex-col ring-1 ring-white/10")}>
+              <div className={cn("overflow-hidden rounded-xl border border-ink/[0.07] bg-black/30 transition-all duration-300", browserExpanded && "flex min-h-0 flex-1 flex-col ring-1 ring-white/10")}>
                 <div className={cn("relative bg-black/30 transition-all duration-300", browserExpanded ? "min-h-0 flex-1" : "aspect-[16/9]")}>
                   {computer.screenshotBase64 ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -1909,26 +2044,26 @@ export function AgentChat({
                     </div>
                   ) : null}
                 </div>
-                <div className="flex flex-wrap gap-1.5 border-t border-white/[0.06] px-2.5 py-2">
+                <div className="flex flex-wrap gap-1.5 border-t border-ink/[0.06] px-2.5 py-2">
                   {computer.liveUrl ? (
-                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className={cn("rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06]", (busy || computerBusy) && "pointer-events-none opacity-40")}>
+                    <a href={computer.liveUrl} target="_blank" rel="noreferrer" className={cn("rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-ink/[0.06]", (busy || computerBusy) && "pointer-events-none opacity-40")}>
                       Live
                     </a>
                   ) : null}
-                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("back").catch(() => undefined)} aria-label="Go back" title="Back" className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("back").catch(() => undefined)} aria-label="Go back" title="Back" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-ink/[0.06] disabled:opacity-40">
                     ← Back
                   </button>
-                  <button type="button" disabled={busy || computerBusy || !computerConnected || !computer.pageUrl} onClick={() => { if (computer.pageUrl) void navigateComputer(computer.pageUrl).catch(() => undefined); }} aria-label="Reload page" title="Reload page" className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy || !computerConnected || !computer.pageUrl} onClick={() => { if (computer.pageUrl) void navigateComputer(computer.pageUrl).catch(() => undefined); }} aria-label="Reload page" title="Reload page" className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-ink/[0.06] disabled:opacity-40">
                     ⟳ Reload
                   </button>
-                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy || !computerConnected} onClick={() => void browserAction("screenshot").catch(() => undefined)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-ink/[0.06] disabled:opacity-40">
                     Snap
                   </button>
-                  <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
+                  <button type="button" disabled={busy || computerBusy} onClick={() => setBrowserExpanded((v) => !v)} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-ink/[0.06] disabled:opacity-40">
                     {browserExpanded ? "Shrink" : "Expand"}
                   </button>
                   {computerConnected ? (
-                    <button type="button" disabled={busy || computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-white/[0.06] disabled:opacity-40">
+                    <button type="button" disabled={busy || computerBusy} onClick={() => void stopComputer()} className="rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-ink/[0.06] disabled:opacity-40">
                       Stop
                     </button>
                   ) : null}
@@ -1938,17 +2073,17 @@ export function AgentChat({
           </section>
           ) : null}
           {panelTab === "activity" ? (
-          <section className="app-block-in border-b border-white/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
+          <section className="app-block-in border-b border-ink/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "120ms" }}>
             <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
               <Ico icon={FiActivity} size={11} className="text-ink-3" /> Activity
             </p>
             {activity.length === 0 ? (
               <p className="text-[12px] text-ink-4">Tasks appear here as {agent.name.split(" ")[0]} works.</p>
             ) : (
-              <ul className="relative space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-white/10">
+              <ul className="relative space-y-0.5 before:absolute before:bottom-2 before:left-[9px] before:top-2 before:w-px before:bg-ink/10">
                 {[...activity].reverse().map((a) => (
                   <li key={a.id} className="relative flex items-start gap-2.5 rounded-lg py-1.5 pl-1">
-                    <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-[#101012]", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
+                    <span className={cn("relative z-[1] mt-1 size-2 shrink-0 rounded-full ring-4 ring-rail", a.tone === "ok" ? "bg-positive" : a.tone === "warn" ? "bg-critical" : a.tone === "run" ? "bg-accent animate-pulse" : "bg-ink-4")} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[12.5px] font-medium text-ink">{a.label}</span>
                       {a.detail ? <span className="block truncate text-[11px] text-ink-3">{a.detail}</span> : null}
@@ -1960,7 +2095,7 @@ export function AgentChat({
           </section>
           ) : null}
           {panelTab === "files" ? (
-          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-white/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
+          <section id="panel-library" className="app-block-in scroll-mt-4 border-t border-ink/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "160ms" }}>
             {previewArtifact ? (
               <ArtifactPreview
                 artifact={previewArtifact}
@@ -1987,7 +2122,7 @@ export function AgentChat({
             {!artifactsLoaded ? (
               <div className="space-y-1.5">
                 {[0, 1].map((i) => (
-                  <div key={i} className="h-11 animate-pulse rounded-xl bg-white/[0.05]" />
+                  <div key={i} className="h-11 animate-pulse rounded-xl bg-ink/[0.05]" />
                 ))}
               </div>
             ) : artifacts.length === 0 ? (
@@ -2000,7 +2135,7 @@ export function AgentChat({
                 {artifacts.map((a) => {
                   return (
                     <li key={a.id}>
-                      <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-white/[0.04]">
+                      <div className="group flex items-center gap-1 rounded-xl px-1.5 py-1.5 transition hover:bg-ink/[0.04]">
                         <button
                           type="button"
                           onClick={() => setPreviewArtifact(a)}
@@ -2026,7 +2161,7 @@ export function AgentChat({
                             onClick={() => downloadArtifact(a)}
                             aria-label={`Download ${a.title}`}
                             title="Download"
-                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-white/[0.07] hover:text-ink"
+                            className="grid size-7 place-items-center rounded-lg text-ink-3 transition hover:bg-ink/[0.07] hover:text-ink"
                           >
                             <FiDownload size={13} />
                           </button>
@@ -2049,7 +2184,7 @@ export function AgentChat({
           </section>
           ) : null}
           {panelTab === "connectors" ? (
-          <section className="app-block-in border-t border-white/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
+          <section className="app-block-in border-t border-ink/[0.06] px-4 py-3" style={{ ["--app-delay" as string]: "240ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 <Ico icon={TbPlugConnected} size={11} className="text-ink-3" /> Connectors

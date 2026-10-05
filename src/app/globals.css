@@ -8,17 +8,17 @@
  * are the dark defaults; [data-theme="light"] overrides keep working
  * because utilities reference var(--color-*) at runtime. */
 @theme {
-  --color-canvas: #1b1b1e;
-  --color-rail: #131316;
-  --color-sunk: #232327;
-  --color-raised: #26262b;
-  --color-hover: #303036;
+  --color-canvas: #212121;
+  --color-rail: #171717;
+  --color-sunk: #29292d;
+  --color-raised: #2f2f2f;
+  --color-hover: #3a3a3e;
   --color-ink: #ececec;
   --color-ink-2: #ececec;
   --color-ink-3: #a1a1aa;
-  --color-ink-4: #71717a;
-  --color-line: #2e2e34;
-  --color-line-strong: #3f3f46;
+  --color-ink-4: #8e8e96;
+  --color-line: #2c2c30;
+  --color-line-strong: #3f3f45;
   --color-accent: #8ab4f8;
   --color-accent-soft: #1a2332;
   --color-violet: #a0a0a0;
@@ -30,17 +30,17 @@
 }
 
 :root {
-  --color-canvas: #1b1b1e;
-  --color-rail: #131316;
-  --color-sunk: #232327;
-  --color-raised: #26262b;
-  --color-hover: #303036;
+  --color-canvas: #212121;
+  --color-rail: #171717;
+  --color-sunk: #29292d;
+  --color-raised: #2f2f2f;
+  --color-hover: #3a3a3e;
   --color-ink: #ececec;
   --color-ink-2: #ececec;
   --color-ink-3: #a1a1aa;
-  --color-ink-4: #71717a;
-  --color-line: #2e2e34;
-  --color-line-strong: #3f3f46;
+  --color-ink-4: #8e8e96;
+  --color-line: #2c2c30;
+  --color-line-strong: #3f3f45;
   --color-accent: #8ab4f8;
   --color-accent-soft: #1a2332;
   --color-violet: #a0a0a0;
@@ -97,17 +97,17 @@
 }
 
 :root[data-theme="dark"] {
-  --color-canvas: #1b1b1e;
-  --color-rail: #131316;
-  --color-sunk: #232327;
-  --color-raised: #26262b;
-  --color-hover: #303036;
+  --color-canvas: #212121;
+  --color-rail: #171717;
+  --color-sunk: #29292d;
+  --color-raised: #2f2f2f;
+  --color-hover: #3a3a3e;
   --color-ink: #ececec;
   --color-ink-2: #ececec;
   --color-ink-3: #a1a1aa;
-  --color-ink-4: #71717a;
-  --color-line: #2e2e34;
-  --color-line-strong: #3f3f46;
+  --color-ink-4: #8e8e96;
+  --color-line: #2c2c30;
+  --color-line-strong: #3f3f45;
   --color-accent: #8ab4f8;
   --color-accent-soft: #1a2332;
   --color-violet: #a0a0a0;
