@@ -94,14 +94,14 @@ function FeaturedCard({
       {connected ? (
         <div>
           <div className="flex w-full items-center justify-between gap-2 rounded-2xl border border-positive/30 bg-positive-soft px-4 py-2.5">
-            <span className="inline-flex items-center gap-2 text-[13.5px] font-medium text-positive">
+            <span className="inline-flex shrink-0 items-center gap-2 text-[13.5px] font-medium text-positive">
               <FiCheck size={15} /> Connected
             </span>
             <button
               type="button"
               disabled={disconnecting || busy}
               onClick={onDisconnect}
-              className="text-[12.5px] font-medium text-ink-3 underline-offset-2 transition hover:text-ink hover:underline disabled:opacity-40"
+              className="shrink-0 whitespace-nowrap text-[12.5px] font-medium text-ink-3 underline-offset-2 transition hover:text-ink hover:underline disabled:opacity-40"
             >
               {disconnecting ? "Removing…" : "Disconnect"}
             </button>

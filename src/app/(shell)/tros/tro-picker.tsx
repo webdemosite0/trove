@@ -9,8 +9,7 @@ import type { AgentRow } from "@/app/actions/agents";
 
 /**
  * "Agent" dropdown for the Tros home hero composer: pick which Tro receives
- * the message. Mascot avatar + live presence dot per Tro, dark-styled for the
- * near-black Tros home.
+ * the message. Mascot avatar + live presence dot per Tro, theme-aware.
  */
 export function TroPicker({
   agents,
@@ -64,7 +63,7 @@ export function TroPicker({
         {selected ? (
           <span className="relative">
             {workingIds.has(selected.id) ? (
-              <span className="absolute -right-px -top-px z-10 size-2 rounded-full bg-blue-500 ring-2 ring-[#101013]" />
+              <span className="absolute -right-px -top-px z-10 size-2 rounded-full bg-blue-500 ring-2 ring-sunk" />
             ) : null}
             <Bot size={22} seed={selected.id} accent={selected.accent} state="idle" />
           </span>
@@ -75,7 +74,7 @@ export function TroPicker({
       {open ? (
         <div
           role="listbox"
-          className="absolute bottom-full left-0 z-30 mb-2 max-h-[280px] w-[240px] overflow-y-auto rounded-2xl border border-line-strong bg-[#141416] p-1.5 shadow-2xl shadow-black/60"
+          className="absolute bottom-full left-0 z-30 mb-2 max-h-[280px] w-[240px] overflow-y-auto rounded-2xl border border-line-strong bg-raised p-1.5 shadow-2xl shadow-black/25"
         >
           <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-4">
             Send to
@@ -95,12 +94,12 @@ export function TroPicker({
                 }}
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition",
-                  active ? "bg-violet-500/15" : "hover:bg-white/[0.06]",
+                  active ? "bg-violet-500/15" : "hover:bg-ink/[0.06]",
                 )}
               >
                 <span className="relative shrink-0">
                   {working ? (
-                    <span className="absolute -right-px -top-px z-10 size-2 rounded-full bg-blue-500 ring-2 ring-[#141416]" />
+                    <span className="absolute -right-px -top-px z-10 size-2 rounded-full bg-blue-500 ring-2 ring-raised" />
                   ) : null}
                   <Bot size={28} seed={a.id} accent={a.accent} state="idle" />
                 </span>
