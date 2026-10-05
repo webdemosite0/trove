@@ -21,6 +21,7 @@ import {
   FiCopy,
   FiDownload,
   FiLayers,
+  FiMoreHorizontal,
   FiPlus,
   FiSquare,
   FiTrash2,
@@ -113,6 +114,9 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
   const [generating, setGenerating] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // R-04: canvas zoom for phones — Fit is default, +/- adjust, indicator shows level.
+  const [zoom, setZoom] = useState(1);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -425,6 +429,8 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
         <button
           type="button"
           onClick={exportPNG}
+          aria-label="Export design"
+          title="Export design"
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2.5 text-[13.5px] font-semibold text-white transition active:scale-95"
         >
           <FiDownload size={16} />
@@ -444,8 +450,36 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
       </header>
 
       {/* Canvas area */}
-      <div ref={wrapRef} className="flex min-h-0 flex-1 overflow-auto bg-sunk/40 p-4">
-        <div className="relative m-auto w-full max-w-[520px]" style={{ aspectRatio: `${size.w} / ${size.h}` }}>
+      <div ref={wrapRef} className="relative flex min-h-0 flex-1 overflow-auto bg-sunk/40 p-4">
+        {/* Zoom controls */}
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-xl border border-line bg-raised/95 px-1.5 py-1 shadow-lg backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))}
+            aria-label="Zoom out"
+            className="grid size-8 place-items-center rounded-lg text-ink-2 hover:bg-hover"
+          >
+            <span className="text-[18px] font-bold leading-none">−</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(1)}
+            aria-label="Fit canvas"
+            title="Fit canvas"
+            className="min-w-[52px] rounded-lg px-1 py-1 text-center text-[12px] font-semibold tabular-nums text-ink-2 hover:bg-hover"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))}
+            aria-label="Zoom in"
+            className="grid size-8 place-items-center rounded-lg text-ink-2 hover:bg-hover"
+          >
+            <FiPlus size={15} />
+          </button>
+        </div>
+        <div className="relative m-auto w-full" style={{ maxWidth: 520 * zoom, aspectRatio: `${size.w} / ${size.h}` }}>
           <canvas
             ref={canvasRef}
             onPointerDown={onPointerDown}
@@ -692,24 +726,55 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
         </div>
       ) : null}
 
-      {/* Bottom toolbar */}
-      <nav className="flex shrink-0 items-stretch gap-1 overflow-x-auto border-t border-line/60 bg-raised px-2 py-2">
+      {/* Bottom toolbar — R-04: primary tools always visible; lesser actions in overflow on phones */}
+      <nav className="relative flex shrink-0 items-stretch gap-1 border-t border-line/60 bg-raised px-2 py-2">
         <ToolButton icon={<span className="text-[17px] font-black">T</span>} label="Text" active={panel === "text"} onClick={addText} />
-        <ToolButton icon={<FiSquare size={19} />} label="Rect" active={false} onClick={() => addShape("rect")} />
-        <ToolButton
-          icon={<span className="block size-[19px] rounded-full border-[2.5px] border-current" />}
-          label="Circle"
-          onClick={() => addShape("circle")}
-        />
         <ToolButton
           icon={<span className="block size-[19px] rounded-full border border-line" style={{ background: background }} />}
           label="Canvas"
           active={panel === "bg"}
           onClick={() => togglePanel("bg")}
         />
-        <ToolButton icon={<FiLayers size={19} />} label="Layers" active={panel === "layers"} onClick={() => togglePanel("layers")} />
-        <ToolButton icon={<FiPlus size={19} />} label="Size" active={panel === "size"} onClick={() => togglePanel("size")} />
         <ToolButton icon={<TbSparkles size={19} />} label="AI" active={panel === "ai"} onClick={() => togglePanel("ai")} />
+        {/* Secondary tools: inline on sm+, overflow menu on phones */}
+        <div className="hidden items-stretch gap-1 sm:flex">
+          <ToolButton icon={<FiSquare size={19} />} label="Rect" active={false} onClick={() => addShape("rect")} />
+          <ToolButton
+            icon={<span className="block size-[19px] rounded-full border-[2.5px] border-current" />}
+            label="Circle"
+            onClick={() => addShape("circle")}
+          />
+          <ToolButton icon={<FiLayers size={19} />} label="Layers" active={panel === "layers"} onClick={() => togglePanel("layers")} />
+          <ToolButton icon={<FiPlus size={19} />} label="Size" active={panel === "size"} onClick={() => togglePanel("size")} />
+        </div>
+        <div className="relative sm:hidden">
+          <ToolButton
+            icon={<FiMoreHorizontal size={19} />}
+            label="More"
+            active={moreOpen}
+            onClick={() => setMoreOpen((v) => !v)}
+          />
+          {moreOpen ? (
+            <>
+              <button
+                type="button"
+                aria-label="Close more tools"
+                className="fixed inset-0 z-10 cursor-default"
+                onClick={() => setMoreOpen(false)}
+              />
+              <div className="absolute bottom-full right-0 z-20 mb-2 flex gap-1 rounded-2xl border border-line bg-raised p-2 shadow-xl">
+                <ToolButton icon={<FiSquare size={19} />} label="Rect" active={false} onClick={() => { setMoreOpen(false); addShape("rect"); }} />
+                <ToolButton
+                  icon={<span className="block size-[19px] rounded-full border-[2.5px] border-current" />}
+                  label="Circle"
+                  onClick={() => { setMoreOpen(false); addShape("circle"); }}
+                />
+                <ToolButton icon={<FiLayers size={19} />} label="Layers" active={panel === "layers"} onClick={() => { setMoreOpen(false); togglePanel("layers"); }} />
+                <ToolButton icon={<FiPlus size={19} />} label="Size" active={panel === "size"} onClick={() => { setMoreOpen(false); togglePanel("size"); }} />
+              </div>
+            </>
+          ) : null}
+        </div>
       </nav>
     </div>
   );

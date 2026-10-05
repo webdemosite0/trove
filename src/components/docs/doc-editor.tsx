@@ -470,7 +470,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
           contentEditable
           onInput={onInput}
           data-placeholder="Start writing…"
-          className="min-h-[50vh] w-full text-[16.5px] leading-[1.75] text-ink focus:outline-none empty:before:pointer-events-none empty:before:text-ink-4/60 empty:before:content-[attr(data-placeholder)] [&_blockquote]:border-l-2 [&_blockquote]:border-accent/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-ink-2 [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-[22px] [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc [&_ol_li]:list-decimal [&_p]:mb-3 [&_ul]:mb-3"
+          className="min-h-[50vh] w-full text-[16.5px] leading-[1.75] text-ink focus:outline-none empty:before:pointer-events-none empty:before:text-ink-4/60 empty:before:content-[attr(data-placeholder)] [&_blockquote]:border-l-2 [&_blockquote]:border-accent/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-ink-2 [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-[22px] [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc [&_ol_li]:list-decimal [&_p]:mb-3 [&_ul]:mb-3 [&_table]:mb-4 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-line [&_th]:bg-sunk [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-[14px] [&_th]:font-semibold [&_td]:min-w-[80px] [&_td]:border [&_td]:border-line [&_td]:px-3 [&_td]:py-2 [&_td]:align-top"
           role="textbox"
           aria-multiline="true"
           aria-label="Document content"

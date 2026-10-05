@@ -41,6 +41,9 @@ export function StudioSplit({
   const [busy, setBusy] = useState(false);
   const [started, setStarted] = useState(hasContent);
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([]);
+  // R-01: on phones, default to the editor with the AI panel behind a tab,
+  // so the chat doesn't eat half the screen.
+  const [mobileTab, setMobileTab] = useState<"editor" | "chat">("editor");
 
   async function submit(prompt: string) {
     const q = prompt.trim();
@@ -74,8 +77,35 @@ export function StudioSplit({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas lg:flex-row">
+      {/* Mobile tab bar: Editor | AI Chat */}
+      <div className="flex shrink-0 gap-1 border-b border-line bg-raised p-2 lg:hidden" role="tablist" aria-label="Studio view">
+        {(["editor", "chat"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === t}
+            onClick={() => setMobileTab(t)}
+            className={cn(
+              "flex-1 rounded-xl px-4 py-2.5 text-[14px] font-medium transition",
+              mobileTab === t
+                ? "bg-accent/15 text-ink"
+                : "text-ink-3 hover:text-ink",
+            )}
+          >
+            {t === "editor" ? "Editor" : "AI Chat"}
+            {t === "chat" && busy ? " ···" : null}
+          </button>
+        ))}
+      </div>
+
       {/* Left: chat + customize (single chat) */}
-      <div className="flex h-[45%] w-full flex-col bg-raised lg:h-full lg:w-[380px] lg:shrink-0 lg:border-r lg:border-line">
+      <div
+        className={cn(
+          "flex min-h-0 w-full flex-1 flex-col bg-raised lg:h-full lg:w-[380px] lg:shrink-0 lg:border-r lg:border-line",
+          mobileTab === "chat" ? "flex" : "hidden lg:flex",
+        )}
+      >
         <div className="border-b border-line px-4 py-3">
           <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
         </div>
@@ -143,7 +173,12 @@ export function StudioSplit({
       </div>
 
       {/* Right: preview */}
-      <div className="relative min-h-0 flex-1 overflow-hidden">
+      <div
+        className={cn(
+          "relative min-h-0 flex-1 overflow-hidden",
+          mobileTab === "editor" ? "flex flex-col" : "hidden lg:flex lg:flex-col",
+        )}
+      >
         {!started ? (
           <div className="flex h-full flex-col items-center justify-center px-8 text-center">
 <div className="grid size-16 place-items-center rounded-full bg-accent/10">

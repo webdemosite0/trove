@@ -14,6 +14,7 @@ import {
   FiMoon,
   FiMonitor,
   FiX,
+  FiArrowLeft,
   FiLogOut,
   FiCheck,
   FiExternalLink,
@@ -177,9 +178,14 @@ export function SettingsModal({
   const validSection = (s: string | null | undefined): SettingsSectionId =>
     (NAV.some((n) => n.id === s) ? s : "general") as SettingsSectionId;
   const [section, setSection] = useState<SettingsSectionId>(validSection(initialSection));
+  // UI-01: on phones, drill down — list first, then detail with back nav.
+  const [mobileDetail, setMobileDetail] = useState(false);
 
   useEffect(() => {
-    if (open) setSection(validSection(initialSection));
+    if (open) {
+      setSection(validSection(initialSection));
+      setMobileDetail(false);
+    }
   }, [open, initialSection]);
 
   useEffect(() => {
@@ -217,10 +223,10 @@ export function SettingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-[min(720px,calc(100dvh-3rem))] w-full max-w-[980px] overflow-hidden rounded-[20px] bg-canvas text-ink shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)]"
+        className="relative flex h-[100dvh] w-full overflow-hidden bg-canvas text-ink sm:h-[min(720px,calc(100dvh-3rem))] sm:max-w-[980px] sm:rounded-[20px] sm:shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)]"
       >
-        {/* Left nav */}
-        <aside className="flex w-[248px] shrink-0 flex-col bg-sunk">
+        {/* Left nav — desktop */}
+        <aside className="hidden w-[248px] shrink-0 flex-col bg-sunk sm:flex">
           <h2 id={titleId} className="px-5 pb-3 pt-5 text-[17px] font-semibold tracking-tight">
             Settings
           </h2>
@@ -256,19 +262,85 @@ export function SettingsModal({
           </form>
         </aside>
 
+        {/* Mobile: section picker list (drill-down) */}
+        <div className={cn("flex min-w-0 flex-1 flex-col sm:hidden", mobileDetail && "hidden")}>
+          <div className="flex shrink-0 items-center justify-between px-5 pb-3 pt-5">
+            <h2 id={titleId} className="text-[17px] font-semibold tracking-tight">
+              Settings
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close settings"
+              className="grid size-9 place-items-center rounded-full bg-sunk text-ink-2"
+            >
+              <FiX size={18} />
+            </button>
+          </div>
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-4 pb-4">
+            {NAV.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setSection(item.id);
+                  setMobileDetail(true);
+                }}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] text-ink transition-colors hover:bg-hover active:bg-hover"
+              >
+                <item.icon size={19} className="shrink-0 text-ink-3" />
+                <span className="flex-1 truncate">{item.label}</span>
+                <FiArrowLeft size={16} className="rotate-180 text-ink-4" />
+              </button>
+            ))}
+          </nav>
+          <form action={logOut} className="shrink-0 border-t border-line p-4">
+            <button
+              type="submit"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] text-ink-3"
+            >
+              <FiLogOut size={19} className="shrink-0" />
+              Log out
+            </button>
+          </form>
+        </div>
+
         {/* Right content */}
-        <div className="relative flex min-w-0 flex-1 flex-col">
+        <div className={cn("relative min-w-0 flex-1 flex-col", mobileDetail ? "flex" : "hidden sm:flex")}>
+          {/* Mobile back bar */}
+          <div className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3 sm:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileDetail(false)}
+              aria-label="Back to settings"
+              className="grid size-9 place-items-center rounded-full text-ink-2 hover:bg-hover"
+            >
+              <FiArrowLeft size={19} />
+            </button>
+            <span className="text-[16px] font-semibold">
+              {NAV.find((n) => n.id === section)?.label}
+            </span>
+            <span className="flex-1" />
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close settings"
+              className="grid size-9 place-items-center rounded-full bg-sunk text-ink-2"
+            >
+              <FiX size={18} />
+            </button>
+          </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-4 top-4 z-10 grid size-8 place-items-center rounded-full bg-sunk text-ink-2 transition-colors hover:bg-hover hover:text-ink"
+            className="absolute right-4 top-4 z-10 hidden size-8 place-items-center rounded-full bg-sunk text-ink-2 transition-colors hover:bg-hover hover:text-ink sm:grid"
           >
             <FiX size={16} />
           </button>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-            <h3 className="mb-5 text-[17px] font-semibold tracking-tight">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8">
+            <h3 className="mb-5 hidden text-[17px] font-semibold tracking-tight sm:block">
               {NAV.find((n) => n.id === section)?.label}
             </h3>
 
