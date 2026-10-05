@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  ClipboardList,
   CircleAlert,
   CircleCheck,
   CircleHelp,
@@ -50,6 +51,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   Link,
+  ListChecks,
   LoaderCircle,
   Lock,
   LogOut,
@@ -85,6 +87,7 @@ import {
   Sparkles,
   Square,
   SquareTerminal,
+  Star,
   Sun,
   Table,
   Tablet,
@@ -162,6 +165,7 @@ export const FiInfo = /*#__PURE__*/ grok(Info);
 export const FiLayers = /*#__PURE__*/ grok(Layers);
 export const FiLayout = /*#__PURE__*/ grok(Layout);
 export const FiLink = /*#__PURE__*/ grok(Link);
+export const FiListChecks = /*#__PURE__*/ grok(ListChecks);
 export const FiLoader = /*#__PURE__*/ grok(LoaderCircle);
 export const FiLock = /*#__PURE__*/ grok(Lock);
 export const FiLogOut = /*#__PURE__*/ grok(LogOut);
@@ -186,6 +190,7 @@ export const FiSidebar = /*#__PURE__*/ grok(PanelLeft);
 export const FiSkipForward = /*#__PURE__*/ grok(SkipForward);
 export const FiSmartphone = /*#__PURE__*/ grok(Smartphone);
 export const FiSquare = /*#__PURE__*/ grok(Square);
+export const FiStar = /*#__PURE__*/ grok(Star);
 export const FiSun = /*#__PURE__*/ grok(Sun);
 export const FiTablet = /*#__PURE__*/ grok(Tablet);
 export const FiTerminal = /*#__PURE__*/ grok(Terminal);

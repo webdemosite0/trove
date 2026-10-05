@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/icons";
 import { SearchIcon } from "@/components/animate-ui/icons";
 import { cn } from "@/lib/utils";
+import { useIsWindows } from "@/lib/use-is-windows";
 
 interface Command {
   id: string;
@@ -41,7 +42,7 @@ interface Command {
 
 const COMMANDS: Command[] = [
   { id: "new-chat", label: "New chat", hint: "Start a conversation", icon: FiPlus, tone: "#7c6fff", href: "/chat", group: "Create" },
-  { id: "new-tro", label: "New Tro", hint: "Hire a specialist", icon: TbRobot, tone: "#a78bfa", href: "/tros?new=1", group: "Create" },
+  { id: "new-tro", label: "New Tro", hint: "Hire a specialist", icon: TbRobot, tone: "#a78bfa", href: "/tros/new", group: "Create" },
   { id: "new-project", label: "New project", hint: "Name it and brief it", icon: TbFolder, tone: "#f59e0b", href: "/projects", group: "Create" },
   { id: "new-doc", label: "New document", hint: "Draft in chat", icon: TbFileText, tone: "#8b5cf6", href: "/documents", group: "Create" },
   { id: "new-sheet", label: "New spreadsheet", hint: "Model in chat", icon: TbTable, tone: "#d97706", href: "/spreadsheets", group: "Create" },
@@ -136,6 +137,7 @@ function Row({
 
 export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
   const router = useRouter();
+  const isWindows = useIsWindows();
   const { openSettings } = useNav();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -288,7 +290,7 @@ export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
                       tone={cmd.tone}
                       label={cmd.label}
                       hint={cmd.hint}
-                      keys={cmd.keys}
+                      keys={cmd.keys === "⌘K" && isWindows ? "Ctrl+K" : cmd.keys}
                       onGo={() => go(cmd.href)}
                       onHover={() => setActive(i)}
                     />

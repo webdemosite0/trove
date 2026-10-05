@@ -67,14 +67,82 @@ export function FailureNote({
   onRetry,
   className,
   compact = false,
+  variant = "card",
 }: {
   error: unknown;
   onRetry?: () => void;
   className?: string;
   compact?: boolean;
+  /**
+   * "card" is the default classified failure card. "centered" is the chat
+   * thread treatment: centered headline with a red outlined Retry pill for
+   * retryable errors (credits/auth keep their title, detail and links).
+   */
+  variant?: "card" | "centered";
 }) {
   const f = classify(error);
   const face = FACE[f.kind];
+
+  const accountLinks = (
+    <>
+      {f.kind === "credits" ? (
+        <Link
+          href="/plans"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-semibold"
+        >
+          <Ico icon={FiZap} motion="sparkle" size={13} />
+          Get more credits
+        </Link>
+      ) : null}
+
+      {f.kind === "auth" ? (
+        <Link
+          href="/login"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-semibold"
+        >
+          <Ico icon={FiLock} motion="lock" size={13} />
+          Log in again
+        </Link>
+      ) : null}
+    </>
+  );
+
+  if (variant === "centered") {
+    return (
+      <div
+        role="alert"
+        className={cn("nx-in flex flex-col items-center px-4 py-8 text-center", className)}
+      >
+        {f.retryable ? (
+          <>
+            <p className="text-[14px] font-medium text-ink-2">
+              The agent encountered an error. Please try again.
+            </p>
+            {onRetry ? (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-critical/50 px-5 py-2 text-[13px] font-semibold text-critical transition hover:bg-critical/10"
+              >
+                <Ico icon={FiRefreshCw} motion="spin" size={14} />
+                Retry
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <p className="text-[14px] font-semibold text-ink">{f.title}</p>
+            <p className="mt-1 max-w-[46ch] text-[13px] leading-relaxed text-ink-3">
+              {f.detail}
+            </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              {accountLinks}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -117,25 +185,7 @@ export function FailureNote({
           </p>
 
           <div className="mt-3.5 flex flex-wrap items-center gap-2">
-            {f.kind === "credits" ? (
-              <Link
-                href="/plans"
-                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-semibold"
-              >
-                <Ico icon={FiZap} motion="sparkle" size={13} />
-                Get more credits
-              </Link>
-            ) : null}
-
-            {f.kind === "auth" ? (
-              <Link
-                href="/login"
-                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-semibold"
-              >
-                <Ico icon={FiLock} motion="lock" size={13} />
-                Log in again
-              </Link>
-            ) : null}
+            {accountLinks}
 
             {onRetry && f.retryable ? (
               <button

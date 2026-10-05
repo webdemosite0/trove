@@ -41,6 +41,8 @@ export function Message({
   assistantSeed,
   assistantAccent,
   thinkMs,
+  variant = "default",
+  chip,
 }: {
   role: "user" | "model";
   text: string;
@@ -64,6 +66,10 @@ export function Message({
   assistantName?: string;
   assistantSeed?: string;
   assistantAccent?: string;
+  /** "dark" renders the Tro thread language: dark-blue user bubbles, plain agent text. */
+  variant?: "default" | "dark";
+  /** Small label chip shown above a user bubble (e.g. "Plan"). */
+  chip?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -76,6 +82,7 @@ export function Message({
     );
 
   if (role === "user") {
+    const dark = variant === "dark";
     return (
       <div className="nx-in flex flex-col items-end gap-2">
         {files?.length ? (
@@ -105,7 +112,24 @@ export function Message({
             ))}
           </div>
         ) : null}
-        <div className="max-w-[min(85%,560px)] rounded-[20px] rounded-br-lg border border-line/60 bg-sunk px-4 py-2.5 text-[15px] leading-relaxed text-ink shadow-[0_2px_12px_-6px_rgba(15,23,42,0.15)]">
+        {chip ? (
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]",
+              dark ? "bg-[#2b3d5f] text-[#bcd0f5]" : "bg-accent/15 text-accent",
+            )}
+          >
+            {chip}
+          </span>
+        ) : null}
+        <div
+          className={cn(
+            "max-w-[min(85%,560px)] rounded-[20px] rounded-br-lg border px-4 py-2.5 text-[15px] leading-relaxed shadow-[0_2px_12px_-6px_rgba(15,23,42,0.15)]",
+            dark
+              ? "border-[#2b3d5f]/70 bg-[#1d2f4d] text-[#e9f1ff]"
+              : "border-line/60 bg-sunk text-ink",
+          )}
+        >
           <span className="whitespace-pre-wrap">{withLinkedText(text)}</span>
         </div>
       </div>
@@ -143,10 +167,12 @@ export function Message({
 
   return (
     <div className="nx-in group/msg">
-      <div className="mb-2 flex items-center gap-2">
-        <BrandMark state={pending ? "working" : "idle"} />
-        <span className="text-[12.5px] font-medium text-ink-3">{brand}</span>
-      </div>
+      {variant === "dark" ? null : (
+        <div className="mb-2 flex items-center gap-2">
+          <BrandMark state={pending ? "working" : "idle"} />
+          <span className="text-[12.5px] font-medium text-ink-3">{brand}</span>
+        </div>
+      )}
       {!pending && thinkMs != null && thinkMs > 0 ? (
         <div className="mb-1.5">
           <Thinking label={`Thought for ${Math.max(1, Math.round(thinkMs / 1000))}s`} />

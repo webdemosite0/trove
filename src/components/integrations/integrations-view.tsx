@@ -2,12 +2,22 @@
 
 import { useEffect, useMemo, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FiSearch, FiPlus, FiCheck, FiExternalLink } from "@/components/ui/icons";
+import {
+  FiSearch,
+  FiCheck,
+  FiExternalLink,
+  FiRefreshCw,
+} from "@/components/ui/icons";
 import { disconnect } from "@/app/actions/connections";
 import { ConnectDialog } from "@/components/integrations/connect-dialog";
-import { SERVICES } from "@/lib/services";
+import { PermissionModal } from "@/components/integrations/permission-modal";
+import { SERVICES, type Service } from "@/lib/services";
 import { ServiceMark } from "@/components/integrations/service-mark";
 import { serviceForComposioToolkit } from "@/lib/composio-map";
+import {
+  accessLevelLabel,
+  type AccessLevel,
+} from "@/lib/access-levels";
 import {
   GOOGLE_UMBRELLA_ID,
   GOOGLE_UMBRELLA_SERVICES,
@@ -18,6 +28,7 @@ export interface ConnectedService {
   service: string;
   account: string;
   hint: string;
+  grant?: string | null;
 }
 
 const POPULAR_IDS = [
@@ -34,6 +45,96 @@ const POPULAR_IDS = [
   "stripe",
   "outlook",
 ];
+
+type Badge = "OAuth" | "Browser" | "Token";
+
+function FeaturedCard({
+  service,
+  badge,
+  connected,
+  connectedGrant,
+  connectedLabel,
+  busy,
+  disabled,
+  onConnect,
+  onDisconnect,
+  disconnecting,
+}: {
+  service: Service;
+  badge?: Badge;
+  connected: boolean;
+  /** Stated grant label recorded on the connection, if any. */
+  connectedGrant?: string | null;
+  connectedLabel?: string;
+  busy: boolean;
+  disabled: boolean;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  disconnecting: boolean;
+}) {
+  return (
+    <div className="flex flex-col rounded-2xl border border-line bg-raised p-5 shadow-[var(--sh-1)]">
+      <div className="flex items-start justify-between gap-3">
+        <span className="grid size-[56px] place-items-center rounded-2xl bg-white shadow-[var(--sh-1)] ring-1 ring-line">
+          <ServiceMark id={service.id} name={service.name} size={42} />
+        </span>
+        {badge ? (
+          <span className="shrink-0 rounded-full border border-line bg-sunk px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-3.5 text-[16px] font-semibold tracking-[-0.01em] text-ink">
+        {service.name}
+      </p>
+      <p className="mt-1 min-h-[20px] truncate text-[13px] text-ink-3">
+        {service.blurb}
+      </p>
+      <div className="mt-4 flex-1" />
+      {connected ? (
+        <div>
+          <div className="flex w-full items-center justify-between gap-2 rounded-2xl border border-positive/30 bg-positive-soft px-4 py-2.5">
+            <span className="inline-flex items-center gap-2 text-[13.5px] font-medium text-positive">
+              <FiCheck size={15} /> Connected
+            </span>
+            <button
+              type="button"
+              disabled={disconnecting || busy}
+              onClick={onDisconnect}
+              className="text-[12.5px] font-medium text-ink-3 underline-offset-2 transition hover:text-ink hover:underline disabled:opacity-40"
+            >
+              {disconnecting ? "Removing…" : "Disconnect"}
+            </button>
+          </div>
+          {connectedLabel ? (
+            <p className="mt-2 truncate text-[12px] text-ink-4">{connectedLabel}</p>
+          ) : null}
+          {connectedGrant ? (
+            <p className="mt-1 text-[12px] text-ink-4">
+              Your grant: <span className="text-ink-3">{connectedGrant}</span>
+            </p>
+          ) : null}
+        </div>
+      ) : service.viaBrowser ? (
+        <span
+          title="No connection needed — your Tro drives this through its cloud browser. Just @mention it in chat."
+          className="flex w-full items-center justify-center rounded-2xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-[13.5px] font-medium text-accent"
+        >
+          Via browser — no setup needed
+        </span>
+      ) : (
+        <button
+          type="button"
+          disabled={disabled || busy}
+          onClick={onConnect}
+          className="w-full rounded-2xl bg-accent px-4 py-2.5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+        >
+          {busy ? "Connecting…" : "Connect"}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function IntegrationsView({
   connected,
@@ -53,9 +154,11 @@ export function IntegrationsView({
 }) {
   const router = useRouter();
   const [opening, setOpening] = useState<string | null>(null);
+  const [perm, setPerm] = useState<Service | null>(null);
   const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const composioSet = useMemo(() => new Set(composioServices), [composioServices]);
 
@@ -68,29 +171,38 @@ export function IntegrationsView({
     [optimistic],
   );
 
-  const installed = useMemo(
-    () => SERVICES.filter((s) => byId.has(s.id) && s.id !== GOOGLE_UMBRELLA_ID),
+  const googleUmbrella = useMemo(
+    () => SERVICES.find((s) => s.id === GOOGLE_UMBRELLA_ID),
+    [],
+  );
+  const googleOn = useMemo(
+    () => GOOGLE_UMBRELLA_SERVICES.every((id) => byId.has(id)),
     [byId],
   );
 
-  const popular = useMemo(() => {
+  const featured = useMemo(() => {
+    const map = new Map(SERVICES.map((s) => [s.id, s]));
     const q = query.trim().toLowerCase();
     if (!q) {
-      const map = new Map(SERVICES.map((s) => [s.id, s]));
-      const ordered = POPULAR_IDS.map((id) => map.get(id)).filter(Boolean) as typeof SERVICES;
-      const rest = SERVICES.filter(
-        (s) => !POPULAR_IDS.includes(s.id) && s.id !== GOOGLE_UMBRELLA_ID,
-      );
-      return [...ordered, ...rest].slice(0, 24);
+      const ordered = POPULAR_IDS.map((id) => map.get(id)).filter(Boolean) as Service[];
+      return { google: googleUmbrella ?? null, list: ordered };
     }
-    return SERVICES.filter(
-      (s) =>
-        s.id !== GOOGLE_UMBRELLA_ID &&
-        (s.name.toLowerCase().includes(q) ||
-          s.blurb.toLowerCase().includes(q) ||
-          s.category.toLowerCase().includes(q)),
-    ).slice(0, 40);
-  }, [query]);
+    return {
+      google:
+        googleUmbrella &&
+        (googleUmbrella.name.toLowerCase().includes(q) ||
+          googleUmbrella.blurb.toLowerCase().includes(q))
+          ? googleUmbrella
+          : null,
+      list: SERVICES.filter(
+        (s) =>
+          s.id !== GOOGLE_UMBRELLA_ID &&
+          (s.name.toLowerCase().includes(q) ||
+            s.blurb.toLowerCase().includes(q) ||
+            s.category.toLowerCase().includes(q)),
+      ).slice(0, 40),
+    };
+  }, [query, googleUmbrella]);
 
   interface CatalogApp {
     slug: string;
@@ -158,7 +270,23 @@ export function IntegrationsView({
     });
   }
 
-  async function connectComposio(service: string) {
+  /** Wired to the existing Composio resync — pulls fresh connection state. */
+  async function refreshConnections() {
+    setError(null);
+    setRefreshing(true);
+    try {
+      const sync = await fetch("/api/composio/sync", { method: "POST" });
+      const syncData = await sync.json().catch(() => null);
+      if (!sync.ok) throw new Error(syncData?.error ?? "Could not refresh connections.");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Refresh failed.");
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  async function connectComposio(service: string, grant?: string) {
     setError(null);
     setBusy(service);
     try {
@@ -184,7 +312,17 @@ export function IntegrationsView({
           }
         }, 800);
       });
-      const sync = await fetch("/api/composio/sync", { method: "POST" });
+      // Record the modal's chosen access level as the connection's stated
+      // grant. The provider's own approval screen sets the actual OAuth
+      // scopes — this choice is never sent to Composio.
+      const grants: Record<string, string> | undefined = grant
+        ? { [service]: grant }
+        : undefined;
+      const sync = await fetch("/api/composio/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grants }),
+      });
       const syncData = await sync.json().catch(() => null);
       if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync connections.");
       router.refresh();
@@ -195,20 +333,22 @@ export function IntegrationsView({
     }
   }
 
-  function startConnect(id: string) {
-    if (id === GOOGLE_UMBRELLA_ID) {
-      void connectGoogle();
-      return;
+  /** Clicking Connect opens the permission modal for OAuth services. */
+  function openPermission(service: Service) {
+    setPerm(service);
+  }
+
+  function authorizeFromModal(level: AccessLevel) {
+    if (!perm) return;
+    if (perm.id === GOOGLE_UMBRELLA_ID) {
+      void connectGoogle(level.id);
+    } else {
+      void connectComposio(perm.id, level.id);
     }
-    if (composioOn && composioSet.has(id)) {
-      void connectComposio(id);
-      return;
-    }
-    if (connectable[id]) setOpening(id);
   }
 
   /** One Google connection: OAuth Gmail, Calendar, and Drive in sequence. */
-  async function connectGoogle() {
+  async function connectGoogle(grant?: string) {
     setError(null);
     setBusy(GOOGLE_UMBRELLA_ID);
     try {
@@ -236,7 +376,14 @@ export function IntegrationsView({
           }, 800);
         });
       }
-      const sync = await fetch("/api/composio/sync", { method: "POST" });
+      const grants: Record<string, string> | undefined = grant
+        ? Object.fromEntries(GOOGLE_UMBRELLA_SERVICES.map((id) => [id, grant]))
+        : undefined;
+      const sync = await fetch("/api/composio/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grants }),
+      });
       const syncData = await sync.json().catch(() => null);
       if (!sync.ok) throw new Error(syncData?.error ?? "Could not sync connections.");
       router.refresh();
@@ -247,49 +394,109 @@ export function IntegrationsView({
     }
   }
 
-  function canConnect(id: string) {
-    return Boolean(connectable[id]) || (composioOn && composioSet.has(id));
+  /** The badge reflects Trove's real connection type for this service. */
+  function badgeFor(s: Service): Badge | undefined {
+    if (s.viaBrowser) return "Browser";
+    if (s.id === GOOGLE_UMBRELLA_ID) return "OAuth";
+    if (composioOn && composioSet.has(s.id)) return "OAuth";
+    if (connectable[s.id]) return "Token";
+    return undefined;
+  }
+
+  /** Connect flow per service: OAuth → permission modal, token → credential dialog. */
+  function startConnect(s: Service) {
+    if (s.viaBrowser) return;
+    if (s.id === GOOGLE_UMBRELLA_ID || (composioOn && composioSet.has(s.id))) {
+      openPermission(s);
+      return;
+    }
+    if (connectable[s.id]) setOpening(s.id);
+  }
+
+  function canConnect(s: Service) {
+    return (
+      s.id === GOOGLE_UMBRELLA_ID ||
+      (composioOn && composioSet.has(s.id)) ||
+      Boolean(connectable[s.id])
+    );
+  }
+
+  function grantLabelFor(serviceId: string, grantId: string | null | undefined) {
+    if (!grantId) return null;
+    return accessLevelLabel(serviceId, grantId);
+  }
+
+  /** OAuth-backed services need Composio configured; token ones do not. */
+  function cardDisabled(s: Service): boolean {
+    if (!signedIn || busy !== null || !canConnect(s)) return true;
+    const needsComposio = s.id === GOOGLE_UMBRELLA_ID || composioSet.has(s.id);
+    return needsComposio && !composioOn;
   }
 
   return (
     <div className={bare ? "bg-transparent text-ink" : "min-h-[calc(100dvh-3.5rem)] bg-transparent text-ink"}>
-      <div className={bare ? "" : "mx-auto max-w-[920px] px-5 pb-16 pt-10 sm:px-8"}>
+      <div className={bare ? "" : "mx-auto max-w-[980px] px-5 pb-16 pt-10 sm:px-8"}>
         {!bare ? (
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-ink">
-              Plugins
-            </h1>
-            <p className="mt-1.5 text-[15px] text-ink-3">
-              Work with Trove across your favorite tools.
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-ink">
+                  Integrations
+                </h1>
+                <p className="mt-1.5 text-[15px] text-ink-3">
+                  Connect apps and tools for your agents.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void refreshConnections()}
+                disabled={refreshing || !composioOn}
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-line bg-raised px-4 py-2 text-[13.5px] font-medium text-ink-2 shadow-[var(--sh-1)] transition hover:border-line-strong hover:text-ink disabled:opacity-40"
+                title="Re-sync connections with Composio"
+              >
+                <FiRefreshCw size={14} className={refreshing ? "animate-spin" : undefined} />
+                {refreshing ? "Refreshing…" : "Refresh"}
+              </button>
+            </div>
+
+            <label className="relative mt-6 block w-full">
+              <FiSearch
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-4"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search integrations..."
+                className="h-12 w-full rounded-2xl border border-line bg-raised pl-11 pr-4 text-[14px] text-ink outline-none shadow-[var(--sh-1)] placeholder:text-ink-4 focus:border-accent"
+              />
+            </label>
+            <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-4">
+              Logins for browser-powered apps like Yango, inDrive, Careem, and
+              Uber happen in your Tro’s cloud browser — just @mention the app in
+              chat and it signs in there.
             </p>
-          </div>
-          <label className="relative block w-full sm:max-w-[260px]">
-            <FiSearch
-              size={15}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4"
-            />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search plugins"
-              className="h-11 w-full rounded-full border border-line bg-raised pl-10 pr-4 text-[14px] text-ink outline-none shadow-[var(--sh-1)] placeholder:text-ink-4 focus:border-accent"
-            />
-          </label>
-        </div>
+          </>
         ) : (
-        <label className="relative mb-4 block w-full">
-          <FiSearch
-            size={15}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4"
-          />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search connectors"
-            className="h-10 w-full rounded-full border border-line bg-raised pl-10 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-4 focus:border-accent"
-          />
-        </label>
+          <>
+            <label className="relative mb-2 block w-full">
+              <FiSearch
+                size={15}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search integrations..."
+                className="h-10 w-full rounded-full border border-line bg-raised pl-10 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-4 focus:border-accent"
+              />
+            </label>
+            <p className="mb-4 text-[12px] leading-relaxed text-ink-4">
+              Logins for browser-powered apps like Yango, inDrive, Careem, and
+              Uber happen in your Tro’s cloud browser — just @mention the app in
+              chat and it signs in there.
+            </p>
+          </>
         )}
 
         {error ? (
@@ -305,146 +512,58 @@ export function IntegrationsView({
           </p>
         ) : null}
 
-        {/* Featured: Google umbrella connector — pinned on top. */}
-        {(() => {
-          const googleOn = GOOGLE_UMBRELLA_SERVICES.every((id) => byId.has(id));
-          const googleBusy = busy === GOOGLE_UMBRELLA_ID;
-          return (
-            <section className="mt-8 overflow-hidden rounded-3xl border border-line bg-raised shadow-[var(--sh-1)]">
-              <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6">
-                <span className="grid size-[72px] shrink-0 place-items-center rounded-2xl bg-white shadow-[var(--sh-1)] ring-1 ring-line">
-                  <ServiceMark id="google" name="Google" size={54} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[17px] font-semibold tracking-[-0.01em] text-ink">
-                    Google
-                  </p>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
-                    One connection for your whole Google workspace — Gmail, Google
-                    Calendar, and Google Drive. Your Tros get mail, scheduling,
-                    and files with a single @google mention.
-                  </p>
-                  <div className="mt-2.5 flex flex-wrap gap-1.5">
-                    {GOOGLE_UMBRELLA_SERVICES.map((id) => {
-                      const svc = SERVICES.find((s) => s.id === id);
-                      const on = byId.has(id);
-                      return (
-                        <span
-                          key={id}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] ${
-                            on
-                              ? "border-positive/30 bg-positive-soft text-positive"
-                              : "border-line bg-transparent text-ink-3"
-                          }`}
-                        >
-                          {on ? <FiCheck size={12} /> : null}
-                          {svc?.name ?? id}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="shrink-0">
-                  {googleOn ? (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-positive/30 bg-positive-soft px-4 py-2 text-[13.5px] font-medium text-positive">
-                      <FiCheck size={15} /> Connected
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={!signedIn || busy !== null || !composioOn}
-                      onClick={() => startConnect(GOOGLE_UMBRELLA_ID)}
-                      className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
-                    >
-                      {googleBusy ? "Connecting…" : "Connect Google"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </section>
-          );
-        })()}
-
-        {installed.length > 0 ? (
-          <section className="mt-10">
-            <p className="text-[13px] font-medium text-ink-3">
-              Installed <span className="text-ink-4">›</span>
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {installed.map((s) => (
-                <span
-                  key={s.id}
-                  title={s.name}
-                  className="group relative grid size-[68px] place-items-center rounded-2xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:scale-105 hover:ring-line-strong"
-                >
-                  <ServiceMark id={s.id} name={s.name} size={52} />
-                </span>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-12">
-          <h2 className="text-[13px] font-medium text-ink-3">Popular</h2>
-          <ul className="mt-4 grid gap-1 sm:grid-cols-2">
-            {popular.map((s) => {
-              const on = byId.has(s.id);
+        {/* Featured card grid */}
+        <section className={bare ? "mt-2" : "mt-8"}>
+          <p className="text-[15px] font-semibold text-ink">⭐ Featured</p>
+          <div className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.google ? (
+              <FeaturedCard
+                key={featured.google.id}
+                service={featured.google}
+                badge="OAuth"
+                connected={googleOn}
+                connectedLabel={
+                  googleOn
+                    ? "Gmail, Calendar & Drive connected"
+                    : "One connection covers Gmail, Google Calendar, and Google Drive."
+                }
+                busy={busy === GOOGLE_UMBRELLA_ID}
+                disabled={cardDisabled(featured.google as Service)}
+                onConnect={() => startConnect(featured.google as Service)}
+                onDisconnect={() => {
+                  for (const id of GOOGLE_UMBRELLA_SERVICES) remove(id);
+                }}
+                disconnecting={pending}
+              />
+            ) : null}
+            {featured.list.map((s) => {
+              const c = byId.get(s.id);
+              const on = Boolean(c);
               return (
-                <li key={s.id}>
-                  <div className="group flex items-center gap-4 rounded-2xl px-3 py-3.5 transition hover:bg-hover/70">
-                    <span className="grid size-[62px] shrink-0 place-items-center rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line">
-                      <ServiceMark id={s.id} name={s.name} size={46} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-medium text-ink">{s.name}</p>
-                      <p className="truncate text-[13px] text-ink-3">{s.blurb}</p>
-                    </span>
-                    {on ? (
-                      <button
-                        type="button"
-                        disabled={pending}
-                        onClick={() => remove(s.id)}
-                        className="grid size-9 shrink-0 place-items-center rounded-full border border-positive/30 bg-positive-soft text-positive"
-                        title="Connected — click to disconnect"
-                      >
-                        <FiCheck size={16} />
-                      </button>
-                    ) : s.viaBrowser ? (
-                      <span
-                        className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[10.5px] font-semibold text-accent"
-                        title="No connection needed — your Tro drives this through its cloud browser. Just @mention it in chat."
-                      >
-                        Via browser
-                      </span>
-                    ) : canConnect(s.id) ? (
-                      <button
-                        type="button"
-                        disabled={!signedIn || busy !== null}
-                        onClick={() => startConnect(s.id)}
-                        className="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-accent/50 hover:bg-hover hover:text-ink disabled:opacity-40"
-                        aria-label={`Add ${s.name}`}
-                      >
-                        {busy === s.id ? (
-                          <span className="text-[12px]">…</span>
-                        ) : (
-                          <FiPlus size={18} />
-                        )}
-                      </button>
-                    ) : (
-                      <span
-                        className="grid size-9 shrink-0 place-items-center rounded-full border border-white/10 text-ink-4"
-                        title="Connect from the service's own setup"
-                      >
-                        <FiPlus size={18} />
-                      </span>
-                    )}
-                  </div>
-                </li>
+                <FeaturedCard
+                  key={s.id}
+                  service={s}
+                  badge={badgeFor(s)}
+                  connected={on}
+                  connectedLabel={c?.account || c?.hint || undefined}
+                  connectedGrant={grantLabelFor(s.id, c?.grant)}
+                  busy={busy === s.id}
+                  disabled={cardDisabled(s)}
+                  onConnect={() => startConnect(s)}
+                  onDisconnect={() => remove(s.id)}
+                  disconnecting={pending}
+                />
               );
             })}
-          </ul>
+          </div>
+          {featured.list.length === 0 && !featured.google ? (
+            <p className="mt-4 text-[13px] text-ink-4">
+              No integrations match “{query.trim()}”. Try another search.
+            </p>
+          ) : null}
         </section>
 
+        {/* Full Composio app directory */}
         {composioOn ? (
           <section className="mt-12">
             <div className="flex items-baseline justify-between gap-3">
@@ -467,14 +586,13 @@ export function IntegrationsView({
             </p>
 
             {catalog === null && !catalogError ? (
-              <div className="mt-4 grid gap-1 sm:grid-cols-2" aria-label="Loading apps">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 rounded-2xl px-3 py-3">
-                    <div className="size-[54px] shrink-0 animate-pulse rounded-2xl bg-sunk" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3.5 w-2/5 animate-pulse rounded-md bg-sunk" />
-                      <div className="h-3 w-3/5 animate-pulse rounded-md bg-sunk" />
-                    </div>
+              <div className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading apps">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-line bg-raised p-5">
+                    <div className="size-[56px] animate-pulse rounded-2xl bg-sunk" />
+                    <div className="mt-3.5 h-4 w-2/5 animate-pulse rounded-md bg-sunk" />
+                    <div className="mt-2 h-3.5 w-3/5 animate-pulse rounded-md bg-sunk" />
+                    <div className="mt-4 h-10 w-full animate-pulse rounded-2xl bg-sunk" />
                   </div>
                 ))}
               </div>
@@ -486,55 +604,37 @@ export function IntegrationsView({
               </p>
             ) : (
               <>
-                <ul className="mt-4 grid gap-1 sm:grid-cols-2">
-                  {allApps.slice(0, shownCount).map((a) => (
-                    <li key={a.slug}>
-                      <div className="group flex items-center gap-4 rounded-2xl px-3 py-3 transition hover:bg-hover/70">
-                        <span className="grid size-[54px] shrink-0 place-items-center overflow-hidden rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line transition group-hover:scale-[1.04]">
-                          {a.logo ? (
-                            <img
-                              src={a.logo}
-                              alt=""
-                              loading="lazy"
-                              className="size-[36px] object-contain"
-                            />
-                          ) : (
-                            <span className="text-[18px] font-bold text-ink-3">
-                              {a.name.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[14.5px] font-medium text-ink">
-                            {a.name}
-                          </p>
-                          <p className="truncate text-[12.5px] text-ink-4">
-                            {a.categories[0] ?? "App"}
-                            {a.toolsCount ? ` · ${a.toolsCount} tools` : ""}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
+                <ul className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {allApps.slice(0, shownCount).map((a) => {
+                    const svc: Service = {
+                      id: a.slug,
+                      name: a.name,
+                      category: "Automation",
+                      blurb: (a.description ?? a.categories[0] ?? "App").slice(0, 90),
+                    };
+                    const c = byId.get(serviceForComposioToolkit(a.slug) ?? a.slug);
+                    const on = Boolean(c);
+                    return (
+                      <li key={a.slug}>
+                        <FeaturedCard
+                          service={svc}
+                          badge="OAuth"
+                          connected={on}
+                          connectedGrant={grantLabelFor(svc.id, c?.grant)}
+                          busy={busy === a.slug}
                           disabled={!signedIn || busy !== null}
-                          onClick={() => void connectComposio(a.slug)}
-                          className="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-accent/50 hover:bg-hover hover:text-ink disabled:opacity-40"
-                          aria-label={`Connect ${a.name}`}
-                          title={`Connect ${a.name}`}
-                        >
-                          {busy === a.slug ? (
-                            <span className="text-[12px]">…</span>
-                          ) : (
-                            <FiPlus size={18} />
-                          )}
-                        </button>
-                      </div>
-                    </li>
-                  ))}
+                          onConnect={() => openPermission(svc)}
+                          onDisconnect={() => remove(serviceForComposioToolkit(a.slug) ?? a.slug)}
+                          disconnecting={pending}
+                        />
+                      </li>
+                    );
+                  })}
                 </ul>
                 {allApps.length > shownCount ? (
                   <button
                     type="button"
-                    onClick={() => setShownCount((c) => c + 48)}
+                    onClick={() => setShownCount((n) => n + 48)}
                     className="mt-4 w-full rounded-2xl border border-line bg-raised py-3 text-[13px] font-medium text-ink-3 shadow-[var(--sh-1)] transition hover:border-line-strong hover:text-ink"
                   >
                     Show more apps
@@ -559,6 +659,17 @@ export function IntegrationsView({
           </p>
         ) : null}
       </div>
+
+      {perm ? (
+        <PermissionModal
+          serviceId={perm.id}
+          name={perm.name}
+          blurb={perm.blurb}
+          busy={busy !== null}
+          onAuthorize={authorizeFromModal}
+          onClose={() => (busy !== null ? null : setPerm(null))}
+        />
+      ) : null}
 
       {opening && connectable[opening] ? (
         <ConnectDialog

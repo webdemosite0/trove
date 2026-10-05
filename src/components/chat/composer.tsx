@@ -52,6 +52,7 @@ export function Composer({
   compact = false,
   busy = false,
   onStop,
+  dark = false,
 }: {
   onSend?: (value: string, attachments?: Attachment[]) => void;
   initialValue?: string;
@@ -65,6 +66,8 @@ export function Composer({
   compact?: boolean;
   busy?: boolean;
   onStop?: () => void;
+  /** Near-black card language for the Tro thread view. */
+  dark?: boolean;
 }) {
   const [value, setValue] = useState(initialValue);
   const [files, setFiles] = useState<Attachment[]>([]);
@@ -236,11 +239,11 @@ export function Composer({
       data-disabled={locked}
       data-focused={focused}
       className={cn(
-        "composer group relative w-full max-w-full border bg-raised/95 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.28)] backdrop-blur-md transition-all duration-200",
-        "focus-within:border-accent/40 focus-within:shadow-[0_24px_70px_-24px_rgba(99,102,241,0.45)]",
-        compact
-          ? "rounded-[22px] border-line"
-          : "rounded-[28px] border-line",
+        "composer group relative w-full max-w-full border backdrop-blur-md transition-all duration-200",
+        dark
+          ? "rounded-2xl border-white/10 bg-[#141417] shadow-[0_18px_50px_-24px_rgba(0,0,0,0.65)] focus-within:border-white/25 focus-within:shadow-[0_24px_70px_-24px_rgba(0,0,0,0.8)]"
+          : "bg-raised/95 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.28)] focus-within:border-accent/40 focus-within:shadow-[0_24px_70px_-24px_rgba(99,102,241,0.45)]",
+        !dark && (compact ? "rounded-[22px] border-line" : "rounded-[28px] border-line"),
         locked && "opacity-60",
       )}
     >
@@ -467,7 +470,7 @@ export function Composer({
   );
 
   return (
-    <BorderBeam active={beamActive} className="w-full rounded-[28px]">
+    <BorderBeam active={beamActive} className={cn("w-full", dark ? "rounded-2xl" : "rounded-[28px]")}>
       {shell}
     </BorderBeam>
   );

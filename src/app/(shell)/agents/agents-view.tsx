@@ -38,7 +38,6 @@ export function AgentsView({
   agents: AgentRow[];
   signedIn: boolean;
 }) {
-  const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const deleting = agents.find((a) => a.id === deletingId) ?? null;
 
@@ -75,20 +74,18 @@ export function AgentsView({
           </p>
         </div>
         {agents.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
+          <Link
+            href="/tros/new"
             className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-semibold shadow-md shadow-accent/15 transition hover:scale-[1.03]"
           >
             <Ico icon={FiPlus} motion="open" size={16} /> New Tro
-          </button>
+          </Link>
         ) : null}
       </header>
 
       {agents.length === 0 ? (
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
+        <Link
+          href="/tros/new"
           className="group flex w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-line-strong bg-raised/40 px-6 py-20 text-center transition hover:border-accent/40 hover:bg-raised/70"
         >
           <Bot size={72} seed="empty" state="idle" />
@@ -99,7 +96,7 @@ export function AgentsView({
           <span className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent">
             New Tro <FiArrowRight size={14} className="transition group-hover:translate-x-0.5" />
           </span>
-        </button>
+        </Link>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {agents.map((a, i) => {
@@ -151,20 +148,19 @@ export function AgentsView({
             );
           })}
 
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
+          <Link
+            href="/tros/new"
             className="flex min-h-[220px] flex-col items-center justify-center rounded-[24px] border border-dashed border-line-strong bg-transparent text-ink-3 transition hover:border-accent/40 hover:bg-raised/50 hover:text-ink"
           >
             <span className="grid size-12 place-items-center rounded-2xl bg-sunk">
               <FiPlus size={20} />
             </span>
             <span className="mt-3 text-[13.5px] font-semibold">Add Tro</span>
-          </button>
+          </Link>
         </div>
       )}
 
-      {creating ? <CreateModal onClose={() => setCreating(false)} /> : null}
+      {/* Creation moved to the /tros/new wizard — CreateModal kept for reference. */}
 
       <Modal
         open={Boolean(deleting)}

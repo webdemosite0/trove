@@ -208,5 +208,5 @@ export function ErrorNote({
   message: string;
   onRetry?: () => void;
 }) {
-  return <FailureNote error={message} onRetry={onRetry} className="mt-5" />;
+  return <FailureNote error={message} onRetry={onRetry} variant="centered" className="mt-5" />;
 }
