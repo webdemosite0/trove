@@ -13,6 +13,7 @@ import {
 } from "@/lib/design-model";
 import { drawDesign, hitTest, layerBounds, renderPNG } from "./render";
 import { cn } from "@/lib/utils";
+import { deriveRequestedName } from "@/lib/artifact-names";
 import {
   FiArrowLeft,
   FiArrowDown,
@@ -37,6 +38,12 @@ const SWATCHES = [
 const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
 type Panel = "none" | "text" | "shape" | "bg" | "layers" | "size" | "ai";
+
+/** Only auto-name while the user hasn't set one themselves. */
+function isDefaultDesignName(n: string): boolean {
+  const v = n.trim().toLowerCase();
+  return v === "" || v === "untitled design";
+}
 
 function ColorRow({
   value,
@@ -369,6 +376,10 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
       setLayers(data.layers);
       setSelectedId(null);
       setPanel("none");
+      // R6: adopt an explicitly requested name ("named \"Launch poster\"") —
+      // never overwrites a name the user set themselves.
+      const requested = deriveRequestedName(prompt);
+      if (requested && isDefaultDesignName(name)) setName(requested);
       return { ok: true, applied: true, count: data.layers.length };
     } catch (e) {
       const message = e instanceof Error ? e.message : "Generation failed.";
@@ -377,7 +388,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
     } finally {
       setGenerating(false);
     }
-  }, [aiPrompt, generating, sizeId]);
+  }, [aiPrompt, generating, sizeId, name]);
   const generateRef = useRef(generate);
   generateRef.current = generate;
 

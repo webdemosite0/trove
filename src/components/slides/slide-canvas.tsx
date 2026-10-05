@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import type { Slide } from "@/lib/slides";
 import {
   DEFAULT_THEME,
+  MIN_TEXT_CONTRAST,
+  contrastRatio,
   fontFamilyFor,
   patternBackground,
 } from "@/lib/slides";
@@ -62,9 +64,18 @@ export const SlideCanvas = memo(function SlideCanvas({
   const accent = theme.accent || DEFAULT_THEME.accent;
   // If the deck picked a canvas but no ink, match the text to the canvas
   // so a dark AI-generated theme doesn't render dark-on-dark in light mode.
+  // R4: an explicit ink that fails WCAG AA (4.5:1) against its own canvas —
+  // e.g. black ink on a near-black canvas — is treated as absent so the
+  // derived pairing below keeps text readable. (parseThemeLine now fixes
+  // this at generation time; this is the backstop for older saved decks.)
+  const inkRatio =
+    theme.canvas && theme.ink ? contrastRatio(theme.ink, theme.canvas) : null;
+  const inkUsable =
+    !theme.ink || inkRatio == null || inkRatio >= MIN_TEXT_CONTRAST;
+  const effectiveInk = inkUsable ? theme.ink : undefined;
   const canvasDark = isDarkColor(theme.canvas);
   const autoInk =
-    theme.ink || (canvasDark === true ? "#ececec" : canvasDark === false ? "#1a1a1e" : undefined);
+    effectiveInk || (canvasDark === true ? "#ececec" : canvasDark === false ? "#1a1a1e" : undefined);
 
   return (
     <div
@@ -80,7 +91,7 @@ export const SlideCanvas = memo(function SlideCanvas({
         ["--slide-accent" as string]: accent,
         // When we auto-derived ink from a dark/light canvas, push it into
         // the ink variables too so text-ink/text-ink-2/etc. stay readable.
-        ...(autoInk && !theme.ink
+        ...(autoInk && !effectiveInk
           ? {
               ["--color-ink" as string]: autoInk,
               ["--color-ink-2" as string]: canvasDark === true ? "#d4d4d8" : "#3f3f46",
@@ -88,7 +99,7 @@ export const SlideCanvas = memo(function SlideCanvas({
               ["--color-ink-4" as string]: canvasDark === true ? "#71717a" : "#a1a1aa",
             }
           : null),
-        color: theme.ink || autoInk || undefined,
+        color: effectiveInk || autoInk || undefined,
         background: patternBackground(theme.pattern, accent, theme.canvas),
       }}
     >

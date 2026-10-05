@@ -7,6 +7,7 @@ import { Thinking } from "@/components/chat/thinking";
 import { cn } from "@/lib/utils";
 import type { Doc } from "@/lib/documents";
 import type { StudioGenResult } from "@/lib/studio-events";
+import { deriveRequestedName } from "@/lib/artifact-names";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -198,8 +199,15 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
   // input) so it stops reading "Untitled document". Never touches a title
   // the user set themselves. The debounced persist reads titleRef at fire
   // time, so the new title is saved with the content.
-  function maybeAdoptTitle(html: string) {
+  function maybeAdoptTitle(html: string, prompt = "") {
     if (!isDefaultTitle(titleRef.current)) return;
+    // R6: an explicit name in the prompt ("named \"Q3 Plan\"") wins over the
+    // heading-derived title. Never touches a title the user set themselves.
+    const requested = deriveRequestedName(prompt);
+    if (requested) {
+      setTitle(requested);
+      return;
+    }
     const derived = deriveDocTitle(html);
     if (!derived) return;
     setTitle(derived);
@@ -293,7 +301,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
           const el = bodyRef.current;
           if (el && full.trim()) {
             el.innerHTML = full;
-            maybeAdoptTitle(full);
+            maybeAdoptTitle(full, prompt);
             setAiResult("");
             setAiPrompt("");
             setAiOpen(false);
@@ -349,7 +357,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       const sep = bodyRef.current.innerHTML.trim() ? "<p><br></p>" : "";
       bodyRef.current.innerHTML = `${bodyRef.current.innerHTML}${sep}${aiResult}`;
     }
-    maybeAdoptTitle(html);
+    maybeAdoptTitle(html, aiPrompt);
     setAiResult("");
     setAiPrompt("");
     setAiOpen(false);

@@ -42,9 +42,10 @@ async function cardFor(id: string, title: string, href: string, createdAt: numbe
   if (!conv || conv.kind !== "sheets") return null;
   const latest = [...conv.messages].reverse().find((m) => m.role === "model")?.text ?? "";
   const doc = decodeSheet(latest);
-  // Exists but unreadable (older format): keep the card so the detail route
-  // can explain the problem instead of 404ing.
-  if (!doc) return { ...fallback, title: conv.title || title };
+  // R5: exists but nothing readable (no sheet payload, not even the legacy
+  // markdown-table form) — the detail route can only show its "couldn't
+  // read" error screen, so drop the card instead of linking to a dead end.
+  if (!doc) return null;
   const { rows, cols } = gridDims(doc.grid);
   return {
     id,

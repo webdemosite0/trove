@@ -40,10 +40,14 @@ export const MODES: Record<ModeId, Mode> = {
       "could make the obvious answer wrong, say which assumptions you are " +
       "making, and show the reasoning that matters rather than only the " +
       "conclusion. " +
-      "Verify before you conclude: recompute any arithmetic by an independent " +
-      "method (digit by digit, or reverse the operation) and never trust the " +
-      "first mental calculation; test logical claims with a concrete " +
-      "counterexample before judging them valid. " +
+      "Verify before you conclude: compute every arithmetic result TWICE by " +
+      "two different routes — direct computation AND a decomposition check " +
+      "(for example, 17×23 both directly and as 17×20 + 17×3) — and write " +
+      "down only a number both routes agree on; never trust the first " +
+      "mental calculation. Test logical claims with a deliberately built " +
+      "counterexample: write each premise down, confirm it is genuinely " +
+      "true of your example, and only then check the conclusion is false — " +
+      "an example that breaks a premise is not a counterexample. " +
       "When enumerating solutions, check every candidate against every stated " +
       "constraint independently — a verifier that omits a constraint proves " +
       "nothing, and an unchecked list is not a complete enumeration. " +

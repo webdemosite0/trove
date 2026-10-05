@@ -1,4 +1,4 @@
-import { listRecents } from "@/lib/recents";
+import { listRecents, savedIdFromHref } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { parseDeck, enrichDeckImages, type Slide } from "@/lib/slides";
 import { DecksList } from "./decks-list";
@@ -18,7 +18,10 @@ export default async function SlidesPage() {
 
   const decks: DeckSummary[] = [];
   for (const r of recents) {
-    const cid = r.conversationId;
+    // R5: saved deck ids live in the path (/slides/<id>), not in ?c= — the
+    // old conversationId lookup was always null, so the grid listed nothing
+    // and validated nothing.
+    const cid = savedIdFromHref("slides", r.href);
     if (!cid) continue;
     const convo = await loadConversation(cid).catch(() => null);
     if (!convo || convo.kind !== "slides") continue;

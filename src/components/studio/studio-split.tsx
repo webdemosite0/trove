@@ -73,7 +73,8 @@ export function StudioSplit({
             ? result.stale
               ? "Generated, but you edited the preview meanwhile — review it there and apply it if you want it."
               : result.applied
-                ? "Done — preview updated."
+                ? "Done — preview updated." +
+                  (result.warning ? ` Note: ${result.warning}` : "")
                 : "Generated, but it wasn't applied to the preview. Check the preview and try again if needed."
             : `Couldn't do that: ${result.error} Try again or rephrase.`,
           // P1: failed (timeout/error) results carry their originating prompt
