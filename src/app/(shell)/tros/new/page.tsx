@@ -6,7 +6,7 @@ import { isMobile } from "@/lib/device";
 import { listConnections } from "@/lib/connections";
 import { serviceById } from "@/lib/services";
 
-export const metadata = { title: "Create agent" };
+export const metadata = { title: "Create Tro" };
 
 type Params = Record<string, string | string[] | undefined>;
 

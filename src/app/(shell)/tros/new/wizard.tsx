@@ -55,6 +55,8 @@ const STEPS: { id: StepId; label: string; icon: typeof FiUser }[] = [
 const field =
   "w-full rounded-2xl border border-line bg-ink/[0.04] px-4 py-3 text-[14px] text-ink outline-none transition placeholder:text-ink-4 focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20";
 const labelCls = "mb-1.5 block text-[12px] font-semibold text-ink-3";
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas";
 
 function titleCase(w: string): string {
   return w ? w[0]!.toUpperCase() + w.slice(1) : w;
@@ -286,11 +288,14 @@ export function NewTroWizard({
         <Link
           href="/tros"
           aria-label="Back to Tros"
-          className="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-ink/[0.04] text-ink-2 transition hover:bg-ink/10 hover:text-ink"
+          className={cn(
+            "grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-ink/[0.04] text-ink-2 transition hover:bg-ink/10 hover:text-ink",
+            focusRing,
+          )}
         >
           <FiArrowLeft size={17} />
         </Link>
-        <h1 className="text-[19px] font-semibold tracking-tight text-ink">Create agent</h1>
+        <h1 className="text-[19px] font-semibold tracking-tight text-ink">Create Tro</h1>
         <div className="ml-auto flex items-center gap-3">
           {state?.error ? (
             <p className="hidden items-center gap-1.5 text-[13px] text-red-400 sm:flex">
@@ -301,10 +306,13 @@ export function NewTroWizard({
             type="submit"
             disabled={pending || !identityValid}
             title={identityValid ? "Create this Tro" : "Finish the Identity step first (name, role, instructions)"}
-            className="btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100"
+            className={cn(
+              "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100",
+              focusRing,
+            )}
           >
             {pending ? <FiLoader size={15} className="animate-spin" /> : null}
-            Create Agent
+            Create Tro
           </button>
         </div>
       </header>
@@ -315,7 +323,7 @@ export function NewTroWizard({
       ) : null}
 
       {/* Stepper */}
-      <nav aria-label="Create agent steps" className="mt-6 flex items-center gap-1 overflow-x-auto pb-1">
+      <nav aria-label="Create Tro steps" className="mt-6 flex items-center gap-1 overflow-x-auto pb-1">
         {STEPS.map((s, i) => {
           const done = i < stepIdx;
           const current = i === stepIdx;
@@ -327,6 +335,7 @@ export function NewTroWizard({
                 onClick={() => setStep(s.id)}
                 className={cn(
                   "flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-medium transition",
+                  focusRing,
                   current
                     ? "bg-ink text-canvas"
                     : done
@@ -337,7 +346,7 @@ export function NewTroWizard({
                 <span
                   className={cn(
                     "grid size-5 place-items-center rounded-full text-[11px] font-bold",
-                    current ? "bg-canvas/20 text-canvas" : done ? "bg-emerald-400/20 text-emerald-300" : "bg-ink/10 text-ink-3",
+                    current ? "bg-canvas/20 text-canvas" : done ? "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-300" : "bg-ink/10 text-ink-3",
                   )}
                 >
                   {done ? <FiCheck size={11} /> : <Icon size={11} />}
@@ -373,7 +382,10 @@ export function NewTroWizard({
               <button
                 type="button"
                 onClick={() => setManualOpen((v) => !v)}
-                className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-violet-300 transition hover:text-violet-200"
+                className={cn(
+                  "mt-3 inline-flex items-center gap-1 rounded-md text-[13px] font-semibold text-violet-600 transition hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200",
+                  focusRing,
+                )}
               >
                 {manualOpen ? "Hide manual fields" : "Fill these in manually"} <FiChevronRight size={13} className={cn("transition", manualOpen && "rotate-90")} />
               </button>
@@ -406,7 +418,10 @@ export function NewTroWizard({
                   type="button"
                   onClick={handleHireCoworker}
                   disabled={pending}
-                  className="rounded-xl border border-line bg-raised px-5 py-2.5 text-[13.5px] font-semibold text-ink transition hover:border-line-strong hover:bg-hover"
+                  className={cn(
+                    "rounded-xl border border-line bg-raised px-5 py-2.5 text-[13.5px] font-semibold text-ink transition hover:border-line-strong hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60",
+                    focusRing,
+                  )}
                 >
                   Hire a coworker
                 </button>
@@ -414,7 +429,10 @@ export function NewTroWizard({
                   type="button"
                   onClick={handleDraftIdentity}
                   disabled={!(describe.trim() || name.trim() || role.trim())}
-                  className="rounded-xl bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-canvas transition hover:bg-ink/85 disabled:opacity-40"
+                  className={cn(
+                    "rounded-xl bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-canvas transition hover:bg-ink/85 disabled:cursor-not-allowed disabled:opacity-40",
+                    focusRing,
+                  )}
                 >
                   Draft identity
                 </button>
@@ -422,16 +440,19 @@ export function NewTroWizard({
 
               <div className="my-6 flex items-center gap-3" aria-hidden>
                 <span className="h-px flex-1 bg-ink/10" />
-                <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-4">Or add an agent another way</span>
+                <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-4">Or add a Tro another way</span>
                 <span className="h-px flex-1 bg-ink/10" />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Link
                   href={defaultTroId ? `/tros/${defaultTroId}` : "/chat"}
-                  className="group rounded-2xl border border-line bg-ink/[0.03] p-4 transition hover:border-violet-400/40 hover:bg-ink/[0.06]"
+                  className={cn(
+                    "group rounded-2xl border border-line bg-ink/[0.03] p-4 transition hover:border-violet-400/40 hover:bg-ink/[0.06]",
+                    focusRing,
+                  )}
                 >
-                  <span className="grid size-9 place-items-center rounded-xl bg-violet-400/15 text-violet-300">
+                  <span className="grid size-9 place-items-center rounded-xl bg-ink/10 text-ink-2">
                     <FiMessageSquare size={16} />
                   </span>
                   <span className="mt-3 block text-[14px] font-semibold text-ink">Describe it in a thread</span>
@@ -443,14 +464,17 @@ export function NewTroWizard({
                   <span className="grid size-9 place-items-center rounded-xl bg-ink/10 text-ink-2">
                     <FiUpload size={16} />
                   </span>
-                  <span className="mt-3 block text-[14px] font-semibold text-ink">Import an agent</span>
+                  <span className="mt-3 block text-[14px] font-semibold text-ink">Import a Tro</span>
                   <span className="mt-1 block text-[12.5px] leading-relaxed text-ink-4">
                     Paste a JSON definition — name, role, instructions, tools, and look.
                   </span>
                   <button
                     type="button"
                     onClick={() => setImportOpen((v) => !v)}
-                    className="mt-2 text-[12.5px] font-semibold text-violet-300 transition hover:text-violet-200"
+                    className={cn(
+                      "mt-2 rounded-md text-[12.5px] font-semibold text-violet-600 transition hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200",
+                      focusRing,
+                    )}
                   >
                     {importOpen ? "Close importer" : "Open importer"}
                   </button>
@@ -469,7 +493,10 @@ export function NewTroWizard({
                         type="button"
                         onClick={handleImport}
                         disabled={!importText.trim()}
-                        className="mt-2 rounded-xl bg-ink px-4 py-2 text-[13px] font-semibold text-canvas transition hover:bg-ink/85 disabled:opacity-40"
+                        className={cn(
+                          "mt-2 rounded-xl bg-ink px-4 py-2 text-[13px] font-semibold text-canvas transition hover:bg-ink/85 disabled:cursor-not-allowed disabled:opacity-40",
+                          focusRing,
+                        )}
                       >
                         Import
                       </button>
@@ -494,6 +521,7 @@ export function NewTroWizard({
                       aria-pressed={on}
                       className={cn(
                         "rounded-2xl border p-4 text-left transition",
+                        focusRing,
                         on
                           ? "border-violet-400/60 bg-violet-400/10"
                           : "border-line bg-ink/[0.03] hover:border-line-strong hover:bg-ink/[0.05]",
@@ -504,7 +532,7 @@ export function NewTroWizard({
                         <span
                           className={cn(
                             "grid size-5 place-items-center rounded-full border transition",
-                            on ? "border-violet-300 bg-violet-300 text-canvas" : "border-line-strong text-transparent",
+                            on ? "border-violet-500 bg-violet-500 text-canvas dark:border-violet-300 dark:bg-violet-300" : "border-line-strong text-transparent",
                           )}
                         >
                           <FiCheck size={12} />
@@ -538,7 +566,8 @@ export function NewTroWizard({
                       aria-pressed={on}
                       className={cn(
                         "rounded-full px-3.5 py-1.5 text-[12.5px] font-medium transition",
-                        on ? "bg-violet-400/20 text-violet-200" : "bg-ink/[0.06] text-ink-3 hover:text-ink",
+                        focusRing,
+                        on ? "bg-violet-500/15 text-violet-700 dark:bg-violet-400/20 dark:text-violet-200" : "bg-ink/[0.06] text-ink-3 hover:text-ink",
                       )}
                     >
                       {tool}
@@ -554,14 +583,14 @@ export function NewTroWizard({
                       key={c.service}
                       className="flex items-center gap-3 rounded-2xl border border-line bg-ink/[0.03] px-4 py-3"
                     >
-                      <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
                         <FiCheck size={14} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13.5px] font-semibold text-ink">{c.label}</span>
                         {c.account ? <span className="block truncate text-[12px] text-ink-4">{c.account}</span> : null}
                       </span>
-                      <span className="shrink-0 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[10.5px] font-bold text-emerald-300">
+                      <span className="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10.5px] font-bold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
                         Connected
                       </span>
                     </li>
@@ -570,12 +599,12 @@ export function NewTroWizard({
               ) : (
                 <div className="rounded-2xl border border-dashed border-line bg-ink/[0.02] px-4 py-5 text-center">
                   <p className="text-[13px] text-ink-3">No integrations connected yet.</p>
-                  <Link href="/settings" className="mt-1.5 inline-block text-[13px] font-semibold text-violet-300 hover:text-violet-200">
+                  <Link href="/settings" className={cn("mt-1.5 inline-block rounded-md text-[13px] font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200", focusRing)}>
                     Connect in Settings →
                   </Link>
                 </div>
               )}
-              <p className="mt-3 text-[12.5px] leading-relaxed text-ink-4">
+              <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
                 Connected integrations are available to every Tro — @mention one in chat and this
                 Tro can act through it.
               </p>
@@ -592,13 +621,14 @@ export function NewTroWizard({
                   aria-pressed={invocation === "thread"}
                   className={cn(
                     "rounded-2xl border p-4 text-left transition",
+                    focusRing,
                     invocation === "thread"
                       ? "border-violet-400/60 bg-violet-400/10"
                       : "border-line bg-ink/[0.03] hover:border-line-strong hover:bg-ink/[0.05]",
                   )}
                 >
                   <span className="flex items-center gap-2.5">
-                    <FiMessageSquare size={16} className="text-violet-300" />
+                    <FiMessageSquare size={16} className="text-violet-600 dark:text-violet-300" />
                     <span className="text-[14px] font-semibold text-ink">Open a chat thread</span>
                   </span>
                   <span className="mt-1.5 block text-[12.5px] leading-relaxed text-ink-3">
@@ -611,6 +641,7 @@ export function NewTroWizard({
                   aria-pressed={invocation === "none"}
                   className={cn(
                     "rounded-2xl border p-4 text-left transition",
+                    focusRing,
                     invocation === "none"
                       ? "border-violet-400/60 bg-violet-400/10"
                       : "border-line bg-ink/[0.03] hover:border-line-strong hover:bg-ink/[0.05]",
@@ -666,7 +697,7 @@ export function NewTroWizard({
                   className={cn(field, "resize-y")}
                 />
               </label>
-              <label className="mt-4 block">
+              <label className="mt-6 block">
                 <span className={labelCls}>Things to remember about you</span>
                 <textarea
                   value={seedMemory}
@@ -689,7 +720,10 @@ export function NewTroWizard({
               type="button"
               onClick={() => setStep(STEPS[Math.max(0, stepIdx - 1)]!.id)}
               disabled={stepIdx === 0}
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[13.5px] font-medium text-ink-3 transition hover:bg-ink/5 hover:text-ink disabled:opacity-30"
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[13.5px] font-medium text-ink-3 transition hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30",
+                focusRing,
+              )}
             >
               <FiArrowLeft size={14} /> Back
             </button>
@@ -697,7 +731,10 @@ export function NewTroWizard({
               <button
                 type="button"
                 onClick={() => setStep(STEPS[stepIdx + 1]!.id)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-ink px-5 py-2 text-[13.5px] font-semibold text-canvas transition hover:bg-ink/85"
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-xl bg-ink px-5 py-2 text-[13.5px] font-semibold text-canvas transition hover:bg-ink/85",
+                  focusRing,
+                )}
               >
                 Continue <FiChevronRight size={14} />
               </button>
@@ -705,10 +742,13 @@ export function NewTroWizard({
               <button
                 type="submit"
                 disabled={pending || !identityValid}
-                className="btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2 text-[13.5px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100"
+                className={cn(
+                  "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2 text-[13.5px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100",
+                  focusRing,
+                )}
               >
                 {pending ? <FiLoader size={14} className="animate-spin" /> : null}
-                Create Agent
+                Create Tro
               </button>
             )}
           </div>
@@ -741,7 +781,10 @@ export function NewTroWizard({
                   type="button"
                   onClick={() => setAvatarOpen((v) => !v)}
                   aria-label="Change mascot and accent"
-                  className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border border-line bg-raised text-ink-2 transition hover:bg-hover hover:text-ink"
+                  className={cn(
+                    "absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border border-line bg-raised text-ink-2 transition hover:bg-hover hover:text-ink",
+                    focusRing,
+                  )}
                 >
                   <FiEdit2 size={12} />
                 </button>
@@ -758,6 +801,7 @@ export function NewTroWizard({
                         title={`${SPECIES_META[s].label} — ${SPECIES_META[s].vibe}`}
                         className={cn(
                           "rounded-xl border p-1 transition",
+                          focusRing,
                           species === s ? "border-violet-400/70 bg-violet-400/10" : "border-transparent hover:border-line-strong hover:bg-ink/5",
                         )}
                       >
@@ -779,6 +823,7 @@ export function NewTroWizard({
                         aria-label={`Accent ${c}`}
                         className={cn(
                           "size-7 rounded-full ring-2 ring-offset-2 ring-offset-raised transition",
+                          focusRing,
                           accent === c ? "ring-ink" : "ring-transparent hover:ring-ink/40",
                         )}
                         style={{ background: c }}
@@ -792,7 +837,7 @@ export function NewTroWizard({
               </h2>
               <p className="truncate text-[13px] text-ink-3">{role.trim() || "No role yet"}</p>
             </div>
-            <dl className="mt-4 space-y-1 px-5 pb-5">
+            <dl className="mt-5 space-y-1 px-5 pb-5">
               <PreviewRow label="Model" value={activeMode.label} hint={activeMode.blurb} />
               <PreviewRow
                 label="Invocations"
@@ -819,7 +864,7 @@ export function NewTroWizard({
             </dl>
           </div>
           <p className="mt-3 px-1 text-[12px] leading-relaxed text-ink-4">
-            Preview updates live as you build. The Tro is created only when you press Create Agent.
+            Preview updates live as you build. The Tro is created only when you press Create Tro.
           </p>
         </aside>
       </div>
@@ -830,7 +875,7 @@ export function NewTroWizard({
 function StepHeading({ icon: Icon, title, blurb }: { icon: typeof FiUser; title: string; blurb: string }) {
   return (
     <div className="flex items-center gap-3.5">
-      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-violet-400/15 text-violet-300">
+      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-violet-500/10 text-violet-600 dark:bg-violet-400/15 dark:text-violet-300">
         <Icon size={19} />
       </span>
       <span>

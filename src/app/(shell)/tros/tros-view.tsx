@@ -703,7 +703,7 @@ export function TrosView({
             </div>
             <Link
               href="/tros/new"
-              className="btn-grad inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03]"
+              className="btn-grad inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-semibold text-ink transition hover:scale-[1.03]"
             >
               <Ico icon={FiPlus} size={14} />
               <span className="hidden sm:inline">New Tro</span>
@@ -923,7 +923,7 @@ export function TrosView({
                   <button
                     type="button"
                     onClick={assignTask}
-                    className="btn-grad shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03]"
+                    className="btn-grad shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold text-ink transition hover:scale-[1.03]"
                   >
                     Assign a task
                   </button>
@@ -1107,7 +1107,7 @@ export function TrosView({
                 <button
                   type="submit"
                   disabled={!brief.trim()}
-                  className="btn-grad shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold text-white transition hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
+                  className="btn-grad shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold text-ink transition hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
                 >
                   Hire
                 </button>
@@ -1310,7 +1310,7 @@ function CreateModal({ initial, onClose }: { initial: Draft; onClose: () => void
           <button type="button" onClick={onClose} className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover">
             Cancel
           </button>
-          <button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2 text-[13px] font-semibold text-white disabled:opacity-60">
+          <button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2 text-[13px] font-semibold text-ink disabled:opacity-60">
             {pending ? <FiLoader size={14} className="animate-spin" /> : null}
             Create Tro
           </button>
