@@ -55,6 +55,7 @@ export default async function ShellLayout({
       service: c.service,
       account: c.account ?? "",
       hint: c.hint ?? "",
+      grant: c.grant ?? null,
     })),
     connectable: connectableProviders(),
     composioOn: composioConfigured(),

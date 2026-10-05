@@ -3,6 +3,7 @@ import "server-only";
 import { all, batch, uid, num, str, type Row } from "@/lib/db";
 import { cache } from "react";
 import { currentUser } from "@/lib/auth";
+import { activeWorkspaceFromCookie } from "@/lib/workspaces";
 
 /** Every page that produces something worth coming back to. */
 export type RecentKind =
@@ -91,6 +92,10 @@ export async function remember(
     const user = await currentUser();
     if (!user) return;
 
+    // Tag the row with the active workspace so the switcher can filter it.
+    // Absent cookie (background jobs, unmigrated DBs) → Personal (NULL).
+    const workspaceId = await activeWorkspaceFromCookie();
+
     // One atomic batch: de-duplicate, insert, then prune. Splitting these
     // would let a concurrent read see the list briefly missing its newest row.
     await batch([
@@ -99,9 +104,9 @@ export async function remember(
         args: [user.id, kind, text],
       },
       {
-        sql: `INSERT INTO recents (id, user_id, kind, title, href, created_at)
-              VALUES (?, ?, ?, ?, ?, ?)`,
-        args: [uid("rec"), user.id, kind, text, href, Date.now()],
+        sql: `INSERT INTO recents (id, user_id, kind, title, href, workspace_id, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [uid("rec"), user.id, kind, text, href, workspaceId, Date.now()],
       },
       {
         sql: `DELETE FROM recents
@@ -130,16 +135,22 @@ export async function listRecents(
     const user = await currentUser();
     if (!user) return [];
 
+    // The sidebar workspace switcher scopes every recent list to the active
+    // workspace. NULL = Personal, the implicit default for legacy rows.
+    const workspaceId = await activeWorkspaceFromCookie();
+    const wsClause = workspaceId ? `AND workspace_id = ?` : `AND workspace_id IS NULL`;
+    const wsArgs = workspaceId ? [workspaceId] : [];
+
     const rows = await all(
       `SELECT id, kind, title, href, created_at
          FROM recents
-        WHERE user_id = ? AND kind = ?
+        WHERE user_id = ? AND kind = ? ${wsClause}
         ORDER BY created_at DESC
         LIMIT ?`,
-      [user.id, kind, limit],
+      [user.id, kind, ...wsArgs, limit],
     );
 
-    return rows.map((r) => ({
+    const recents = rows.map((r) => ({
       id: str(r.id),
       kind: str(r.kind) as RecentKind,
       title: str(r.title),
@@ -147,6 +158,11 @@ export async function listRecents(
       createdAt: num(r.created_at),
       conversationId: conversationIdFrom(str(r.href)),
     }));
+
+    // R5: the per-kind strips never ran the dead-link filter — only
+    // listAllRecents did. Drop rows whose saved item is confirmed gone so no
+    // strip links to a 404.
+    return filterDeadRecents(recents, user.id);
   } catch (e) {
     rethrowFrameworkErrors(e);
     console.error("recents: could not read", e);
@@ -166,13 +182,17 @@ async function readAllRecents(limit = 12, userId?: string): Promise<Recent[]> {
     const user = userId ? { id: userId } : await currentUser();
     if (!user) return [];
 
+    const workspaceId = await activeWorkspaceFromCookie();
+    const wsClause = workspaceId ? `AND workspace_id = ?` : `AND workspace_id IS NULL`;
+    const wsArgs = workspaceId ? [workspaceId] : [];
+
     const rows = await all(
       `SELECT id, kind, title, href, created_at
          FROM recents
-        WHERE user_id = ?
+        WHERE user_id = ? ${wsClause}
         ORDER BY created_at DESC
         LIMIT ?`,
-      [user.id, limit],
+      [user.id, ...wsArgs, limit],
     );
 
     const recents = rows.map((r) => ({
@@ -241,42 +261,65 @@ function placeholders(n: number): string {
  * The subset of (kind, id) pairs whose saved item still exists, checked
  * against the backing tables. Saved ids carry distinct prefixes per table
  * (conv_, dsg_), so a plain id set is collision-safe.
+ *
+ * R5: "exists" is not enough — a pair counts as live only when the backing
+ * row's kind matches what the recents row claims AND the conversation holds
+ * at least one message. The previous existence-only check kept rows whose
+ * destination 404s: every detail page rejects a wrong-kind row, and a
+ * message-less conversation cannot render anything.
  */
 export async function liveSavedIds(
   userId: string,
   pairs: { kind: RecentKind; id: string }[],
 ): Promise<Set<string>> {
-  const convIds = new Set<string>();
+  const convPairs = pairs.filter((p) => p.kind !== "design");
+  const convIds = convPairs.map((p) => p.id);
   const designIds = new Set<string>();
-  for (const p of pairs) {
-    if (p.kind === "design") designIds.add(p.id);
-    else convIds.add(p.id);
-  }
+  for (const p of pairs) if (p.kind === "design") designIds.add(p.id);
+
   const live = new Set<string>();
-  const [convRows, designRows]: [Row[], Row[]] = await Promise.all([
-    convIds.size
-      ? all(
-          `SELECT id FROM conversations WHERE user_id = ? AND id IN (${placeholders(convIds.size)})`,
-          [userId, ...convIds],
-        )
-      : Promise.resolve([]),
-    designIds.size
-      ? all(
-          `SELECT id FROM design_docs WHERE user_id = ? AND id IN (${placeholders(designIds.size)})`,
-          [userId, ...designIds],
-        )
-      : Promise.resolve([]),
-  ]);
-  for (const row of convRows) live.add(str(row.id));
+  const [convRows, designRows, msgRows]: [Row[], Row[], Row[]] =
+    await Promise.all([
+      convIds.length
+        ? all(
+            `SELECT id, kind FROM conversations WHERE user_id = ? AND id IN (${placeholders(convIds.length)})`,
+            [userId, ...convIds],
+          )
+        : Promise.resolve([]),
+      designIds.size
+        ? all(
+            `SELECT id FROM design_docs WHERE user_id = ? AND id IN (${placeholders(designIds.size)})`,
+            [userId, ...designIds],
+          )
+        : Promise.resolve([]),
+      // Message ids are unguessable, so scoping by conversation alone is
+      // fine — the id is only trusted when the user-scoped row above agrees.
+      convIds.length
+        ? all(
+            `SELECT DISTINCT conversation_id AS cid FROM messages WHERE conversation_id IN (${placeholders(convIds.length)})`,
+            [...convIds],
+          )
+        : Promise.resolve([]),
+    ]);
+  const kindById = new Map<string, string>();
+  for (const row of convRows) kindById.set(str(row.id), str(row.kind));
+  const hasMessages = new Set<string>();
+  for (const row of msgRows) hasMessages.add(str(row.cid));
+  for (const p of convPairs) {
+    if (kindById.get(p.id) === p.kind && hasMessages.has(p.id)) {
+      live.add(p.id);
+    }
+  }
   for (const row of designRows) live.add(str(row.id));
   return live;
 }
 
 /**
  * Removes rows whose href points at a saved item that is confirmed gone.
- * A row is dropped only when its id resolves AND is absent from the backing
- * table — anything ambiguous (unparseable href, validation error) is kept,
- * so a transient failure can never hide the user's work.
+ * A row is dropped only when its id resolves AND the backing row is missing,
+ * of a different kind, or holds no messages — anything ambiguous
+ * (unparseable href, validation error) is kept, so a transient failure can
+ * never hide the user's work.
  */
 export async function filterDeadRecents(
   recents: Recent[],

@@ -6,6 +6,7 @@ import { ensureProjectColumns } from "@/lib/projects";
 import { hrefFor } from "@/lib/conversations";
 import type { RecentKind } from "@/lib/recents";
 import { liveSavedIds, savedIdFromHref } from "@/lib/recents";
+import { activeWorkspaceFromCookie } from "@/lib/workspaces";
 
 export type WorkKind = RecentKind;
 
@@ -58,6 +59,13 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
   const safeLimit = Math.min(200, Math.max(1, Math.floor(limit)));
   await ensureProjectColumns().catch(() => undefined);
 
+  // Scoped to the active workspace like the recents strips. Agents have no
+  // workspace concept, so they stay global (documented in the workstream).
+  const workspaceId = await activeWorkspaceFromCookie();
+  const wsClause = workspaceId ? `AND c.workspace_id = ?` : `AND c.workspace_id IS NULL`;
+  const wsArgs = workspaceId ? [workspaceId] : [];
+  const recentsWsClause = workspaceId ? `AND workspace_id = ?` : `AND workspace_id IS NULL`;
+
   const [conversations, agents, legacy] = await Promise.all([
     all(
       `SELECT c.id, c.kind, c.title, c.updated_at,
@@ -69,10 +77,10 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
                  LIMIT 1
               ) AS preview_text
          FROM conversations c
-        WHERE c.user_id = ? AND c.kind <> 'site'
+        WHERE c.user_id = ? AND c.kind <> 'site' ${wsClause}
         ORDER BY c.updated_at DESC
         LIMIT ?`,
-      [user.id, safeLimit],
+      [user.id, ...wsArgs, safeLimit],
     ).catch(() => []),
     all(
       `SELECT id, name, role, created_at
@@ -85,10 +93,10 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
     all(
       `SELECT id, kind, title, href, created_at
          FROM recents
-        WHERE user_id = ?
+        WHERE user_id = ? ${recentsWsClause}
         ORDER BY created_at DESC
         LIMIT ?`,
-      [user.id, safeLimit],
+      [user.id, ...wsArgs, safeLimit],
     ).catch(() => []),
   ]);
 

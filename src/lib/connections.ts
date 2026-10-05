@@ -11,6 +11,36 @@ export interface Connection {
   account: string;
   hint: string;
   verifiedAt: number;
+  /**
+   * Access level id the user picked in the permission modal (e.g. "read-send").
+   * A *stated grant*: recorded on the connection, never sent to the provider —
+   * OAuth scopes are set by the provider's own approval screen.
+   */
+  grant?: string;
+}
+
+/** Extract the stated grant from a stored connection payload, if any. */
+function grantFromPayload(kind: string, secretStored: string): string | undefined {
+  if (kind !== "composio") return undefined;
+  const payload = canStoreSecrets()
+    ? safeDecrypt(secretStored)
+    : secretStored;
+  if (!payload || !payload.startsWith("{")) return undefined;
+  try {
+    const parsed = JSON.parse(payload) as { grant?: unknown };
+    return typeof parsed.grant === "string" && parsed.grant ? parsed.grant : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Best-effort decrypt that returns null instead of throwing. */
+function safeDecrypt(value: string): string | null {
+  try {
+    return decrypt(value);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -88,7 +118,7 @@ export async function listConnections(): Promise<Connection[]> {
   if (!user) return [];
 
   const rows = await all(
-    `SELECT service, kind, account, hint, verified_at FROM connections WHERE user_id = ?`,
+    `SELECT service, kind, account, hint, verified_at, secret FROM connections WHERE user_id = ?`,
     [user.id],
   );
 
@@ -98,6 +128,7 @@ export async function listConnections(): Promise<Connection[]> {
     account: str(r.account),
     hint: str(r.hint),
     verifiedAt: num(r.verified_at),
+    grant: grantFromPayload(str(r.kind), str(r.secret)),
   }));
 }
 

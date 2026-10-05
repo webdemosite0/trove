@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { saveConversation, type StoredMessage } from "@/lib/conversations";
+import { ownWorkspace } from "@/lib/workspaces";
 import type { RecentKind } from "@/lib/recents";
 
 export const runtime = "nodejs";
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
   let title = "";
   let messages: StoredMessage[] = [];
   let path: string | null = null;
+  let workspaceId: string | null = null;
 
   try {
     const body = await req.json();
@@ -27,12 +29,19 @@ export async function POST(req: NextRequest) {
     title = String(body?.title ?? "");
     messages = Array.isArray(body?.messages) ? body.messages : [];
     path = body?.path ? String(body.path) : null;
+    workspaceId = body?.workspaceId ? String(body.workspaceId) : null;
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
 
   if (!KINDS.has(kind)) {
     return Response.json({ error: "Unknown kind." }, { status: 400 });
+  }
+
+  // Tag the new thread with the active workspace. An id the user doesn't own
+  // is rejected rather than silently dropped to Personal.
+  if (workspaceId && !(await ownWorkspace(workspaceId))) {
+    return Response.json({ error: "Workspace not found." }, { status: 404 });
   }
 
   const clean = messages
@@ -54,6 +63,7 @@ export async function POST(req: NextRequest) {
       title,
       messages: clean,
       path,
+      workspaceId,
     });
     if (!saved) return Response.json({ error: "No identity." }, { status: 401 });
     return Response.json({ id: saved });

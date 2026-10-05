@@ -211,16 +211,23 @@ export async function executeTool(
   });
 }
 
-/** Persist a Composio-backed connection in the local connections table. */
+/** Persist a Composio-backed connection in the local connections table.
+ *
+ * `grant` is the access level the user picked in the permission modal
+ * (e.g. "read-send"). It is a *stated grant*, recorded on the connection
+ * record — the OAuth scopes themselves are set by the provider's own
+ * approval screen and are not changed here. */
 export async function markComposioConnection(
   userId: string,
   service: string,
   accountId: string,
+  grant?: string,
 ): Promise<void> {
   const payload = JSON.stringify({
     composio: true,
     toolkit: composioToolkitFor(service) ?? service,
     accountId,
+    ...(grant ? { grant } : null),
   });
   const now = Date.now();
   const secret = canStoreSecrets() ? encrypt(payload) : payload;
@@ -249,10 +256,16 @@ export async function markComposioConnection(
  * After the user finishes Connect Link, sync toolkit connection status
  * into the local connections table so Integrations UI shows Installed.
  *
+ * `grants` maps Trove service ids → access level ids the user picked in the
+ * permission modal. Each is recorded as the connection's stated grant; the
+ * provider's own OAuth scopes are never altered.
+ *
  * Uses DEFAULT_TOOLKITS only — never the full map (some toolkits need
  * custom auth_configs and break session create).
  */
-export async function syncComposioConnections(): Promise<{ synced: string[] }> {
+export async function syncComposioConnections(
+  grants?: Record<string, string>,
+): Promise<{ synced: string[] }> {
   const user = await currentUser();
   if (!user) return { synced: [] };
   if (!composioConfigured()) return { synced: [] };
@@ -291,7 +304,7 @@ export async function syncComposioConnections(): Promise<{ synced: string[] }> {
     const service = serviceForComposioToolkit(slug);
     if (!service) continue;
 
-    await markComposioConnection(user.id, service, accountId);
+    await markComposioConnection(user.id, service, accountId, grants?.[service]);
     synced.push(service);
   }
 

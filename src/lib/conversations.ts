@@ -1,8 +1,43 @@
 import "server-only";
 
-import { one, all, batch, uid, num, str } from "@/lib/db";
+import { one, all, batch, run, uid, num, str } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import type { RecentKind } from "@/lib/recents";
+
+/**
+ * R2 (P1) — does `messages.truncated` exist on this database?
+ *
+ * The QA-02 change writes the `truncated` column in the same commit that
+ * added its migration. If that migration never applied on a database
+ * (failed/skipped cold-start migration), every conversation save throws
+ * "no such column: truncated", the route 500s, and the client — which used
+ * to swallow the failure — showed a false "Saved" with nothing persisted.
+ * Detect once per instance, self-heal with the ALTER when possible, and
+ * otherwise fall back to writing/reading without the column so saves keep
+ * working (losing only the truncation flag, a minor display hint).
+ */
+let truncatedCol: boolean | null = null;
+
+async function messagesHaveTruncated(): Promise<boolean> {
+  if (truncatedCol !== null) return truncatedCol;
+  const cols = await all(`PRAGMA table_info(messages)`).catch(() => []);
+  if (cols.some((c) => str(c.name) === "truncated")) {
+    truncatedCol = true;
+    return true;
+  }
+  try {
+    await run(
+      `ALTER TABLE messages ADD COLUMN truncated INTEGER NOT NULL DEFAULT 0`,
+    );
+    truncatedCol = true;
+  } catch (e) {
+    // "duplicate column name" = a concurrent instance just added it; any
+    // other error means we proceed without the column.
+    const message = e instanceof Error ? e.message : String(e);
+    truncatedCol = /duplicate column name/i.test(message);
+  }
+  return truncatedCol;
+}
 
 export interface StoredMessage {
   role: "user" | "model";
@@ -67,12 +102,19 @@ export async function saveConversation({
   title,
   messages,
   path,
+  workspaceId,
 }: {
   id?: string | null;
   kind: RecentKind;
   title: string;
   messages: StoredMessage[];
   path?: string | null;
+  /**
+   * Active workspace the new thread belongs to. Null/undefined = Personal.
+   * Only set when a row is created — updating an existing thread never moves
+   * it between workspaces.
+   */
+  workspaceId?: string | null;
 }): Promise<string | null> {
   const user = await currentUser();
   if (!user) return null;
@@ -91,7 +133,10 @@ export async function saveConversation({
     if (!owned) convoId = null;
   }
 
-  const writes: { sql: string; args: (string | number)[] }[] = [];
+  const writes: { sql: string; args: (string | number | null)[] }[] = [];
+
+  // R2 (P1): resolve before building the message inserts (see above).
+  const withTruncated = await messagesHaveTruncated();
 
   if (convoId) {
     writes.push({
@@ -105,18 +150,36 @@ export async function saveConversation({
   } else {
     convoId = uid("conv");
     writes.push({
-      sql: `INSERT INTO conversations (id, user_id, kind, title, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [convoId, user.id, kind, text, now, now],
+      sql: `INSERT INTO conversations (id, user_id, kind, title, workspace_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [convoId, user.id, kind, text, workspaceId ?? null, now, now],
     });
   }
 
   messages.forEach((m, i) => {
-    writes.push({
-      sql: `INSERT INTO messages (id, conversation_id, role, text, truncated, seq, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      args: [uid("msg"), convoId as string, m.role, m.text, m.truncated ? 1 : 0, i, now],
-    });
+    // R2 (P1): tolerate a database where the QA-02 `truncated` migration
+    // never applied — a missing column must not fail the entire save.
+    if (withTruncated) {
+      writes.push({
+        sql: `INSERT INTO messages (id, conversation_id, role, text, truncated, seq, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          uid("msg"),
+          convoId as string,
+          m.role,
+          m.text,
+          m.truncated ? 1 : 0,
+          i,
+          now,
+        ],
+      });
+    } else {
+      writes.push({
+        sql: `INSERT INTO messages (id, conversation_id, role, text, seq, created_at)
+              VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [uid("msg"), convoId as string, m.role, m.text, i, now],
+      });
+    }
   });
 
   const href = hrefFor(kind, convoId, path);
@@ -125,9 +188,9 @@ export async function saveConversation({
     args: [user.id, kind, href],
   });
   writes.push({
-    sql: `INSERT INTO recents (id, user_id, kind, title, href, created_at)
-          VALUES (?, ?, ?, ?, ?, ?)`,
-    args: [uid("rec"), user.id, kind, text, href, now],
+    sql: `INSERT INTO recents (id, user_id, kind, title, href, workspace_id, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    args: [uid("rec"), user.id, kind, text, href, workspaceId ?? null, now],
   });
 
   await batch(writes);
@@ -147,8 +210,12 @@ export async function loadConversation(id: string): Promise<Conversation | null>
 
   if (!head) return null;
 
+  // R2 (P1): same missing-column tolerance as the write path.
+  const withTruncated = await messagesHaveTruncated();
   const rows = await all(
-    `SELECT role, text, truncated FROM messages WHERE conversation_id = ? ORDER BY seq ASC`,
+    withTruncated
+      ? `SELECT role, text, truncated FROM messages WHERE conversation_id = ? ORDER BY seq ASC`
+      : `SELECT role, text FROM messages WHERE conversation_id = ? ORDER BY seq ASC`,
     [id],
   );
 
@@ -160,7 +227,7 @@ export async function loadConversation(id: string): Promise<Conversation | null>
     messages: rows.map((r) => ({
       role: str(r.role) === "user" ? "user" : "model",
       text: str(r.text),
-      truncated: num(r.truncated) === 1,
+      truncated: withTruncated && num(r.truncated) === 1,
     })),
   };
 }
