@@ -27,6 +27,8 @@ function assetUrl(assets: ReleaseAsset[], pattern: RegExp) {
   );
 }
 
+const RELEASES_URL = "https://github.com/webdemosite0/trove/releases";
+
 export async function GET() {
   try {
     const res = await fetch(
@@ -42,7 +44,9 @@ export async function GET() {
 
     if (!res.ok) {
       return Response.json(
-        { available: false, reason: "release_lookup_failed" },
+        // QA-11: distinguish "couldn't check" from "no release exists" so the
+        // UI never claims installers are "being built" when a lookup just failed.
+        { available: false, reason: "release_lookup_failed", releaseUrl: RELEASES_URL },
         { headers: { "Cache-Control": "public, max-age=60" } },
       );
     }
@@ -56,7 +60,7 @@ export async function GET() {
 
     if (!release) {
       return Response.json(
-        { available: false, reason: "release_building" },
+        { available: false, reason: "release_building", releaseUrl: RELEASES_URL },
         { headers: { "Cache-Control": "public, max-age=60" } },
       );
     }
@@ -88,14 +92,14 @@ export async function GET() {
         available: Boolean(downloads.windows || downloads.macos || downloads.linux),
         tag: release.tag_name ?? "",
         publishedAt: release.published_at ?? "",
-        releaseUrl: release.html_url ?? "https://github.com/webdemosite0/trove/releases",
+        releaseUrl: release.html_url ?? RELEASES_URL,
         downloads,
       },
       { headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=600" } },
     );
   } catch {
     return Response.json(
-      { available: false, reason: "release_lookup_failed" },
+      { available: false, reason: "release_lookup_failed", releaseUrl: RELEASES_URL },
       { headers: { "Cache-Control": "public, max-age=60" } },
     );
   }

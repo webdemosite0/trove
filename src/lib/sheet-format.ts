@@ -38,6 +38,57 @@ export function cellRefLabel(col: number, row: number): string {
   return `${columnLabel(col)}${row + 1}`;
 }
 
+/**
+ * Post-generation sanity check (QA-06): flag formulas that reference their
+ * own cell, directly (=A2*B2 placed in B2) or through a range
+ * (=MAX(B2:B4) placed in B4). Self-references render as #ERR in the engine,
+ * so catching them at generation time avoids shipping broken sheets.
+ * Returns human-readable issue strings like "B2 references itself".
+ */
+export function findFormulaIssues(raw: string[][]): string[] {
+  const issues: string[] = [];
+  const refRe =
+    /\$?[A-Za-z]{1,3}\$?[0-9]{1,7}(?::\$?[A-Za-z]{1,3}\$?[0-9]{1,7})?/g;
+  for (let r = 0; r < raw.length; r++) {
+    const row = raw[r];
+    if (!row) continue;
+    for (let c = 0; c < row.length; c++) {
+      const v = (row[c] ?? "").trim();
+      if (!v.startsWith("=")) continue;
+      const body = v.slice(1);
+      refRe.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = refRe.exec(body))) {
+        const token = m[0];
+        // Skip function names like LOG10(
+        if (body[m.index + token.length] === "(") continue;
+        const label = cellRefLabel(c, r);
+        if (token.includes(":")) {
+          const [a, b] = token.split(":");
+          const ra = parseCellRef(a);
+          const rb = parseCellRef(b);
+          if (!ra || !rb) continue;
+          const c0 = Math.min(ra.col, rb.col);
+          const c1 = Math.max(ra.col, rb.col);
+          const r0 = Math.min(ra.row, rb.row);
+          const r1 = Math.max(ra.row, rb.row);
+          if (c >= c0 && c <= c1 && r >= r0 && r <= r1) {
+            issues.push(`${label} includes itself in range ${token.toUpperCase()}`);
+            break;
+          }
+        } else {
+          const ref = parseCellRef(token);
+          if (ref && ref.col === c && ref.row === r) {
+            issues.push(`${label} references itself`);
+            break;
+          }
+        }
+      }
+    }
+  }
+  return issues;
+}
+
 // ---------------------------------------------------------------------------
 // Formula engine
 // ---------------------------------------------------------------------------

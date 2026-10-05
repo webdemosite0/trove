@@ -183,7 +183,9 @@ export function parseDeck(markdown: string): Slide[] {
     }
 
     if (!current) {
-      current = blank(plain.slice(0, 80));
+      // No slide open yet and this isn't a heading, theme, or directive:
+      // it's conversational framing ("Okay, here's your deck…"). Drop it
+      // rather than turning it into a phantom first slide (QA-07).
       continue;
     }
 
@@ -218,6 +220,160 @@ export function parseDeck(markdown: string): Slide[] {
 
   push();
   return slides;
+}
+
+/* --------------------- generation validation (QA-07) --------------------- */
+
+/**
+ * Strip conversational framing before the first real slide. The deck format
+ * starts with a `# ` title heading, so anything before the first heading —
+ * "Okay, here's your deck…", "I will also…" — is preamble, not content.
+ * Structural Theme lines hiding in the preamble are preserved.
+ */
+export function stripDeckPreamble(markdown: string): string {
+  const lines = markdown.split("\n");
+  let inCode = false;
+  let firstHeading = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (/^```/.test(t)) {
+      inCode = !inCode;
+      continue;
+    }
+    if (!inCode && /^#{1,3}\s+\S/.test(t)) {
+      firstHeading = i;
+      break;
+    }
+  }
+  if (firstHeading <= 0) return markdown;
+  const kept: string[] = [];
+  for (let i = 0; i < firstHeading; i++) {
+    if (parseThemeLine(clean(lines[i]))) kept.push(lines[i]);
+  }
+  return [...kept, ...lines.slice(firstHeading)].join("\n");
+}
+
+export interface DeckRequirements {
+  /** Exact total slides requested (incl. title slide), or the upper bound of a range. */
+  slideCount: number | null;
+  /** Lower bound when the user gave a range like "8-12 slides". */
+  minSlides: number | null;
+  /** Verbatim tokens (e.g. "END-QA-DECK") that must appear in the final deck. */
+  markers: string[];
+}
+
+/**
+ * Read structured requirements out of the user's prompt:
+ * - an exact slide count ("exactly 5 slides", "a 5-slide deck", "5 slides")
+ *   or a range ("8–12 slides" → min 8, max 12);
+ * - required verbatim markers: quoted ALL-CAPS tokens, or dashed ALL-CAPS
+ *   tokens like END-QA-DECK.
+ */
+export function extractDeckRequirements(prompt: string): DeckRequirements {
+  const text = prompt.replace(/\s+/g, " ");
+  let slideCount: number | null = null;
+  let minSlides: number | null = null;
+
+  const range = text.match(/(\d+)\s*(?:-|–|—|\bto\b)\s*(\d+)\s*-?\s*slides?\b/i);
+  if (range) {
+    minSlides = parseInt(range[1], 10);
+    slideCount = parseInt(range[2], 10);
+    if (minSlides > slideCount) [minSlides, slideCount] = [slideCount, minSlides];
+  } else {
+    const exact =
+      text.match(/exactly\s+(\d+)\s*-?\s*slides?\b/i) ||
+      text.match(/(\d+)\s*-\s*slides?\b/i) ||
+      text.match(/(\d+)\s+slides?\b/i);
+    if (exact) {
+      slideCount = parseInt(exact[1], 10);
+      minSlides = slideCount;
+    }
+  }
+
+  const markers = new Set<string>();
+  for (const m of text.matchAll(/["'`]([A-Z0-9][A-Z0-9_.-]{2,})["'`]/g)) {
+    markers.add(m[1]);
+  }
+  for (const m of text.matchAll(/\b([A-Z][A-Z0-9]*(?:-[A-Z0-9]+){1,4})\b/g)) {
+    markers.add(m[1]);
+  }
+  return { slideCount, minSlides, markers: [...markers] };
+}
+
+export interface DeckIssue {
+  kind: "count" | "marker";
+  message: string;
+}
+
+/**
+ * Validate parsed slides against the user's requirements. Returns issues;
+ * the caller decides which ones block saving.
+ */
+export function validateDeck(slides: Slide[], req: DeckRequirements): DeckIssue[] {
+  const issues: DeckIssue[] = [];
+  if (req.slideCount != null && slides.length > req.slideCount) {
+    issues.push({
+      kind: "count",
+      message: `You asked for ${req.slideCount} slides but the draft came back with ${slides.length}.`,
+    });
+  }
+  const min = req.minSlides ?? req.slideCount;
+  if (min != null && slides.length < min) {
+    const want =
+      req.minSlides != null && req.minSlides !== req.slideCount
+        ? `${req.minSlides}–${req.slideCount}`
+        : String(min);
+    issues.push({
+      kind: "count",
+      message: `You asked for ${want} slides but only ${slides.length} came back. Try again or add slides manually.`,
+    });
+  }
+  if (req.markers.length) {
+    const text = serializeDeck(slides);
+    for (const marker of req.markers) {
+      if (!text.includes(marker)) {
+        issues.push({
+          kind: "marker",
+          message: `Required text "${marker}" is missing from the generated deck.`,
+        });
+      }
+    }
+  }
+  return issues;
+}
+
+/**
+ * Trim extras down to the requested count. "Too few" is left for
+ * validateDeck to report as a mismatch — slides are never invented.
+ */
+export function enforceSlideCount(slides: Slide[], req: DeckRequirements): Slide[] {
+  if (req.slideCount != null && slides.length > req.slideCount) {
+    return slides.slice(0, req.slideCount);
+  }
+  return slides;
+}
+
+/** Image briefs that carry no real visual information. */
+const DEGENERATE_BRIEF = /^(photo|visual panel|image|picture|illustration|placeholder|n\/?a|none|tbd)\b/i;
+
+/**
+ * Drop photo/split frames that have no real image prompt. A PhotoFrame with
+ * a degenerate brief renders as a "PHOTO / Visual panel" placeholder, which
+ * reads as content — so demote the slide to a text layout instead and the
+ * slot simply isn't there. This aligns generation with PhotoFrame's
+ * contract: it only ever receives real briefs or real URLs.
+ */
+export function sanitizeDeckImages(slides: Slide[]): Slide[] {
+  return slides.map((s) => {
+    if (s.layout !== "photo" && s.layout !== "split") return s;
+    const brief = (s.image ?? "").trim();
+    if (brief && !DEGENERATE_BRIEF.test(brief)) return s;
+    return {
+      ...s,
+      image: undefined,
+      layout: (s.bullets.length ? "bullets" : "title") as SlideLayout,
+    };
+  });
 }
 
 export function serializeDeck(slides: Slide[], theme?: DeckTheme): string {

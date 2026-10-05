@@ -39,7 +39,16 @@ export const MODES: Record<ModeId, Mode> = {
       "Work the problem through before answering. Consider the cases that " +
       "could make the obvious answer wrong, say which assumptions you are " +
       "making, and show the reasoning that matters rather than only the " +
-      "conclusion.",
+      "conclusion. " +
+      "Verify before you conclude: recompute any arithmetic by an independent " +
+      "method (digit by digit, or reverse the operation) and never trust the " +
+      "first mental calculation; test logical claims with a concrete " +
+      "counterexample before judging them valid. " +
+      "When enumerating solutions, check every candidate against every stated " +
+      "constraint independently — a verifier that omits a constraint proves " +
+      "nothing, and an unchecked list is not a complete enumeration. " +
+      "Never present code as executed unless it actually ran; if you cannot " +
+      "run it, verify by hand and say so plainly.",
   },
   creative: {
     id: "creative",

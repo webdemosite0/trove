@@ -636,7 +636,7 @@ function MessagingPane() {
       <Card>
         <p className="text-[15px] font-semibold">WhatsApp</p>
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
-          Chat with Muse from WhatsApp. Connection is managed in the Muse app under
+          Chat with Trove from WhatsApp. Connection is managed in the Trove app under
           Chat connections.
         </p>
       </Card>
@@ -653,7 +653,7 @@ function DevicesPane() {
         <p className="mt-1.5 text-[13.5px] text-ink-3">Signed in via the web app.</p>
       </Card>
       <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
-        Pair your phone from the Muse app to sync health data, location, and messages.
+        Pair your phone from the Trove app to sync health data, location, and messages.
       </p>
     </div>
   );

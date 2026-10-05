@@ -6,13 +6,14 @@ import { ToastProvider } from "@/components/ui/toast";
 import { isMobile } from "@/lib/device";
 import { MobileShell } from "@/components/mobile/shell";
 import { StudioChrome } from "@/components/shell/studio-chrome";
+import { SettingsHost } from "@/components/settings/settings-host";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
 /**
- * Studio layout — websites, documents, spreadsheets, slides, design.
+ * Studio layout — documents, spreadsheets, slides, design.
  * Auth: resolveShell(). Credits: StudioChrome via /api/shell-meta.
  * NOTE: This file intentionally does not read balance from the shell gate.
  */
@@ -47,6 +48,8 @@ export default async function StudioLayout({
       <ToastProvider>
         <Backdrop />
         <StudioChrome user={user}>{children}</StudioChrome>
+        {/* QA-08: mount the settings modal so the TopBar account button works in editors */}
+        <SettingsHost user={user} balance={null} />
       </ToastProvider>
     </NavProvider>
   );
