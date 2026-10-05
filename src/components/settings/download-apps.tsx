@@ -24,6 +24,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 type NativeDownloads = {
   available?: boolean;
+  reason?: string;
   tag?: string;
   releaseUrl?: string;
   downloads?: {
@@ -206,6 +207,10 @@ export function DownloadApps() {
 
   const recommendedNative = recommended ? nativeUrl(native, recommended.id) : null;
 
+  // QA-11: never claim installers are "being built" when the release lookup
+  // itself failed — a desktop-* release with real installers exists on GitHub.
+  const lookupFailed = native?.reason === "release_lookup_failed";
+
   return (
     <div className="space-y-5 pb-8">
       <section className="relative overflow-hidden rounded-[26px] border border-line-strong bg-raised p-5 shadow-[var(--elev)] sm:p-6">
@@ -252,7 +257,9 @@ export function DownloadApps() {
         description={
           native?.available
             ? `Native desktop release ${native.tag || ""} is available. Mobile currently installs as a web app.`
-            : "Native desktop installers are being built. Browser installation remains available while the release finishes."
+            : lookupFailed
+              ? "We couldn't check for the latest desktop build just now — get it directly from GitHub releases below."
+              : "Native desktop installers are being built. Browser installation remains available while the release finishes."
         }
         className="border-line-strong bg-raised shadow-[var(--elev)]"
       >
@@ -302,7 +309,9 @@ export function DownloadApps() {
                     {direct
                       ? `Download ${platform.nativeExtension}`
                       : platform.nativeExtension
-                        ? "Native build pending"
+                        ? lookupFailed
+                          ? "Check GitHub releases"
+                          : "Native build pending"
                         : "Install steps"}
                     {direct ? <FiDownload size={12} /> : <FiExternalLink size={12} />}
                   </span>
@@ -319,7 +328,7 @@ export function DownloadApps() {
             rel="noreferrer"
             className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium text-accent hover:underline"
           >
-            View desktop release
+            {lookupFailed ? "Get the desktop build from GitHub releases" : "View desktop release"}
             <FiExternalLink size={12} />
           </a>
         ) : null}
@@ -335,7 +344,9 @@ export function DownloadApps() {
                 ? "iOS requires Safari’s Add to Home Screen flow until a signed App Store build is configured."
                 : selected === "android"
                   ? "Android currently uses the installable web app while the signed APK/Play Store build is prepared."
-                  : "The native release is still building; use the browser install flow in the meantime."
+                  : lookupFailed
+                    ? "We couldn't verify the latest native build — use the GitHub releases link above, or the browser install flow in the meantime."
+                    : "The native release is still building; use the browser install flow in the meantime."
           }
           className="border-line-strong bg-raised shadow-[var(--elev)]"
         >
