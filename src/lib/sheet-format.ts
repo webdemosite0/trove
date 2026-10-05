@@ -537,6 +537,37 @@ export function gridDims(grid: string[][]): { rows: number; cols: number } {
   };
 }
 
+/**
+ * R1 (P1): does the parsed grid hold any formula cells? A formula cell is a
+ * raw value starting with "=", e.g. "=1-2" or "=SUM(A1:A3)". The sheet
+ * evaluates these for display; a grid with none where the user asked for
+ * formulas means the model pre-computed constants instead.
+ */
+export function gridHasFormulas(raw: string[][]): boolean {
+  for (const row of raw) {
+    if (!row) continue;
+    for (const cell of row) {
+      if ((cell ?? "").trim().startsWith("=")) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * R1 (P1): did the user's request explicitly ask for formulas? Matches
+ * "=FUNCTION(" patterns (e.g. "=SUM(", "=A2*B2" is caught by the cell-ref
+ * arm) or the literal word "formula"/"formulas".
+ */
+export function requestMentionsFormulas(prompt: string): boolean {
+  const p = prompt ?? "";
+  if (/\bformulas?\b/i.test(p)) return true;
+  // =FN( … e.g. =SUM(, =AVERAGE( — function-call formulas
+  if (/=\s*[A-Za-z]{2,}\s*\(/.test(p)) return true;
+  // =<cell or digit/paren> … e.g. =A2*B2, =1-2, =(A1+A2)/2
+  if (/=\s*(?:\$?[A-Za-z]{1,3}\$?[0-9]{1,7}|[0-9(])/.test(p)) return true;
+  return false;
+}
+
 /** Rough relative time for list cards. */
 export function timeAgo(ts: number): string {
   const s = Math.floor((Date.now() - ts) / 1000);

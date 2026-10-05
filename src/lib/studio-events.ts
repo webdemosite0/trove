@@ -26,6 +26,13 @@ export type StudioGenResult =
       count?: number;
       /** Echo of the requesting sidebar prompt's id (request ownership). */
       reqId?: string;
+      /**
+       * R3 (P1): non-blocking generation caveat — e.g. the deck was trimmed
+       * to the requested slide count, or the output looked truncated. The
+       * content WAS applied, but completion is qualified; the sidebar
+       * appends this to its confirmation instead of a bare "Done".
+       */
+      warning?: string;
     }
   | {
       ok: false;

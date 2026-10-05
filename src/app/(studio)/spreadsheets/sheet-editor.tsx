@@ -13,7 +13,9 @@ import {
   decodeSheet,
   encodeSheet,
   gridDims,
+  gridHasFormulas,
   normalizeGrid,
+  requestMentionsFormulas,
   type SheetDoc,
 } from "@/lib/sheet-format";
 import { parseMarkdownTable } from "@/lib/export";
@@ -21,6 +23,7 @@ import { downloadCsv, downloadXlsx } from "@/lib/export";
 import { useSaved } from "@/lib/use-saved";
 import { localTimeZone } from "@/lib/context";
 import type { StudioGenResult } from "@/lib/studio-events";
+import { deriveRequestedName } from "@/lib/artifact-names";
 
 const AI_EXAMPLES = [
   "A 12-month SaaS revenue forecast",
@@ -116,6 +119,10 @@ export function SheetEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  // R2 (P1): explicit-save failures surface here, honestly. The AI error
+  // state above is for generation; a failed save must not be retried as a
+  // regeneration.
+  const [saveError, setSaveError] = useState<string | null>(null);
   const dirtyRef = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /**
@@ -164,17 +171,25 @@ export function SheetEditor({
     };
   }, [grid, title, sheetId]);
 
+  /**
+   * R2 (P1): returns true only when the server CONFIRMED persistence.
+   * "Saved" flashes and the local draft is dropped only on confirmation —
+   * a failed save must never read as saved, and the draft (the user's
+   * recovery copy) must survive it.
+   */
   const doSave = useCallback(
-    async (g: string[][], t: string, userPrompt: string) => {
+    async (g: string[][], t: string, userPrompt: string): Promise<boolean> => {
       const clean = normalizeGrid(g);
-      await save(
+      const result = await save(
         [
           { role: "user", text: userPrompt || t },
           { role: "model", text: encodeSheet({ title: t, grid: clean }) },
         ],
         t,
       );
+      if (!result.ok) return false;
       dirtyRef.current = false;
+      setSaveError(null);
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 1800);
       try {
@@ -182,9 +197,22 @@ export function SheetEditor({
       } catch {
         /* ignore */
       }
+      return true;
     },
     [save, sheetId],
   );
+
+  /** Explicit Save button: an honest error on failure, never a false Saved. */
+  const handleSaveClick = useCallback(() => {
+    setSaveError(null);
+    void doSave(grid, title, prompt || title).then((ok) => {
+      if (!ok) {
+        setSaveError(
+          "Couldn't save this spreadsheet. Your work is still here — check your connection and try again.",
+        );
+      }
+    });
+  }, [doSave, grid, title, prompt]);
 
   const runAi = useCallback(
     async (text: string, reqId?: string): Promise<StudioGenResult> => {
@@ -257,10 +285,24 @@ export function SheetEditor({
           if (!out.trim()) throw new Error("The model returned nothing. Try again.");
           const table = parseMarkdownTable(out);
           if (!table.length) throw new Error("Couldn't parse a table from the response.");
+          // R1 (P1): if the request explicitly asked for formulas but the
+          // parsed grid holds zero formula cells, the model pre-computed
+          // constants instead of preserving formulas — fail honestly (with
+          // a retry path via the sidebar) instead of presenting constants
+          // as a successful formula sheet.
+          if (requestMentionsFormulas(q) && !gridHasFormulas(table)) {
+            throw new Error(
+              "Your request asked for formulas, but the result came back with none — the values were computed instead of stored as formulas. Try again.",
+            );
+          }
           lastSignal = `parsed:${table.length}x${table[0]?.length ?? 0}`;
           const next = normalizeGrid(table);
+          // R6: an explicit name in the prompt ("named \"Q3 Budget\"") wins
+          // over the truncated-prompt fallback. Only applied while the title
+          // is still the default — never over a manual title.
           const derivedTitle =
-            q.length > 48 ? q.slice(0, 48).trimEnd() + "…" : q;
+            deriveRequestedName(q) ??
+            (q.length > 48 ? q.slice(0, 48).trimEnd() + "…" : q);
           const finalTitle =
             titleRef.current === "Untitled sheet" ? derivedTitle : titleRef.current;
           // QA-05: only apply if this request is still the newest and no manual
@@ -279,10 +321,13 @@ export function SheetEditor({
           lastSignal = "saving";
           // Saving is best-effort bookkeeping: the grid above is already
           // applied and visible, so never let a slow save hold the
-          // completion signal hostage — race it and move on.
+          // completion signal hostage — race it and move on. A failed
+          // background save stays silent here (no false "Saved": doSave
+          // only flashes on confirmation); the explicit Save button owns
+          // the honest error path.
           const savedInTime = await Promise.race([
             doSave(next, finalTitle, q).then(
-              () => true,
+              (ok) => ok,
               () => false,
             ),
             new Promise<boolean>((r) => setTimeout(() => r(false), 15000)),
@@ -434,7 +479,7 @@ export function SheetEditor({
         ) : null}
         <button
           type="button"
-          onClick={() => void doSave(grid, title, prompt || title)}
+          onClick={handleSaveClick}
           className="shrink-0 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white transition hover:brightness-110 active:scale-95"
         >
           Save
@@ -507,6 +552,13 @@ export function SheetEditor({
       {error ? (
         <div className="shrink-0 px-3 pt-2 sm:px-4">
           <FailureNote error={error} onRetry={() => void runAi(prompt)} />
+        </div>
+      ) : null}
+      {/* R2 (P1): an explicit save that the server did not confirm surfaces
+          as a failure with a save retry — never as a silent "Saved". */}
+      {saveError ? (
+        <div className="shrink-0 px-3 pt-2 sm:px-4">
+          <FailureNote error={saveError} onRetry={handleSaveClick} />
         </div>
       ) : null}
       {/* QA-05: a generation result that arrived stale (user edited or a newer

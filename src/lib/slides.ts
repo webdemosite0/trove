@@ -114,14 +114,14 @@ function finalize(slide: Slide): Slide {
 function parseThemeLine(plain: string): DeckTheme | null {
   const full = plain.match(THEME_FULL);
   if (full) {
-    return {
+    return ensureThemeContrast({
       name: full[1].trim() || "custom",
       accent: full[2],
       font: full[3].toLowerCase() as DeckFont,
       pattern: full[4].toLowerCase() as DeckPattern,
       canvas: full[5] || undefined,
       ink: full[6] || undefined,
-    };
+    });
   }
   const loose = plain.match(THEME_LOOSE);
   if (loose) {
@@ -133,6 +133,80 @@ function parseThemeLine(plain: string): DeckTheme | null {
     };
   }
   return null;
+}
+
+/* --------------------- theme contrast (R4, WCAG AA) --------------------- */
+
+/** WCAG AA minimum contrast ratio for normal text. */
+export const MIN_TEXT_CONTRAST = 4.5;
+
+function hexToSrgb(hex: string): [number, number, number] | null {
+  const m = hex.trim().match(/^#([0-9a-f]{3,8})$/i);
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3 || h.length === 4)
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  if (h.length === 8) h = h.slice(0, 6); // drop alpha for luminance
+  if (h.length !== 6) return null;
+  return [
+    parseInt(h.slice(0, 2), 16) / 255,
+    parseInt(h.slice(2, 4), 16) / 255,
+    parseInt(h.slice(4, 6), 16) / 255,
+  ];
+}
+
+/** WCAG relative luminance of a hex color, or null when unparseable. */
+export function relativeLuminance(hex: string): number | null {
+  const rgb = hexToSrgb(hex);
+  if (!rgb) return null;
+  const lin = (c: number) =>
+    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const [r, g, b] = rgb.map(lin);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** WCAG contrast ratio between two hex colors (1–21), or null. */
+export function contrastRatio(fg: string, bg: string): number | null {
+  const l1 = relativeLuminance(fg);
+  const l2 = relativeLuminance(bg);
+  if (l1 == null || l2 == null) return null;
+  const [hi, lo] = l1 >= l2 ? [l1, l2] : [l2, l1];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
+ * R4 (P1): enforce a readable ink/canvas pairing at theme-generation time.
+ *
+ * Why: the earlier render-time contrast guard only matched ink to a canvas
+ * when the model emitted NO ink — an explicit black ink on a near-black
+ * canvas sailed through, rendering an unreadable (black-on-near-black)
+ * title even against an explicit high-contrast request.
+ *
+ * The generated pair's contrast ratio is checked against WCAG AA (4.5:1).
+ * When it fails — or when ink is absent — ink falls back to whichever of a
+ * near-white / near-black pairing has the better ratio against the canvas.
+ * Themes without a canvas are returned unchanged.
+ */
+export function ensureThemeContrast(theme: DeckTheme): DeckTheme {
+  const { canvas } = theme;
+  if (!canvas || relativeLuminance(canvas) == null) return theme;
+  const LIGHT_INK = "#f4f4f6";
+  const DARK_INK = "#17171b";
+  const pickFallback = (): string => {
+    const rl = contrastRatio(LIGHT_INK, canvas);
+    const rd = contrastRatio(DARK_INK, canvas);
+    if (rl == null || rd == null) return rl == null ? DARK_INK : LIGHT_INK;
+    return rl >= rd ? LIGHT_INK : DARK_INK;
+  };
+  if (!theme.ink) return { ...theme, ink: pickFallback() };
+  const ratio = contrastRatio(theme.ink, canvas);
+  if (ratio != null && ratio < MIN_TEXT_CONTRAST) {
+    return { ...theme, ink: pickFallback() };
+  }
+  return theme;
 }
 
 export function parseDeck(markdown: string): Slide[] {
@@ -351,6 +425,52 @@ export function enforceSlideCount(slides: Slide[], req: DeckRequirements): Slide
     return slides.slice(0, req.slideCount);
   }
   return slides;
+}
+
+/* --------------------- truncation detection (R3) --------------------- */
+
+const TERMINAL_PUNCT = /[.!?…:;)\]}"'”’`|-]$/;
+
+/** Strip markdown heading/bullet/slide-label prefixes for tail analysis. */
+function tailText(line: string): string {
+  return line
+    .replace(/^#{1,4}\s+/, "")
+    .replace(/^slide\s*\d+\s*[—–:.-]?\s*/i, "")
+    .replace(/^\s*(?:[-*•]|\d+[.)])\s+/, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .trim();
+}
+
+/**
+ * R3 (P1): detect a cut-off deck from the raw model output. Two signals:
+ *  1. A requested ending marker (e.g. END-QA-DECK) is absent — the strongest
+ *     completeness signal; the output was cut before the end.
+ *  2. The last content line ends mid-word: an alphanumeric tail with no
+ *     terminal punctuation, cut as a dangling fragment (e.g. "Closing t").
+ *     The fragment check (a 1–2 character trailing token) keeps ordinary
+ *     unpunctuated bullets ("Faster onboarding") from tripping the warning.
+ * Returns a human-readable message, or null when the output looks complete.
+ */
+export function detectDeckTruncation(
+  raw: string,
+  slides: Slide[],
+  req: DeckRequirements,
+): string | null {
+  if (!slides.length) return null;
+  for (const marker of req.markers) {
+    if (!raw.includes(marker)) {
+      return `The deck is missing the required text "${marker}" — the output looks cut off before the end.`;
+    }
+  }
+  const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
+  const last = lines.length ? tailText(lines[lines.length - 1]) : "";
+  if (!last) return null;
+  const endsMidWord = /[A-Za-z0-9]$/.test(last) && !TERMINAL_PUNCT.test(last);
+  const danglingFragment = /\s[A-Za-z0-9]{1,2}$/.test(last);
+  if (endsMidWord && danglingFragment) {
+    return "The final slide ends mid-word — the output looks truncated.";
+  }
+  return null;
 }
 
 /** Image briefs that carry no real visual information. */

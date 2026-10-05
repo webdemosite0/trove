@@ -29,6 +29,12 @@ import {
   serialiseDeck,
   enrichDeckImages,
   deckFilename,
+  stripDeckPreamble,
+  extractDeckRequirements,
+  enforceSlideCount,
+  validateDeck,
+  detectDeckTruncation,
+  type DeckRequirements,
   type Slide,
   type SlideLayout,
 } from "@/lib/slides";
@@ -38,6 +44,7 @@ import { deleteSaved } from "@/app/actions/library";
 import { localTimeZone } from "@/lib/context";
 import { cn } from "@/lib/utils";
 import type { StudioGenResult } from "@/lib/studio-events";
+import { deriveRequestedName } from "@/lib/artifact-names";
 
 export interface RestoredDeck {
   id: string;
@@ -172,6 +179,26 @@ export function whenDecksEditorReady(timeoutMs: number): Promise<boolean> {
   });
 }
 
+/**
+ * R3 (P1): follow-up prompt that asks the model to finish a truncated deck.
+ * The caller (askAi) already includes the current deck as revision context,
+ * so this completes the draft in place rather than starting over.
+ */
+function repairPromptFor(req: DeckRequirements): string {
+  const markerBit = req.markers.length
+    ? ` Make sure the finished deck ends with ${req.markers
+        .map((m) => `"${m}"`)
+        .join(" and ")} verbatim, on its own final line.`
+    : "";
+  const countBit =
+    req.slideCount != null ? ` Keep it to exactly ${req.slideCount} slides.` : "";
+  return (
+    `The previous deck output was cut off before the end. Finish it: ` +
+    `complete the final slide and every remaining slide in full.${markerBit}${countBit} ` +
+    `Output ONLY the complete deck in the same markdown slide format.`
+  );
+}
+
 export function DeckEditor({
   restored = null,
   initialPrompt = "",
@@ -192,12 +219,25 @@ export function DeckEditor({
   const [layoutsOpen, setLayoutsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving">(
-    "saved",
-  );
+  const [saveState, setSaveState] = useState<
+    "saved" | "dirty" | "saving" | "error"
+  >("saved");
+  // R2 (P1): the server's reason when a save is not confirmed. Shown
+  // honestly in the header — "Saved" appears only on confirmation.
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [aiInput, setAiInput] = useState(initialPrompt);
   const [aiSheetOpen, setAiSheetOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  /**
+   * R3 (P1): visible incomplete-output warning. Set when generation came
+   * back cut off (missing marker / mid-word tail) — the deck still loads,
+   * but completion is never reported silently.
+   */
+  const [incomplete, setIncomplete] = useState<{
+    message: string;
+    retryPrompt: string;
+    repairPrompt: string;
+  } | null>(null);
 
   const { save, id: idRef } = useSaved("slides", restored?.id ?? null);
   const saveTimer = useRef<number | null>(null);
@@ -210,17 +250,30 @@ export function DeckEditor({
   const slide = slides[safeIndex];
 
   /* ------------------------------ persistence ------------------------------ */
+  /**
+   * R2 (P1): "Saved" is set only after the server CONFIRMS persistence.
+   * A failed save sets an honest error state (with retry) instead of the
+   * old `.finally(() => setSaveState("saved"))`, which lied on every
+   * failure — the exact "Saved but nothing persisted" defect.
+   */
   const persist = useCallback(
-    (next: Slide[], t: string, p: string) => {
+    async (next: Slide[], t: string, p: string) => {
       if (!next.length) return;
       setSaveState("saving");
-      void save(
+      setSaveError(null);
+      const result = await save(
         [
           { role: "user", text: p || t || "Untitled deck" },
           { role: "model", text: serialiseDeck(next) },
         ],
         t || "Untitled deck",
-      ).finally(() => setSaveState("saved"));
+      );
+      if (result.ok) {
+        setSaveState("saved");
+      } else {
+        setSaveState("error");
+        setSaveError(result.error ?? "Couldn't save this deck.");
+      }
     },
     [save],
   );
@@ -231,7 +284,7 @@ export function DeckEditor({
     setSaveState("dirty");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      persist(slides, title, prompt);
+      void persist(slides, title, prompt);
     }, 1600);
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
@@ -253,6 +306,7 @@ export function DeckEditor({
       }
       setBusy(true);
       setError(null);
+      setIncomplete(null);
       setAiSheetOpen(false);
       try {
         const context = slides.length
@@ -282,18 +336,55 @@ export function DeckEditor({
         }
         if (!out.trim())
           throw new Error("The model returned nothing. Try again.");
-        const next = enrichDeckImages(parseDeck(out));
+        // R3 (P1): generation validation — extract the user's requirements
+        // (explicit slide count, verbatim markers), honor the count, and
+        // detect a truncated/incomplete output before presenting it.
+        const req = extractDeckRequirements(v);
+        let next = enrichDeckImages(parseDeck(stripDeckPreamble(out)));
         if (!next.length)
           throw new Error("Couldn't read slides from the response. Try again.");
+        // R3a: extras beyond an explicitly requested count are trimmed, and
+        // the user is told — never silently kept.
+        const generatedCount = next.length;
+        next = enforceSlideCount(next, req);
+        const trimmed = generatedCount - next.length;
+        // R3b: a missing required marker or a final slide cut off mid-word
+        // means the output is incomplete — surface it, never mark it
+        // complete silently. (Marker checks live here; count checks below.)
+        const truncation = detectDeckTruncation(out, next, req);
+        const countIssues = validateDeck(next, req).filter(
+          (i) => i.kind === "count",
+        );
+        const notes: string[] = [];
+        if (trimmed > 0)
+          notes.push(
+            `The draft came back with ${generatedCount} slides, so it was trimmed to the ${next.length} you asked for.`,
+          );
+        if (truncation) notes.push(truncation);
+        for (const i of countIssues) notes.push(i.message);
+        const warning = notes.length ? notes.join(" ") : undefined;
+        setIncomplete(
+          truncation
+            ? {
+                message: truncation,
+                retryPrompt: v,
+                repairPrompt: repairPromptFor(req),
+              }
+            : null,
+        );
         deck.load(next);
         setCurrent(0);
         const newTitle =
-          title === "Untitled deck" ? v.slice(0, 64) : title;
+          // R6: an explicit name in the prompt ("titled Q3 Review") wins over
+          // the truncated-prompt fallback. Only while still the default.
+          title === "Untitled deck"
+            ? (deriveRequestedName(v) ?? v.slice(0, 64))
+            : title;
         if (title === "Untitled deck") setTitle(newTitle);
         const newPrompt = prompt || v;
         if (!prompt) setPrompt(newPrompt);
-        persist(next, newTitle, newPrompt);
-        return { ok: true, applied: true, count: next.length };
+        void persist(next, newTitle, newPrompt);
+        return { ok: true, applied: true, count: next.length, warning };
       } catch (e) {
         const message = e instanceof Error ? e.message : "Something went wrong.";
         setError(message);
@@ -375,7 +466,7 @@ export function DeckEditor({
     deck.load([{ ...BLANK_SLIDE, bullets: [...BLANK_SLIDE.bullets] }]);
     setCurrent(0);
     setPrompt("Blank deck");
-    persist(
+    void persist(
       [{ ...BLANK_SLIDE, bullets: [...BLANK_SLIDE.bullets] }],
       title,
       "Blank deck",
@@ -398,7 +489,7 @@ export function DeckEditor({
     setTitle(t);
     setRenaming(false);
     if (slides.length && t !== (restored?.title ?? "Untitled deck"))
-      persist(slides, t, prompt);
+      void persist(slides, t, prompt);
   }
 
   /* ------------- external studio events (split-view chat panel) ------------ */
@@ -562,20 +653,49 @@ export function DeckEditor({
             {title}
           </button>
         )}
+        {/* R2 (P1): "Saved" only after the server confirms persistence. A
+            failed save shows an honest, clickable error — never a false Saved. */}
         <span
+          role={saveState === "error" ? "alert" : undefined}
+          onClick={
+            saveState === "error"
+              ? () => void persist(slides, title, prompt)
+              : undefined
+          }
           className={cn(
             "hidden shrink-0 items-center gap-1.5 text-[12px] text-ink-4 sm:flex",
             saveState === "dirty" && "text-amber-500",
+            saveState === "error" && "cursor-pointer text-critical",
           )}
-          title={saveState === "saved" ? "All changes saved" : saveState === "saving" ? "Saving…" : "Unsaved changes"}
+          title={
+            saveState === "saved"
+              ? "All changes saved"
+              : saveState === "saving"
+                ? "Saving…"
+                : saveState === "error"
+                  ? `${saveError ?? "Save failed."} Click to retry.`
+                  : "Unsaved changes"
+          }
         >
           <span
             className={cn(
               "size-1.5 rounded-full",
-              saveState === "saved" ? "bg-emerald-500" : saveState === "saving" ? "animate-pulse bg-accent" : "bg-amber-500",
+              saveState === "saved"
+                ? "bg-emerald-500"
+                : saveState === "saving"
+                  ? "animate-pulse bg-accent"
+                  : saveState === "error"
+                    ? "bg-critical"
+                    : "bg-amber-500",
             )}
           />
-          {saveState === "saved" ? "Saved" : saveState === "saving" ? "Saving…" : "Unsaved"}
+          {saveState === "saved"
+            ? "Saved"
+            : saveState === "saving"
+              ? "Saving…"
+              : saveState === "error"
+                ? "Save failed — retry"
+                : "Unsaved"}
         </span>
         <IconBtn onClick={deck.undo} label="Undo" disabled={!total}>
           <Ico icon={FiCornerUpLeft} size={17} />
@@ -657,9 +777,54 @@ export function DeckEditor({
 
         {/* Main column */}
         <main className="flex min-w-0 flex-1 flex-col">
+          {/* R3: incomplete-output warning — visible, with Retry/Repair */}
+          {incomplete ? (
+            <div className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-3 py-2.5 sm:px-4">
+              <p className="text-[13px] font-semibold text-amber-700 dark:text-amber-300">
+                Incomplete output
+              </p>
+              <p className="mt-0.5 text-[12.5px] leading-snug text-ink-2">
+                {incomplete.message} Retry the request, or repair it to have
+                the deck finished in place.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const p = incomplete.retryPrompt;
+                    setIncomplete(null);
+                    void askAi(p);
+                  }}
+                  disabled={busy}
+                  className="rounded-xl bg-accent px-3 py-1.5 text-[12.5px] font-semibold text-white transition active:scale-95 disabled:opacity-40"
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const p = incomplete.repairPrompt;
+                    setIncomplete(null);
+                    void askAi(p);
+                  }}
+                  disabled={busy}
+                  className="rounded-xl border border-line bg-raised px-3 py-1.5 text-[12.5px] font-semibold text-ink transition hover:border-accent/50 active:scale-95 disabled:opacity-40"
+                >
+                  Repair
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIncomplete(null)}
+                  className="rounded-xl px-3 py-1.5 text-[12.5px] font-medium text-ink-3 transition hover:text-ink"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : null}
           {/* Slide toolbar */}
           <div className="flex shrink-0 items-center gap-1 border-b border-line/60 px-2 py-1.5 sm:px-4">
-            <span className="px-2 text-[12.5px] font-semibold tabular-nums text-ink-3">
+            <span className="min-w-[3.25rem] shrink-0 whitespace-nowrap px-2 text-center text-[12.5px] font-semibold tabular-nums text-ink-3">
               {total ? `${safeIndex + 1} / ${total}` : "0 / 0"}
             </span>
             <div className="mx-1 h-5 w-px bg-line" />
