@@ -637,6 +637,7 @@ export function TrosView({
       >
         <TroListPanel
           agents={agents}
+          onNew={() => router.push("/tros/new")}
           onDelete={setDeletingId}
           workingIds={presence}
           className="h-full"
