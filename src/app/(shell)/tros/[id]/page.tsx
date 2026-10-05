@@ -1,12 +1,11 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { AgentChat } from "./agent-chat";
 import { currentUser } from "@/lib/auth";
 import { one, str, num } from "@/lib/db";
 import { listRecents } from "@/lib/recents";
 import { loadConversation } from "@/lib/conversations";
 import { listAgents, type AgentRow } from "@/app/actions/agents";
-import { isDesktopShell } from "@/lib/desktop-shell";
-import { userHasTrosAccess } from "@/lib/tros-access";
+import { isMobile } from "@/lib/device";
 import { TrosDesktopOnly } from "../desktop-only";
 
 export const metadata = { title: "Tro" };
@@ -26,24 +25,14 @@ export default async function TroPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; q?: string }>;
 }) {
+  const [{ id }, { c, q }] = await Promise.all([params, searchParams]);
+
+  if (await isMobile()) return <TrosDesktopOnly />;
+
   const user = await currentUser();
-  if (!user) redirect("/login");
-
-  if (!userHasTrosAccess(user)) {
-    redirect("/dashboard?settings=tros");
-  }
-
-  if (!(await isDesktopShell())) {
-    return (
-      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
-        <TrosDesktopOnly />
-      </div>
-    );
-  }
-
-  const [{ id }, { c }] = await Promise.all([params, searchParams]);
+  if (!user) notFound();
 
   const row = await one(
     `SELECT * FROM agents WHERE id = ? AND user_id = ?`,
@@ -58,6 +47,8 @@ export default async function TroPage({
     instructions: str(row.instructions),
     tools: str(row.tools),
     accent: str(row.accent),
+    species: row.species == null ? null : str(row.species),
+    mode: row.mode == null ? null : str(row.mode),
     parent_id: row.parent_id == null ? null : str(row.parent_id),
     created_at: num(row.created_at),
   };
@@ -84,6 +75,9 @@ export default async function TroPage({
       agents={agents}
       recents={forAgent}
       restored={saved ? { id: saved.id, messages: saved.messages } : null}
+      // ?q= (from the Tros home composer) auto-sends as the first turn of a
+      // fresh thread. Ignored when restoring an existing conversation (?c=).
+      firstMessage={!saved && q ? q : undefined}
       key={saved?.id ?? "new"}
     />
   );

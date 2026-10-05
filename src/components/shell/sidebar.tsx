@@ -30,6 +30,7 @@ import {
 import { logOut } from "@/app/actions/auth";
 import { useNav } from "@/components/shell/nav-state";
 import { ProductSwitcher, useIsTrosProduct } from "@/components/shell/product-switcher";
+import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
 import { ThemeToggle } from "@/components/shell/theme";
 import { Tooltip } from "@/components/ui/tooltip";
 import { formatCredits } from "@/lib/format-credits";
@@ -69,7 +70,7 @@ const CREATE: NavItem[] = [
 ];
 
 const TROS: NavItem[] = [
-  { href: "/tros", label: "Library", icon: TbRobot },
+  { href: "/tros", label: "Home", icon: TbRobot },
   { href: "/tros/artifacts", label: "Artifacts", icon: FiLayers },
 ];
 
@@ -266,28 +267,16 @@ export function Sidebar({
   balance?: Balance | null;
 }) {
   const pathname = usePathname() || "/";
-  const { open, setOpen, collapsed, setCollapsed, toggleCollapsed, openSettings } = useNav();
+  const { open, setOpen, collapsed, toggleCollapsed, openSettings } = useNav();
   const isTrosPath = useIsTrosProduct(pathname);
   const isDesktop = useIsDesktopClient();
   const canTros = userHasTrosAccess(user);
   const isTros = isTrosPath && isDesktop && canTros;
   const closeDrawer = () => setOpen(false);
-  const closePanel = () => setCollapsed(true);
-  // Desktop app rail: a rail nav click navigates AND opens the floating panel.
-  // The pathname effect below must not immediately close it again.
-  const railNavOpen = useRef(false);
-  const onRailNavigate = () => {
-    railNavOpen.current = true;
-    setCollapsed(false);
-  };
 
   useEffect(() => {
     setOpen(false);
-    if (isDesktop) {
-      if (railNavOpen.current) railNavOpen.current = false;
-      else setCollapsed(true);
-    }
-  }, [pathname, setOpen, setCollapsed, isDesktop]);
+  }, [pathname, setOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -303,16 +292,6 @@ export function Sidebar({
     };
   }, [open, setOpen]);
 
-  // Desktop app floating panel: Escape closes it (no scroll lock — it's an overlay).
-  useEffect(() => {
-    if (!isDesktop || collapsed) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setCollapsed(true);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isDesktop, collapsed, setCollapsed]);
-
   const onTeamPlan = isTeamPlan(user);
   const mainItems = isTros
     ? TROS
@@ -320,67 +299,56 @@ export function Sidebar({
       ? [...MAIN, TEAM_NAV]
       : MAIN;
   const createItems = isTros ? [] : CREATE;
+  // Reminders / Team / Skills lived in the desktop rail — keep them reachable
+  // in the single sidebar. Team already appears in mainItems on team plans.
+  const moreItems = MORE.filter((m) => m.href !== "/team" || !onTeamPlan);
 
-  const body = (opts: {
-    compact: boolean;
-    /** Desktop-app floating panel: X close button instead of the collapse toggle. */
-    panel?: boolean;
-    onNavigate: () => void;
-  }) => (
+  const body = (compact: boolean, onNavigate: () => void) => (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
       <div
         className={cn(
           "flex shrink-0 items-center gap-1 px-2",
-          opts.compact ? "flex-col gap-2 py-3" : "h-14",
+          compact ? "flex-col gap-2 py-3" : "h-14",
         )}
       >
-        <div className={cn(opts.compact ? "" : "min-w-0 flex-1")}>
+        <div className={cn(compact ? "" : "min-w-0 flex-1")}>
           <ProductSwitcher
-            collapsed={opts.compact}
-            onNavigate={opts.onNavigate}
+            collapsed={compact}
+            onNavigate={onNavigate}
             canUseTros={canTros}
           />
         </div>
 
-        {opts.panel ? (
-          <button
-            type="button"
-            onClick={opts.onNavigate}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink"
-            aria-label="Close sidebar"
-          >
-            <FiX size={18} />
-          </button>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={closeDrawer}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink lg:hidden"
-              aria-label="Close sidebar"
-            >
-              <FiX size={18} />
-            </button>
+        <button
+          type="button"
+          onClick={closeDrawer}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink lg:hidden"
+          aria-label="Close sidebar"
+        >
+          <FiX size={18} />
+        </button>
 
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              className="hidden h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink lg:flex"
-              aria-label={opts.compact ? "Expand sidebar" : "Collapse sidebar"}
-              title={opts.compact ? "Expand" : "Collapse"}
-            >
-              <FiSidebar size={17} />
-            </button>
-          </>
-        )}
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          className="hidden h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink lg:flex"
+          aria-label={compact ? "Expand sidebar" : "Collapse sidebar"}
+          title={compact ? "Expand" : "Collapse"}
+        >
+          <FiSidebar size={17} />
+        </button>
+      </div>
+
+      <div className="shrink-0 px-2 pb-1">
+        <WorkspaceSwitcher compact={compact} onNavigate={onNavigate} />
       </div>
 
       <div className="shrink-0 px-2 pb-2">
-        {opts.compact ? (
+        {compact ? (
           <Tooltip label={isTros ? "New Tro" : "New chat"} side="right">
             <Link
-              href={isTros ? "/tros?new=1" : "/chat"}
-              onClick={opts.onNavigate}
+              href={isTros ? "/tros/new" : "/chat"}
+              onClick={onNavigate}
               aria-label={isTros ? "New Tro" : "New chat"}
               className="btn-grad mx-auto flex h-10 w-10 items-center justify-center rounded-xl"
             >
@@ -389,8 +357,8 @@ export function Sidebar({
           </Tooltip>
         ) : (
           <Link
-            href={isTros ? "/tros?new=1" : "/chat"}
-            onClick={opts.onNavigate}
+            href={isTros ? "/tros/new" : "/chat"}
+            onClick={onNavigate}
             className="btn-grad flex h-10 w-full items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold"
           >
             <FiPlus size={16} />
@@ -400,7 +368,7 @@ export function Sidebar({
       </div>
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-3">
-        {!opts.compact ? (
+        {!compact ? (
           <p className="px-2 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
             {isTros ? "Tros" : "Workspace"}
           </p>
@@ -413,14 +381,14 @@ export function Sidebar({
             key={item.href + item.label}
             item={item}
             pathname={pathname}
-            compact={opts.compact}
-            onNavigate={opts.onNavigate}
+            compact={compact}
+            onNavigate={onNavigate}
           />
         ))}
 
         {createItems.length > 0 ? (
           <>
-            {!opts.compact ? (
+            {!compact ? (
               <p className="px-2 pb-1.5 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
                 Create
               </p>
@@ -432,8 +400,29 @@ export function Sidebar({
                 key={item.href + item.label}
                 item={item}
                 pathname={pathname}
-                compact={opts.compact}
-                onNavigate={opts.onNavigate}
+                compact={compact}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </>
+        ) : null}
+
+        {moreItems.length > 0 ? (
+          <>
+            {!compact ? (
+              <p className="px-2 pb-1.5 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+                More
+              </p>
+            ) : (
+              <div className="mx-2 my-2 border-t border-line" />
+            )}
+            {moreItems.map((item) => (
+              <NavLink
+                key={item.href + item.label}
+                item={item}
+                pathname={pathname}
+                compact={compact}
+                onNavigate={onNavigate}
               />
             ))}
           </>
@@ -442,24 +431,24 @@ export function Sidebar({
 
       <div className="shrink-0 space-y-2 border-t border-line p-2">
         {user ? (
-          <AccountMenu user={user} compact={opts.compact} onNavigate={opts.onNavigate} />
+          <AccountMenu user={user} compact={compact} onNavigate={onNavigate} />
         ) : (
           <Link
             href="/login"
-            onClick={opts.onNavigate}
+            onClick={onNavigate}
             className="btn-grad flex h-10 w-full items-center justify-center rounded-xl text-[13.5px] font-semibold"
           >
             Log in
           </Link>
         )}
 
-        {!opts.compact ? (
+        {!compact ? (
           <div className="flex items-center gap-0.5">
             <Tooltip label="Settings" side="top">
               <button
                 type="button"
                 onClick={() => {
-                  opts.onNavigate();
+                  onNavigate();
                   openSettings("general");
                 }}
                 className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink"
@@ -471,7 +460,7 @@ export function Sidebar({
             <Tooltip label="Plans" side="top">
               <Link
                 href={isTros ? "/plans?from=tros" : "/plans?from=trove"}
-                onClick={opts.onNavigate}
+                onClick={onNavigate}
                 className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink"
                 aria-label="Plans"
               >
@@ -482,7 +471,7 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={() => {
-                  opts.onNavigate();
+                  onNavigate();
                   openSettings("help");
                 }}
                 className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink"
@@ -496,7 +485,7 @@ export function Sidebar({
           </div>
         ) : null}
 
-        {balance && !opts.compact ? (
+        {balance && !compact ? (
           <div className="flex items-center justify-between rounded-xl bg-sunk px-3 py-2">
             <span className="text-[11px] text-ink-4">Credits</span>
             <span className="text-[11px] font-semibold tabular-nums text-ink">
@@ -508,137 +497,6 @@ export function Sidebar({
     </div>
   );
 
-  // Desktop-app only: permanent slim icon rail. Every nav click navigates
-  // AND opens the floating panel (via onRailNavigate).
-  const railBody = () => (
-    <div className="flex h-full min-h-0 w-full flex-col">
-      <div className="flex shrink-0 flex-col items-center pt-2">
-        <Tooltip label="Open sidebar" side="right">
-          <button
-            type="button"
-            onClick={() => setCollapsed(false)}
-            aria-label="Open sidebar"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
-          >
-            <FiSidebar size={19} />
-          </button>
-        </Tooltip>
-      </div>
-
-      <nav
-        aria-label="Primary"
-        className="flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto px-2 pb-2"
-      >
-        {mainItems.map((item) => (
-          <NavLink
-            key={item.href + item.label}
-            item={item}
-            pathname={pathname}
-            compact
-            onNavigate={onRailNavigate}
-          />
-        ))}
-        {createItems.length > 0 ? (
-          <>
-            <div className="my-1.5 w-6 shrink-0 border-t border-line" aria-hidden="true" />
-            {createItems.map((item) => (
-              <NavLink
-                key={item.href + item.label}
-                item={item}
-                pathname={pathname}
-                compact
-                onNavigate={onRailNavigate}
-              />
-            ))}
-          </>
-        ) : null}
-        <div className="my-1.5 w-6 shrink-0 border-t border-line" aria-hidden="true" />
-        {MORE.map((item) => (
-          <NavLink
-            key={item.href + item.label}
-            item={item}
-            pathname={pathname}
-            compact
-            onNavigate={onRailNavigate}
-          />
-        ))}
-      </nav>
-
-      <div className="flex w-full shrink-0 flex-col items-center gap-1 border-t border-line p-1.5">
-        <Tooltip label="Settings" side="right">
-          <button
-            type="button"
-            onClick={() => openSettings("general")}
-            aria-label="Settings"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-2 transition-colors hover:bg-hover hover:text-ink"
-          >
-            <FiSettings size={19} />
-          </button>
-        </Tooltip>
-        {user ? (
-          <AccountMenu user={user} compact onNavigate={() => {}} />
-        ) : (
-          <Tooltip label="Log in" side="right">
-            <Link
-              href="/login"
-              aria-label="Log in"
-              className="btn-grad flex h-10 w-10 items-center justify-center rounded-xl"
-            >
-              <FiUser size={18} />
-            </Link>
-          </Tooltip>
-        )}
-      </div>
-    </div>
-  );
-
-  // ---- Desktop app: rail + floating panel ----
-  if (isDesktop) {
-    return (
-      <>
-        <aside
-          aria-label="Primary"
-          className="sticky top-0 hidden h-dvh w-[52px] shrink-0 flex-col border-r border-line bg-rail lg:flex"
-        >
-          {railBody()}
-        </aside>
-
-        {!collapsed ? (
-          <div className="fixed inset-0 z-40 hidden lg:block">
-            <button
-              type="button"
-              aria-label="Close sidebar"
-              onClick={closePanel}
-              className="absolute inset-0 cursor-default bg-transparent"
-            />
-            <aside
-              role="dialog"
-              aria-label="Sidebar"
-              className="sidebar-panel-in absolute inset-y-0 left-[52px] flex w-[280px] flex-col overflow-hidden border-r border-line bg-rail shadow-2xl"
-            >
-              {body({ compact: false, panel: true, onNavigate: closePanel })}
-            </aside>
-          </div>
-        ) : null}
-
-        {open ? (
-          <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
-            <button
-              type="button"
-              className="absolute inset-0 bg-black/40"
-              aria-label="Close sidebar"
-              onClick={closeDrawer}
-            />
-            <aside className="absolute inset-y-0 left-0 flex w-[min(86vw,280px)] flex-col overflow-hidden border-r border-line bg-rail shadow-2xl">
-              {body({ compact: false, onNavigate: closeDrawer })}
-            </aside>
-          </div>
-        ) : null}
-      </>
-    );
-  }
-
-  // ---- Web + mobile: existing behavior, untouched ----
   return (
     <>
       <aside
@@ -647,7 +505,7 @@ export function Sidebar({
           collapsed ? "w-[68px]" : "w-[248px]",
         )}
       >
-        {body({ compact: collapsed, onNavigate: closeDrawer })}
+        {body(collapsed, closeDrawer)}
       </aside>
 
       {open ? (
@@ -659,7 +517,7 @@ export function Sidebar({
             onClick={closeDrawer}
           />
           <aside className="absolute inset-y-0 left-0 flex w-[min(86vw,280px)] flex-col overflow-hidden border-r border-line bg-rail shadow-2xl">
-            {body({ compact: false, onNavigate: closeDrawer })}
+            {body(false, closeDrawer)}
           </aside>
         </div>
       ) : null}

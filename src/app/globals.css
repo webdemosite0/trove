@@ -260,14 +260,3 @@ body {
     inset 0 0 0 1px rgb(0 0 0 / 0.05);
 }
 
-/* Desktop-app floating sidebar panel: slide in from the rail. */
-@keyframes sidebar-panel-in {
-  from { transform: translateX(-14px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-.sidebar-panel-in {
-  animation: sidebar-panel-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-@media (prefers-reduced-motion: reduce) {
-  .sidebar-panel-in { animation: none; }
-}
