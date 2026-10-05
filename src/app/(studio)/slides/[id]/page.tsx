@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
 import { loadConversation } from "@/lib/conversations";
 import { parseDeck, enrichDeckImages } from "@/lib/slides";
 import { type RestoredDeck } from "../editor/deck-editor";
 import { DecksStudio } from "@/components/studio/decks-studio";
+import { StudioNotFound } from "@/components/studio/studio-not-found";
 
 export const metadata = { title: "Deck" };
 
@@ -13,7 +13,10 @@ export default async function SlidesWorkspacePage({
 }) {
   const { id } = await params;
   const saved = await loadConversation(id).catch(() => null);
-  if (!saved || saved.kind !== "slides") notFound();
+  if (!saved || saved.kind !== "slides") {
+    // Deleted, or a stale link — explain instead of showing a bare 404.
+    return <StudioNotFound kind="deck" />;
+  }
 
   const prompt = saved.messages.find((m) => m.role === "user")?.text ?? "";
   const latest =

@@ -65,6 +65,9 @@ export function DocsStudio({ initial }: { initial: Doc | null }) {
       hasContent={!!initial?.content}
       preview={<DocEditor initial={initial} />}
       onPrompt={handlePrompt}
+      // Defect 1-docs: failed generations (timeout/error) get a prominent
+      // Retry button under the error that re-submits the last prompt.
+      enableRetry
       suggestions={[
         "Project proposal",
         "Meeting notes",

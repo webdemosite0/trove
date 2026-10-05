@@ -53,6 +53,7 @@ export function DecksStudio({
         <DeckEditor restored={restored} initialPrompt={initialPrompt} />
       }
       onPrompt={handlePrompt}
+      enableRetry
       suggestions={[
         "A seed pitch for an AI devtools startup",
         "A product launch deck for a mobile app",

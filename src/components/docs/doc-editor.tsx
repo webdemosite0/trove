@@ -17,6 +17,24 @@ function finishDocs(result: StudioGenResult) {
   );
 }
 
+/** Defect 6: pull a document title from the first heading of generated HTML. */
+function deriveDocTitle(html: string): string | null {
+  const m = html.match(/<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/i);
+  if (!m) return null;
+  const text = m[1]
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return null;
+  return text.length > 120 ? `${text.slice(0, 120).trimEnd()}…` : text;
+}
+
+/** Only auto-title when the user hasn't set one themselves. */
+function isDefaultTitle(t: string) {
+  const v = t.trim().toLowerCase();
+  return v === "" || v === "untitled document";
+}
+
 /** Notion-style document editor: title, rich text, autosave, AI drafting. */
 export function DocEditor({ initial }: { initial: Doc | null }) {
   const router = useRouter();
@@ -129,6 +147,18 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
     }, 1500);
   }, [persist]);
 
+  // Defect 6: when AI-generated content lands and the title is still the
+  // default, adopt the generated heading as the document title (metadata +
+  // input) so it stops reading "Untitled document". Never touches a title
+  // the user set themselves. The debounced persist reads titleRef at fire
+  // time, so the new title is saved with the content.
+  function maybeAdoptTitle(html: string) {
+    if (!isDefaultTitle(titleRef.current)) return;
+    const derived = deriveDocTitle(html);
+    if (!derived) return;
+    setTitle(derived);
+  }
+
   // Flush on unmount.
   useEffect(() => {
     return () => {
@@ -204,6 +234,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
           const el = bodyRef.current;
           if (el && full.trim()) {
             el.innerHTML = full;
+            maybeAdoptTitle(full);
             setAiResult("");
             setAiPrompt("");
             setAiOpen(false);
@@ -237,12 +268,14 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
 
   function insertAi(replace: boolean) {
     if (!aiResult.trim() || !bodyRef.current) return;
+    const html = aiResult;
     if (replace) {
       bodyRef.current.innerHTML = aiResult;
     } else {
       const sep = bodyRef.current.innerHTML.trim() ? "<p><br></p>" : "";
       bodyRef.current.innerHTML = `${bodyRef.current.innerHTML}${sep}${aiResult}`;
     }
+    maybeAdoptTitle(html);
     setAiResult("");
     setAiPrompt("");
     setAiOpen(false);
@@ -252,17 +285,26 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
   }
 
   const saveLabel = useMemo(() => {
+    // Defect 4: a blank document (no real body content) gets a distinct
+    // label, so a saved-but-empty draft after a failed generation doesn't
+    // read as real progress.
+    const blank = words === 0;
     switch (saveState) {
       case "saving":
         return "Saving…";
       case "saved":
-        return "Saved";
+        return blank ? "Blank document saved" : "Saved";
       case "error":
         return "Save failed — retry";
       default:
-        return dirtyRef.current ? "Unsaved" : "Saved";
+        return dirtyRef.current
+          ? "Unsaved"
+          : // On a persisted doc row, an idle blank draft is a saved blank.
+            docId && blank
+            ? "Blank document saved"
+            : "Saved";
     }
-  }, [saveState]);
+  }, [saveState, words, docId]);
 
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col bg-canvas">
@@ -350,7 +392,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
             {aiResult ? (
               <div className="mt-3">
                 <div
-                  className="max-h-56 overflow-y-auto rounded-2xl border border-line/60 bg-canvas p-4 text-[14px] leading-relaxed text-ink [&_h2]:mb-1 [&_h2]:mt-3 [&_h2]:text-[16px] [&_h2]:font-semibold [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2"
+                  className="max-h-56 overflow-y-auto overflow-x-auto rounded-2xl border border-line/60 bg-canvas p-4 text-[14px] leading-relaxed text-ink [&_h2]:mb-1 [&_h2]:mt-3 [&_h2]:text-[16px] [&_h2]:font-semibold [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_td]:break-words"
                   dangerouslySetInnerHTML={{ __html: aiResult }}
                 />
                 <div className="mt-3 flex gap-2.5">
@@ -470,7 +512,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
           contentEditable
           onInput={onInput}
           data-placeholder="Start writing…"
-          className="min-h-[50vh] w-full text-[16.5px] leading-[1.75] text-ink focus:outline-none empty:before:pointer-events-none empty:before:text-ink-4/60 empty:before:content-[attr(data-placeholder)] [&_blockquote]:border-l-2 [&_blockquote]:border-accent/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-ink-2 [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-[22px] [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc [&_ol_li]:list-decimal [&_p]:mb-3 [&_ul]:mb-3 [&_table]:mb-4 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-line [&_th]:bg-sunk [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-[14px] [&_th]:font-semibold [&_td]:min-w-[80px] [&_td]:border [&_td]:border-line [&_td]:px-3 [&_td]:py-2 [&_td]:align-top"
+          className="min-h-[50vh] w-full text-[16.5px] leading-[1.75] text-ink focus:outline-none empty:before:pointer-events-none empty:before:text-ink-4/60 empty:before:content-[attr(data-placeholder)] [&_blockquote]:border-l-2 [&_blockquote]:border-accent/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-ink-2 [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-[22px] [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc [&_ol_li]:list-decimal [&_p]:mb-3 [&_ul]:mb-3 [&_table]:mb-4 [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_th]:border [&_th]:border-line [&_th]:bg-sunk [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-[14px] [&_th]:font-semibold [&_td]:border [&_td]:border-line [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_td]:break-words"
           role="textbox"
           aria-multiline="true"
           aria-label="Document content"

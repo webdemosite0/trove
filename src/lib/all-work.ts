@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { ensureProjectColumns } from "@/lib/projects";
 import { hrefFor } from "@/lib/conversations";
 import type { RecentKind } from "@/lib/recents";
+import { liveSavedIds, savedIdFromHref } from "@/lib/recents";
 
 export type WorkKind = RecentKind;
 
@@ -130,7 +131,24 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
   }
 
   // Keep older work discoverable even if it was created before the newer
-  // canonical save paths existed.
+  // canonical save paths existed. Legacy rows carry raw stored hrefs, which
+  // can go stale — resolve each to its saved item and drop only the ones
+  // confirmed gone. A validation failure keeps everything (never hide work
+  // on an ambiguous result).
+  let liveLegacy: Set<string> | null = null;
+  const legacyPairs = legacy.flatMap((row) => {
+    const kind = safeKind(row.kind);
+    const savedId = savedIdFromHref(kind, str(row.href));
+    return savedId ? [{ kind, id: savedId }] : [];
+  });
+  if (legacyPairs.length) {
+    try {
+      liveLegacy = await liveSavedIds(user.id, legacyPairs);
+    } catch (e) {
+      console.error("all-work: could not validate legacy destinations", e);
+    }
+  }
+
   for (const row of legacy) {
     const kind = safeKind(row.kind);
     if (kind === "agent") continue;
@@ -138,6 +156,10 @@ export async function listAllWork(limit = 48): Promise<WorkItem[]> {
     const title = str(row.title);
     const key = `legacy:${kind}:${href || title}`;
     if (!title || seen.has(key)) continue;
+
+    // The destination is confirmed gone — drop the stale link.
+    const savedId = savedIdFromHref(kind, href);
+    if (savedId && liveLegacy && !liveLegacy.has(savedId)) continue;
 
     // Avoid showing a legacy recent that already points at a canonical item.
     if (href && items.some((item) => item.href === href)) continue;

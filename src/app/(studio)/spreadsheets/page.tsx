@@ -16,7 +16,13 @@ export interface SheetCard {
   preview: string[][];
 }
 
-async function cardFor(id: string, title: string, href: string, createdAt: number): Promise<SheetCard> {
+/**
+ * A card for one recent sheet — or null when the saved conversation is
+ * confirmed gone, so the grid never links to a 404. A failed lookup (rather
+ * than a missing record) keeps the entry: a transient error must not hide
+ * the user's work.
+ */
+async function cardFor(id: string, title: string, href: string, createdAt: number): Promise<SheetCard | null> {
   const fallback: SheetCard = {
     id,
     title,
@@ -26,25 +32,29 @@ async function cardFor(id: string, title: string, href: string, createdAt: numbe
     cols: 0,
     preview: [],
   };
+  let conv;
   try {
-    const conv = await loadConversation(id);
-    if (!conv || conv.kind !== "sheets") return fallback;
-    const latest = [...conv.messages].reverse().find((m) => m.role === "model")?.text ?? "";
-    const doc = decodeSheet(latest);
-    if (!doc) return fallback;
-    const { rows, cols } = gridDims(doc.grid);
-    return {
-      id,
-      title: doc.title || conv.title || title,
-      href,
-      updatedAt: createdAt,
-      rows,
-      cols,
-      preview: doc.grid.slice(0, 3).map((r) => r.slice(0, 4)),
-    };
+    conv = await loadConversation(id);
   } catch {
     return fallback;
   }
+  // The destination is confirmed gone — drop the card instead of linking nowhere.
+  if (!conv || conv.kind !== "sheets") return null;
+  const latest = [...conv.messages].reverse().find((m) => m.role === "model")?.text ?? "";
+  const doc = decodeSheet(latest);
+  // Exists but unreadable (older format): keep the card so the detail route
+  // can explain the problem instead of 404ing.
+  if (!doc) return { ...fallback, title: conv.title || title };
+  const { rows, cols } = gridDims(doc.grid);
+  return {
+    id,
+    title: doc.title || conv.title || title,
+    href,
+    updatedAt: createdAt,
+    rows,
+    cols,
+    preview: doc.grid.slice(0, 3).map((r) => r.slice(0, 4)),
+  };
 }
 
 /** Sheets save to /spreadsheets/<id> paths (not ?c=), so pull the id from the path. */
@@ -66,22 +76,26 @@ function sheetIdFromHref(href: string, conversationId: string | null): string | 
 
 export default async function SheetsPage() {
   const recents = await listRecents("sheets", 24);
-  const cards: SheetCard[] = await Promise.all(
-    recents.map((r) => {
-      const sid = sheetIdFromHref(r.href, r.conversationId);
-      return sid
-        ? cardFor(sid, r.title, `/spreadsheets/${encodeURIComponent(sid)}`, r.createdAt)
-        : Promise.resolve({
-            id: r.id,
-            title: r.title,
-            href: r.href,
-            updatedAt: r.createdAt,
-            rows: 0,
-            cols: 0,
-            preview: [] as string[][],
-          });
-    }),
-  );
+  // cardFor returns null for entries whose saved conversation is confirmed
+  // gone — drop those so the grid never links to a 404.
+  const cards: SheetCard[] = (
+    await Promise.all(
+      recents.map((r) => {
+        const sid = sheetIdFromHref(r.href, r.conversationId);
+        return sid
+          ? cardFor(sid, r.title, `/spreadsheets/${encodeURIComponent(sid)}`, r.createdAt)
+          : Promise.resolve<SheetCard | null>({
+              id: r.id,
+              title: r.title,
+              href: r.href,
+              updatedAt: r.createdAt,
+              rows: 0,
+              cols: 0,
+              preview: [] as string[][],
+            });
+      }),
+    )
+  ).filter((c): c is SheetCard => c !== null);
 
   return (
     <div className="h-full min-h-0 overflow-y-auto overscroll-contain bg-canvas">

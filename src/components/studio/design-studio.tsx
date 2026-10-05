@@ -72,6 +72,7 @@ export function DesignStudio({ doc }: { doc: DesignDoc }) {
       hasContent={doc.layers.length > 0}
       preview={<DesignEditor doc={doc} />}
       onPrompt={handlePrompt}
+      enableRetry
       suggestions={[
         "Instagram post for a coffee shop",
         "Launch poster for a music app",

@@ -154,6 +154,67 @@ function UsageBar({ pct }: { pct: number }) {
   );
 }
 
+/* ---------------------------------- loading ---------------------------------- */
+
+/**
+ * Defect 3 (P2): a signed-in user must never see the signed-out copy ("Sign in
+ * to edit your profile") just because account data hasn't arrived yet. These
+ * placeholders render while the host is still fetching account data.
+ */
+function Skeleton({ className }: { className?: string }) {
+  return <div aria-hidden className={cn("animate-pulse bg-line/70", className)} />;
+}
+
+function ProfileSkeleton() {
+  return (
+    <Card aria-label="Loading profile">
+      <div className="flex items-center gap-4">
+        <Skeleton className="size-14 shrink-0 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-3.5 w-1/3 rounded-md" />
+          <Skeleton className="h-3 w-1/2 rounded-md" />
+        </div>
+      </div>
+      <div className="mt-5 space-y-3">
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <Skeleton className="h-20 w-full rounded-xl" />
+      </div>
+    </Card>
+  );
+}
+
+function FormSkeleton() {
+  return (
+    <Card aria-label="Loading">
+      <div className="space-y-3">
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+      </div>
+    </Card>
+  );
+}
+
+function UsageSkeleton() {
+  return (
+    <Card aria-label="Loading usage">
+      <div className="flex items-baseline justify-between">
+        <Skeleton className="h-[18px] w-28 rounded-md" />
+        <Skeleton className="h-4 w-16 rounded-md" />
+      </div>
+      <Skeleton className="mt-2.5 h-1.5 w-full rounded-full" />
+      <div className="mt-5 space-y-3">
+        <div className="flex items-baseline justify-between">
+          <Skeleton className="h-[18px] w-36 rounded-md" />
+          <Skeleton className="h-4 w-24 rounded-md" />
+        </div>
+        <Skeleton className="h-1.5 w-full rounded-full" />
+      </div>
+    </Card>
+  );
+}
+
 /* ---------------------------------- modal ---------------------------------- */
 
 /** Floating settings dialog — Muse-style overlay, separate from the page. */
@@ -165,14 +226,22 @@ export function SettingsModal({
   initialSection = "general",
   integrations,
   settingsData,
+  settingsLoadFailed = false,
 }: {
   open: boolean;
   onClose: () => void;
   user: User | null;
-  balance: Balance | null;
+  /**
+   * `undefined` = still arriving (studio routes fetch it client-side — see
+   * SettingsHost). The modal renders loading skeletons in that state, never
+   * the signed-out fallbacks. `null` = confirmed no balance data.
+   */
+  balance: Balance | null | undefined;
   initialSection?: string | null;
   integrations?: IntegrationsData;
   settingsData?: SettingsData;
+  /** The client-side account fetch settled without data. */
+  settingsLoadFailed?: boolean;
 }) {
   const titleId = useId();
   const validSection = (s: string | null | undefined): SettingsSectionId =>
@@ -204,6 +273,10 @@ export function SettingsModal({
 
   if (!open) return null;
 
+  // Defect 3 (P2): while the balance is still arriving, usage spots show
+  // skeletons — never the "no tokens left" fallback, which reads as a
+  // different (wrong) plan than the chat routes show.
+  const balanceLoading = balance === undefined;
   const planName = balance?.plan?.name ?? user?.plan ?? "Free";
   const granted = balance?.granted ?? 0;
   const used = balance?.used ?? 0;
@@ -354,6 +427,8 @@ export function SettingsModal({
                 remaining={remaining}
                 onClose={onClose}
                 settingsData={settingsData}
+                settingsLoadFailed={settingsLoadFailed}
+                balanceLoading={balanceLoading}
               />
             ) : null}
 
@@ -384,6 +459,7 @@ export function SettingsModal({
                 remaining={remaining}
                 onClose={onClose}
                 subscription={settingsData?.subscription ?? null}
+                balanceLoading={balanceLoading}
               />
             ) : null}
 
@@ -417,6 +493,8 @@ function GeneralPane({
   remaining,
   onClose,
   settingsData,
+  settingsLoadFailed = false,
+  balanceLoading = false,
 }: {
   user: User | null;
   planName: string;
@@ -426,9 +504,18 @@ function GeneralPane({
   remaining: number;
   onClose: () => void;
   settingsData?: SettingsData;
+  /** The client-side account fetch settled without data. */
+  settingsLoadFailed?: boolean;
+  /** Balance is still arriving — show skeletons, not the zero fallback. */
+  balanceLoading?: boolean;
 }) {
   const [theme, setTheme] = useTheme();
   const [accent, setAccent] = useAccent();
+  // Defect 3 (P2): the signed-out copy renders only for a confirmed signed-out
+  // session (`user === null`) — never while account data is still loading, and
+  // never when a session exists but the fetch came back empty.
+  const signedOut = user === null;
+  const accountLoading = !signedOut && settingsData === undefined && !settingsLoadFailed;
   const name = user?.name?.trim() || "Account";
   const resetDate = "Oct 5";
 
@@ -437,11 +524,19 @@ function GeneralPane({
       {/* Profile — inline, replaces the old /settings/account page */}
       <SectionLabel>Profile</SectionLabel>
       <div data-theme="dark">
-        {settingsData?.profile ? (
+        {signedOut ? (
+          <Card>
+            <p className="text-[13px] text-ink-3">Sign in to edit your profile.</p>
+          </Card>
+        ) : accountLoading ? (
+          <ProfileSkeleton />
+        ) : settingsData?.profile ? (
           <ProfileForm profile={settingsData.profile} />
         ) : (
           <Card>
-            <p className="text-[13px] text-ink-3">Sign in to edit your profile.</p>
+            <p className="text-[13px] text-ink-3">
+              We couldn't load your profile. Close and reopen Settings to try again.
+            </p>
           </Card>
         )}
       </div>
@@ -449,11 +544,19 @@ function GeneralPane({
       {/* Business — inline, replaces the old /settings/business page */}
       <SectionLabel>Business</SectionLabel>
       <div data-theme="dark">
-        {settingsData?.businessProfile ? (
+        {signedOut ? (
+          <Card>
+            <p className="text-[13px] text-ink-3">Sign in to set your business profile.</p>
+          </Card>
+        ) : accountLoading ? (
+          <FormSkeleton />
+        ) : settingsData?.businessProfile ? (
           <BusinessProfileForm initial={settingsData.businessProfile} />
         ) : (
           <Card>
-            <p className="text-[13px] text-ink-3">Sign in to set your business profile.</p>
+            <p className="text-[13px] text-ink-3">
+              We couldn't load your business profile. Close and reopen Settings to try again.
+            </p>
           </Card>
         )}
       </div>
@@ -461,10 +564,17 @@ function GeneralPane({
       {/* AI instructions — inline, replaces the old /settings/instructions page */}
       <SectionLabel>AI instructions</SectionLabel>
       <div data-theme="dark">
-        <InstructionsForm initial={settingsData?.manualInstructions ?? ""} />
+        {accountLoading ? (
+          <FormSkeleton />
+        ) : (
+          <InstructionsForm initial={settingsData?.manualInstructions ?? ""} />
+        )}
       </div>
 
       <SectionLabel>Usage</SectionLabel>
+      {balanceLoading ? (
+        <UsageSkeleton />
+      ) : (
       <Card>
         <div className="flex items-baseline justify-between">
           <p className="text-[15px] font-semibold">{planName} plan</p>
@@ -488,6 +598,7 @@ function GeneralPane({
           </Link>
         </div>
       </Card>
+      )}
 
       <SectionLabel>Appearance</SectionLabel>
       <Card>
@@ -545,8 +656,14 @@ function GeneralPane({
       </Card>
 
       <p className="mt-6 text-[12.5px] text-ink-4">
-        Signed in as {name}
-        {user?.email ? ` · ${user.email}` : ""}.
+        {user ? (
+          <>
+            Signed in as {name}
+            {user.email ? ` · ${user.email}` : ""}.
+          </>
+        ) : (
+          "Not signed in."
+        )}
       </p>
     </div>
   );
@@ -558,17 +675,29 @@ function WalletPane({
   remaining,
   onClose,
   subscription,
+  balanceLoading = false,
 }: {
   planName: string;
   pct: number;
   remaining: number;
   onClose: () => void;
   subscription: Subscription | null;
+  /** Balance is still arriving — show skeletons, not the zero fallback. */
+  balanceLoading?: boolean;
 }) {
   const hasBillingProfile = Boolean(subscription?.customerId);
   return (
     <div>
       <SectionLabel>Current plan</SectionLabel>
+      {balanceLoading ? (
+        <Card aria-label="Loading plan">
+          <div className="flex items-baseline justify-between">
+            <Skeleton className="h-[18px] w-28 rounded-md" />
+            <Skeleton className="h-4 w-16 rounded-md" />
+          </div>
+          <Skeleton className="mt-2.5 h-1.5 w-full rounded-full" />
+        </Card>
+      ) : (
       <Card>
         <div className="flex items-baseline justify-between">
           <p className="text-[15px] font-semibold">{planName}</p>
@@ -585,6 +714,7 @@ function WalletPane({
           </Link>
         </div>
       </Card>
+      )}
 
       <SectionLabel>Billing</SectionLabel>
       <Card>
@@ -628,7 +758,11 @@ function WalletPane({
         ) : null}
       </Card>
       <p className="mt-4 text-[12.5px] text-ink-4">
-        {remaining.toLocaleString()} credits remaining this period.
+        {balanceLoading ? (
+          <Skeleton className="h-4 w-52 rounded-md" />
+        ) : (
+          `${remaining.toLocaleString()} credits remaining this period.`
+        )}
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
 import { loadConversation } from "@/lib/conversations";
 import { decodeSheet } from "@/lib/sheet-format";
 import { SheetsStudio } from "@/components/studio/sheets-studio";
+import { StudioNotFound } from "@/components/studio/studio-not-found";
 
 export const metadata = { title: "Spreadsheet" };
 
@@ -12,7 +12,10 @@ export default async function SpreadsheetWorkspacePage({
 }) {
   const { id } = await params;
   const saved = await loadConversation(id).catch(() => null);
-  if (!saved || saved.kind !== "sheets") notFound();
+  if (!saved || saved.kind !== "sheets") {
+    // Deleted, or a stale link — explain instead of showing a bare 404.
+    return <StudioNotFound kind="spreadsheet" />;
+  }
 
   const latest = [...saved.messages]
     .reverse()

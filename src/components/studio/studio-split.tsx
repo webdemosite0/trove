@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Composer } from "@/components/chat/composer";
 import { Thinking } from "@/components/chat/thinking";
+import { FiRefreshCw } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import type { StudioGenResult } from "@/lib/studio-events";
 
@@ -20,6 +21,7 @@ export function StudioSplit({
   placeholder,
   hasContent = false,
   emptyMessage = "Describe what to create — the preview will appear here.",
+  enableRetry = false,
 }: {
   /** The live preview / editor rendered on the right (after generation) */
   preview: React.ReactNode;
@@ -37,10 +39,18 @@ export function StudioSplit({
   /** Whether content already exists */
   hasContent?: boolean;
   emptyMessage?: string;
+  /**
+   * Show a prominent "Retry" button on failed generations (timeout/error)
+   * that re-submits the prompt that failed — no retyping needed. Opt-in so
+   * studios own their own failure UX (the Documents studio opts in separately).
+   */
+  enableRetry?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [started, setStarted] = useState(hasContent);
-  const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([]);
+  const [messages, setMessages] = useState<
+    { role: "user" | "ai"; text: string; failedPrompt?: string }[]
+  >([]);
   // R-01: on phones, default to the editor with the AI panel behind a tab,
   // so the chat doesn't eat half the screen.
   const [mobileTab, setMobileTab] = useState<"editor" | "chat">("editor");
@@ -66,13 +76,22 @@ export function StudioSplit({
                 ? "Done — preview updated."
                 : "Generated, but it wasn't applied to the preview. Check the preview and try again if needed."
             : `Couldn't do that: ${result.error} Try again or rephrase.`,
+          // P1: failed (timeout/error) results carry their originating prompt
+          // so the sidebar can offer a direct Retry without retyping.
+          failedPrompt: result.ok ? undefined : q,
         },
       ]);
     } catch {
-      setMessages((m) => [...m, { role: "ai", text: "Something went wrong. Try again." }]);
+      setMessages((m) => [...m, { role: "ai", text: "Something went wrong. Try again.", failedPrompt: q }]);
     } finally {
       setBusy(false);
     }
+  }
+
+  /** Re-submit the prompt that failed (direct retry — no retyping). */
+  function retry(failedPrompt: string) {
+    if (busy) return;
+    void submit(failedPrompt);
   }
 
   return (
@@ -150,6 +169,19 @@ export function StudioSplit({
                 )}
               >
                 {m.text}
+                {/* P1: direct retry on failed generations — the button sits
+                    right under the error text, visible without scrolling. */}
+                {enableRetry && m.role === "ai" && m.failedPrompt ? (
+                  <button
+                    type="button"
+                    onClick={() => m.failedPrompt && retry(m.failedPrompt)}
+                    disabled={busy}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition hover:brightness-110 active:scale-95 disabled:opacity-40"
+                  >
+                    <FiRefreshCw size={13} />
+                    Retry
+                  </button>
+                ) : null}
               </div>
             ))
           )}

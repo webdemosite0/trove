@@ -50,6 +50,7 @@ export function SheetsStudio({
       preview={<SheetEditor sheetId={sheetId} initial={initial} hideAiBar />}
       onPrompt={handlePrompt}
       suggestions={SUGGESTIONS}
+      enableRetry
       customize={
         <div className="space-y-2.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
