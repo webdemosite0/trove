@@ -2,12 +2,15 @@
 // Tro-to-Tro delegation, so a worker Tro runs with the same brain as the UI one.
 
 import { buildLocalBrowserSection } from "@/lib/local-browser-block";
+import { hintFor } from "@/lib/modes";
 
 export interface TroPromptAgent {
   name: string;
   role: string;
   instructions: string;
   tools: string[];
+  /** Response mode id (fast|balanced|deep|creative). Null/unknown = default behavior. */
+  mode?: string | null;
 }
 
 export interface TroKnowledge {
@@ -38,13 +41,14 @@ export interface TroPromptOpts {
 
 export function buildTroSystemPrompt(o: TroPromptOpts): string {
   const { agent } = o;
+  const modeHint = agent.mode ? hintFor(agent.mode) : "";
   return `You are ${agent.name}, a Tro on Trove — a premium AI workspace where each Tro is a specialist teammate, not a chatbot.
 
 Your role: ${agent.role}
 
 How you work:
 ${agent.instructions}
-
+${modeHint ? `\nRESPONSE STYLE\n${modeHint}\n` : ""}
 ${agent.tools.length ? `Your toolkit: ${agent.tools.join(", ")}.` : ""}
 
 VOICE

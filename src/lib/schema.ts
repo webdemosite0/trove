@@ -13,7 +13,8 @@ PRAGMA journal_mode = WAL;
       email_verified INTEGER NOT NULL DEFAULT 0,
       provider TEXT NOT NULL DEFAULT 'password',
       onboarding_done INTEGER NOT NULL DEFAULT 0,
-      onboarding_meta TEXT NOT NULL DEFAULT ''
+      onboarding_meta TEXT NOT NULL DEFAULT '',
+      active_workspace_id TEXT
     );
 
     CREATE TABLE IF NOT EXISTS auth_tokens (
@@ -69,9 +70,11 @@ PRAGMA journal_mode = WAL;
       kind TEXT NOT NULL,
       title TEXT NOT NULL,
       href TEXT NOT NULL DEFAULT '',
+      workspace_id TEXT,
       created_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS recents_lookup ON recents (user_id, kind, created_at DESC);
+    CREATE INDEX IF NOT EXISTS recents_by_workspace ON recents (user_id, workspace_id, created_at DESC);
 
     CREATE TABLE IF NOT EXISTS tro_artifacts (
       id TEXT PRIMARY KEY,
@@ -90,9 +93,11 @@ PRAGMA journal_mode = WAL;
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       kind TEXT NOT NULL,
       title TEXT NOT NULL,
+      workspace_id TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
+    CREATE INDEX IF NOT EXISTS conversations_by_workspace ON conversations (user_id, workspace_id, updated_at DESC);
 
     CREATE TABLE IF NOT EXISTS messages (
       id TEXT PRIMARY KEY,
@@ -310,6 +315,17 @@ PRAGMA journal_mode = WAL;
       created_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS team_messages_by_team ON team_messages (team_id, created_at DESC);
+
+    -- Team workspaces (sidebar switcher). users.active_workspace_id = NULL
+    -- means Personal, the implicit default workspace (no row needed).
+    CREATE TABLE IF NOT EXISTS workspaces (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL DEFAULT '#3b82f6',
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS workspaces_by_user ON workspaces (user_id, created_at DESC);
 `;
 
 export const MIGRATIONS: string[] = [
@@ -372,12 +388,28 @@ export const MIGRATIONS: string[] = [
   `CREATE INDEX IF NOT EXISTS tro_scheduled_tasks_agent ON tro_scheduled_tasks (agent_id, next_run_at)`,
   `CREATE TABLE IF NOT EXISTS tro_skills (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, slug TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', instructions TEXT NOT NULL DEFAULT '', icon TEXT NOT NULL DEFAULT '✨', source TEXT NOT NULL DEFAULT 'custom', connector TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(user_id, slug))`,
   `CREATE INDEX IF NOT EXISTS tro_skills_user ON tro_skills (user_id, slug)`,
+  // Tro task activity feed: persistent, truthful event log per agent.
+  // kind: task_created|task_started|task_progress|task_waiting|task_done|task_failed|task_cancelled|task_retried|delegated|delegate_result|artifact_saved|approval_requested|approval_resolved|tool_used|note
+  // status: queued|working|waiting|done|failed|cancelled
+  `CREATE TABLE IF NOT EXISTS tro_task_events (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, task_id TEXT, kind TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'working', title TEXT NOT NULL DEFAULT '', detail TEXT NOT NULL DEFAULT '', actor_name TEXT NOT NULL DEFAULT '', target_agent_id TEXT, target_agent_name TEXT, artifact_id TEXT, verified INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_task_events_agent ON tro_task_events (agent_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS tro_task_events_user ON tro_task_events (user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS tro_task_events_task ON tro_task_events (task_id, created_at DESC)`,
   // Canva-style design docs: size id, layers JSON, background, thumbnail data URL.
   `CREATE TABLE IF NOT EXISTS design_docs (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL DEFAULT 'Untitled design', category TEXT NOT NULL DEFAULT 'custom', size_id TEXT NOT NULL DEFAULT 'ig-post', layers TEXT NOT NULL DEFAULT '[]', background TEXT NOT NULL DEFAULT '#ffffff', thumbnail TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS design_docs_user ON design_docs (user_id, updated_at DESC)`,
   // Studio documents: real docs with title + HTML content, per user.
   `CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS documents_by_user ON documents (user_id, updated_at DESC)`,
+  // Edit Tro screen: selectable mascot species per Tro.
+  `ALTER TABLE agents ADD COLUMN species TEXT`,
+  // Tro knowledge base: uploaded reference documents per Tro.
+  `CREATE TABLE IF NOT EXISTS tro_knowledge (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, title TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT 'upload', created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_knowledge_agent ON tro_knowledge (agent_id, created_at DESC)`,
+  // Tro memory: kind is 'preference' (about the user) or 'task' (task history note).
+  `CREATE TABLE IF NOT EXISTS tro_memories (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE, kind TEXT NOT NULL DEFAULT 'preference', content TEXT NOT NULL DEFAULT '', enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS tro_memories_agent ON tro_memories (agent_id, kind, updated_at DESC)`,
+  // Browser extension (local browser control): pairing codes, connections, command queue.
   // extension_pairing_codes: single-use 6-digit codes, 10-min expiry, code -> user_id.
   `CREATE TABLE IF NOT EXISTS extension_pairing_codes (code TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)`,
   // extension_connections: one row per paired browser. token_hash is SHA-256 of the secret token.
@@ -387,8 +419,21 @@ export const MIGRATIONS: string[] = [
   `CREATE TABLE IF NOT EXISTS extension_commands (id TEXT PRIMARY KEY, connection_id TEXT NOT NULL REFERENCES extension_connections(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL, payload TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'pending', result TEXT NOT NULL DEFAULT '', error TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS extension_commands_queue ON extension_commands (connection_id, status, created_at)`,
   `CREATE INDEX IF NOT EXISTS extension_commands_user ON extension_commands (user_id, created_at DESC)`,
-  // QA-02: persist truncation flag so a cut-off answer is never presented as clean.
+  // QA-02: flag chat replies the provider cut off at the token limit, so a
+  // truncated answer is never presented as a clean completion.
   `ALTER TABLE messages ADD COLUMN truncated INTEGER NOT NULL DEFAULT 0`,
+    // Team workspaces (sidebar workspace switcher). NULL workspace_id on
+    // conversations/recents/users means Personal — the implicit default,
+    // so legacy rows keep working without backfill.
+    `CREATE TABLE IF NOT EXISTS workspaces (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, color TEXT NOT NULL DEFAULT '#3b82f6', created_at INTEGER NOT NULL)`,
+    `CREATE INDEX IF NOT EXISTS workspaces_by_user ON workspaces (user_id, created_at DESC)`,
+    `ALTER TABLE users ADD COLUMN active_workspace_id TEXT`,
+    `ALTER TABLE conversations ADD COLUMN workspace_id TEXT`,
+    `CREATE INDEX IF NOT EXISTS conversations_by_workspace ON conversations (user_id, workspace_id, updated_at DESC)`,
+    `ALTER TABLE recents ADD COLUMN workspace_id TEXT`,
+    `CREATE INDEX IF NOT EXISTS recents_by_workspace ON recents (user_id, workspace_id, created_at DESC)`,
+  // Create-agent wizard: per-Tro response mode (fast|balanced|deep|creative).
+  `ALTER TABLE agents ADD COLUMN mode TEXT NOT NULL DEFAULT 'balanced'`,
 ];
 
 export const REPAIRS = `

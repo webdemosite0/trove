@@ -15,6 +15,8 @@ import {
   type TeamRosterEntry,
 } from "@/lib/tro-prompt";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
+import { logTaskEvent } from "@/lib/tro-activity";
+import { temperatureFor } from "@/lib/modes";
 
 const MAX_DEPTH = 3;
 const MAX_TASK_CHARS = 4000;
@@ -26,6 +28,7 @@ export interface TeamTro {
   instructions: string;
   tools: string[];
   parent_id: string | null;
+  mode: string | null;
 }
 
 export interface DelegateResult {
@@ -37,7 +40,7 @@ export interface DelegateResult {
 
 async function loadRoster(userId: string): Promise<TeamTro[]> {
   const rows = (await all(
-    `SELECT id, name, role, instructions, tools, parent_id FROM agents WHERE user_id = ? ORDER BY created_at DESC`,
+    `SELECT id, name, role, instructions, tools, parent_id, mode FROM agents WHERE user_id = ? ORDER BY created_at DESC`,
     [userId],
   )) as Record<string, unknown>[];
   return rows.map((r) => {
@@ -55,6 +58,7 @@ async function loadRoster(userId: string): Promise<TeamTro[]> {
       instructions: str(r.instructions),
       tools,
       parent_id: r.parent_id == null ? null : String(r.parent_id),
+      mode: r.mode == null ? null : String(r.mode),
     };
   });
 }
@@ -148,6 +152,26 @@ export async function runDelegation(opts: {
     account = null;
   }
 
+  // Delegated Tros get their knowledge + memories too.
+  let knowledge: { title: string; content: string }[] = [];
+  let memories: { kind: "preference" | "task"; content: string }[] = [];
+  try {
+    const kRows = (await all(
+      `SELECT title, content FROM tro_knowledge WHERE user_id = ? AND agent_id = ? ORDER BY created_at DESC LIMIT 10`,
+      [userId, target.id],
+    )) as { title: unknown; content: unknown }[];
+    knowledge = kRows.map((r) => ({ title: String(r.title), content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+  try {
+    const mRows = (await all(
+      `SELECT kind, content FROM tro_memories WHERE user_id = ? AND agent_id = ? AND enabled = 1 ORDER BY updated_at DESC LIMIT 20`,
+      [userId, target.id],
+    )) as { kind: unknown; content: unknown }[];
+    memories = mRows
+      .filter((r) => r.kind === "preference" || r.kind === "task")
+      .map((r) => ({ kind: r.kind as "preference" | "task", content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+
   const system = buildTroSystemPrompt({
     agent: target,
     browserNote: `CLOUD COMPUTER starts automatically in this workspace. When asked to research the web, treat browsing as available.`,
@@ -157,16 +181,33 @@ export async function runDelegation(opts: {
     obeyFormat: OBEY_FORMAT,
     situation: situation({ timeZone: safeTimeZone("UTC"), canSearch: true }),
     teamSection: buildTeamSection(target.id, toRosterEntries(roster)),
+    knowledge,
+    memories,
   });
 
   const brief = `${senderName} (a fellow Tro on your team) asked you to do this:\n\n${task}\n\nDeliver the finished work directly — no preamble about being delegated to, just do the job in your voice.`;
+
+  const taskId = `dlg_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  // Feed: delegation started (on the sender's feed, visible in team view).
+  await logTaskEvent({
+    userId,
+    agentId: senderId,
+    kind: "delegated",
+    status: "working",
+    title: `Delegated to ${target.name}`,
+    detail: task.slice(0, 500),
+    actorName: senderName,
+    taskId,
+    targetAgentId: target.id,
+    targetAgentName: target.name,
+  });
 
   await markWorking(userId, target.id);
   try {
     let reply = await generateText({
       turns: [{ role: "user", text: brief }],
       system,
-      temperature: 0.75,
+      temperature: target.mode ? temperatureFor(target.mode) : 0.75,
       onUsage: (u) => account && spend(account.userId, "agent", u.totalTokens),
     });
 
@@ -204,10 +245,36 @@ export async function runDelegation(opts: {
       reply = nested.text;
     }
 
+    // Feed: delegation completed — verified because we hold the reply.
+    await logTaskEvent({
+      userId,
+      agentId: senderId,
+      kind: "delegate_result",
+      status: "done",
+      title: `${target.name} completed the task`,
+      detail: reply.slice(0, 500),
+      actorName: target.name,
+      taskId,
+      targetAgentId: target.id,
+      targetAgentName: target.name,
+      verified: true,
+    });
     return { ok: true, target: { id: target.id, name: target.name, role: target.role }, reply };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("tro delegate", target.id, message);
+    await logTaskEvent({
+      userId,
+      agentId: senderId,
+      kind: "task_failed",
+      status: "failed",
+      title: `Delegation to ${target.name} failed`,
+      detail: message.slice(0, 500),
+      actorName: senderName,
+      taskId,
+      targetAgentId: target.id,
+      targetAgentName: target.name,
+    });
     return { ok: false, error: `Delegation failed: ${message}` };
   } finally {
     await clearWorking(userId, target.id);

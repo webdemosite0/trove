@@ -5,6 +5,7 @@ import { buildChatConnectorContext } from "@/lib/chat-connectors";
 import { buildTroConnectorToolSection, executeConnectorTool } from "@/lib/tro-connector-tools";
 import { parseConnectorToolBlocks, stripConnectorToolBlocks } from "@/lib/tool-block";
 import { nextCronRun } from "@/lib/schedule-block";
+import { temperatureFor } from "@/lib/modes";
 import { OBEY_FORMAT, safeTimeZone, situation } from "@/lib/context";
 
 export const runtime = "nodejs";
@@ -116,6 +117,7 @@ async function fireTask(row: Record<string, unknown>) {
       role: str(agentRow.role),
       instructions: str(agentRow.instructions),
       tools,
+      mode: agentRow.mode == null ? null : str(agentRow.mode),
     },
     browserNote: "",
     connectedNote: connectorContext.connectedNote,
@@ -136,7 +138,7 @@ async function fireTask(row: Record<string, unknown>) {
     full = await generateText({
       turns: [{ role: "user", text: scheduledPreamble }],
       system,
-      temperature: 0.5,
+      temperature: agentRow.mode ? temperatureFor(String(agentRow.mode)) : 0.5,
     });
   } catch (e) {
     throw new Error(e instanceof Error ? e.message : "agent run failed");

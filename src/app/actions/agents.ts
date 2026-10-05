@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@/lib/auth";
-import { all, run, uid } from "@/lib/db";
+import { all, one, run, uid } from "@/lib/db";
 
 export interface AgentRow {
   id: string;
@@ -11,6 +11,8 @@ export interface AgentRow {
   instructions: string;
   tools: string;
   accent: string;
+  species: string | null;
+  mode: string | null;
   parent_id: string | null;
   created_at: number;
 }
@@ -31,6 +33,8 @@ export async function listAgents(): Promise<AgentRow[]> {
     instructions: String(r.instructions),
     tools: String(r.tools),
     accent: String(r.accent),
+    species: r.species == null ? null : String(r.species),
+    mode: r.mode == null ? null : String(r.mode),
     parent_id: r.parent_id == null ? null : String(r.parent_id),
     created_at: Number(r.created_at),
   }));
@@ -48,6 +52,23 @@ const DEFAULT_TRO_TOOLS = [
   "Send email",
   "Query database",
 ];
+
+/** Mascot species the wizard can assign at creation (mirrors bot.tsx SPECIES). */
+const VALID_SPECIES = [
+  "muse",
+  "pulse",
+  "orb",
+  "spark",
+  "nova",
+  "drift",
+  "lead",
+  "guide",
+  "bloom",
+  "byte",
+] as const;
+
+/** Response modes the wizard can assign at creation (mirrors modes.ts ModeId). */
+const VALID_MODES = ["fast", "balanced", "deep", "creative"] as const;
 
 /** Create or refresh the business-default Tro after onboarding analysis. */
 export async function ensureDefaultTroForBusiness(input: {
@@ -132,10 +153,21 @@ export async function createAgent(
     return { error: "Instructions need at least 20 characters — be specific." };
   }
 
+  const rawSpecies = String(form.get("species") ?? "").trim();
+  const species = (VALID_SPECIES as readonly string[]).includes(rawSpecies) ? rawSpecies : null;
+  const rawMode = String(form.get("mode") ?? "balanced").trim();
+  const mode = (VALID_MODES as readonly string[]).includes(rawMode) ? rawMode : "balanced";
+  const rawParent = String(form.get("parent_id") ?? "").trim();
+  let parentId: string | null = null;
+  if (rawParent) {
+    const prow = await one(`SELECT id FROM agents WHERE id = ? AND user_id = ?`, [rawParent, user.id]);
+    parentId = prow ? rawParent : null;
+  }
+
   const id = uid("agt");
   await run(
-    `INSERT INTO agents (id, user_id, name, role, instructions, tools, accent, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO agents (id, user_id, name, role, instructions, tools, accent, species, mode, parent_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.id,
@@ -144,6 +176,9 @@ export async function createAgent(
       instructions,
       JSON.stringify(tools),
       accent,
+      species,
+      mode,
+      parentId,
       Date.now(),
     ],
   );
@@ -151,6 +186,48 @@ export async function createAgent(
   revalidatePath("/agents");
   revalidatePath("/tros");
   return { ok: true, id };
+}
+
+export async function updateAgent(
+  id: string,
+  input: {
+    name: string;
+    role: string;
+    instructions: string;
+    tools: string[];
+    accent: string;
+    species?: string | null;
+  },
+): Promise<{ ok: boolean; error?: string }> {
+  const user = await currentUser();
+  if (!user) return { ok: false, error: "Log in to edit this Tro." };
+
+  const name = input.name.trim();
+  const role = input.role.trim();
+  const instructions = input.instructions.trim();
+  if (name.length < 2) return { ok: false, error: "Give the Tro a name." };
+  if (role.length < 2) return { ok: false, error: "Describe the Tro's role." };
+  if (instructions.length < 20) {
+    return { ok: false, error: "Instructions need at least 20 characters." };
+  }
+
+  await run(
+    `UPDATE agents SET name = ?, role = ?, instructions = ?, tools = ?, accent = ?, species = ?
+     WHERE id = ? AND user_id = ?`,
+    [
+      name,
+      role,
+      instructions,
+      JSON.stringify(input.tools),
+      input.accent || "#3b82f6",
+      input.species || null,
+      id,
+      user.id,
+    ],
+  );
+  revalidatePath("/tros");
+  revalidatePath(`/tros/${id}`);
+  return { ok: true };
 }
 
 export async function deleteAgent(id: string) {

@@ -11,8 +11,20 @@ import { buildTroConnectorToolSection } from "@/lib/tro-connector-tools";
 import { buildTroBrowserToolSection } from "@/lib/browser-tool-block";
 import { buildTroScheduleSection } from "@/lib/schedule-block";
 import { buildTroSystemPrompt, buildTeamSection } from "@/lib/tro-prompt";
+import { temperatureFor, hintFor } from "@/lib/modes";
 
 export const runtime = "nodejs";
+
+/**
+ * PLAN MODE hint: the user asked the Tro to plan, not execute. No tool
+ * blocks, no side effects — write the plan, then ask for approval.
+ */
+const PLAN_MODE_HINT =
+  "PLAN MODE is on: do not take any actions this turn. Do NOT emit " +
+  "connector-tool, browser-tool, local-browser, schedule-task, team-hire, " +
+  "or team-delegate blocks, and do NOT save artifacts. Write a clear " +
+  "step-by-step plan for what you would do, then use an ask-block to get " +
+  "the user's approval before acting.";
 
 export async function POST(req: NextRequest) {
   const user = await currentUser();
@@ -25,6 +37,10 @@ export async function POST(req: NextRequest) {
   let attachments: Attachment[] = [];
   let timeZone = "UTC";
   let browser: { sessionId?: string; pageUrl?: string | null; title?: string | null } | null = null;
+  // Optional response mode (fast | balanced | deep | creative) and plan mode.
+  // Absent → the long-standing defaults are preserved.
+  let mode: string | undefined;
+  let planMode = false;
   try {
     const body = await req.json();
     agentId = String(body?.agentId ?? "");
@@ -32,6 +48,8 @@ export async function POST(req: NextRequest) {
     attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     timeZone = safeTimeZone(body?.timeZone);
     browser = body?.browser && typeof body.browser === "object" ? body.browser : null;
+    if (typeof body?.mode === "string") mode = body.mode;
+    planMode = body?.plan === true;
   } catch {
     return Response.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -46,12 +64,15 @@ export async function POST(req: NextRequest) {
         role: str(row.role),
         instructions: str(row.instructions),
         tools: str(row.tools),
+        mode: row.mode == null ? null : str(row.mode),
       }
     : undefined;
 
   if (!agent) {
     return Response.json({ error: "Agent not found." }, { status: 404 });
   }
+  // The Tro's stored response mode is the default; a per-request mode overrides it.
+  if (!mode) mode = agent.mode ?? undefined;
   if (turns.length === 0) {
     return Response.json({ error: "No messages provided." }, { status: 400 });
   }
@@ -122,8 +143,30 @@ export async function POST(req: NextRequest) {
     ? `CLOUD COMPUTER is connected.\nCurrent page: ${browser.pageUrl || "about:blank"}${browser.title ? ` (“${browser.title}”)` : ""}.\nWhen the user asks you to browse, research, or open a site, assume the computer can navigate. Reference what is on screen when useful.`
     : `CLOUD COMPUTER starts automatically in this workspace. When the user shares a URL or asks to research the web, treat browsing as available.`;
 
+  // Fetch knowledge base and enabled memories for this Tro.
+  let knowledge: { title: string; content: string }[] = [];
+  let memories: { kind: "preference" | "task"; content: string }[] = [];
+  try {
+    const kRows = (await all(
+      `SELECT title, content FROM tro_knowledge WHERE user_id = ? AND agent_id = ? ORDER BY created_at DESC LIMIT 10`,
+      [user.id, agentId],
+    )) as { title: unknown; content: unknown }[];
+    knowledge = kRows.map((r) => ({ title: String(r.title), content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+  try {
+    const mRows = (await all(
+      `SELECT kind, content FROM tro_memories WHERE user_id = ? AND agent_id = ? AND enabled = 1 ORDER BY updated_at DESC LIMIT 20`,
+      [user.id, agentId],
+    )) as { kind: unknown; content: unknown }[];
+    memories = mRows
+      .filter((r) => r.kind === "preference" || r.kind === "task")
+      .map((r) => ({ kind: r.kind as "preference" | "task", content: String(r.content) }));
+  } catch { /* table may not exist yet */ }
+
   const system = buildTroSystemPrompt({
     agent: { name: agent.name, role: agent.role, instructions: agent.instructions, tools },
+    knowledge,
+    memories,
     browserNote,
     connectedNote: connectorContext.connectedNote,
     liveContext:
@@ -170,8 +213,10 @@ export async function POST(req: NextRequest) {
       onUsage: (u) =>
         account && spend(account.userId, "agent", u.totalTokens),
       turns,
-      system,
-      temperature: 0.75,
+      system: [system, mode ? hintFor(mode) : "", planMode ? PLAN_MODE_HINT : ""]
+        .filter(Boolean)
+        .join("\n\n"),
+      temperature: mode ? temperatureFor(mode) : 0.75,
       extraParts: attachments.length ? toParts(attachments) : undefined,
     });
     return new Response(stream, {
