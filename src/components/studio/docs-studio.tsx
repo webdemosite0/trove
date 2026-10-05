@@ -1,7 +1,7 @@
 "use client";
 
 import { StudioSplit } from "@/components/studio/studio-split";
-import { DocEditor } from "@/components/docs/doc-editor";
+import { DocEditor, whenDocsEditorReady } from "@/components/docs/doc-editor";
 import {
   studioResultOf,
   type StudioGenResult,
@@ -32,17 +32,33 @@ export function DocsStudio({ initial }: { initial: Doc | null }) {
     const reqId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
     return new Promise<StudioGenResult>((resolve) => {
       let settled = false;
+      // Defect 2 (P1): the editor now self-aborts at 90s (matching sheets),
+      // so this backstop only fires when the editor never answered at all —
+      // keep it just past 90s so a silent editor fails fast instead of
+      // hanging "Creating…" for 3 minutes.
+      const startedAt = Date.now();
       // QA-01: a timeout is a failure, not a success — never report "Done"
       // when the editor never confirmed the content was applied.
       const timer = setTimeout(() => {
         if (settled) return;
         settled = true;
         window.removeEventListener("docs-ai-finished", onDone);
+        const waitedMs = Date.now() - startedAt;
+        // Defect 2: diagnostic breadcrumb linking the chat command to the
+        // editor execution (request id, handler, elapsed, last progress).
+        console.error("[docs-studio/handlePrompt] generation timed out", {
+          reqId,
+          handler: "docs/runAi",
+          waitedMs,
+          lastSignal: "docs-ai-finished never arrived",
+        });
         resolve({
           ok: false,
           error: "The document editor didn't respond in time.",
+          reqId,
+          details: `reqId=${reqId} handler=docs/runAi waited=${Math.round(waitedMs / 1000)}s lastSignal=docs-ai-finished-never-arrived`,
         });
-      }, 180_000);
+      }, 100_000);
       function onDone(e: Event) {
         if (settled) return;
         const result = studioResultOf(e);
@@ -54,7 +70,16 @@ export function DocsStudio({ initial }: { initial: Doc | null }) {
         resolve(result);
       }
       window.addEventListener("docs-ai-finished", onDone);
-      dispatchPrompt({ prompt, reqId });
+      // Defect 2 follow-up (P1): on a brand-new document the editor only
+      // mounts as a result of this submit (StudioSplit gates the preview on
+      // `started`), so dispatching the prompt event immediately would fire
+      // before its listener exists and the request would be silently lost.
+      // Wait for the editor's ready signal first; if it never comes, dispatch
+      // anyway and let the backstop above report it with diagnostics.
+      void whenDocsEditorReady(8000).then(() => {
+        if (settled) return;
+        dispatchPrompt({ prompt, reqId });
+      });
     });
   }
 

@@ -27,7 +27,18 @@ export type StudioGenResult =
       /** Echo of the requesting sidebar prompt's id (request ownership). */
       reqId?: string;
     }
-  | { ok: false; error: string; reqId?: string };
+  | {
+      ok: false;
+      error: string;
+      reqId?: string;
+      /**
+       * Defect 2 (P1): optional diagnostic breadcrumb — request id, editor
+       * handler, elapsed ms, last progress signal — so a timeout/failure can
+       * be traced from the chat command to the editor execution. The studio
+       * sidebar renders it subtly under the error text.
+       */
+      details?: string;
+    };
 
 /** Extract a StudioGenResult from a completion event's detail, if present. */
 export function studioResultOf(e: Event): StudioGenResult | null {

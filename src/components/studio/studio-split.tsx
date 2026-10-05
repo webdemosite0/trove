@@ -49,7 +49,7 @@ export function StudioSplit({
   const [busy, setBusy] = useState(false);
   const [started, setStarted] = useState(hasContent);
   const [messages, setMessages] = useState<
-    { role: "user" | "ai"; text: string; failedPrompt?: string }[]
+    { role: "user" | "ai"; text: string; failedPrompt?: string; details?: string }[]
   >([]);
   // R-01: on phones, default to the editor with the AI panel behind a tab,
   // so the chat doesn't eat half the screen.
@@ -79,6 +79,9 @@ export function StudioSplit({
           // P1: failed (timeout/error) results carry their originating prompt
           // so the sidebar can offer a direct Retry without retyping.
           failedPrompt: result.ok ? undefined : q,
+          // Defect 2: pass through the editor's diagnostic breadcrumb so a
+          // failure can be traced from the chat command to editor execution.
+          details: result.ok ? undefined : result.details,
         },
       ]);
     } catch {
@@ -169,6 +172,13 @@ export function StudioSplit({
                 )}
               >
                 {m.text}
+                {/* Defect 2: show the editor's diagnostic breadcrumb under
+                    the error so failures are traceable to the request. */}
+                {m.role === "ai" && m.details ? (
+                  <p className="mt-1.5 break-all font-mono text-[10.5px] leading-relaxed text-ink-4/80">
+                    {m.details}
+                  </p>
+                ) : null}
                 {/* P1: direct retry on failed generations — the button sits
                     right under the error text, visible without scrolling. */}
                 {enableRetry && m.role === "ai" && m.failedPrompt ? (
