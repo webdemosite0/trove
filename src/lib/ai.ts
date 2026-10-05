@@ -9,6 +9,7 @@ import {
   type OnAttempt,
   type Source,
   type OnSources,
+  type OnFinishReason,
 } from "@/lib/gemini";
 import {
   compatGenerate,
@@ -18,7 +19,7 @@ import {
   type CompatProvider,
 } from "@/lib/openai-compat";
 
-export type { Turn, Usage, OnUsage, OnAttempt, Source, OnSources };
+export type { Turn, Usage, OnUsage, OnAttempt, Source, OnSources, OnFinishReason };
 
 type Common = {
   turns: Turn[];
@@ -259,6 +260,8 @@ export async function streamText(
     onSources?: OnSources;
     onSearch?: (query: string, provider: string, count: number) => void;
     preferredProvider?: string;
+    /** Fires once when the stream ends, with the provider's finish reason. */
+    onFinishReason?: OnFinishReason;
   },
 ): Promise<ReadableStream<Uint8Array>> {
   const temperature = opts.temperature ?? 0.7;
@@ -287,6 +290,7 @@ export async function streamText(
         temperature,
         maxOutputTokens,
         onUsage: opts.onUsage,
+        onFinishReason: opts.onFinishReason,
       });
       noteProviderSuccess(selectedCompat.id);
       return result;
@@ -312,6 +316,7 @@ export async function streamText(
         temperature,
         maxOutputTokens,
         onUsage: opts.onUsage,
+        onFinishReason: opts.onFinishReason,
       });
       noteProviderSuccess(gpt.id);
       return result;
@@ -331,6 +336,7 @@ export async function streamText(
     maxOutputTokens,
     onUsage: opts.onUsage,
     extraParts: opts.extraParts,
+    onFinishReason: opts.onFinishReason,
   };
 
   if (tryGrounding) {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Thinking } from "@/components/chat/thinking";
+import type { StudioGenResult } from "@/lib/studio-events";
 import {
   CANVAS_SIZES,
   sizeById,
@@ -302,9 +303,13 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
   };
 
   /* ── AI generate ── */
-  const generate = useCallback(async () => {
+  // QA-01: returns a truthful result (ok/applied/error) so the studio chat
+  // panel only says "Done" when layers were actually generated and applied.
+  const generate = useCallback(async (): Promise<StudioGenResult> => {
     const prompt = aiPrompt.trim();
-    if (!prompt || generating) return;
+    if (!prompt || generating) {
+      return { ok: false, error: "Still generating — wait a moment." };
+    }
     setGenerating(true);
     try {
       const res = await fetch("/api/design-docs/generate", {
@@ -314,14 +319,19 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
       });
       const data = (await res.json()) as { background?: string; layers?: Layer[]; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Generation failed.");
+      // An empty layer list is not a success — the canvas would stay blank.
+      if (!data.layers?.length) {
+        throw new Error("The model returned an empty design. Try again.");
+      }
       setBackground(data.background ?? "#ffffff");
-      setLayers(data.layers ?? []);
+      setLayers(data.layers);
       setSelectedId(null);
       setPanel("none");
-      window.dispatchEvent(new CustomEvent("design-ai-done"));
-    } catch {
+      return { ok: true, applied: true, count: data.layers.length };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Generation failed.";
       setSaveState("error");
-      window.dispatchEvent(new CustomEvent("design-ai-error"));
+      return { ok: false, error: message };
     } finally {
       setGenerating(false);
     }
@@ -336,7 +346,18 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
       if (prompt) {
         setAiPrompt(prompt);
         setPanel("ai");
-        setTimeout(() => generateRef.current(), 50);
+        // QA-01: forward the real result (ok/applied/error) so the sidebar
+        // never declares success on a failed or empty generation.
+        setTimeout(() => {
+          void generateRef.current().then((result) => {
+            window.dispatchEvent(
+              new CustomEvent<StudioGenResult>(
+                result.ok ? "design-ai-done" : "design-ai-error",
+                { detail: result },
+              ),
+            );
+          });
+        }, 50);
       }
     }
     function onExternalSize(e: Event) {

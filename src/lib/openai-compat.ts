@@ -4,6 +4,9 @@ import type { Turn, Usage, OnUsage } from "@/lib/gemini";
 const COMPAT_GENERATE_TIMEOUT_MS = 90_000;
 const COMPAT_STREAM_CONNECT_TIMEOUT_MS = 15_000;
 
+/** Fired once with the provider's finish reason (e.g. "stop" or "length"). */
+export type OnFinishReason = (reason: string) => void;
+
 export type CompatProvider = {
   id: string;
   label: string;
@@ -158,8 +161,10 @@ export async function compatGenerate(opts: {
   temperature?: number;
   maxOutputTokens?: number;
   onUsage?: OnUsage;
+  /** Fires once with the provider's finish reason (non-streaming response). */
+  onFinishReason?: OnFinishReason;
 }): Promise<string> {
-  const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
+  const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage, onFinishReason } = opts;
   const res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
     signal: AbortSignal.timeout(COMPAT_GENERATE_TIMEOUT_MS),
@@ -191,11 +196,13 @@ export async function compatGenerate(opts: {
   } catch {
     throw new Error(`${provider.label}: invalid JSON`);
   }
-  const content = (json as { choices?: { message?: { content?: string } }[] })?.choices?.[0]
+  const content = (json as { choices?: { message?: { content?: string }; finish_reason?: string }[] })?.choices?.[0]
     ?.message?.content;
   if (typeof content !== "string") throw new Error(`${provider.label}: empty response`);
   const usage = usageFrom(json);
   if (usage && onUsage) onUsage(usage);
+  const finishReason = (json as { choices?: { finish_reason?: string }[] })?.choices?.[0]?.finish_reason;
+  if (finishReason && onFinishReason) onFinishReason(finishReason);
   return content;
 }
 
@@ -206,8 +213,10 @@ export async function compatStream(opts: {
   temperature?: number;
   maxOutputTokens?: number;
   onUsage?: OnUsage;
+  /** Fires once when the stream ends, with the provider's finish reason. */
+  onFinishReason?: OnFinishReason;
 }): Promise<ReadableStream<Uint8Array>> {
-  const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage } = opts;
+  const { provider, turns, system, temperature = 0.7, maxOutputTokens = 8192, onUsage, onFinishReason } = opts;
   let res: Response;
   try {
     res = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -246,12 +255,30 @@ export async function compatStream(opts: {
   const decoder = new TextDecoder();
   let buffer = "";
   let reportedUsage = false;
+  // The finish reason rides on the final SSE chunk (usually with an empty
+  // delta). It must be captured — "length" means the answer was cut off by
+  // the token limit and must not be presented as a clean completion.
+  let finishReason: string | null = null;
+  let finishReasonReported = false;
+
+  const reportFinishReason = () => {
+    if (finishReasonReported) return;
+    finishReasonReported = true;
+    if (finishReason && onFinishReason) {
+      try {
+        onFinishReason(finishReason);
+      } catch {
+        /* a reporting callback must never break the stream */
+      }
+    }
+  };
 
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
+          reportFinishReason();
           controller.close();
           return;
         }
@@ -263,16 +290,19 @@ export async function compatStream(opts: {
           if (!trimmed.startsWith("data:")) continue;
           const data = trimmed.slice(5).trim();
           if (data === "[DONE]") {
+            reportFinishReason();
             controller.close();
             return;
           }
           try {
             const json = JSON.parse(data) as {
-              choices?: { delta?: { content?: string } }[];
+              choices?: { delta?: { content?: string }; finish_reason?: string | null }[];
               usage?: Record<string, unknown>;
             };
             const chunk = json.choices?.[0]?.delta?.content;
             if (chunk) controller.enqueue(new TextEncoder().encode(chunk));
+            const fr = json.choices?.[0]?.finish_reason;
+            if (typeof fr === "string" && fr) finishReason = fr;
             if (!reportedUsage && json.usage && onUsage) {
               const usage = usageFrom(json);
               if (usage) {

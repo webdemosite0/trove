@@ -52,6 +52,9 @@ export interface Turn {
   text: string;
 }
 
+/** Fired once when a stream ends, with the provider's finish reason (e.g. "STOP" or "MAX_TOKENS"). */
+export type OnFinishReason = (reason: string) => void;
+
 function key() {
   const k = process.env.GEMINI_API_KEY;
   if (!k) throw new Error("GEMINI_API_KEY is not set. Add it to .env.local.");
@@ -270,6 +273,7 @@ export async function streamText({
   onUsage,
   search = false,
   onSources,
+  onFinishReason,
 }: {
   turns: Turn[];
   system: string;
@@ -289,6 +293,8 @@ export async function streamText({
   search?: boolean;
   /** Fires when grounding metadata arrives, before the stream ends. */
   onSources?: OnSources;
+  /** Fires once when the stream ends, with the provider's finish reason. */
+  onFinishReason?: OnFinishReason;
 }) {
   const contents = turns.map((t) => ({
     role: t.role,
@@ -309,6 +315,7 @@ export async function streamText({
     search,
     onUsage,
     onSources,
+    onFinishReason,
   });
 }
 
@@ -329,6 +336,7 @@ async function streamFromContents({
   declareSearchTool = false,
   onUsage,
   onSources,
+  onFinishReason,
 }: {
   contents: unknown[];
   system: string;
@@ -345,6 +353,8 @@ async function streamFromContents({
   declareSearchTool?: boolean;
   onUsage?: OnUsage;
   onSources?: OnSources;
+  /** Fires once when the stream ends, with the provider's finish reason. */
+  onFinishReason?: OnFinishReason;
 }) {
   const upstream = await callWithFallback("streamGenerateContent?alt=sse", {
     contents,
@@ -371,6 +381,10 @@ async function streamFromContents({
   // Whether the reader got anything at all, and why not.
   let emitted = false;
   let failure: unknown = null;
+  // Gemini reports why the turn ended on candidates[0].finishReason
+  // ("MAX_TOKENS" means the answer was cut off by the output limit). The
+  // last frame that carries it is authoritative.
+  let finishReason: string | null = null;
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -402,6 +416,8 @@ async function streamFromContents({
                   controller.enqueue(encoder.encode(part.text));
                 }
               }
+              const fr = json?.candidates?.[0]?.finishReason;
+              if (typeof fr === "string" && fr) finishReason = fr;
             } catch {
               /* partial frame; the next chunk completes it */
             }
@@ -442,6 +458,13 @@ async function streamFromContents({
               : new Error("The model returned an empty response."),
           );
         } else {
+          if (finishReason && onFinishReason) {
+            try {
+              onFinishReason(finishReason);
+            } catch (e) {
+              console.error("Gemini finish-reason callback failed", e);
+            }
+          }
           controller.close();
         }
         reader.releaseLock();
@@ -707,6 +730,7 @@ export async function streamWithSearch({
   extraParts,
   onUsage,
   onSearch,
+  onFinishReason,
 }: {
   turns: Turn[];
   system: string;
@@ -715,6 +739,8 @@ export async function streamWithSearch({
   extraParts?: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }>;
   onUsage?: OnUsage;
   onSearch?: (query: string, provider: string, count: number) => void;
+  /** Fires once when the stream ends, with the provider's finish reason. */
+  onFinishReason?: OnFinishReason;
 }) {
   const started = buildContents(turns, extraParts);
 
@@ -732,5 +758,6 @@ export async function streamWithSearch({
     maxOutputTokens,
     declareSearchTool: searched,
     onUsage,
+    onFinishReason,
   });
 }

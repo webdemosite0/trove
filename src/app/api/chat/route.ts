@@ -18,6 +18,7 @@ import { ANALYTICS_EVENTS, trackEvent, trackEventOncePerUser } from "@/lib/analy
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { classifyOperationalError, opsAlert } from "@/lib/ops-alert";
 import { SYSTEM, SYSTEM_FAST } from "@/lib/chat-system";
+import { TRUNCATION_MARKER, isTruncationFinish } from "@/lib/truncation";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -318,9 +319,16 @@ async function handle(req: NextRequest) {
   try {
     let sources: Source[] = [];
     const searches: { query: string; provider: string; count: number }[] = [];
+    // The provider's finish reason ("length" / "MAX_TOKENS") tells us the
+    // model was cut off by the token limit. It must reach the client so a
+    // truncated answer is never presented as a clean completion.
+    let finishReason: string | null = null;
 
     const stream = await streamText({
       onUsage: (u) => account && spend(account.userId, "chat", u.totalTokens),
+      onFinishReason: (reason) => {
+        finishReason = reason;
+      },
       turns: modelTurns,
       system: promptFor(wantSearch),
       systemWithoutSearch: promptFor(false),
@@ -351,13 +359,19 @@ async function handle(req: NextRequest) {
             controller.enqueue(
               new TextEncoder().encode(`\n\n---\n**Sources**\n${lines}\n`),
             );
-            return;
-          }
-          if (searches.length) {
+          } else if (searches.length) {
             const lines = searches
               .map((s) => `- Searched for "${s.query}" — ${s.count} results`)
               .join("\n");
             controller.enqueue(new TextEncoder().encode(`\n\n---\n${lines}\n`));
+          }
+          // The stream is plain text with no metadata channel, so a
+          // truncation is signalled with a trailer the client strips before
+          // showing or saving the reply.
+          if (isTruncationFinish(finishReason)) {
+            controller.enqueue(
+              new TextEncoder().encode(`\n\n${TRUNCATION_MARKER}\n`),
+            );
           }
         },
       }),
