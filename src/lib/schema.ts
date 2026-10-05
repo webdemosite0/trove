@@ -387,6 +387,8 @@ export const MIGRATIONS: string[] = [
   `CREATE TABLE IF NOT EXISTS extension_commands (id TEXT PRIMARY KEY, connection_id TEXT NOT NULL REFERENCES extension_connections(id) ON DELETE CASCADE, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL, payload TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'pending', result TEXT NOT NULL DEFAULT '', error TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS extension_commands_queue ON extension_commands (connection_id, status, created_at)`,
   `CREATE INDEX IF NOT EXISTS extension_commands_user ON extension_commands (user_id, created_at DESC)`,
+  // QA-02: persist truncation flag so a cut-off answer is never presented as clean.
+  `ALTER TABLE messages ADD COLUMN truncated INTEGER NOT NULL DEFAULT 0`,
 ];
 
 export const REPAIRS = `

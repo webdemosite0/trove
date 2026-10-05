@@ -78,7 +78,7 @@ export function MobileChat({
     };
   }, [initialActivity.length]);
 
-  const { turns, busy, error, send, retry, clear, bottom } = useChatThread({
+  const { turns, busy, error, send, retry, regenerate, continueReply, clear, bottom } = useChatThread({
     restored,
     mode,
     projectId: null,
@@ -211,6 +211,17 @@ export function MobileChat({
               text={turn.text}
               files={turn.files}
               pending={busy && index === turns.length - 1 && turn.role === "model"}
+              truncated={turn.truncated === true}
+              onContinue={
+                !busy && index === turns.length - 1 && turn.role === "model" && turn.truncated
+                  ? () => continueReply(turn.id)
+                  : undefined
+              }
+              onRetry={
+                !busy && index === turns.length - 1 && turn.role === "model" && turn.truncated
+                  ? regenerate
+                  : undefined
+              }
             />
           ))}
           {error ? <Problem message={error} onRetry={retry} /> : null}

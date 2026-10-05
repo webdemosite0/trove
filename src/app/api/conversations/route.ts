@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
     .map((m) => ({
       role: m.role === "user" ? ("user" as const) : ("model" as const),
       text: String(m.text),
+      truncated: m.truncated === true,
     }));
 
   if (!clean.length) {

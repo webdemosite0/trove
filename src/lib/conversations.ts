@@ -7,6 +7,8 @@ import type { RecentKind } from "@/lib/recents";
 export interface StoredMessage {
   role: "user" | "model";
   text: string;
+  /** The provider cut this reply off at the token limit. */
+  truncated?: boolean;
 }
 
 export interface Conversation {
@@ -111,9 +113,9 @@ export async function saveConversation({
 
   messages.forEach((m, i) => {
     writes.push({
-      sql: `INSERT INTO messages (id, conversation_id, role, text, seq, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [uid("msg"), convoId as string, m.role, m.text, i, now],
+      sql: `INSERT INTO messages (id, conversation_id, role, text, truncated, seq, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [uid("msg"), convoId as string, m.role, m.text, m.truncated ? 1 : 0, i, now],
     });
   });
 
@@ -146,7 +148,7 @@ export async function loadConversation(id: string): Promise<Conversation | null>
   if (!head) return null;
 
   const rows = await all(
-    `SELECT role, text FROM messages WHERE conversation_id = ? ORDER BY seq ASC`,
+    `SELECT role, text, truncated FROM messages WHERE conversation_id = ? ORDER BY seq ASC`,
     [id],
   );
 
@@ -158,6 +160,7 @@ export async function loadConversation(id: string): Promise<Conversation | null>
     messages: rows.map((r) => ({
       role: str(r.role) === "user" ? "user" : "model",
       text: str(r.text),
+      truncated: num(r.truncated) === 1,
     })),
   };
 }

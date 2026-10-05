@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FiCheck, FiFile } from "@/components/ui/icons";
+import { FiAlertTriangle, FiArrowRight, FiCheck, FiFile } from "@/components/ui/icons";
 import {
   ClipboardCheckIcon,
   RotateCcwIcon,
@@ -34,6 +34,9 @@ export function Message({
   generatingImage,
   imageCaption,
   onRegenerate,
+  onContinue,
+  onRetry,
+  truncated,
   assistantName,
   assistantSeed,
   assistantAccent,
@@ -46,6 +49,12 @@ export function Message({
   generatingImage?: boolean;
   imageCaption?: string;
   onRegenerate?: () => void;
+  /** Resume a truncated reply from where it stopped (QA-02). */
+  onContinue?: () => void;
+  /** Retry a truncated reply from scratch (QA-02). */
+  onRetry?: () => void;
+  /** The provider cut this reply off at the token limit — not a clean completion. */
+  truncated?: boolean;
   thinkMs?: number;
   searchQuery?: string;
   searchSources?: { title: string; url: string; domain?: string }[];
@@ -170,6 +179,45 @@ export function Message({
           ) : null}
         </div>
       )}
+      {!pending && truncated ? (
+        <div
+          role="status"
+          className="mt-3 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07] p-4"
+        >
+          <div className="flex items-center gap-2">
+            <Ico icon={FiAlertTriangle} motion="lift" size={15} className="text-amber-500" />
+            <p className="text-[13.5px] font-semibold text-ink">
+              This response was cut off
+            </p>
+          </div>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-3">
+            It hit the reply length limit before finishing, so it isn&apos;t a
+            complete answer.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onContinue ? (
+              <button
+                type="button"
+                onClick={onContinue}
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/90 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-amber-500"
+              >
+                Continue
+                <Ico icon={FiArrowRight} motion="lift" size={14} />
+              </button>
+            ) : null}
+            {onRetry ? (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-raised px-4 py-2 text-[13px] font-medium text-ink transition hover:bg-hover"
+              >
+                <RotateCcwIcon size={14} />
+                Retry
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       {!pending ? (
         <div className="mt-2 flex items-center gap-0.5 opacity-0 transition group-hover/msg:opacity-100">
           <button

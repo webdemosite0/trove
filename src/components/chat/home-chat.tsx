@@ -55,7 +55,7 @@ export function HomeChat({
     };
   }, [initialActivity.length]);
 
-  const { turns, busy, error, send, stop, retry, regenerate, clear, bottom } =
+  const { turns, busy, error, send, stop, retry, regenerate, continueReply, clear, bottom } =
     useChatThread({
       restored,
       mode,
@@ -166,8 +166,19 @@ export function HomeChat({
               searchQuery={t.searchQuery}
               searchSources={t.searchSources}
               pending={busy && i === turns.length - 1 && t.role === "model"}
+              truncated={t.truncated === true}
               onRegenerate={
                 !busy && i === turns.length - 1 && t.role === "model"
+                  ? regenerate
+                  : undefined
+              }
+              onContinue={
+                !busy && i === turns.length - 1 && t.role === "model" && t.truncated
+                  ? () => continueReply(t.id)
+                  : undefined
+              }
+              onRetry={
+                !busy && i === turns.length - 1 && t.role === "model" && t.truncated
                   ? regenerate
                   : undefined
               }

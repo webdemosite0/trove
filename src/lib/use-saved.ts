@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 export interface SavedMessage {
   role: "user" | "model";
   text: string;
+  /** The provider cut this reply off at the token limit. */
+  truncated?: boolean;
 }
 
 /**

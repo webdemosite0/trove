@@ -7,6 +7,7 @@ import type { ModeId } from "@/lib/modes";
 import { localTimeZone } from "@/lib/context";
 import type { LocalProjectFile } from "@/lib/local-project";
 import { isImagePrompt, enrichImagePrompt, imageCaptionFromPrompt } from "@/lib/image-prompt";
+import { stripTruncationMarker } from "@/lib/truncation";
 import {
   parseConnectorToolBlocks,
   stripConnectorToolBlocks,
@@ -28,6 +29,17 @@ export interface Turn {
   thinkMs?: number;
   searchQuery?: string;
   searchSources?: { title: string; url: string; domain?: string }[];
+  /**
+   * The provider cut this reply off at the token limit. It must not be
+   * presented as a clean completion — the UI offers Continue / Retry instead.
+   */
+  truncated?: boolean;
+}
+
+export interface RestoredMessage {
+  role: "user" | "model";
+  text: string;
+  truncated?: boolean;
 }
 
 function distanceFromBottom(anchor: HTMLElement | null): number {
@@ -51,7 +63,7 @@ export function useChatThread({
   localProject = null,
   onApplyLocalFiles,
 }: {
-  restored?: { id: string; messages: { role: "user" | "model"; text: string }[] } | null;
+  restored?: { id: string; messages: RestoredMessage[] } | null;
   mode: ModeId;
   projectId?: string | null;
   localProject?: {
@@ -63,7 +75,12 @@ export function useChatThread({
 }) {
   const { save, reset } = useSaved("chat", restored?.id ?? null);
   const [turns, setTurns] = useState<Turn[]>(() =>
-    (restored?.messages ?? []).map((m, i) => ({ id: i, role: m.role, text: m.text })),
+    (restored?.messages ?? []).map((m, i) => ({
+      id: i,
+      role: m.role,
+      text: m.text,
+      truncated: m.truncated === true,
+    })),
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +139,11 @@ export function useChatThread({
             : x,
         );
         void save(
-          next.map(({ role, text: body }) => ({ role, text: body })),
+          next.map(({ role, text: body, truncated }) => ({
+            role,
+            text: body,
+            truncated: truncated === true,
+          })),
           next[0]?.text,
         );
         return next;
@@ -160,6 +181,80 @@ export function useChatThread({
       }
     },
     [finishReply],
+  );
+
+  /**
+   * Stream one assistant turn into `rid`, appending live chunks and returning
+   * the full new text. The server appends a truncation marker when the
+   * provider cut the reply off at the token limit; it is stripped here so it
+   * never shows in the UI, never reaches saved history, and never leaks into
+   * the conversation sent back to the model — and the turn is flagged
+   * `truncated` so the UI treats it as incomplete.
+   */
+  const streamInto = useCallback(
+    async (
+      msgs: { role: "user" | "model"; text: string }[],
+      rid: number,
+      withAttachments: Attachment[] | undefined,
+      signal: AbortSignal,
+    ): Promise<{ text: string; truncated: boolean }> => {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: msgs,
+          mode,
+          model: "auto",
+          projectId,
+          localProject: localProject
+            ? { name: localProject.name, files: localProject.files.slice(0, 12) }
+            : null,
+          timeZone: localTimeZone(),
+          attachments: withAttachments?.map(({ name, mimeType, size, data, kind }) => ({
+            name, mimeType, size, data, kind,
+          })),
+        }),
+        signal,
+      });
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Request failed (" + res.status + ").");
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffered = "";
+      let out = "";
+      let raf = 0;
+      const flush = () => {
+        raf = 0;
+        if (!buffered) return;
+        const chunk = buffered;
+        buffered = "";
+        setTurns((t) => t.map((x) => (x.id === rid ? { ...x, text: x.text + chunk } : x)));
+      };
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const piece = decoder.decode(value, { stream: true });
+        out += piece;
+        buffered += piece;
+        if (!raf) raf = requestAnimationFrame(flush);
+      }
+      if (raf) cancelAnimationFrame(raf);
+      flush();
+      const stripped = stripTruncationMarker(out);
+      // Remove the marker from the live-typed text and flag the turn, so a
+      // truncated reply is never presented as a clean completion.
+      setTurns((t) =>
+        t.map((x) => {
+          if (x.id !== rid) return x;
+          const cleaned = stripTruncationMarker(x.text);
+          return { ...x, text: cleaned.text, truncated: cleaned.truncated };
+        }),
+      );
+      return stripped;
+    },
+    [mode, projectId, localProject],
   );
 
   const run = useCallback(
@@ -263,63 +358,11 @@ export function useChatThread({
           return "Local browser action timed out after 60s — the extension may be offline.";
         };
 
-        // Stream one assistant turn into `rid`, returning the full text.
-        const streamInto = async (
-          msgs: { role: "user" | "model"; text: string }[],
-          rid: number,
-          withAttachments?: Attachment[],
-        ): Promise<string> => {
-          const res = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              messages: msgs,
-              mode,
-              model: "auto",
-              projectId,
-              localProject: localProject
-                ? { name: localProject.name, files: localProject.files.slice(0, 12) }
-                : null,
-              timeZone: localTimeZone(),
-              attachments: withAttachments?.map(({ name, mimeType, size, data, kind }) => ({
-                name, mimeType, size, data, kind,
-              })),
-            }),
-            signal: ac.signal,
-          });
-          if (!res.ok || !res.body) {
-            const data = await res.json().catch(() => null);
-            throw new Error(data?.error ?? "Request failed (" + res.status + ").");
-          }
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder();
-          let buffered = "";
-          let out = "";
-          let raf = 0;
-          const flush = () => {
-            raf = 0;
-            if (!buffered) return;
-            const chunk = buffered;
-            buffered = "";
-            setTurns((t) => t.map((x) => (x.id === rid ? { ...x, text: x.text + chunk } : x)));
-          };
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const piece = decoder.decode(value, { stream: true });
-            out += piece;
-            buffered += piece;
-            if (!raf) raf = requestAnimationFrame(flush);
-          }
-          if (raf) cancelAnimationFrame(raf);
-          flush();
-          return out;
-        };
-
         const convo: { role: "user" | "model"; text: string }[] = history.map(
           ({ role, text }) => ({ role, text }),
         );
-        let fullReply = await streamInto(convo, replyId, files);
+        let streamed = await streamInto(convo, replyId, files, ac.signal);
+        let fullReply = streamed.text;
 
         // Connector tools: the agent can call @mentioned integrations
         // mid-turn. Run any connector-tool blocks, feed the results back,
@@ -373,7 +416,8 @@ export function useChatThread({
           });
           const followUpId = nextId.current++;
           setTurns((t) => [...t, { id: followUpId, role: "model", text: "" }]);
-          fullReply = await streamInto(convo, followUpId);
+          streamed = await streamInto(convo, followUpId, undefined, ac.signal);
+          fullReply = streamed.text;
           parsed = parseConnectorToolBlocks(fullReply);
           currentReplyId = followUpId;
         }
@@ -409,7 +453,8 @@ export function useChatThread({
           });
           const followUpId = nextId.current++;
           setTurns((t) => [...t, { id: followUpId, role: "model", text: "" }]);
-          fullReply = await streamInto(convo, followUpId);
+          streamed = await streamInto(convo, followUpId, undefined, ac.signal);
+          fullReply = streamed.text;
           localParsed = parseLocalBrowser(fullReply);
           currentReplyId = followUpId;
         }
@@ -421,7 +466,14 @@ export function useChatThread({
           const next = t.map((x) =>
             x.id === currentReplyId ? { ...x, text: fullReply, thinkMs: elapsed } : x,
           );
-          void save(next.map(({ role, text }) => ({ role, text })), next[0]?.text);
+          void save(
+            next.map(({ role, text, truncated }) => ({
+              role,
+              text,
+              truncated: truncated === true,
+            })),
+            next[0]?.text,
+          );
           return next;
         });
       } catch (e) {
@@ -432,7 +484,7 @@ export function useChatThread({
         setBusy(false);
       }
     },
-    [save, mode, projectId, localProject, runImage],
+    [save, streamInto, runImage],
   );
 
   const stop = useCallback(() => {
@@ -449,7 +501,15 @@ export function useChatThread({
         return t.slice(0, -1);
       }
       return t.map((x, i) =>
-        i === t.length - 1 && x.role === "model" ? { ...x, generatingImage: false } : x,
+        i === t.length - 1 && x.role === "model"
+          ? {
+              ...x,
+              generatingImage: false,
+              // If the user stopped mid-stream after the truncation marker
+              // arrived, strip it so the protocol never leaks into the UI.
+              text: stripTruncationMarker(x.text).text,
+            }
+          : x,
       );
     });
   }, []);
@@ -486,6 +546,70 @@ export function useChatThread({
     void run(turns.slice(0, -1));
   }, [turns, run]);
 
+  /**
+   * Continue a truncated reply: re-send the thread so far (including the cut
+   * off text) plus an instruction to pick up where it stopped, streaming the
+   * continuation into the SAME turn. If the continuation is cut off again,
+   * the truncated flag stays and the user can continue once more.
+   */
+  const continueReply = useCallback(
+    (turnId: number) => {
+      abortRef.current?.abort();
+      const ac = new AbortController();
+      abortRef.current = ac;
+      stickToBottom.current = true;
+      setError(null);
+      setBusy(true);
+      thinkStartedAt.current = Date.now();
+      setTurns((prev) => {
+        const idx = prev.findIndex((t) => t.id === turnId);
+        if (idx < 0) return prev;
+        const target = prev[idx];
+        if (target.role !== "model" || !target.truncated) return prev;
+        const convo: { role: "user" | "model"; text: string }[] = prev
+          .slice(0, idx + 1)
+          .map(({ role, text }) => ({ role, text }));
+        convo.push({
+          role: "user",
+          text:
+            "Continue your previous response from exactly where it stopped. " +
+            "Do not repeat anything you already said — pick up mid-sentence if necessary.",
+        });
+        queueMicrotask(() => {
+          void (async () => {
+            try {
+              await streamInto(convo, turnId, undefined, ac.signal);
+              const elapsed = thinkStartedAt.current
+                ? Date.now() - thinkStartedAt.current
+                : undefined;
+              setTurns((t) => {
+                const next = t.map((x) =>
+                  x.id === turnId ? { ...x, thinkMs: elapsed ?? x.thinkMs } : x,
+                );
+                void save(
+                  next.map(({ role, text, truncated }) => ({
+                    role,
+                    text,
+                    truncated: truncated === true,
+                  })),
+                  next[0]?.text,
+                );
+                return next;
+              });
+            } catch (e) {
+              if (e instanceof DOMException && e.name === "AbortError") return;
+              setError(e instanceof Error ? e.message : "Something went wrong.");
+            } finally {
+              setBusy(false);
+            }
+          })();
+        });
+        return prev;
+      });
+    },
+    [save, streamInto],
+  );
+
   const clear = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -496,5 +620,5 @@ export function useChatThread({
     reset();
   }, [reset]);
 
-  return { turns, busy, error, setError, send, stop, retry, regenerate, clear, bottom, reset };
+  return { turns, busy, error, setError, send, stop, retry, regenerate, continueReply, clear, bottom, reset };
 }
