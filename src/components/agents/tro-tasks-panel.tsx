@@ -121,7 +121,13 @@ export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentNa
     load();
     const onChange = () => load();
     window.addEventListener("tro-schedules-changed", onChange);
-    return () => window.removeEventListener("tro-schedules-changed", onChange);
+    // Re-check scheduler health while the panel is open so the banner flips
+    // to "live" on its own once cron-job.org starts pinging.
+    const id = setInterval(load, 30_000);
+    return () => {
+      window.removeEventListener("tro-schedules-changed", onChange);
+      clearInterval(id);
+    };
   }, [load]);
 
   const toggle = useCallback(
