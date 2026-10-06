@@ -14,6 +14,7 @@ import { Ico } from "@/components/ui/ico";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Modal } from "@/components/ui/modal";
+import { useLongPress } from "@/components/mobile/gestures";
 import { cn } from "@/lib/utils";
 
 export type ProjectRow = {
@@ -77,6 +78,26 @@ export function ProjectsView({
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [clearAllOpen, setClearAllOpen] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
+
+  // Long-press a project card on touch devices: Open / Delete actions with
+  // a blurred backdrop and a slight zoom on the card.
+  const lp = useLongPress({
+    actions: [
+      {
+        id: "open",
+        label: "Open project",
+        icon: FiArrowRight,
+        onSelect: (id) => router.push(`/projects/${encodeURIComponent(id)}`),
+      },
+      {
+        id: "delete",
+        label: "Delete",
+        icon: FiTrash2,
+        destructive: true,
+        onSelect: (id) => setDeletingId(id),
+      },
+    ],
+  });
 
   useEffect(() => {
     setProjects(initial);
@@ -239,6 +260,7 @@ export function ProjectsView({
           {projects.map((p, i) => (
             <article
               key={p.id}
+              {...lp.itemProps(p.id)}
               className="nx-in group relative flex flex-col rounded-[var(--r-panel)] border border-line bg-rail p-5 transition-all duration-[var(--t-hover)] hover:-translate-y-0.5 hover:border-line-strong"
               style={{ animationDelay: `${i * 40}ms`, animationFillMode: "backwards" }}
             >
@@ -427,6 +449,8 @@ export function ProjectsView({
           </button>
         </div>
       </Modal>
+
+      {lp.menu}
     </div>
   );
 }

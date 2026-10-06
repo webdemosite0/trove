@@ -107,7 +107,7 @@ export function MobileChat({
             <h1 className="mt-5 text-[clamp(1.45rem,1.2rem+1.5vw,1.75rem)] font-semibold tracking-[-0.04em] text-ink">
               What can I help with?
             </h1>
-            <p className="mt-2 max-w-[34ch] text-[13px] leading-relaxed text-ink-4">
+            <p className="mt-2 max-w-[36ch] text-[15px] leading-relaxed text-ink-4">
               Hi {name}. Ask anything, or connect tools from Plugins.
             </p>
           </div>
@@ -133,33 +133,36 @@ export function MobileChat({
                 type="button"
                 onClick={() => setDraft(item.prompt)}
                 className={cn(
-                  "flex h-10 shrink-0 items-center gap-2 rounded-full border border-line bg-raised/75 px-3.5 text-[12px] font-medium text-ink-2 shadow-[var(--sh-1)] transition active:scale-95",
+                  "flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-raised/75 px-4 text-[13.5px] font-medium text-ink-2 shadow-[var(--sh-1)] transition active:scale-95",
                   item.tone === "violet" && "active:bg-violet-500/10",
                   item.tone === "sky" && "active:bg-sky-500/10",
                   item.tone === "emerald" && "active:bg-emerald-500/10",
                 )}
               >
-                <item.icon size={14} className="text-accent" />
+                <item.icon size={16} className="text-accent" />
                 {item.label}
               </button>
             ))}
             <button
               type="button"
               onClick={() => openSettings("integrations")}
-              className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/8 px-3.5 text-[12px] font-medium text-ink-2 transition active:scale-95"
+              className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/8 px-4 text-[13.5px] font-medium text-ink-2 transition active:scale-95"
             >
-              <TbPlugConnected size={14} className="text-accent" />
+              <TbPlugConnected size={16} className="text-accent" />
               Plugins
             </button>
           </div>
 
           {activity.length ? (
             <section className="mt-8">
-              <div className="mb-2 flex items-center justify-between px-1">
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-4">
+              <div className="mb-2.5 flex items-center justify-between px-1">
+                <h2 className="text-[12.5px] font-bold uppercase tracking-[0.14em] text-ink-4">
                   Recent
                 </h2>
-                <Link href="/dashboard" className="text-[11px] font-medium text-accent">
+                <Link
+                  href="/dashboard"
+                  className="-mr-2 grid min-h-11 place-items-center rounded-full px-4 text-[12.5px] font-medium text-accent transition active:bg-hover"
+                >
                   Home
                 </Link>
               </div>
@@ -169,17 +172,17 @@ export function MobileChat({
                     key={`${recent.kind}-${recent.href}-${recent.title}`}
                     href={recent.href}
                     className={cn(
-                      "flex min-h-12 items-center gap-3 px-3.5 py-2.5 transition active:bg-hover",
+                      "flex min-h-13 items-center gap-3.5 px-4 py-3 transition active:bg-hover",
                       index > 0 && "border-t border-line/70",
                     )}
                   >
-                    <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/10 to-sky-500/10 text-accent">
-                      <TbSparkles size={14} />
+                    <span className="grid size-8.5 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/10 to-sky-500/10 text-accent">
+                      <TbSparkles size={16} />
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-2">
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink-2">
                       {recent.title}
                     </span>
-                    <FiArrowRight size={13} className="shrink-0 text-ink-4" />
+                    <FiArrowRight size={14} className="shrink-0 text-ink-4" />
                   </Link>
                 ))}
               </div>
@@ -192,18 +195,18 @@ export function MobileChat({
 
   return (
     <div className="mobile-chat flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 items-center justify-end gap-2 border-b border-line/45 px-3 py-1.5">
+      <div className="flex shrink-0 items-center justify-end gap-2 border-b border-line/45 px-3 py-2">
         <button
           type="button"
           onClick={clear}
-          className="shrink-0 rounded-full px-3 py-2 text-[11.5px] font-medium text-ink-3 transition active:bg-hover active:text-ink"
+          className="grid min-h-11 shrink-0 place-items-center rounded-full px-4 text-[13.5px] font-medium text-ink-3 transition active:bg-hover active:text-ink"
         >
           New chat
         </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3.5 pb-4 pt-3 sm:px-4">
-        <div className="mx-auto max-w-[640px] space-y-4">
+        <div className="mx-auto max-w-[640px] space-y-5">
           {turns.map((turn, index) => (
             <Message
               key={turn.id}

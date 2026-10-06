@@ -61,7 +61,7 @@ export function MobileComposer({
   const box = React.useRef<HTMLTextAreaElement>(null);
   const picker = React.useRef<HTMLInputElement>(null);
 
-  const MIN_H = 50;
+  const MIN_H = 54;
   const MAX_H = 148;
 
   const resize = React.useCallback(() => {
@@ -214,16 +214,16 @@ export function MobileComposer({
           {files.map((f, i) => (
             <li
               key={`${f.name}-${i}`}
-              className="flex shrink-0 items-center gap-1.5 rounded-full bg-sunk py-1 pl-3 pr-1.5"
+              className="flex shrink-0 items-center gap-2 rounded-full bg-sunk py-1.5 pl-4 pr-1.5"
             >
-              <span className="max-w-[140px] truncate text-[12px] text-ink-2">{f.name}</span>
+              <span className="max-w-[140px] truncate text-[13px] text-ink-2">{f.name}</span>
               <button
                 type="button"
                 aria-label={`Remove ${f.name}`}
                 onClick={() => setFiles((list) => list.filter((_, n) => n !== i))}
-                className="grid h-5 w-5 place-items-center rounded-full text-ink-4 active:bg-hover"
+                className="grid size-7 shrink-0 place-items-center rounded-full text-ink-4 active:bg-hover"
               >
-                <Ico icon={FiX} motion="close" size={12} />
+                <Ico icon={FiX} motion="close" size={13} />
               </button>
             </li>
           ))}
@@ -231,7 +231,7 @@ export function MobileComposer({
       ) : null}
 
       {error ? (
-        <p className="px-3.5 pb-1 pt-2 text-[12.5px] text-critical">{error}</p>
+        <p className="px-3.5 pb-1 pt-2 text-[13.5px] text-critical">{error}</p>
       ) : null}
 
       {mentionedIds.length ? (
@@ -274,21 +274,21 @@ export function MobileComposer({
         }}
         placeholder={disabled ? "Working…" : placeholder}
         aria-label={placeholder}
-        className="block max-h-[164px] min-h-[50px] w-full resize-none bg-transparent px-3.5 pb-1 pt-2.5 text-[16px] leading-[1.45] text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed"
+        className="block max-h-[164px] min-h-[54px] w-full resize-none bg-transparent px-3.5 pb-1.5 pt-2.5 text-[16px] leading-[1.5] text-ink outline-none placeholder:text-ink-4 disabled:cursor-not-allowed"
       />
 
-      <div className="flex min-h-10 items-center gap-0.5 px-0.5 pb-0.5">
+      <div className="flex min-h-11 items-center gap-1 px-1 pb-1 pt-0.5">
         <button
           type="button"
           aria-label="Attach files"
           disabled={disabled}
           onClick={() => picker.current?.click()}
           className={cn(
-            "grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition active:scale-95 active:bg-hover",
+            "grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition active:scale-95 active:bg-hover",
             disabled && "pointer-events-none opacity-40",
           )}
         >
-          <Ico icon={FiPlus} motion="grow" size={20} />
+          <Ico icon={FiPlus} motion="grow" size={22} />
         </button>
         <input
             ref={picker}
@@ -316,13 +316,13 @@ export function MobileComposer({
           disabled={!ready}
           aria-label="Send"
           className={cn(
-            "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-all duration-[var(--t-hover)]",
+            "grid h-11 w-11 shrink-0 place-items-center rounded-full transition-all duration-[var(--t-hover)]",
             ready
               ? "btn-grad shadow-[0_6px_18px_-6px_var(--btn-glow)] active:scale-95"
               : "bg-sunk text-ink-4",
           )}
         >
-          <Ico icon={FiArrowUp} motion="send" size={18} />
+          <Ico icon={FiArrowUp} motion="send" size={20} />
         </button>
       </div>
     </div>
