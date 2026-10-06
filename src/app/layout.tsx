@@ -7,6 +7,7 @@ import { THEME_SCRIPT } from "@/components/shell/theme";
 import "./globals.css";
 import "./stream-anim.css";
 import "./mobile-shell.css";
+import "./glass.css";
 import "./icon-weight.css";
 import "./icon-motion.css";
 import "./landing-motion.css";

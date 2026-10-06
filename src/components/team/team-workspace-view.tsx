@@ -5,17 +5,141 @@ import { useMemo, useState } from "react";
 import {
   FiArrowRight,
   FiCheck,
+  FiChevronDown,
   FiFolder,
   FiLogOut,
   FiMail,
   FiPlus,
+  FiSearch,
   FiShield,
   FiTrash2,
   FiUsers,
   FiX,
 } from "@/components/ui/icons";
-import type { TeamState } from "@/lib/team";
+import { BottomSheet, useMediaQuery } from "@/components/mobile/bottom-sheet";
+import { Ico } from "@/components/ui/ico";
+import type { TeamState, TeamProject } from "@/lib/team";
 import { cn } from "@/lib/utils";
+
+/**
+ * Mobile "share a project" picker. The native <select> becomes a bottom
+ * sheet with a searchable option list — same one-job pattern as the
+ * reminders time picker: pick in context, confirm, done. Options carry
+ * checkmark selection; an empty search gets imagery, a plain acknowledgment,
+ * a spelling hint, and a way out.
+ */
+function ShareSheet({
+  open,
+  onClose,
+  projects,
+  value,
+  onChange,
+  onShare,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  projects: TeamProject[];
+  value: string;
+  onChange: (id: string) => void;
+  onShare: () => void;
+  busy: boolean;
+}) {
+  const [query, setQuery] = useState("");
+  const filtered = projects.filter((p) =>
+    p.name.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  return (
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Share a project"
+      subtitle="Pick one of your projects to share with the team"
+      search={{
+        value: query,
+        onChange: setQuery,
+        placeholder: "Search your projects…",
+        ariaLabel: "Search your projects",
+      }}
+      actions={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-[var(--r-control)] border border-line-strong px-4 py-2.5 text-[13.5px] font-medium text-ink-2 transition active:bg-hover"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!value || busy}
+            onClick={() => {
+              onShare();
+              onClose();
+            }}
+            className="flex-1 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-semibold transition-transform active:scale-[0.98] disabled:opacity-50"
+          >
+            Share
+          </button>
+        </>
+      }
+    >
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center px-4 py-10 text-center">
+          <span className="grid size-11 place-items-center rounded-full bg-sunk text-ink-4">
+            <FiSearch size={18} />
+          </span>
+          <p className="mt-3 text-[14px] font-medium text-ink">
+            No projects matching &ldquo;{query.trim()}&rdquo;
+          </p>
+          <p className="mt-1 max-w-[36ch] text-[12.5px] leading-relaxed text-ink-4">
+            Check the spelling or try a shorter search.
+          </p>
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="mt-4 rounded-full border border-line-strong px-4 py-2 text-[12.5px] font-medium text-ink-2 transition active:bg-hover"
+          >
+            Clear search
+          </button>
+        </div>
+      ) : (
+        <ul className="-mx-1">
+          {filtered.map((p) => {
+            const selected = value === p.id;
+            return (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => onChange(p.id)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-[var(--r-control)] px-3.5 py-3 text-left transition active:bg-hover",
+                    selected && "bg-accent-soft",
+                  )}
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-sunk text-ink-3">
+                    <FiFolder size={14} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] text-ink">{p.name}</span>
+                    <span className="block text-[11.5px] capitalize text-ink-4">
+                      {p.status}
+                    </span>
+                  </span>
+                  {selected ? (
+                    <Ico icon={FiCheck} motion="check" size={15} className="shrink-0 text-accent" />
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </BottomSheet>
+  );
+}
 
 function roleLabel(role: string) {
   return role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Member";
@@ -45,6 +169,8 @@ export function TeamWorkspaceView({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
   const [shareProjectId, setShareProjectId] = useState("");
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const coarse = useMediaQuery("(pointer: coarse)");
   const [lastInviteLink, setLastInviteLink] = useState("");
   const [seatBusy, setSeatBusy] = useState("");
 
@@ -574,28 +700,60 @@ export function TeamWorkspaceView({
             </div>
 
             {shareable.length ? (
-              <div className="mt-4 flex gap-2">
-                <select
-                  value={shareProjectId}
-                  onChange={(e) => setShareProjectId(e.target.value)}
-                  className="h-10 min-w-0 flex-1 rounded-xl border border-line-strong bg-sunk px-3 text-[12px] text-ink outline-none focus:border-accent"
-                >
-                  <option value="">Share one of your projects…</option>
-                  {shareable.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => void act("share-project", { projectId: shareProjectId })}
-                  disabled={!shareProjectId || Boolean(busy)}
-                  className="btn-grad h-10 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-50"
-                >
-                  Share
-                </button>
-              </div>
+              coarse ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShareSheetOpen(true)}
+                    aria-haspopup="dialog"
+                    className="mt-4 flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-line-strong bg-sunk px-3.5 text-[13px] transition active:bg-hover"
+                  >
+                    <span className="truncate text-ink-2">
+                      {shareable.find((p) => p.id === shareProjectId)?.name ??
+                        "Share one of your projects…"}
+                    </span>
+                    <Ico
+                      icon={FiChevronDown}
+                      motion="nudge"
+                      size={15}
+                      className="shrink-0 text-ink-4"
+                    />
+                  </button>
+                  <ShareSheet
+                    key={String(shareSheetOpen)}
+                    open={shareSheetOpen}
+                    onClose={() => setShareSheetOpen(false)}
+                    projects={shareable}
+                    value={shareProjectId}
+                    onChange={setShareProjectId}
+                    onShare={() => void act("share-project", { projectId: shareProjectId })}
+                    busy={Boolean(busy)}
+                  />
+                </>
+              ) : (
+                <div className="mt-4 flex gap-2">
+                  <select
+                    value={shareProjectId}
+                    onChange={(e) => setShareProjectId(e.target.value)}
+                    className="h-10 min-w-0 flex-1 rounded-xl border border-line-strong bg-sunk px-3 text-[12px] text-ink outline-none focus:border-accent"
+                  >
+                    <option value="">Share one of your projects…</option>
+                    {shareable.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => void act("share-project", { projectId: shareProjectId })}
+                    disabled={!shareProjectId || Boolean(busy)}
+                    className="btn-grad h-10 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-50"
+                  >
+                    Share
+                  </button>
+                </div>
+              )
             ) : null}
 
             <div className="mt-4 space-y-2">
@@ -634,7 +792,19 @@ export function TeamWorkspaceView({
                   );
                 })
               ) : (
-                <p className="text-[12px] text-ink-4">No shared projects yet.</p>
+                <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-line-strong px-4 py-8 text-center">
+                  <span className="grid size-11 place-items-center rounded-full bg-sunk text-ink-3">
+                    <FiFolder size={18} />
+                  </span>
+                  <p className="mt-3 text-[13.5px] font-medium text-ink">
+                    No shared projects yet
+                  </p>
+                  <p className="mt-1 max-w-[38ch] text-[12.5px] leading-relaxed text-ink-4">
+                    {shareable.length
+                      ? "Pick one of your projects above and hit Share — the whole team can open it."
+                      : "Projects you share with the team will appear here."}
+                  </p>
+                </div>
               )}
             </div>
           </section>

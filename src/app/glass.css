@@ -1,0 +1,131 @@
+/* Apple Glass UI — iOS Liquid Glass treatment (CSS-only layer)
+ * ------------------------------------------------------------------
+ * Frosted translucency, backdrop blur, specular edge highlights and
+ * floating glass panels, applied purely through CSS onto existing
+ * class hooks. No .tsx edits; load order (after mobile-shell.css) and
+ * unlayered cascade beat the Tailwind utilities these surfaces carry.
+ *
+ * Theming contract: `:root` holds the dark defaults, mirroring
+ * globals.css; `:root[data-theme="light"]`
+ * overrides. Every theme-dependent value derives from existing
+ * `--color-*` tokens via color-mix — no hardcoded theme hex. The only
+ * literals are rgb() lighting constants (white specular glare, neutral
+ * shadow), the same convention globals.css uses for --btn-glow.
+ *
+ * Readability: floating panels with dense text stay ≥88% opaque so
+ * blur never muddies type. `prefers-reduced-transparency` falls back
+ * to solid token surfaces with no translucency.
+ */
+
+:root {
+  --glass-blur: 24px;
+  --glass-blur-soft: 14px;
+  --glass-saturate: 1.5;
+  /* Translucent tints derived from theme surfaces */
+  --glass-tint-bar: color-mix(in srgb, var(--color-canvas) 82%, transparent);
+  --glass-tint-panel: color-mix(in srgb, var(--color-raised) 88%, transparent);
+  /* Refractive rim: light hairline in dark, dark hairline in light */
+  --glass-rim: color-mix(in srgb, var(--color-ink) 14%, transparent);
+  /* Specular lighting (constants, tuned per theme) */
+  --glass-glare: rgb(255 255 255 / 0.16);
+  --glass-inner-shade: rgb(0 0 0 / 0.22);
+  --glass-drop: rgb(0 0 0 / 0.5);
+  --glass-specular:
+    inset 0 1px 0 var(--glass-glare),
+    inset 0 -1px 0 var(--glass-inner-shade);
+}
+
+:root[data-theme="light"] {
+  --glass-tint-bar: color-mix(in srgb, var(--color-canvas) 78%, transparent);
+  --glass-tint-panel: color-mix(in srgb, var(--color-raised) 92%, transparent);
+  --glass-glare: rgb(255 255 255 / 0.55);
+  --glass-inner-shade: rgb(15 18 30 / 0.08);
+  --glass-drop: rgb(15 18 30 / 0.16);
+}
+
+/* ---- Mobile bottom tab bar: floating frosted glass ---- */
+.mobile-tabbar {
+  background: var(--glass-tint-bar);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-top-color: var(--glass-rim);
+  box-shadow: var(--glass-specular), 0 -16px 40px -16px var(--glass-drop);
+}
+
+/* ---- Bottom sheet: frosted panel with specular top edge ---- */
+.nx-sheet-panel {
+  background: var(--glass-tint-panel);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-top-color: var(--glass-rim);
+  box-shadow: var(--glass-specular), 0 -24px 64px -16px var(--glass-drop);
+}
+/* Drag handle: glassy grabber pill */
+.nx-sheet-panel .h-1.w-10 {
+  background: color-mix(in srgb, var(--color-ink-4) 65%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+/* ---- Mobile header: thin frosted bar with glare ---- */
+.mobile-shell-header {
+  background: var(--glass-tint-bar);
+  -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-saturate));
+  border-bottom-color: var(--glass-rim);
+  box-shadow: inset 0 1px 0 var(--glass-glare);
+}
+
+/* ---- Desktop command palette: floating glass panel ----
+ * Panel is the sibling right after the backdrop button
+ * (aria-label="Close command palette"). */
+[aria-label="Close command palette"] + div {
+  background: var(--glass-tint-panel);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-color: var(--glass-rim);
+  box-shadow: var(--glass-specular), 0 24px 72px -16px var(--glass-drop);
+}
+
+/* ---- Desktop notifications popover: floating glass panel ---- */
+[role="dialog"][aria-label="Notifications"] {
+  background: var(--glass-tint-panel);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-color: var(--glass-rim);
+  box-shadow: var(--glass-specular), 0 24px 72px -16px var(--glass-drop);
+}
+
+/* ---- Desktop top bar: thin frosted bar with glare ----
+ * Only the shell top bar uses nx-no-print on a <header>. */
+header.nx-no-print {
+  background: var(--glass-tint-bar);
+  -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-soft)) saturate(var(--glass-saturate));
+  border-bottom-color: var(--glass-rim);
+  box-shadow: inset 0 1px 0 var(--glass-glare);
+}
+
+/* ---- Reduced transparency: solid token surfaces, no blur ---- */
+@media (prefers-reduced-transparency: reduce) {
+  .mobile-tabbar,
+  .mobile-shell-header,
+  .nx-sheet-panel,
+  header.nx-no-print,
+  [aria-label="Close command palette"] + div,
+  [role="dialog"][aria-label="Notifications"] {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--color-line);
+    box-shadow: 0 12px 32px -16px var(--glass-drop);
+  }
+  .mobile-tabbar,
+  .mobile-shell-header,
+  header.nx-no-print {
+    background: var(--color-canvas);
+  }
+  .nx-sheet-panel,
+  [aria-label="Close command palette"] + div,
+  [role="dialog"][aria-label="Notifications"] {
+    background: var(--color-raised);
+  }
+}
