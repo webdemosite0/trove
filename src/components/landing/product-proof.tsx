@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   FiArrowRight,
-  FiCheck,
   FiDownload,
   FiFileText,
   FiGrid,
@@ -45,13 +44,6 @@ const TABS: {
 }[] = [
   { id: "memo", label: "Investor memo", file: "q3-investor-update.md", mime: "text/markdown", getContent: memoMarkdown, Icon: FiFileText },
   { id: "sheet", label: "Pricing model", file: "wholesale-pricing.csv", mime: "text/csv", getContent: sheetCsv, Icon: FiGrid },
-];
-
-const WORKFLOW = [
-  { title: "Brief", text: "One message, the whole job. No prompt engineering, no forms." },
-  { title: "Build", text: "Trove drafts each file as a real artifact — memo, model, deck." },
-  { title: "Refine", text: "Change anything in plain language. Files update in place." },
-  { title: "Keep", text: "Download the real files. They're yours." },
 ];
 
 function download(name: string, mime: string, content: string) {
@@ -289,26 +281,6 @@ export function ProductProof() {
             </p>
           </div>
         </div>
-
-        {/* The workflow */}
-        <ol className="mt-10 grid gap-2.5 sm:mt-14 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
-          {WORKFLOW.map((w, i) => (
-            <li
-              key={w.title}
-              className="rounded-[16px] border border-line bg-raised p-4 sm:p-5"
-            >
-              <span className="flex items-center gap-2">
-                <span className="grid size-6 place-items-center rounded-full bg-emerald-500/12 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-                  {i < WORKFLOW.length - 1 ? <FiCheck size={12} aria-hidden /> : <FiArrowRight size={12} aria-hidden />}
-                </span>
-                <span className="text-[13.5px] font-semibold text-ink">
-                  {i + 1}. {w.title}
-                </span>
-              </span>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">{w.text}</p>
-            </li>
-          ))}
-        </ol>
 
         <div className="mt-8 text-center sm:mt-10">
           <Link

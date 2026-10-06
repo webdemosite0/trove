@@ -5,30 +5,20 @@ import { Backdrop } from "@/components/shell/backdrop";
 import { Footer } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
-import { Bento } from "@/components/landing/bento";
 import { LandingScene } from "@/components/landing/scene";
 import { LiveDemo } from "@/components/landing/live-demo";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { PricingPreview, FinalCta, SectionHead } from "@/components/landing/sections";
+import { PricingPreview, FinalCta } from "@/components/landing/sections";
 import { ProductProof } from "@/components/landing/product-proof";
 import { Faq } from "@/components/landing/faq";
 import { CrewSection } from "@/components/landing/crew";
 import { PLANS } from "@/lib/credits";
 import { site } from "@/lib/site";
-import {
-  FiFileText,
-  FiGrid,
-  FiLayers,
-  FiGlobe,
-  FiSearch,
-  FiCpu,
-} from "@/components/ui/icons";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: "Trove — Describe the work. Get the files.",
   description:
-    "AI workspace for documents, spreadsheets, presentations, research, code, and agents. Describe the work, refine in chat, export when ready.",
+    "The AI workspace for businesses, solo entrepreneurs, and one-person businesses. Describe the work once in chat — get back real documents, spreadsheets, decks, and sites.",
 };
 
 export default async function Landing() {
@@ -66,16 +56,16 @@ export default async function Landing() {
       <main className="relative z-[1]">
         <Hero freeCredits={free.monthly} />
 
-        <Bento />
-
+        {/* Proof before promises: watch a build happen, download the results free. */}
         <LiveDemo />
 
-        <HowItWorks />
-
+        {/* Before/after: one brief in, finished files out. */}
         <ProductProof />
 
+        {/* The Tros, collapsed to a single band. */}
         <CrewSection />
 
+        {/* Pricing right after proof — a short path to the number. */}
         <div id="pricing">
           <PricingPreview plans={PLANS} />
         </div>

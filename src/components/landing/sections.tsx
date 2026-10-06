@@ -222,7 +222,7 @@ export function PricingPreview({
       <div className="mx-auto max-w-[1140px] px-5 py-20 lg:px-8 lg:py-28">
         <SectionHead
           title="Start free. Grow when it earns it."
-          lede="Credits are metered on real token usage, so a short answer costs less than a long one."
+          lede="200 free credits a month — roughly 20 landing pages or 40 memos, measured from the real examples on this site. Metered on actual tokens, never a flat fee per artifact."
         />
 
         <div className="mx-auto mt-12 grid max-w-[720px] gap-4 sm:grid-cols-2">

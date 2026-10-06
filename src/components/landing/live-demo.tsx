@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
+  FiArrowRight,
   FiCheck,
   FiDownload,
   FiExternalLink,
@@ -464,9 +466,18 @@ export function LiveDemo() {
         </div>
 
         <p className="mt-3 text-center text-[11.5px] text-ink-4">
-          Illustrative demo — every output above was built as a real Trove artifact, and the
-          downloads work.
+          Illustrative demo — every output above was built as a real Trove artifact.
+          Explore and download freely; no account needed.
         </p>
+        <div className="mt-4 text-center">
+          <Link
+            href="/chat"
+            className="group inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-accent"
+          >
+            Start building with your own work — free
+            <FiArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </Link>
+        </div>
       </div>
     </section>
   );

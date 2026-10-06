@@ -40,7 +40,7 @@ const CAPABILITIES = [
   "Spreadsheets",
   "Decks",
   "Research",
-  "Agents",
+  "Tros",
 ];
 
 function ProductVisual() {
@@ -196,9 +196,9 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
           className="lp-hero-in mx-auto mt-4 max-w-[56ch] text-[15px] leading-relaxed text-ink-3 sm:mt-6 sm:text-[18px]"
           style={{ animationDelay: "140ms" }}
         >
-          Trove is the AI workspace for founders, freelancers, and small teams.
-          Documents, spreadsheets, decks, designs, research — described once in chat,
-          delivered as real work you keep, refine, and publish.
+          Trove is the AI workspace for businesses, solo entrepreneurs, and one-person
+          businesses. Describe the work once in chat — a site, a deck, a model, a memo —
+          and get back real files you keep, refine, and publish.
         </p>
 
         <div className="lp-hero-in mx-auto mt-6 max-w-[760px] sm:mt-9" style={{ animationDelay: "200ms" }}>
