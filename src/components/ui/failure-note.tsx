@@ -91,7 +91,7 @@ export function FailureNote({
           className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-semibold"
         >
           <Ico icon={FiZap} motion="sparkle" size={13} />
-          Get more credits
+          Keep working
         </Link>
       ) : null}
 
@@ -116,7 +116,7 @@ export function FailureNote({
         {f.retryable ? (
           <>
             <p className="text-[14px] font-medium text-ink-2">
-              The agent encountered an error. Please try again.
+              The Tro encountered an error. Please try again.
             </p>
             {onRetry ? (
               <button
@@ -135,6 +135,12 @@ export function FailureNote({
             <p className="mt-1 max-w-[46ch] text-[13px] leading-relaxed text-ink-3">
               {f.detail}
             </p>
+            {f.kind === "credits" ? (
+              <p className="mt-1.5 max-w-[46ch] text-[12.5px] leading-relaxed text-ink-4">
+                Nothing is lost — your drafts, files, and scheduled tasks stay saved, and
+                work resumes when your next grant arrives.
+              </p>
+            ) : null}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
               {accountLinks}
             </div>
@@ -183,6 +189,17 @@ export function FailureNote({
           >
             {f.detail}
           </p>
+          {f.kind === "credits" ? (
+            <p
+              className={cn(
+                "mt-1.5 leading-relaxed text-ink-4",
+                compact ? "text-[12px]" : "text-[12.5px]",
+              )}
+            >
+              Nothing is lost — your drafts, files, and scheduled tasks stay saved, and
+              work resumes when your next grant arrives.
+            </p>
+          ) : null}
 
           <div className="mt-3.5 flex flex-wrap items-center gap-2">
             {accountLinks}

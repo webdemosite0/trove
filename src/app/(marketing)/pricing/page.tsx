@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FiCheck, FiArrowRight } from "@/components/ui/icons";
 
 import { PLANS } from "@/lib/credits";
+import { artifactYield } from "@/lib/artifact-yield";
 import {
   PLAN_COMPARISON,
   PLAN_COMPARE_GROUPS,
@@ -60,9 +61,27 @@ export default function PricingPage() {
           Pro and adds a private workspace: invites, roles, shared projects, company
           context, and one credit pool for the group.
         </p>
+        {/* Anchor first: the ruler (what credits build) lands before any price. */}
+        <div className="mt-6 rounded-[var(--r-panel)] border border-line bg-raised/60 px-5 py-4">
+          <p className="text-[14px] leading-relaxed text-ink-2">
+            <span className="font-semibold text-ink">What credits actually buy:</span>{" "}
+            Pro&rsquo;s {proPlan.monthly.toLocaleString()} credits build{" "}
+            <strong className="font-semibold text-ink">{artifactYield(proPlan)}</strong> a
+            month. Free&rsquo;s {freePlan.monthly.toLocaleString()} build{" "}
+            <strong className="font-semibold text-ink">{artifactYield(freePlan)}</strong>{" "}
+            a month. No flat fee per artifact — you&rsquo;re metered on actual tokens.
+          </p>
+        </div>
       </header>
 
-      <div className="mt-12 grid gap-4 lg:grid-cols-3">
+      <p className="mt-6 max-w-[72ch] text-[13.5px] leading-relaxed text-ink-3">
+        <strong className="font-semibold text-ink">If you run out of credits</strong>,
+        generation pauses until your next monthly grant or an upgrade — your drafts,
+        saved files, and scheduled tasks stay right where you left them. Nothing is
+        deleted.
+      </p>
+
+      <div className="mt-10 grid gap-4 lg:grid-cols-3">
         {PLANS.map((plan) => {
           const featured = plan.id === "pro";
           const isTeam = plan.id === "team";
@@ -94,7 +113,12 @@ export default function PricingPage() {
               </h2>
               <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">{plan.blurb}</p>
 
-              <p className="mt-5 flex items-baseline gap-1">
+              {/* The anchor number lands first; the cost never sits alone. */}
+              <p className="mt-5 text-[13.5px] font-medium text-ink">
+                {artifactYield(plan)}{" "}
+                <span className="font-normal text-ink-4">a month</span>
+              </p>
+              <p className="mt-2 flex items-baseline gap-1">
                 <span className="text-[36px] font-semibold tracking-[-0.03em] tabular-nums text-ink">
                   {plan.price === 0 ? "$0" : `$${plan.price}`}
                 </span>
@@ -214,28 +238,34 @@ export default function PricingPage() {
             more refinements use more — you&apos;re metered on actual tokens, never a flat fee.
           </p>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[480px] text-left text-[13px]">
+            <table className="w-full min-w-[560px] text-left text-[13px]">
               <thead>
                 <tr className="border-b border-line text-[11px] uppercase tracking-[0.08em] text-ink-4">
                   <th className="pb-2 pr-4 font-medium">Typical build</th>
                   <th className="pb-2 pr-4 font-medium">≈ Credits</th>
-                  <th className="pb-2 pr-4 font-medium">Free (200/mo)</th>
-                  <th className="pb-2 font-medium">Pro (5,000/mo)</th>
+                  {[freePlan, proPlan, teamPlan].map((p) => (
+                    <th key={p.id} className="pb-2 pr-4 font-medium last:pr-0">
+                      {p.name} ({p.monthly.toLocaleString()}/mo)
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="text-ink-2">
                 {[
-                  ["Landing page", "~10", "~20", "~500"],
-                  ["Investor memo", "~5", "~40", "~1,000"],
-                  ["3-slide pitch deck", "~5", "~40", "~1,000"],
-                  ["Research brief", "~5", "~40", "~1,000"],
-                  ["Pricing model", "~5", "~40", "~1,000"],
-                ].map((row) => (
-                  <tr key={row[0]} className="border-b border-line/60 last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-ink">{row[0]}</td>
-                    <td className="py-2.5 pr-4 tabular-nums">{row[1]}</td>
-                    <td className="py-2.5 pr-4 tabular-nums">{row[2]}</td>
-                    <td className="py-2.5 tabular-nums">{row[3]}</td>
+                  ["Landing page", 10],
+                  ["Investor memo", 5],
+                  ["3-slide pitch deck", 5],
+                  ["Research brief", 5],
+                  ["Pricing model", 5],
+                ].map(([name, per]) => (
+                  <tr key={name} className="border-b border-line/60 last:border-0">
+                    <td className="py-2.5 pr-4 font-medium text-ink">{name}</td>
+                    <td className="py-2.5 pr-4 tabular-nums">~{per}</td>
+                    {[freePlan, proPlan, teamPlan].map((p) => (
+                      <td key={p.id} className="py-2.5 pr-4 tabular-nums last:pr-0">
+                        ~{Math.round(p.monthly / Number(per)).toLocaleString()}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>

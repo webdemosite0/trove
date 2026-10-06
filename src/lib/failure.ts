@@ -38,7 +38,8 @@ export function classify(raw: unknown): Failure {
       ...base,
       kind: "credits",
       title: "You are out of credits this month",
-      detail: "Your allowance has been used. Upgrade or wait for the next reset.",
+      detail:
+        "Your monthly allowance has been used, so new work is paused until your next grant.",
       retryable: false,
     };
   }

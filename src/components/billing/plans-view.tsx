@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/icons";
 import { choosePlan } from "@/app/actions/billing";
 import { formatCredits } from "@/lib/format-credits";
+import { artifactYield } from "@/lib/artifact-yield";
 import { FailureNote } from "@/components/ui/failure-note";
 import { cn } from "@/lib/utils";
 import type { Balance, Plan, UsageRow } from "@/lib/credits";
@@ -98,6 +99,10 @@ export function PlansView({
   const [interval, setInterval] = useState<BillingInterval>("month");
 
   const paidNow = Boolean(currentPlan && currentPlan !== "free");
+  const remaining = Number(balance?.remaining ?? 0);
+  const granted = Number(balance?.granted ?? 0);
+  const lowBalance = balance != null && remaining <= 0;
+  const nearlyEmpty = !lowBalance && granted > 0 && remaining / granted < 0.2;
   const [waiting, setWaiting] = useState(checkout === "done" && !paidNow);
   const tries = useRef(0);
 
@@ -192,7 +197,8 @@ export function PlansView({
       ) : null}
 
       {balance && signedIn ? (
-        <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-raised/70 px-5 py-4">
+        <>
+          <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-raised/70 px-5 py-4">
           <div className="flex items-center gap-2 text-[13px] text-ink-2">
             <FiZap size={15} className="text-accent" />
             <span>
@@ -226,7 +232,15 @@ export function PlansView({
                 : null}
             </span>
           ) : null}
-        </div>
+          </div>
+          {lowBalance || nearlyEmpty ? (
+            <p className="mt-3 text-[12.5px] leading-relaxed text-ink-3">
+              {lowBalance
+                ? "At 0, new work pauses until your next grant — your drafts, files, and scheduled tasks stay saved."
+                : "Running low — at 0, new work pauses until your next grant. Your drafts and scheduled tasks stay saved."}
+            </p>
+          ) : null}
+        </>
       ) : null}
 
       <div className="mt-8 flex items-center gap-2">
@@ -271,6 +285,11 @@ export function PlansView({
                 </span>
               ) : null}
               <p className="text-[15px] font-semibold text-ink">{t.name}</p>
+              {/* Anchor first: what the allowance builds lands before the price. */}
+              <p className="mt-3 text-[13px] font-medium text-ink">
+                {artifactYield(t)}{" "}
+                <span className="font-normal text-ink-4">a month</span>
+              </p>
               <p className="mt-3 flex items-baseline gap-1">
                 <span className="text-[32px] font-semibold tracking-tight text-ink">
                   {paid ? `$${price}` : "$0"}
