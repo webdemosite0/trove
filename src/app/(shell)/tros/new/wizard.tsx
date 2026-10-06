@@ -24,6 +24,11 @@ import { Bot, SPECIES, SPECIES_META, speciesFromSeed, type SplashySpecies } from
 import { createAgent, type AgentFormState } from "@/app/actions/agents";
 import { MODE_LIST, type ModeId } from "@/lib/modes";
 import { cn } from "@/lib/utils";
+import {
+  clearAnonymousDraft,
+  loadAnonymousDraft,
+  saveAnonymousDraft,
+} from "@/lib/anonymous-draft";
 
 const ACCENTS = ["#6366f1", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24", "#f472b6", "#fb923c", "#2dd4bf", "#e879f9", "#60a5fa"];
 
@@ -102,18 +107,37 @@ export interface WizardInitial {
   describe: string;
 }
 
+/** In-progress Tro, persisted to this device across the auth boundary. */
+interface TroDraft {
+  describe: string;
+  name: string;
+  role: string;
+  instructions: string;
+  species: string;
+  accent: string;
+  mode: string;
+  tools: string[];
+  invocation: "thread" | "none";
+  parentId: string;
+  seedKnowledge: string;
+  seedMemory: string;
+}
+
 export function NewTroWizard({
   initial,
   initialSpecies,
   team,
   connectors,
   defaultTroId,
+  anonymous,
 }: {
   initial: WizardInitial;
   initialSpecies: string;
   team: { id: string; name: string }[];
   connectors: { service: string; label: string; account: string | null }[];
   defaultTroId: string | null;
+  /** No session — build first, create the account at the auth boundary. */
+  anonymous: boolean;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -146,6 +170,99 @@ export function NewTroWizard({
   const [parentId, setParentId] = useState("");
   const [seedKnowledge, setSeedKnowledge] = useState("");
   const [seedMemory, setSeedMemory] = useState("");
+
+  // P4 — build before signup: the auth boundary never swallows in-progress work.
+  const [showContinue, setShowContinue] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  /** Everything worth preserving across the signup/login boundary. */
+  function snapshotDraft(): TroDraft {
+    return {
+      describe,
+      name,
+      role,
+      instructions,
+      species,
+      accent,
+      mode,
+      tools,
+      invocation,
+      parentId,
+      seedKnowledge,
+      seedMemory,
+    };
+  }
+
+  /**
+   * The auth boundary. Anonymous visitors never submit the form — their work
+   * is saved to this device and they're offered "Continue — save your work".
+   * Returns true when the caller may proceed (signed in).
+   */
+  function checkpointForAccount(e?: React.SyntheticEvent): boolean {
+    if (!anonymous) return true;
+    e?.preventDefault();
+    saveAnonymousDraft("tro", snapshotDraft(), "/tros/new");
+    setShowContinue(true);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    return false;
+  }
+
+  function discardDraft() {
+    clearAnonymousDraft("tro");
+    setDraftRestored(false);
+    setShowContinue(false);
+    setDescribe("");
+    setName("");
+    setRole("");
+    setInstructions("");
+    setManualOpen(false);
+    setSeedKnowledge("");
+    setSeedMemory("");
+    setTools(DEFAULT_TOOLS);
+    setMode("balanced");
+    setInvocation("thread");
+    setParentId("");
+    const fresh = speciesFromSeed("new-tro");
+    setSpecies(fresh);
+    setSpeciesTouched(false);
+    setAccent(SPECIES_META[fresh].defaultAccent);
+    setAccentTouched(false);
+  }
+
+  // Restore a draft saved before the auth boundary. Shared-link seed params
+  // (?describe=…) win over a stored draft.
+  const urlSeeded = Boolean(initial.describe || initial.name || initial.role || initial.instructions);
+  useEffect(() => {
+    if (urlSeeded) return;
+    const draft = loadAnonymousDraft<TroDraft>("tro");
+    if (!draft) return;
+    const d = draft.data;
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    setDescribe(str(d.describe));
+    setName(str(d.name));
+    setRole(str(d.role));
+    setInstructions(str(d.instructions));
+    if (str(d.name).trim() || str(d.role).trim() || str(d.instructions).trim()) setManualOpen(true);
+    if (isSpecies(str(d.species))) {
+      setSpecies(d.species as SplashySpecies);
+      setSpeciesTouched(true);
+    }
+    if (/^#[0-9a-fA-F]{6}$/.test(str(d.accent))) {
+      setAccent(str(d.accent));
+      setAccentTouched(true);
+    }
+    if (MODE_LIST.some((m) => m.id === d.mode)) setMode(d.mode as ModeId);
+    if (Array.isArray(d.tools)) {
+      const known = d.tools.filter((t): t is string => typeof t === "string" && TOOLS.includes(t));
+      if (known.length) setTools(known);
+    }
+    if (d.invocation === "thread" || d.invocation === "none") setInvocation(d.invocation);
+    setParentId(str(d.parentId));
+    setSeedKnowledge(str(d.seedKnowledge));
+    setSeedMemory(str(d.seedMemory));
+    setDraftRestored(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
@@ -188,6 +305,7 @@ export function NewTroWizard({
   }
 
   function handleHireCoworker() {
+    if (!checkpointForAccount()) return;
     const src = describe.trim() || [name, role].filter(Boolean).join(" — ");
     if (!src.trim() && !identityValid) {
       // Nothing to draft from — open the manual fields instead of submitting empty.
@@ -254,6 +372,7 @@ export function NewTroWizard({
   useEffect(() => {
     if (!state?.id || seededRef.current) return;
     seededRef.current = true;
+    clearAnonymousDraft("tro");
     const id = state.id;
     (async () => {
       try {
@@ -286,8 +405,8 @@ export function NewTroWizard({
       {/* Header */}
       <header className="flex items-center gap-3">
         <Link
-          href="/tros"
-          aria-label="Back to Tros"
+          href={anonymous ? "/" : "/tros"}
+          aria-label={anonymous ? "Back to home" : "Back to Tros"}
           className={cn(
             "grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-ink/[0.04] text-ink-2 transition hover:bg-ink/10 hover:text-ink",
             focusRing,
@@ -305,6 +424,7 @@ export function NewTroWizard({
           <button
             type="submit"
             disabled={pending || !identityValid}
+            onClick={checkpointForAccount}
             title={identityValid ? "Create this Tro" : "Finish the Identity step first (name, role, instructions)"}
             className={cn(
               "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100",
@@ -320,6 +440,66 @@ export function NewTroWizard({
         <p className="mt-3 flex items-center gap-1.5 text-[13px] text-red-400 sm:hidden">
           <FiAlertCircle size={14} /> {state.error}
         </p>
+      ) : null}
+
+      {/* P4 — the auth boundary: work is saved on this device, the account
+          comes second. The button says what it does: continue, not sign up. */}
+      {showContinue ? (
+        <div
+          role="dialog"
+          aria-label="Save your work"
+          className="mt-4 rounded-2xl border border-accent/30 bg-accent/[0.07] p-5"
+        >
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-positive/15 text-positive">
+              <FiCheck size={16} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold text-ink">Your Tro is saved on this device</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-3">
+                Create a free account to hire {name.trim() || "your Tro"} — your
+                draft comes back automatically and nothing is lost.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+                <Link
+                  href="/signup"
+                  className={cn(
+                    "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-ink transition hover:scale-[1.03]",
+                    focusRing,
+                  )}
+                >
+                  Continue — save your work
+                </Link>
+                <Link
+                  href="/login?next=/tros/new"
+                  className={cn(
+                    "rounded-md text-[13px] font-semibold text-ink-3 underline-offset-4 transition hover:text-ink hover:underline",
+                    focusRing,
+                  )}
+                >
+                  I already have an account
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : draftRestored ? (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-ink/[0.03] px-4 py-3">
+          <p className="text-[13px] text-ink-2">
+            <span className="font-semibold text-ink">Welcome back</span> — your
+            unfinished Tro was restored from this device.
+          </p>
+          <button
+            type="button"
+            onClick={discardDraft}
+            className={cn(
+              "shrink-0 rounded-md text-[12.5px] font-semibold text-ink-4 underline-offset-4 transition hover:text-ink hover:underline",
+              focusRing,
+            )}
+          >
+            Start over
+          </button>
+        </div>
       ) : null}
 
       {/* Stepper */}
@@ -447,6 +627,11 @@ export function NewTroWizard({
               <div className="grid gap-3 sm:grid-cols-2">
                 <Link
                   href={defaultTroId ? `/tros/${defaultTroId}` : "/chat"}
+                  onClick={() => {
+                    // Anonymous: the destination needs an account, so stash the
+                    // draft first — it's restored when they come back.
+                    if (anonymous) saveAnonymousDraft("tro", snapshotDraft(), "/tros/new");
+                  }}
                   className={cn(
                     "group rounded-2xl border border-line bg-ink/[0.03] p-4 transition hover:border-violet-400/40 hover:bg-ink/[0.06]",
                     focusRing,
@@ -528,7 +713,14 @@ export function NewTroWizard({
                       )}
                     >
                       <span className="flex items-center justify-between">
-                        <span className="text-[14.5px] font-semibold text-ink">{m.label}</span>
+                        <span className="flex items-center gap-2">
+                          <span className="text-[14.5px] font-semibold text-ink">{m.label}</span>
+                          {m.id === "balanced" ? (
+                            <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">
+                              Recommended
+                            </span>
+                          ) : null}
+                        </span>
                         <span
                           className={cn(
                             "grid size-5 place-items-center rounded-full border transition",
@@ -545,8 +737,9 @@ export function NewTroWizard({
                 })}
               </div>
               <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
-                The mode is stored with the Tro and shapes every reply — Fast for quick answers,
-                Deep for reasoning that shows its work.
+                Balanced is pre-selected — accurate enough for almost everything, fast enough to
+                feel instant. Most people never switch. The mode is stored with the Tro and shapes
+                every reply — Fast for quick answers, Deep for reasoning that shows its work.
               </p>
             </section>
           ) : null}
@@ -575,6 +768,10 @@ export function NewTroWizard({
                   );
                 })}
               </div>
+              <p className="mt-3 text-[12.5px] leading-relaxed text-ink-4">
+                Pre-selected: the three tools most Tros actually use. Most people keep these —
+                add or remove to suit this Tro.
+              </p>
               <p className={cn(labelCls, "mt-6")}>Integrations</p>
               {connectors.length ? (
                 <ul className="space-y-2">
@@ -599,9 +796,16 @@ export function NewTroWizard({
               ) : (
                 <div className="rounded-2xl border border-dashed border-line bg-ink/[0.02] px-4 py-5 text-center">
                   <p className="text-[13px] text-ink-3">No integrations connected yet.</p>
-                  <Link href="/settings" className={cn("mt-1.5 inline-block rounded-md text-[13px] font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200", focusRing)}>
-                    Connect in Settings →
-                  </Link>
+                  {anonymous ? (
+                    <p className="mx-auto mt-1.5 max-w-[52ch] text-[12.5px] leading-relaxed text-ink-4">
+                      Integrations become available after you create your account —
+                      this Tro will pick them up automatically.
+                    </p>
+                  ) : (
+                    <Link href="/settings" className={cn("mt-1.5 inline-block rounded-md text-[13px] font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200", focusRing)}>
+                      Connect in Settings →
+                    </Link>
+                  )}
                 </div>
               )}
               <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
@@ -630,9 +834,13 @@ export function NewTroWizard({
                   <span className="flex items-center gap-2.5">
                     <FiMessageSquare size={16} className="text-violet-600 dark:text-violet-300" />
                     <span className="text-[14px] font-semibold text-ink">Open a chat thread</span>
+                    <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">
+                      Recommended
+                    </span>
                   </span>
                   <span className="mt-1.5 block text-[12.5px] leading-relaxed text-ink-3">
-                    After creation, start chatting with this Tro right away.
+                    After creation, start chatting with this Tro right away — the most common
+                    choice, pre-selected for you.
                   </span>
                 </button>
                 <button
@@ -708,8 +916,9 @@ export function NewTroWizard({
                 />
               </label>
               <p className="mt-4 text-[12.5px] leading-relaxed text-ink-4">
-                Both are optional. After hiring, you can add documents in the Tro's Knowledge tab
-                and long-term memories in its Memory tab.
+                Both are optional — most people leave these blank and add knowledge later. After
+                hiring, you can add documents in the Tro's Knowledge tab and long-term memories
+                in its Memory tab.
               </p>
             </section>
           ) : null}
@@ -742,6 +951,7 @@ export function NewTroWizard({
               <button
                 type="submit"
                 disabled={pending || !identityValid}
+                onClick={checkpointForAccount}
                 className={cn(
                   "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2 text-[13.5px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100",
                   focusRing,
@@ -861,10 +1071,26 @@ export function NewTroWizard({
                   )}
                 </div>
               </div>
+              {/* P1 payoff: the preview doesn't just mirror choices, it tells
+                  you the Tro is ready — the "results waiting" moment. */}
+              <div className="mt-2 flex items-start gap-2.5 rounded-xl border border-positive/25 bg-positive/[0.07] px-3 py-2.5">
+                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-positive/15 text-positive">
+                  <FiCheck size={11} />
+                </span>
+                <p className="text-[12px] leading-snug text-ink-2">
+                  <span className="font-semibold text-ink">
+                    {tools.length} {tools.length === 1 ? "tool" : "tools"} · {activeMode.label}
+                  </span>{" "}
+                  · {invocation === "thread" ? "opens a chat thread" : "create only"} — ready
+                  to hire.
+                </p>
+              </div>
             </dl>
           </div>
           <p className="mt-3 px-1 text-[12px] leading-relaxed text-ink-4">
-            Preview updates live as you build. The Tro is created only when you press Create Tro.
+            <span className="font-semibold text-ink-3">Live preview</span> — every choice above
+            appears here instantly, so you see exactly what you're getting. The Tro is created
+            only when you press Create Tro.
           </p>
         </aside>
       </div>

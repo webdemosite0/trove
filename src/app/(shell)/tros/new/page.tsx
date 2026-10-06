@@ -59,6 +59,7 @@ export default async function NewTroPage({
         team={agents.map((a) => ({ id: a.id, name: a.name }))}
         connectors={connectors}
         defaultTroId={agents[0]?.id ?? null}
+        anonymous={!user}
       />
     </div>
   );

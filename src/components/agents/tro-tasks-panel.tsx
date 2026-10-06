@@ -272,6 +272,33 @@ export function TroTasksPanel({ agentId, agentName }: { agentId: string; agentNa
   );
 }
 
+/** Smart default for a one-off run: tomorrow at 9:00 in the user's local time. */
+function defaultRunAt(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function friendlyRunAt(when: string): string {
+  const d = new Date(when);
+  if (!when || Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+const CRON_PRESETS = [
+  { label: "Weekdays 9am", cron: "0 9 * * 1-5" },
+  { label: "Every morning 9am", cron: "0 9 * * *" },
+  { label: "Every Monday 9am", cron: "0 9 * * 1" },
+];
+
 function TaskForm({
   agentId,
   saving,
@@ -290,8 +317,9 @@ function TaskForm({
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<"reminder" | "task">("reminder");
   const [mode, setMode] = useState<"once" | "repeat">("once");
-  const [when, setWhen] = useState("");
-  const [cron, setCron] = useState("");
+  const [when, setWhen] = useState<string>(defaultRunAt);
+  // Smart default: most repeating schedules are weekday-morning check-ins.
+  const [cron, setCron] = useState(CRON_PRESETS[0]!.cron);
   const [instruction, setInstruction] = useState("");
 
   const submit = async (e: React.FormEvent) => {
@@ -366,7 +394,10 @@ function TaskForm({
                 : "border-line text-ink-3 hover:text-ink-2",
             )}
           >
-            {k === "reminder" ? "🔔 Reminder" : "⚡ Task (Tro does it)"}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              {k === "reminder" ? <FiBell size={12} /> : <FiZap size={12} />}
+              {k === "reminder" ? "Reminder" : "Task (Tro does it)"}
+            </span>
           </button>
         ))}
       </div>
@@ -388,19 +419,51 @@ function TaskForm({
         ))}
       </div>
       {mode === "once" ? (
-        <input
-          type="datetime-local"
-          className={inputCls}
-          value={when}
-          onChange={(e) => setWhen(e.target.value)}
-        />
+        <div>
+          <input
+            type="datetime-local"
+            className={inputCls}
+            value={when}
+            onChange={(e) => setWhen(e.target.value)}
+          />
+          {friendlyRunAt(when) ? (
+            <p className="mt-1 text-[11px] text-ink-4">
+              Fires {friendlyRunAt(when)} · {Intl.DateTimeFormat().resolvedOptions().timeZone}
+            </p>
+          ) : null}
+        </div>
       ) : (
-        <input
-          className={inputCls}
-          placeholder="Cron — e.g. 0 9 * * 1-5 (weekdays 9am)"
-          value={cron}
-          onChange={(e) => setCron(e.target.value)}
-        />
+        <div>
+          <input
+            className={inputCls}
+            placeholder="Cron — e.g. 0 9 * * 1-5 (weekdays 9am)"
+            value={cron}
+            onChange={(e) => setCron(e.target.value)}
+          />
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {CRON_PRESETS.map((p) => (
+              <button
+                key={p.cron}
+                type="button"
+                onClick={() => setCron(p.cron)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+                  cron === p.cron
+                    ? "border-accent/50 bg-accent/10 text-ink"
+                    : "border-line text-ink-4 hover:text-ink-2",
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {CRON_PRESETS.some((p) => p.cron === cron.trim()) ? (
+            <p className="mt-1 text-[11px] text-ink-4">
+              Repeats {CRON_PRESETS.find((p) => p.cron === cron.trim())!.label.toLowerCase()} ·{" "}
+              {Intl.DateTimeFormat().resolvedOptions().timeZone}
+            </p>
+          ) : null}
+        </div>
       )}
       <textarea
         className={cn(inputCls, "min-h-[52px] resize-y")}
