@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useNav } from "@/components/shell/nav-state";
@@ -9,6 +10,8 @@ import {
   FiPlus,
   FiX,
   FiMenu,
+  FiBell,
+  FiMoreHorizontal,
   FiSettings,
   FiCreditCard,
   FiUsers,
@@ -21,7 +24,6 @@ import {
   TbPalette,
   TbRobot,
   TbHelpCircle,
-  TbWorld,
   TbSearch,
   TbPlugConnected,
   TbBell,
@@ -51,20 +53,20 @@ const PRIMARY: Item[] = [
   { href: "/spreadsheets", label: "Sheets", icon: TbTable, motion: "scan" },
   { href: "/slides", label: "Decks", icon: TbPresentation, motion: "launch" },
   { href: "/design", label: "Design", icon: TbPalette, motion: "hue" },
-  { href: "/websites", label: "Websites", icon: TbWorld, motion: "grow" },
   { href: "/research", label: "Research", icon: TbSearch, motion: "scan" },
-  { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
+  { href: "/agents", label: "Tros", icon: TbRobot, motion: "ring" },
   { href: "/settings", label: "Plugins", icon: TbPlugConnected, motion: "nudge", settingsSection: "integrations" },
   { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring" },
   { href: "/team", label: "Team", icon: FiUsers, motion: "stack" },
 ];
 
+/** Bottom tab bar: 4 key destinations max (3–4 ideal). Tros are desktop-only,
+    so Agents stays in the drawer only; Plugins lives in the more menu. */
 const TABS: Item[] = [
   { href: "/chat", label: "Chat", icon: TbMessageCircle, motion: "sparkle" },
   { href: "/dashboard", label: "Home", icon: TbLayoutDashboard, motion: "panel" },
   { href: "/documents", label: "Docs", icon: TbFiles, motion: "stack" },
-  { href: "/agents", label: "Agents", icon: TbRobot, motion: "ring" },
-  { href: "/settings", label: "Plugins", icon: TbPlugConnected, motion: "nudge", settingsSection: "integrations" },
+  { href: "/reminders", label: "Reminders", icon: TbBell, motion: "ring" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -75,7 +77,7 @@ function isActive(pathname: string, href: string) {
 
 /** Studio tools own Chat / Preview tabs — hide global bottom bar. */
 function isStudioTool(pathname: string) {
-  return /^\/(documents|spreadsheets|slides|design|research|code|websites)(\/|$)/.test(
+  return /^\/(documents|spreadsheets|slides|design|research|code)(\/|$)/.test(
     pathname,
   );
 }
@@ -100,34 +102,50 @@ export function MobileShell({
   const router = useRouter();
   const { openSettings } = useNav();
   const [open, setOpen] = React.useState(false);
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const [liveBalance, setLiveBalance] = React.useState<Balance | null>(balance);
+  const [dueCount, setDueCount] = React.useState(0);
   const isTeam = pathname === "/team" || pathname.startsWith("/team/");
 
   React.useEffect(() => setOpen(false), [pathname]);
+  React.useEffect(() => setMenuOpen(false), [pathname]);
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   React.useEffect(() => {
     if (isTeam) return;
     let controller: AbortController | null = null;
-    const loadBalance = () => {
+    const loadMeta = () => {
       controller?.abort();
       controller = new AbortController();
-      void fetch("/api/shell-meta?only=balance", {
-        cache: "no-store",
-        signal: controller.signal,
-      })
+      const signal = controller.signal;
+      void fetch("/api/shell-meta?only=balance", { cache: "no-store", signal })
         .then(async (res) =>
           res.ok ? ((await res.json()) as { balance?: Balance | null }) : null,
         )
         .then((data) => data && setLiveBalance(data.balance ?? null))
         .catch(() => null);
+      void fetch("/api/shell-meta?only=due", { cache: "no-store", signal })
+        .then(async (res) =>
+          res.ok ? ((await res.json()) as { due?: number }) : null,
+        )
+        .then((data) => data && setDueCount(Math.max(0, data.due ?? 0)))
+        .catch(() => null);
     };
-    loadBalance();
-    window.addEventListener("trove:shell-meta-refresh", loadBalance);
+    loadMeta();
+    window.addEventListener("trove:shell-meta-refresh", loadMeta);
     return () => {
       controller?.abort();
-      window.removeEventListener("trove:shell-meta-refresh", loadBalance);
+      window.removeEventListener("trove:shell-meta-refresh", loadMeta);
     };
-  }, [isTeam]);
+  }, [isTeam, pathname]);
 
   const activeItem = React.useMemo(
     () => PRIMARY.find((item) => isActive(pathname, item.href)) ?? null,
@@ -148,6 +166,18 @@ export function MobileShell({
     liveBalance && typeof liveBalance.remaining === "number"
       ? liveBalance.remaining
       : null;
+
+  const menuItems: { label: string; icon: IconType; run: () => void }[] = [
+    { label: studioNewLabel, icon: FiPlus, run: () => router.push(studioNewHref) },
+    {
+      label: "Plugins",
+      icon: TbPlugConnected,
+      run: () => openSettings("integrations"),
+    },
+    { label: "Settings", icon: FiSettings, run: () => openSettings("general") },
+    { label: "Plan", icon: FiCreditCard, run: () => router.push("/plans") },
+    { label: "Help", icon: TbHelpCircle, run: () => openSettings("help") },
+  ];
 
   if (isTeam) {
     return <>{children}</>;
@@ -183,15 +213,88 @@ export function MobileShell({
           </span>
         </div>
 
-        <button
-          type="button"
-          aria-label={studioNewLabel}
-          onClick={() => router.push(studioNewHref)}
-          className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
-        >
-          <Ico icon={FiPlus} motion="pop" size={20} />
-        </button>
+        <div className="flex shrink-0 items-center">
+          <button
+            key={studioNewLabel}
+            type="button"
+            aria-label={studioNewLabel}
+            onClick={() => router.push(studioNewHref)}
+            className="mobile-header-swap grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+          >
+            <Ico icon={FiPlus} motion="pop" size={20} />
+          </button>
+          <Link
+            href="/reminders"
+            aria-label={dueCount > 0 ? `Reminders, ${dueCount} due` : "Reminders"}
+            className="relative grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+          >
+            <Ico icon={FiBell} motion="ring" size={20} />
+            {dueCount > 0 ? (
+              <span className="mobile-bell-badge" aria-hidden="true">
+                {dueCount > 9 ? "9+" : dueCount}
+              </span>
+            ) : null}
+          </Link>
+          <button
+            type="button"
+            aria-label="More actions"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+          >
+            <Ico icon={FiMoreHorizontal} motion="nudge" size={20} />
+          </button>
+        </div>
       </header>
+
+      {menuOpen
+        ? createPortal(
+            <>
+              <div
+                className="fixed inset-0 z-[70] cursor-default"
+                onClick={() => setMenuOpen(false)}
+                aria-hidden="true"
+              />
+              <div
+                role="menu"
+                aria-label="More actions"
+                className="mobile-more-menu fixed right-2 z-[71] w-60 overflow-hidden rounded-2xl border border-line/70 bg-raised shadow-2xl"
+                style={{ top: "calc(58px + env(safe-area-inset-top))" }}
+              >
+                <div className="py-1.5">
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        item.run();
+                      }}
+                      className="flex min-h-11 w-full items-center gap-3 px-4 text-left text-[13.5px] text-ink-2 transition active:bg-hover"
+                    >
+                      <Ico icon={item.icon} motion="pop" size={17} className="shrink-0 text-ink-3" />
+                      {item.label}
+                    </button>
+                  ))}
+                  <div className="mx-3 my-1.5 h-px bg-line/70" aria-hidden="true" />
+                  <form action={logOut}>
+                    <button
+                      type="submit"
+                      role="menuitem"
+                      className="flex min-h-11 w-full items-center gap-3 px-4 text-left text-[13.5px] text-ink-2 transition active:bg-hover"
+                    >
+                      <FiLogOut size={16} className="shrink-0 text-ink-3" />
+                      Log out
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </>,
+            document.body,
+          )
+        : null}
 
       <main
         className={cn(
@@ -218,35 +321,24 @@ export function MobileShell({
           <ul className="mx-auto flex h-14 max-w-[560px] items-stretch justify-between px-1">
             {TABS.map((tab) => {
               const active = isActive(pathname, tab.href);
-              const inner = (
-                <>
-                  <Ico
-                    icon={tab.icon}
-                    motion={tab.motion}
-                    size={20}
-                    active={active}
-                    className={active ? "text-accent" : "text-ink-3"}
-                  />
-                  <span className="truncate">{tab.label}</span>
-                </>
-              );
-              const cls = cn(
-                "flex w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-medium transition active:scale-95",
-                active ? "text-accent" : "text-ink-4",
-              );
-              return tab.settingsSection ? (
-                <li key={tab.href + tab.label} className="flex min-w-0 flex-1">
-                  <button type="button" onClick={() => openSettings(tab.settingsSection!)} className={cls}>
-                    {inner}
-                  </button>
-                </li>
-              ) : (
+              return (
                 <li key={tab.href} className="flex min-w-0 flex-1">
                   <Link
                     href={tab.href}
-                    className={cls}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "mobile-tab flex w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-medium transition active:scale-95",
+                      active ? "text-accent" : "text-ink-4",
+                    )}
                   >
-                    {inner}
+                    <Ico
+                      icon={tab.icon}
+                      motion={tab.motion}
+                      size={20}
+                      active={active}
+                      className={active ? "text-accent" : "text-ink-3"}
+                    />
+                    <span className="truncate">{tab.label}</span>
                   </Link>
                 </li>
               );

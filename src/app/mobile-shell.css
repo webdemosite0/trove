@@ -43,6 +43,98 @@
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
+/* ---- Mobile nav: dynamism ----
+   Motion tokens may be defined by the theme; fallbacks keep this self-contained
+   (the more menu is portaled to document.body, outside .mobile-shell). */
+.mobile-shell {
+  --t-enter: 220ms;
+  --t-hover: 160ms;
+  --ease-ui: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Bell due-count badge */
+.mobile-bell-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-canvas);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Bottom tab bar: slides/fades back in when returning from chat/studio */
+.mobile-tabbar {
+  animation: mobile-tabbar-in var(--t-enter, 200ms) var(--ease-ui, ease-out);
+}
+.mobile-tab .ico {
+  transition: transform var(--t-hover, 150ms) var(--ease-ui, ease-out);
+}
+.mobile-tab:active .ico {
+  transform: scale(0.88);
+}
+
+@keyframes mobile-tabbar-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Contextual header action (+ becomes New doc/sheet/deck/…): soft swap */
+.mobile-header-swap {
+  animation: mobile-header-swap-in var(--t-enter, 200ms) var(--ease-ui, ease-out);
+}
+@keyframes mobile-header-swap-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* More menu: pop from the trigger corner */
+.mobile-more-menu {
+  transform-origin: top right;
+  animation: mobile-menu-in 180ms var(--ease-ui, ease-out);
+}
+@keyframes mobile-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-tabbar,
+  .mobile-header-swap,
+  .mobile-more-menu {
+    animation: none;
+  }
+  .mobile-tab .ico {
+    transition: none;
+  }
+}
+
 @media (max-width: 1023px) {
   .mobile-bottom-nav,
   .mobile-tabbar {
