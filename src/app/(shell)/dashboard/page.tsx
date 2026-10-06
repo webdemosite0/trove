@@ -20,6 +20,7 @@ import {
 import { currentUser } from "@/lib/auth";
 import { teamStateForUser } from "@/lib/team";
 import { TeamHome } from "@/components/team/team-home";
+import { WorkspaceSetup } from "@/components/home/workspace-setup";
 import { listAllRecents, relativeTime, type RecentKind } from "@/lib/recents";
 import { one, num } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -115,6 +116,17 @@ export default async function MePage() {
     listAllRecents(8),
   ]);
 
+  // Real completion signals for the workspace-setup checklist (same
+  // definitions the onboarding page uses — nothing invented, nothing faked).
+  const [hasChat, hasArtifact] = await Promise.all([
+    one(`SELECT 1 AS x FROM recents WHERE user_id = ? AND kind = 'chat' LIMIT 1`, [user.id])
+      .then((r) => !!r)
+      .catch(() => false),
+    one(`SELECT 1 AS x FROM tro_artifacts WHERE user_id = ? LIMIT 1`, [user.id])
+      .then((r) => !!r)
+      .catch(() => false),
+  ]);
+
   const stats: { label: string; value: number; href?: string; settingsSection?: string; accent: string }[] = [
     { label: "Tros", value: agents, href: "/tros", accent: "#8b5cf6" },
     { label: "Connectors", value: integrations, settingsSection: "integrations", accent: "#10b981" },
@@ -176,6 +188,18 @@ export default async function MePage() {
             <FiArrowRight size={16} />
           </span>
         </Link>
+
+        {/* workspace setup checklist — real completion states only, never 0% */}
+        <WorkspaceSetup
+          userId={user.id}
+          flags={{
+            account: true,
+            chat: hasChat,
+            tro: agents > 0,
+            artifact: hasArtifact,
+            integration: integrations > 0,
+          }}
+        />
 
         {/* recent work */}
         {recents.length > 0 && (
