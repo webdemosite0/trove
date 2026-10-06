@@ -21,6 +21,9 @@ const PUBLIC_PAGES = new Set([
   "/terms",
   "/security",
   "/status",
+  // Anonymous build entry (P4: build before signup). The page itself renders a
+  // guest-friendly wizard; creating anything still requires an account.
+  "/tros/new",
 ]);
 
 const PUBLIC_PREFIXES = [
@@ -163,6 +166,17 @@ function subdomainRewrite(req: NextRequest): NextResponse | null {
   return NextResponse.rewrite(url);
 }
 
+/**
+ * Forwards the invoked pathname to server components (read via headers()).
+ * Lets the shell guard allow anonymous build entries like /tros/new without
+ * weakening auth anywhere else.
+ */
+function withInvokePath(req: NextRequest, pathname: string): { headers: Headers } {
+  const headers = new Headers(req.headers);
+  headers.set("x-invoke-path", pathname);
+  return { headers };
+}
+
 export function middleware(req: NextRequest) {
   const subdomain = subdomainRewrite(req);
   if (subdomain) return subdomain;
@@ -173,13 +187,13 @@ export function middleware(req: NextRequest) {
   if (toApex) return secureAppResponse(toApex);
 
   if (isPublic(pathname)) {
-    const res = pinUi(req, NextResponse.next());
+    const res = pinUi(req, NextResponse.next({ request: withInvokePath(req, pathname) }));
     if (req.cookies.has("nx_guest")) res.cookies.delete("nx_guest");
     return secureAppResponse(res);
   }
 
   if (req.cookies.has("nx_session")) {
-    return secureAppResponse(pinUi(req, NextResponse.next()));
+    return secureAppResponse(pinUi(req, NextResponse.next({ request: withInvokePath(req, pathname) })));
   }
 
   if (pathname.startsWith("/api/")) {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Backdrop } from "@/components/shell/backdrop";
 import { NavProvider } from "@/components/shell/nav-state";
 import { resolveShell } from "@/components/shell/guard";
@@ -28,6 +29,9 @@ export default async function StudioLayout({
   }
 
   const { user } = result;
+  // Studio stays account-only: the shell guard's anonymous build entries
+  // (e.g. /tros/new) never render here, so narrow back to an authenticated user.
+  if (!user) redirect("/login");
 
   if (await isMobile()) {
     return (

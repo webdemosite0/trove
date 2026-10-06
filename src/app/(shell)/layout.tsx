@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
 import { CommandPalette } from "@/components/shell/command-palette";
@@ -7,6 +8,7 @@ import { Backdrop } from "@/components/shell/backdrop";
 import { resolveShell } from "@/components/shell/guard";
 import { ToastProvider } from "@/components/ui/toast";
 import { MobileShell } from "@/components/mobile/shell";
+import { Wordmark } from "@/components/brand/logo";
 import { isMobile } from "@/lib/device";
 import { countDueReminders } from "@/app/actions/reminders";
 import { listAllRecents } from "@/lib/recents";
@@ -19,11 +21,16 @@ import { getProfile } from "@/app/actions/profile";
 import { getBusinessProfile } from "@/lib/business-profile";
 import { getManualInstructions } from "@/lib/user-prefs";
 import { subscriptionFor } from "@/lib/billing";
+import { cn } from "@/lib/utils";
 
 /** Authenticated app pages must never appear in search results. */
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
+
+/** Focus ring for the anonymous build-entry chrome (theme tokens only). */
+const focusRingCls =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas";
 
 
 export default async function ShellLayout({
@@ -36,6 +43,32 @@ export default async function ShellLayout({
   const gate = await resolveShell();
   if (!gate.ok) return gate.screen;
   const { user, balance } = gate;
+
+  // Anonymous build entry (P4: build before signup, e.g. /tros/new). Minimal
+  // public chrome — no sidebar, no user data — so a visitor can build before
+  // creating an account. Authenticated visitors never take this branch.
+  if (!user) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-canvas text-ink">
+        <Backdrop />
+        <header className="flex shrink-0 items-center justify-between border-b border-line px-4 py-3 sm:px-8">
+          <Link href="/" aria-label="Trove home" className={focusRingCls}>
+            <Wordmark size={19} />
+          </Link>
+          <Link
+            href="/login?next=/tros/new"
+            className={cn(
+              "rounded-xl border border-line bg-ink/[0.04] px-4 py-2 text-[13px] font-semibold text-ink transition hover:bg-ink/10",
+              focusRingCls,
+            )}
+          >
+            Log in
+          </Link>
+        </header>
+        <main className="min-h-0 flex-1">{children}</main>
+      </div>
+    );
+  }
 
   // One COUNT alongside the two queries the guard already runs. It is on every
   // navigation, so it stays a count — the reminders themselves are fetched by

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { Backdrop } from "@/components/shell/backdrop";
 import { SetupNeeded } from "@/components/shell/setup-needed";
 import { currentUser, type User } from "@/lib/auth";
@@ -6,8 +7,16 @@ import { storageIsEphemeral, tursoVars } from "@/lib/db";
 import { balanceFor } from "@/lib/credits";
 import type { Balance } from "@/lib/types";
 
+/**
+ * Pages a visitor may open without an account (P4: build before signup).
+ * Kept in sync with PUBLIC_PAGES in src/middleware.ts — middleware lets the
+ * request through, and the guard lets the layout render instead of bouncing
+ * to /login. Creating anything still requires a session.
+ */
+const ANONYMOUS_BUILD_PATHS = new Set(["/tros/new"]);
+
 export type ShellGate =
-  | { ok: true; user: User; balance: Balance | null }
+  | { ok: true; user: User | null; balance: Balance | null }
   | { ok: false; screen: React.ReactNode };
 
 export async function resolveShell(): Promise<ShellGate> {
@@ -64,7 +73,20 @@ export async function resolveShell(): Promise<ShellGate> {
     };
   }
 
-  if (!user) redirect("/login");
+  if (!user) {
+    // Anonymous build entry: render the guest-friendly page instead of
+    // bouncing to /login. Everything that writes still requires a session.
+    let pathname: string | null = null;
+    try {
+      pathname = (await headers()).get("x-invoke-path");
+    } catch {
+      pathname = null;
+    }
+    if (pathname && ANONYMOUS_BUILD_PATHS.has(pathname)) {
+      return { ok: true, user: null, balance: null };
+    }
+    redirect("/login");
+  }
   if (!user.emailVerified) redirect("/verify-email");
   if (!user.onboardingDone) redirect("/onboarding");
 
