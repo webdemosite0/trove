@@ -14,6 +14,7 @@ import {
   Box,
   Briefcase,
   Calendar,
+  Camera,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -135,6 +136,7 @@ export const FiBellOff = /*#__PURE__*/ grok(BellOff);
 export const FiBookOpen = /*#__PURE__*/ grok(BookOpen);
 export const FiBriefcase = /*#__PURE__*/ grok(Briefcase);
 export const FiCalendar = /*#__PURE__*/ grok(Calendar);
+export const FiCamera = /*#__PURE__*/ grok(Camera);
 export const FiCheck = /*#__PURE__*/ grok(Check);
 export const FiChevronDown = /*#__PURE__*/ grok(ChevronDown);
 export const FiChevronLeft = /*#__PURE__*/ grok(ChevronLeft);

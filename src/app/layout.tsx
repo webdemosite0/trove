@@ -8,6 +8,7 @@ import "./globals.css";
 import "./stream-anim.css";
 import "./mobile-shell.css";
 import "./glass.css";
+import "../components/mobile/springs.css";
 import "./icon-weight.css";
 import "./icon-motion.css";
 import "./landing-motion.css";

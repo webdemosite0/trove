@@ -14,6 +14,7 @@ import { ModePicker } from "@/components/chat/mode-picker";
 import type { ModeId } from "@/lib/modes";
 import { cn } from "@/lib/utils";
 import { Ico } from "@/components/ui/ico";
+import { AttachMenu } from "./attach-menu";
 import { ConnectorChip } from "@/components/chat/connector-chip";
 import {
   ConnectorMentionMenu,
@@ -58,8 +59,9 @@ export function MobileComposer({
   const [error, setError] = React.useState<string | null>(null);
   const [focused, setFocused] = React.useState(false);
   const [cursor, setCursor] = React.useState(initialValue.length);
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const box = React.useRef<HTMLTextAreaElement>(null);
-  const picker = React.useRef<HTMLInputElement>(null);
+  const plusBtn = React.useRef<HTMLButtonElement>(null);
 
   const MIN_H = 54;
   const MAX_H = 148;
@@ -99,8 +101,12 @@ export function MobileComposer({
     requestAnimationFrame(collapse);
   };
 
-  const pick = async (list: FileList | null) => {
-    if (!list?.length) return;
+  /**
+   * Runs the shared limit checks and converts Files into Attachments.
+   * The attach menu's pickers and the camera capture both flow through here.
+   */
+  const pickFiles = async (filesIn: File[]) => {
+    if (!filesIn.length) return;
     setError(null);
 
     const room = MAX_FILES - files.length;
@@ -112,7 +118,7 @@ export function MobileComposer({
     const next: Attachment[] = [];
     let total = files.reduce((n, f) => n + f.size, 0);
 
-    for (const file of Array.from(list).slice(0, room)) {
+    for (const file of filesIn.slice(0, room)) {
       if (file.size > MAX_FILE_BYTES) {
         setError(`${file.name} is over ${humanSize(MAX_FILE_BYTES)}.`);
         continue;
@@ -279,28 +285,20 @@ export function MobileComposer({
 
       <div className="flex min-h-11 items-center gap-1 px-1 pb-1 pt-0.5">
         <button
+          ref={plusBtn}
           type="button"
           aria-label="Attach files"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
           disabled={disabled}
-          onClick={() => picker.current?.click()}
+          onClick={() => setMenuOpen((o) => !o)}
           className={cn(
-            "grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition active:scale-95 active:bg-hover",
+            "spring-press grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 active:bg-hover",
             disabled && "pointer-events-none opacity-40",
           )}
         >
           <Ico icon={FiPlus} motion="grow" size={22} />
         </button>
-        <input
-            ref={picker}
-            type="file"
-            multiple
-            disabled={disabled}
-            className="hidden"
-            onChange={(e) => {
-              void pick(e.target.files);
-              e.target.value = "";
-            }}
-          />
 
         {leading}
 
@@ -325,6 +323,16 @@ export function MobileComposer({
           <Ico icon={FiArrowUp} motion="send" size={20} />
         </button>
       </div>
+
+      {menuOpen ? (
+        <AttachMenu
+          anchorRef={plusBtn}
+          onPickFiles={(f) => {
+            void pickFiles(f);
+          }}
+          onClose={() => setMenuOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
