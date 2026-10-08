@@ -6,10 +6,12 @@ import { PLANS, type BillingInterval } from "@/lib/credits";
  * Whop — billing provider for Trove subscriptions.
  *
  * Env:
- *   WHOP_API_KEY         — account API key (Whop dashboard → Developer → API keys)
- *   WHOP_WEBHOOK_SECRET  — webhook signing secret, ws_… (Developer → Webhooks)
- *   WHOP_PLAN_PRO        — monthly Pro plan id (plan_…)
- *   WHOP_PLAN_TEAM       — monthly Team plan id (plan_…)
+ *   WHOP_API_KEY          — account API key (Whop dashboard → Developer → API keys)
+ *   WHOP_WEBHOOK_SECRET   — webhook signing secret, ws_… (Developer → Webhooks)
+ *   WHOP_PLAN_PRO         — monthly Pro plan id (plan_…)
+ *   WHOP_PLAN_TEAM        — monthly Team plan id (plan_…)
+ *   WHOP_PLAN_PRO_YEARLY  — yearly Pro plan id (plan_…)
+ *   WHOP_PLAN_TEAM_YEARLY — yearly Team plan id (plan_…)
  *
  * Plan ids live in the environment rather than in code because they are
  * account-specific: the same plan has a different id in anyone else's
@@ -60,16 +62,15 @@ async function whopFetch<T = unknown>(
   return body;
 }
 
-/**
- * Resolve the Whop plan id for a Trove plan + billing interval.
- * Only monthly plans exist on Whop today; yearly falls through to Lemon/Stripe.
- */
+/** Resolve the Whop plan id for a Trove plan + billing interval. */
 export function whopPlanFor(
   planId: string,
   interval: BillingInterval = "month",
 ): string | null {
-  if (interval !== "month") return null;
-  const key = `WHOP_PLAN_${planId.toUpperCase()}`;
+  const key =
+    interval === "year"
+      ? `WHOP_PLAN_${planId.toUpperCase()}_YEARLY`
+      : `WHOP_PLAN_${planId.toUpperCase()}`;
   return process.env[key]?.trim() || null;
 }
 
@@ -113,9 +114,11 @@ export async function createWhopCheckout(opts: {
   const interval: BillingInterval = opts.interval === "year" ? "year" : "month";
   const plan = whopPlanFor(opts.planId, interval);
   if (!plan) {
-    throw new Error(
-      `No Whop plan for ${opts.planId} (${interval}). Set WHOP_PLAN_${opts.planId.toUpperCase()}.`,
-    );
+    const key =
+      interval === "year"
+        ? `WHOP_PLAN_${opts.planId.toUpperCase()}_YEARLY`
+        : `WHOP_PLAN_${opts.planId.toUpperCase()}`;
+    throw new Error(`No Whop plan for ${opts.planId} (${interval}). Set ${key}.`);
   }
 
   const json = await whopFetch<{
