@@ -33,6 +33,8 @@ const PUBLIC_PREFIXES = [
   "/api/auth/",
   "/api/health",
   "/api/billing/webhook",
+  "/api/billing/lemon-webhook",
+  "/api/billing/whop-webhook",
   "/api/site/",
   "/api/mascots/",
   "/api/crew/",
