@@ -8,6 +8,11 @@ import {
   lemonPurchasable,
   variantFor,
 } from "@/lib/lemon";
+import {
+  createWhopCheckout,
+  whopConfigured,
+  whopPurchasable,
+} from "@/lib/whop";
 import { priceFor, stripe, stripeConfigured } from "@/lib/stripe";
 import { site } from "@/lib/site";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -75,6 +80,56 @@ export async function POST(req: Request) {
     path: "/plans",
     properties: { plan: plan.id, interval },
   });
+
+  if (whopConfigured()) {
+    if (!whopPurchasable(plan.id, interval)) {
+      console.error(`[billing] whop missing plan plan=${plan.id} interval=${interval}`);
+      await opsAlert("billing_config_missing", {
+        provider: "whop",
+        plan: plan.id,
+        interval,
+      });
+      return NextResponse.json(
+        { error: "Checkout is temporarily unavailable for this plan." },
+        { status: 503 },
+      );
+    }
+
+    try {
+      const { url } = await createWhopCheckout({
+        planId: plan.id,
+        interval,
+        userId: user.id,
+        email: user.email,
+        successUrl: `${site.url}/plans?checkout=done`,
+      });
+      await trackEvent({
+        event: ANALYTICS_EVENTS.checkoutCreated,
+        userId: user.id,
+        path: "/plans",
+        properties: { provider: "whop", plan: plan.id, interval },
+      });
+      return NextResponse.json({ url, provider: "whop", interval });
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error("[billing] whop checkout failed:", detail);
+      await opsAlert("billing_checkout_failed", {
+        provider: "whop",
+        plan: plan.id,
+        interval,
+      });
+      await trackEvent({
+        event: ANALYTICS_EVENTS.checkoutFailed,
+        userId: user.id,
+        path: "/plans",
+        properties: { provider: "whop", plan: plan.id, interval },
+      });
+      return NextResponse.json(
+        { error: "Could not start checkout. Please try again shortly." },
+        { status: 502 },
+      );
+    }
+  }
 
   if (lemonConfigured()) {
     if (!lemonPurchasable(plan.id, interval)) {

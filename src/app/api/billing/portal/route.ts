@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/auth";
 import { subscriptionFor } from "@/lib/billing";
 import { createLemonCustomerPortal, lemonConfigured } from "@/lib/lemon";
 import { stripe, stripeConfigured } from "@/lib/stripe";
+import { whopConfigured } from "@/lib/whop";
 import { site } from "@/lib/site";
 
 export const runtime = "nodejs";
@@ -25,10 +26,17 @@ export async function POST() {
     );
   }
 
-  // Lemon customer ids are numeric strings; Stripe starts with cus_
+  // Lemon customer ids are numeric strings; Stripe starts with cus_;
+  // Whop user ids start with user_
   const isStripe = sub.customerId.startsWith("cus_");
+  const isWhop = sub.customerId.startsWith("user_");
 
   try {
+    if (isWhop && whopConfigured()) {
+      // Whop members manage their subscription in the Whop hub.
+      return NextResponse.json({ url: "https://whop.com/hub", provider: "whop" });
+    }
+
     if (!isStripe && lemonConfigured()) {
       const url = await createLemonCustomerPortal(sub.customerId);
       return NextResponse.json({ url, provider: "lemon" });

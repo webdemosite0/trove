@@ -4,6 +4,7 @@ import { PLANS, myBalance, usageByKind } from "@/lib/credits";
 import { subscriptionFor } from "@/lib/billing";
 import { lemonConfigured, lemonPurchasable } from "@/lib/lemon";
 import { purchasable as stripePurchasable, stripeConfigured } from "@/lib/stripe";
+import { whopConfigured, whopPurchasable } from "@/lib/whop";
 import { accountProfileForUser } from "@/lib/account-type";
 
 export const metadata = { title: "Plans" };
@@ -28,8 +29,10 @@ export default async function PricingPage({
       p.price > 0 && businessAllowed
         ? {
             month:
+              whopPurchasable(p.id, "month") ||
               lemonPurchasable(p.id, "month") || stripePurchasable(p.id, "month"),
             year:
+              whopPurchasable(p.id, "year") ||
               lemonPurchasable(p.id, "year") || stripePurchasable(p.id, "year"),
           }
         : p.price > 0
@@ -37,7 +40,8 @@ export default async function PricingPage({
           : { month: true, year: true };
   }
 
-  const paymentsReady = lemonConfigured() || stripeConfigured();
+  const paymentsReady =
+    whopConfigured() || lemonConfigured() || stripeConfigured();
 
   return (
     <PlansView
