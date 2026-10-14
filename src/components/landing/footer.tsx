@@ -30,7 +30,7 @@ export function Footer() {
             </a>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
             <nav aria-label="Product">
               <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
                 Product

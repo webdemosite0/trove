@@ -1,5 +1,4 @@
-import { Backdrop } from "@/components/shell/backdrop";
-import { LandingNav } from "@/components/landing/nav";
+import { LvNav } from "@/components/lv/nav";
 import { ChatBubble } from "@/components/landing/chat-bubble";
 import { Footer } from "@/components/landing/footer";
 
@@ -21,10 +20,9 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
-      <Backdrop />
-      <LandingNav />
-      <main className="flex-1">{children}</main>
+    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-canvas">
+      <LvNav />
+      <main className="flex-1 pt-16">{children}</main>
       <Footer />
       <ChatBubble />
     </div>

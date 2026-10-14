@@ -52,8 +52,12 @@ const PUBLISH_ROOT_DOMAIN = String(
   .replace(/^\*\./, "")
   .replace(/\/$/, "");
 
+/** Images, video and fonts in public/ (e.g. /auth/hero.jpg, /tros/*.mp4) are never private. */
+const PUBLIC_ASSET = /\.(?:png|jpe?g|webp|avif|gif|svg|ico|mp4|webm|woff2?)$/i;
+
 function isPublic(pathname: string) {
   if (PUBLIC_PAGES.has(pathname)) return true;
+  if (!pathname.startsWith("/api/") && PUBLIC_ASSET.test(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 

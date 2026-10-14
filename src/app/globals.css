@@ -9,17 +9,17 @@
  * modifiers like bg-raised/90 — are generated. The values below are the
  * dark defaults; [data-theme="light"] overrides them at runtime. */
 @theme {
-  --color-canvas: #141416;
-  --color-rail: #111113;
-  --color-sunk: #1b1b1e;
-  --color-raised: #1c1c1f;
-  --color-hover: #26262a;
-  --color-ink: #ededef;
-  --color-ink-2: #d4d4d8;
-  --color-ink-3: #a1a1aa;
-  --color-ink-4: #7c7c85;
-  --color-line: #27272b;
-  --color-line-strong: #36363c;
+  --color-canvas: #121212;
+  --color-rail: #0d0d0d;
+  --color-sunk: #181818;
+  --color-raised: #1b1b1b;
+  --color-hover: #252525;
+  --color-ink: #f4f4f5;
+  --color-ink-2: #d9d9de;
+  --color-ink-3: #a3a3aa;
+  --color-ink-4: #7a7a82;
+  --color-line: #262626;
+  --color-line-strong: #353535;
   --color-accent: #60a5fa;
   --color-accent-soft: #15233a;
   --color-violet: #60a5fa;
@@ -31,17 +31,17 @@
 }
 
 :root {
-  --color-canvas: #141416;
-  --color-rail: #111113;
-  --color-sunk: #1b1b1e;
-  --color-raised: #1c1c1f;
-  --color-hover: #26262a;
-  --color-ink: #ededef;
-  --color-ink-2: #d4d4d8;
-  --color-ink-3: #a1a1aa;
-  --color-ink-4: #7c7c85;
-  --color-line: #27272b;
-  --color-line-strong: #36363c;
+  --color-canvas: #121212;
+  --color-rail: #0d0d0d;
+  --color-sunk: #181818;
+  --color-raised: #1b1b1b;
+  --color-hover: #252525;
+  --color-ink: #f4f4f5;
+  --color-ink-2: #d9d9de;
+  --color-ink-3: #a3a3aa;
+  --color-ink-4: #7a7a82;
+  --color-line: #262626;
+  --color-line-strong: #353535;
   --color-accent: #60a5fa;
   --color-accent-soft: #15233a;
   --color-violet: #60a5fa;
@@ -63,12 +63,12 @@
   /* One typeface everywhere keeps it calm; headings use Inter too. */
   --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono-code), ui-monospace, monospace;
-  --r-panel: 12px;
-  --r-control: 8px;
+  --r-panel: 16px;
+  --r-control: 10px;
   --r-chip: 999px;
-  --r-hero: 16px;
-  --r-card: 12px;
-  --r-tight: 6px;
+  --r-hero: 24px;
+  --r-card: 16px;
+  --r-tight: 8px;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.45), 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 16px 40px -12px rgb(0 0 0 / 0.55), 0 1px 2px rgb(0 0 0 / 0.3);
@@ -86,17 +86,17 @@
 }
 
 :root[data-theme="light"] {
-  --color-canvas: #ffffff;
-  --color-rail: #fafafa;
-  --color-sunk: #f6f6f7;
+  --color-canvas: #fcfcfb;
+  --color-rail: #f7f6f3;
+  --color-sunk: #f3f2ef;
   --color-raised: #ffffff;
-  --color-hover: #f2f2f4;
-  --color-ink: #18181b;
-  --color-ink-2: #27272a;
-  --color-ink-3: #52525b;
-  --color-ink-4: #71717a;
-  --color-line: #e7e7ea;
-  --color-line-strong: #d6d6db;
+  --color-hover: #efeee9;
+  --color-ink: #141414;
+  --color-ink-2: #262626;
+  --color-ink-3: #525252;
+  --color-ink-4: #737373;
+  --color-line: #e8e6e1;
+  --color-line-strong: #d9d6cf;
   --color-accent: #2563eb;
   --color-accent-soft: #eff6ff;
   --color-violet: #2563eb;
@@ -120,17 +120,17 @@
 }
 
 :root[data-theme="dark"] {
-  --color-canvas: #141416;
-  --color-rail: #111113;
-  --color-sunk: #1b1b1e;
-  --color-raised: #1c1c1f;
-  --color-hover: #26262a;
-  --color-ink: #ededef;
-  --color-ink-2: #d4d4d8;
-  --color-ink-3: #a1a1aa;
-  --color-ink-4: #7c7c85;
-  --color-line: #27272b;
-  --color-line-strong: #36363c;
+  --color-canvas: #121212;
+  --color-rail: #0d0d0d;
+  --color-sunk: #181818;
+  --color-raised: #1b1b1b;
+  --color-hover: #252525;
+  --color-ink: #f4f4f5;
+  --color-ink-2: #d9d9de;
+  --color-ink-3: #a3a3aa;
+  --color-ink-4: #7a7a82;
+  --color-line: #262626;
+  --color-line-strong: #353535;
   --color-accent: #60a5fa;
   --color-accent-soft: #15233a;
   --color-violet: #60a5fa;
@@ -303,3 +303,63 @@ body {
 :root[data-theme="dark"] .lv-glow { opacity: 0.75; }
 @media (max-width: 640px) { .lv-glow { height: 420px; filter: blur(48px); } }
 @media print { .lv-glow { display: none; } }
+
+/* ── Lovable-style landing (2026-10) ─────────────────────────────────────
+ * .lv-hero: the full-bleed sunset gradient behind the homepage hero —
+ * deep night at the top, then blue, pink and orange rising from the bottom,
+ * with a fine grain so the gradient never bands. */
+.lv-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(70% 55% at 22% 92%, rgba(37, 99, 235, 0.95), transparent 70%),
+    radial-gradient(55% 50% at 52% 100%, rgba(236, 72, 153, 0.95), transparent 70%),
+    radial-gradient(60% 55% at 84% 96%, rgba(249, 115, 22, 0.9), transparent 70%),
+    radial-gradient(90% 70% at 50% 120%, rgba(244, 114, 182, 0.7), transparent 75%),
+    linear-gradient(180deg, #05060f 0%, #0b1030 38%, #1b1f6b 62%, #3b2a8f 78%, #7c3aed 100%);
+}
+.lv-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+/* Soft fade from the hero into the page below. */
+.lv-hero-fade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 160px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--color-canvas));
+}
+@keyframes lv-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.06); }
+}
+.lv-drift { animation: lv-drift 14s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .lv-drift { animation: none; } }
+
+/* The big prompt box: theme surface, large radius, soft ring. */
+.lv-prompt {
+  background: color-mix(in oklab, var(--color-raised) 92%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-line-strong) 70%, transparent);
+  border-radius: 28px;
+  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.04);
+  backdrop-filter: blur(18px);
+}
+.lv-prompt:focus-within { border-color: var(--color-ink-4); }
+
+/* Template card thumbnail frame. */
+.lv-thumb {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  aspect-ratio: 16 / 10;
+  background: var(--color-sunk);
+  border: 1px solid var(--color-line);
+}

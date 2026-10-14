@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { Backdrop } from "@/components/shell/backdrop";
 import { ChatBubble } from "@/components/landing/chat-bubble";
 import { Footer } from "@/components/landing/footer";
-import { LandingNav } from "@/components/landing/nav";
-import { Hero } from "@/components/landing/hero";
-import { LandingScene } from "@/components/landing/scene";
 import { LiveDemo } from "@/components/landing/live-demo";
-import { PricingPreview, FinalCta } from "@/components/landing/sections";
-import { ProductProof } from "@/components/landing/product-proof";
+import { PricingPreview } from "@/components/landing/sections";
 import { Faq } from "@/components/landing/faq";
-import { CrewSection } from "@/components/landing/crew";
+import { LvNav } from "@/components/lv/nav";
+import { LvHero } from "@/components/lv/hero";
+import { LvTemplates } from "@/components/lv/templates";
+import { LvTros, LvWorkspace, LvCta } from "@/components/lv/sections";
 import { PLANS } from "@/lib/credits";
 import { site } from "@/lib/site";
 
@@ -45,28 +43,27 @@ export default async function Landing() {
   };
 
   return (
-    <div className="relative z-[1] min-h-screen overflow-x-hidden">
+    <div className="relative min-h-screen overflow-x-clip bg-canvas">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LandingScene />
-      <Backdrop />
-      <LandingNav />
+      <LvNav overHero />
 
-      <main className="relative z-[1]">
-        <Hero freeCredits={free.monthly} />
+      <main>
+        <LvHero freeCredits={free.monthly} />
 
-        {/* Proof before promises: watch a build happen, download the results free. */}
+        {/* Lovable-style gallery: real files you can start from in one click. */}
+        <LvTemplates />
+
+        {/* Proof: watch a build happen, download the results free. */}
         <LiveDemo />
 
-        {/* Before/after: one brief in, finished files out. */}
-        <ProductProof />
+        <LvWorkspace />
 
-        {/* The Tros, collapsed to a single band. */}
-        <CrewSection />
+        {/* The Tros, with the 3D crew at work. */}
+        <LvTros />
 
-        {/* Pricing right after proof — a short path to the number. */}
         <div id="pricing">
           <PricingPreview plans={PLANS} />
         </div>
@@ -75,7 +72,7 @@ export default async function Landing() {
           <Faq />
         </div>
 
-        <FinalCta />
+        <LvCta />
       </main>
 
       <Footer />
