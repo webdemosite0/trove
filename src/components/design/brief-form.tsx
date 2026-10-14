@@ -168,7 +168,7 @@ export function BriefForm({
         <button
           type="submit"
           disabled={busy || !brief.screens.length}
-          className="group flex h-11 items-center gap-2 rounded-[var(--r-panel)] btn-grad px-5 text-[14.5px] font-semibold disabled:opacity-50"
+          className="group flex h-9 items-center gap-2 rounded-[var(--r-panel)] btn-grad px-5 text-[13.5px] font-medium disabled:opacity-50"
         >
           {busy
             ? "Designing…"

@@ -27,7 +27,7 @@ export default async function DocumentPage({
           </p>
           <Link
             href="/documents"
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-semibold text-white transition active:scale-95"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[13.5px] font-medium text-white transition"
           >
             Back to documents
           </Link>

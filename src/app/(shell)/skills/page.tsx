@@ -53,7 +53,7 @@ export default function SkillsPage() {
     <div className="mx-auto min-h-screen w-full max-w-[960px] px-5 py-10 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight text-ink">Skills</h1>
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">Skills</h1>
           <p className="mt-1.5 max-w-[52ch] text-[14px] leading-relaxed text-ink-3">
             Capabilities Trove can use while you chat. Connect apps under Integrations when they
             become available.

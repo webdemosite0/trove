@@ -75,7 +75,7 @@ const CREATE_TILES = [
 function SectionLabel({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="mb-4 flex items-center justify-between">
-      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-4">{children}</p>
+      <p className="text-[12.5px] font-medium text-ink-4">{children}</p>
       {action}
     </div>
   );
@@ -93,7 +93,7 @@ export default async function MePage() {
         </p>
         <Link
           href="/login"
-          className="btn-grad mt-6 inline-flex h-11 items-center rounded-full px-6 text-[14px] font-semibold text-white transition hover:opacity-90"
+          className="btn-grad mt-6 inline-flex h-9 items-center rounded-full px-6 text-[13.5px] font-medium text-white transition hover:opacity-90"
         >
           Log in
         </Link>
@@ -140,43 +140,22 @@ export default async function MePage() {
 
   return (
     <div className="relative min-h-[calc(100dvh-3.5rem)] overflow-hidden">
-      {/* ambient backdrop */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 42% at 50% -8%, rgba(99,102,241,0.14), transparent 60%), radial-gradient(ellipse 36% 30% at 96% 36%, rgba(244,114,182,0.08), transparent 55%), radial-gradient(ellipse 32% 28% at 4% 66%, rgba(52,211,153,0.08), transparent 55%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.25]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(128,128,128,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.06) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-          maskImage: "radial-gradient(ellipse 70% 55% at 50% 22%, black, transparent)",
-          WebkitMaskImage: "radial-gradient(ellipse 70% 55% at 50% 22%, black, transparent)",
-        }}
-      />
-
-      <div className="relative mx-auto max-w-[1020px] px-5 pb-20 pt-10 lg:pt-14">
+      <div className="relative mx-auto max-w-[960px] px-5 pb-20 pt-10 lg:pt-12">
         {/* greeting */}
         <p className="text-[13px] font-medium text-ink-4">
           {dateStr} · {greet}, {first}
         </p>
-        <h1 className="mt-2 text-[clamp(2rem,1.4rem+2.4vw,3rem)] font-semibold tracking-[-0.035em] text-ink">
-          What will you build today?
+        <h1 className="mt-1.5 text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-[-0.02em] text-ink">
+          What should we make today?
         </h1>
 
         {/* command bar */}
         <Link
           href="/chat"
-          className="group mt-7 flex max-w-[640px] items-center gap-3.5 rounded-xl border border-line bg-raised/90 px-4 py-3 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.28)] backdrop-blur transition hover:border-line-strong hover:shadow-[0_20px_56px_-18px_rgba(99,102,241,0.35)]"
+          className="group mt-6 flex max-w-[640px] items-center gap-3 rounded-xl border border-line bg-raised px-3.5 py-2.5 shadow-[var(--shadow-sm)] transition-colors hover:border-line-strong"
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25">
-            <FiZap size={16} />
+          <span className="grid size-8 shrink-0 place-items-center rounded-[var(--r-control)] border border-line bg-sunk text-ink-3">
+            <FiZap size={15} />
           </span>
           <span className="flex-1 truncate text-left text-[15px] text-ink-4 transition-colors group-hover:text-ink-3">
             Ask anything, or describe what to build…
@@ -184,7 +163,7 @@ export default async function MePage() {
           <kbd className="hidden shrink-0 items-center gap-1 rounded-lg border border-line bg-sunk px-2 py-1 text-[11px] font-medium text-ink-4 sm:flex">
             ⌘K
           </kbd>
-          <span className="btn-grad grid size-9 shrink-0 place-items-center rounded-full text-white transition-transform group-hover:translate-x-0.5">
+          <span className="btn-grad grid size-8 shrink-0 place-items-center rounded-[var(--r-control)] text-white">
             <FiArrowRight size={16} />
           </span>
         </Link>
@@ -221,13 +200,10 @@ export default async function MePage() {
                   <Link
                     key={r.id}
                     href={r.href || "/chat"}
-                    className="group flex flex-col rounded-xl border border-line bg-raised/80 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_40px_-20px_rgba(15,23,42,0.3)]"
+                    className="group flex flex-col rounded-xl border border-line bg-raised p-4 transition-colors duration-150 hover:border-line-strong hover:bg-sunk"
                   >
-                    <span
-                      className="mb-3 grid size-9 place-items-center rounded-xl"
-                      style={{ background: `${meta.tone}1a`, color: meta.tone }}
-                    >
-                      <Icon size={17} />
+                    <span className="mb-3 grid size-8 place-items-center rounded-[var(--r-control)] border border-line bg-sunk text-ink-3">
+                      <Icon size={16} />
                     </span>
                     <p className="line-clamp-2 text-[13.5px] font-medium leading-snug text-ink">
                       {r.title || "Untitled"}
@@ -257,22 +233,14 @@ export default async function MePage() {
                   key={t.label}
                   href={t.href}
                   className={cn(
-                    "group relative overflow-hidden rounded-xl border border-line bg-raised/80 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_40px_-20px_rgba(99,102,241,0.35)]",
+                    "group relative overflow-hidden rounded-xl border border-line bg-raised p-4 transition-colors duration-150 hover:border-line-strong hover:bg-sunk",
                     t.large && "col-span-2",
                   )}
                 >
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute -right-8 -top-8 size-28 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-25"
-                    style={{ background: t.tone }}
-                  />
-                  <span
-                    className="grid size-10 place-items-center rounded-xl transition-transform duration-200 group-hover:scale-110"
-                    style={{ background: `${t.tone}1a`, color: t.tone }}
-                  >
-                    <Icon size={19} />
+                  <span className="grid size-8 place-items-center rounded-[var(--r-control)] border border-line bg-sunk text-ink-3">
+                    <Icon size={16} />
                   </span>
-                  <p className="mt-3.5 text-[15px] font-semibold tracking-[-0.01em] text-ink">{t.label}</p>
+                  <p className="mt-3 text-[14px] font-medium text-ink">{t.label}</p>
                   <p className="mt-0.5 text-[12.5px] text-ink-3">{t.desc}</p>
                   <FiArrowRight
                     size={15}
@@ -292,8 +260,7 @@ export default async function MePage() {
               const inner = (
                 <>
                   <p
-                    className="text-[26px] font-semibold tracking-tight tabular-nums"
-                    style={{ color: s.accent }}
+                    className="text-[22px] font-semibold tracking-tight tabular-nums text-ink"
                   >
                     {s.value}
                   </p>
@@ -303,7 +270,7 @@ export default async function MePage() {
                 </>
               );
               const cls =
-                "group rounded-xl border border-line bg-raised/80 px-4 py-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong";
+                "group rounded-xl border border-line bg-raised/80 px-4 py-5 text-center transition-all duration-200  hover:border-line-strong";
               return s.settingsSection ? (
                 <OpenSettingsButton key={s.label} section={s.settingsSection} className={cls}>
                   {inner}

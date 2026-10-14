@@ -88,7 +88,7 @@ export function FailureNote({
       {f.kind === "credits" ? (
         <Link
           href="/plans"
-          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-semibold"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-medium"
         >
           <Ico icon={FiZap} motion="sparkle" size={13} />
           Keep working
@@ -98,7 +98,7 @@ export function FailureNote({
       {f.kind === "auth" ? (
         <Link
           href="/login"
-          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-semibold"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--r-chip)] btn-grad px-3 text-[12.5px] font-medium"
         >
           <Ico icon={FiLock} motion="lock" size={13} />
           Log in again

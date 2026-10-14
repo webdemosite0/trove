@@ -146,7 +146,7 @@ export function ProjectPicker({
           "group inline-flex items-center gap-1.5 rounded-full border transition",
           compact ? "h-8 px-2.5 text-[11.5px]" : "h-9 px-3 text-[12.5px]",
           active || localActive
-            ? "border-violet-400/25 bg-violet-500/10 text-ink shadow-[0_4px_18px_-12px_var(--btn-glow)]"
+            ? "border-violet-400/25 bg-violet-500/10 text-ink "
             : "border-line bg-raised/70 text-ink-3 hover:border-line-strong hover:bg-hover hover:text-ink",
           disabled && "opacity-50",
         )}
@@ -293,7 +293,7 @@ export function ProjectPicker({
                       type="button"
                       onClick={() => void create()}
                       disabled={pending || name.trim().length < 2}
-                      className="btn-grad rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-50"
+                      className="btn-grad rounded-[var(--r-control)] px-3 py-1.5 text-[11.5px] font-medium text-white disabled:opacity-50"
                     >
                       {pending ? "Creating…" : "Create in Trove"}
                     </button>

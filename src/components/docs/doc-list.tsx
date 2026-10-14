@@ -53,7 +53,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-3 pb-4 pt-6 sm:pt-8">
         <div>
-          <h1 className="text-[26px] font-bold tracking-tight text-ink sm:text-[32px]">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
             Documents
           </h1>
           <p className="mt-0.5 text-[13px] text-ink-3 sm:text-[14px]">
@@ -64,7 +64,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
         </div>
         <Link
           href="/documents/new"
-          className="grid h-12 shrink-0 place-items-center gap-2 rounded-xl bg-accent px-4 text-[15px] font-semibold text-white shadow-lg shadow-accent/25 transition active:scale-95 sm:flex sm:h-11"
+          className="grid h-9 shrink-0 place-items-center gap-2 rounded-[var(--r-control)] bg-accent px-4 text-[13.5px] font-medium text-white shadow-[var(--shadow-sm)] transition sm:flex sm:h-9"
           aria-label="New document"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
@@ -124,7 +124,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
             {!query ? (
               <Link
                 href="/documents/new"
-                className="mt-6 grid h-12 place-items-center rounded-xl bg-accent px-6 text-[15px] font-semibold text-white shadow-lg shadow-accent/25 transition active:scale-95"
+                className="mt-6 grid h-9 place-items-center rounded-[var(--r-control)] bg-accent px-6 text-[13.5px] font-medium text-white shadow-[var(--shadow-sm)] transition"
               >
                 New document
               </Link>
@@ -199,7 +199,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
           aria-label="Delete document"
         >
           <div
-            className="w-full max-w-sm rounded-xl bg-raised p-6 shadow-2xl"
+            className="w-full max-w-sm rounded-xl bg-raised p-6 shadow-[var(--shadow-md)]"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-[17px] font-semibold text-ink">Delete document?</h3>
@@ -210,7 +210,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
               <button
                 type="button"
                 onClick={() => setConfirmId(null)}
-                className="grid h-12 flex-1 place-items-center rounded-xl bg-sunk text-[15px] font-semibold text-ink transition active:scale-95"
+                className="grid h-12 flex-1 place-items-center rounded-xl bg-sunk text-[15px] font-semibold text-ink transition"
               >
                 Cancel
               </button>
@@ -218,7 +218,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
                 type="button"
                 onClick={() => void doDelete(confirmId)}
                 disabled={deleting === confirmId}
-                className="grid h-12 flex-1 place-items-center rounded-xl bg-critical text-[15px] font-semibold text-white transition active:scale-95 disabled:opacity-60"
+                className="grid h-12 flex-1 place-items-center rounded-xl bg-critical text-[15px] font-semibold text-white transition disabled:opacity-60"
               >
                 {deleting === confirmId ? "Deleting…" : "Delete"}
               </button>

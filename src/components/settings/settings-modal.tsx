@@ -642,7 +642,7 @@ function GeneralPane({
                   title={a.name}
                   aria-label={`Theme color ${a.name}`}
                   className={cn(
-                    "grid size-8 place-items-center rounded-full transition-transform hover:scale-110",
+                    "grid size-8 place-items-center rounded-full transition-transform ",
                     active && "ring-2 ring-ink ring-offset-2 ring-offset-canvas",
                   )}
                   style={{ background: a.value || "conic-gradient(#3b82f6,#8b5cf6,#ec4899,#f97316,#22c55e,#3b82f6)" }}

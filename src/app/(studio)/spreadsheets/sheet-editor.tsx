@@ -450,7 +450,7 @@ export function SheetEditor({
         <Link
           href="/spreadsheets"
           aria-label="All spreadsheets"
-          className="grid size-10 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-hover active:scale-95"
+          className="grid size-10 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-hover"
         >
           <FiArrowLeft size={20} />
         </Link>
@@ -469,7 +469,7 @@ export function SheetEditor({
             onClick={() => setAiOpen((v) => !v)}
             aria-expanded={aiOpen}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition active:scale-95",
+              "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition ",
               aiOpen ? "bg-accent/15 text-accent" : "bg-sunk text-ink-2 hover:bg-hover",
             )}
           >
@@ -480,7 +480,7 @@ export function SheetEditor({
         <button
           type="button"
           onClick={handleSaveClick}
-          className="shrink-0 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white transition hover:brightness-110 active:scale-95"
+          className="shrink-0 rounded-full bg-accent px-4 py-2 text-[13px] font-medium text-white transition hover:brightness-110"
         >
           Save
         </button>
@@ -490,7 +490,7 @@ export function SheetEditor({
             onClick={() => downloadXlsx(grid, `${fileStem}.xlsx`)}
             aria-label="Download Excel"
             title="Download Excel (.xlsx)"
-            className="grid size-10 place-items-center rounded-full text-ink-3 transition hover:bg-hover active:scale-95"
+            className="grid size-10 place-items-center rounded-full text-ink-3 transition hover:bg-hover"
           >
             <FiDownload size={18} />
           </button>
@@ -518,7 +518,7 @@ export function SheetEditor({
             <button
               type="submit"
               disabled={busy || !prompt.trim()}
-              className="shrink-0 rounded-full bg-accent px-4 py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110 active:scale-95 disabled:opacity-40"
+              className="shrink-0 rounded-full bg-accent px-4 py-2.5 text-[13.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
             >
               Build
             </button>
@@ -533,7 +533,7 @@ export function SheetEditor({
                     setPrompt(ex);
                     void runAi(ex);
                   }}
-                  className="shrink-0 rounded-full border border-line bg-canvas px-3 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:text-ink active:scale-95"
+                  className="shrink-0 rounded-full border border-line bg-canvas px-3 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:text-ink"
                 >
                   {ex}
                 </button>
@@ -575,14 +575,14 @@ export function SheetEditor({
               <button
                 type="button"
                 onClick={() => void applyPendingGen()}
-                className="rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition hover:brightness-110 active:scale-95"
+                className="rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:brightness-110"
               >
                 Apply generated
               </button>
               <button
                 type="button"
                 onClick={() => setPendingGen(null)}
-                className="rounded-full border border-line bg-canvas px-3.5 py-1.5 text-[12.5px] font-medium text-ink-3 transition hover:text-ink active:scale-95"
+                className="rounded-full border border-line bg-canvas px-3.5 py-1.5 text-[12.5px] font-medium text-ink-3 transition hover:text-ink"
               >
                 Discard
               </button>

@@ -61,7 +61,7 @@ function ColorRow({
           aria-label={`Color ${c}`}
           onClick={() => onChange(c)}
           className={cn(
-            "size-9 rounded-full border border-line transition active:scale-90",
+            "size-9 rounded-full border border-line transition ",
             value.toLowerCase() === c.toLowerCase() && "ring-2 ring-accent ring-offset-2 ring-offset-raised",
           )}
           style={{ background: c }}
@@ -99,7 +99,7 @@ function ToolButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-3 py-2.5 text-[11px] font-medium transition active:scale-95",
+        "flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-3 py-2.5 text-[11px] font-medium transition ",
         active ? "bg-accent/15 text-accent" : "text-ink-2 hover:bg-hover",
       )}
     >
@@ -467,7 +467,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
           type="button"
           onClick={() => router.push("/design")}
           aria-label="Back to designs"
-          className="grid size-10 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover active:scale-95"
+          className="grid size-10 shrink-0 place-items-center rounded-xl text-ink-3 transition hover:bg-hover"
         >
           <FiArrowLeft size={20} />
         </button>
@@ -486,7 +486,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
           onClick={exportPNG}
           aria-label="Export design"
           title="Export design"
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2.5 text-[13.5px] font-semibold text-white transition active:scale-95"
+          className="flex shrink-0 items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-3.5 py-2.5 text-[13.5px] font-medium text-white transition"
         >
           <FiDownload size={16} />
           <span className="hidden sm:inline">Export</span>
@@ -496,7 +496,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
           onClick={remove}
           aria-label="Delete design"
           className={cn(
-            "grid size-10 shrink-0 place-items-center rounded-xl transition active:scale-95",
+            "grid size-10 shrink-0 place-items-center rounded-xl transition ",
             confirmDelete ? "bg-critical/15 text-critical" : "text-ink-4 hover:bg-hover hover:text-critical",
           )}
         >
@@ -507,7 +507,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
       {/* Canvas area */}
       <div ref={wrapRef} className="relative flex min-h-0 flex-1 overflow-auto bg-sunk/40 p-4">
         {/* Zoom controls */}
-        <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-xl border border-line bg-raised/95 px-1.5 py-1 shadow-lg backdrop-blur">
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-xl border border-line bg-raised/95 px-1.5 py-1 shadow-[var(--shadow-md)] backdrop-blur">
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))}
@@ -541,7 +541,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
-            className="h-full w-full touch-none rounded-lg bg-white shadow-xl ring-1 ring-line"
+            className="h-full w-full touch-none rounded-lg bg-white shadow-[var(--shadow-md)] ring-1 ring-line"
           />
           {generating ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-canvas/70 backdrop-blur-sm">
@@ -610,7 +610,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
                   onClick={() => updateLayer(selected.id, { bold: !selected.bold })}
                   aria-pressed={selected.bold}
                   className={cn(
-                    "grid size-11 place-items-center rounded-xl border text-[16px] font-black transition active:scale-95",
+                    "grid size-11 place-items-center rounded-xl border text-[16px] font-black transition ",
                     selected.bold ? "border-accent bg-accent/15 text-accent" : "border-line text-ink-2",
                   )}
                 >
@@ -622,7 +622,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
                     type="button"
                     onClick={() => updateLayer(selected.id, { align: a })}
                     className={cn(
-                      "h-11 flex-1 rounded-xl border text-[13px] font-medium capitalize transition active:scale-95",
+                      "h-11 flex-1 rounded-xl border text-[13px] font-medium capitalize transition ",
                       selected.align === a ? "border-accent bg-accent/15 text-accent" : "border-line text-ink-2",
                     )}
                   >
@@ -730,7 +730,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
                     setSizeId(s.id);
                   }}
                   className={cn(
-                    "rounded-xl border p-3 text-left transition active:scale-95",
+                    "rounded-xl border p-3 text-left transition ",
                     s.id === sizeId ? "border-accent bg-accent/10" : "border-line/60 bg-sunk/50",
                   )}
                 >
@@ -758,7 +758,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
                   type="button"
                   onClick={generate}
                   disabled={generating || !aiPrompt.trim()}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-4 py-3 text-[14px] font-semibold text-white transition active:scale-95 disabled:opacity-50"
+                  className="flex shrink-0 items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-4 py-3 text-[13.5px] font-medium text-white transition disabled:opacity-50"
                 >
                   <TbSparkles size={16} />
                   Create
@@ -770,10 +770,10 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
 
           {(panel === "text" || panel === "shape") && selected ? (
             <div className="mt-3 flex gap-2 border-t border-line/60 pt-3">
-              <button type="button" onClick={duplicateSelected} className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-[13px] font-medium text-ink-2 transition active:scale-95">
+              <button type="button" onClick={duplicateSelected} className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line text-[13px] font-medium text-ink-2 transition">
                 <FiCopy size={15} /> Duplicate
               </button>
-              <button type="button" onClick={deleteSelected} className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-critical/30 text-[13px] font-medium text-critical transition active:scale-95">
+              <button type="button" onClick={deleteSelected} className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-critical/30 text-[13px] font-medium text-critical transition">
                 <FiTrash2 size={15} /> Delete
               </button>
             </div>
@@ -817,7 +817,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
                 className="fixed inset-0 z-10 cursor-default"
                 onClick={() => setMoreOpen(false)}
               />
-              <div className="absolute bottom-full right-0 z-20 mb-2 flex gap-1 rounded-xl border border-line bg-raised p-2 shadow-xl">
+              <div className="absolute bottom-full right-0 z-20 mb-2 flex gap-1 rounded-xl border border-line bg-raised p-2 shadow-[var(--shadow-md)]">
                 <ToolButton icon={<FiSquare size={19} />} label="Rect" active={false} onClick={() => { setMoreOpen(false); addShape("rect"); }} />
                 <ToolButton
                   icon={<span className="block size-[19px] rounded-full border-[2.5px] border-current" />}

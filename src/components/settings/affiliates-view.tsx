@@ -151,7 +151,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
             type="button"
             onClick={() => copy("link")}
             className={cn(
-              "btn-grad shrink-0 rounded-xl px-4 py-3 text-[13.5px] font-semibold transition",
+              "btn-grad shrink-0 rounded-[var(--r-control)] px-4 py-3 text-[13.5px] font-medium transition",
             )}
           >
             {copied === "link" ? "Copied!" : "Copy link"}
@@ -180,7 +180,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                "flex items-center justify-center rounded-xl bg-gradient-to-r px-3 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:scale-[1.02] hover:shadow-md",
+                "flex items-center justify-center rounded-xl bg-gradient-to-r px-3 py-2.5 text-[13px] font-semibold text-white shadow-sm transition  hover:shadow-md",
                 t.className,
               )}
             >

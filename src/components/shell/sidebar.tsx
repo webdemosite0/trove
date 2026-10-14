@@ -432,7 +432,7 @@ export function Sidebar({
           <Link
             href="/login"
             onClick={onNavigate}
-            className="btn-grad flex h-10 w-full items-center justify-center rounded-xl text-[13.5px] font-semibold"
+            className="btn-grad flex h-9 w-full items-center justify-center rounded-[var(--r-control)] text-[13.5px] font-medium"
           >
             Log in
           </Link>
@@ -512,7 +512,7 @@ export function Sidebar({
             aria-label="Close sidebar"
             onClick={closeDrawer}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(86vw,280px)] flex-col overflow-hidden border-r border-line bg-rail shadow-2xl">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(86vw,280px)] flex-col overflow-hidden border-r border-line bg-rail shadow-[var(--shadow-md)]">
             {body(false, closeDrawer)}
           </aside>
         </div>

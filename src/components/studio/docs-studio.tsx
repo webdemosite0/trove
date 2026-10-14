@@ -112,7 +112,7 @@ export function DocsStudio({ initial }: { initial: Doc | null }) {
                 onClick={() =>
                   dispatchPrompt({ prompt: "", rewrite: true, tone: tone.toLowerCase() })
                 }
-                className="rounded-full border border-line bg-sunk px-3 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-accent/40 hover:text-ink active:scale-95"
+                className="rounded-full border border-line bg-sunk px-3 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-accent/40 hover:text-ink"
               >
                 {tone}
               </button>

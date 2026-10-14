@@ -266,7 +266,7 @@ export function MobileCamera({
           type="button"
           aria-label="Close camera"
           onClick={handleClose}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform active:scale-90"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M15 18l-6-6 6-6" />
@@ -280,7 +280,7 @@ export function MobileCamera({
               aria-label={torchOn ? "Turn flash off" : "Turn flash on"}
               aria-pressed={torchOn}
               onClick={toggleTorch}
-              className="flex h-11 w-11 items-center justify-center rounded-full transition-transform active:scale-90"
+              className="flex h-11 w-11 items-center justify-center rounded-full transition-transform"
               style={{ color: torchOn ? "var(--color-violet)" : "currentColor" }}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill={torchOn ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -351,7 +351,7 @@ export function MobileCamera({
             <button
               type="button"
               onClick={openFilePicker}
-              className="h-12 rounded-full px-6 text-[15px] font-semibold text-white transition-transform active:scale-95"
+              className="h-12 rounded-full px-6 text-[15px] font-semibold text-white transition-transform"
               style={{ background: "var(--color-violet)" }}
             >
               Choose a photo instead
@@ -389,7 +389,7 @@ export function MobileCamera({
             <button
               type="button"
               onClick={retake}
-              className="flex h-12 min-w-[7rem] items-center justify-center gap-2 rounded-full border border-white/25 px-5 text-[15px] font-semibold text-white transition-transform active:scale-95"
+              className="flex h-12 min-w-[7rem] items-center justify-center gap-2 rounded-full border border-white/25 px-5 text-[15px] font-semibold text-white transition-transform"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M3 12a9 9 0 1 0 3-6.7" />
@@ -400,7 +400,7 @@ export function MobileCamera({
             <button
               type="button"
               onClick={usePhoto}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-semibold text-white transition-transform active:scale-95"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-semibold text-white transition-transform"
               style={{ background: "var(--color-violet)" }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -418,7 +418,7 @@ export function MobileCamera({
                 aria-label="Flip camera"
                 onClick={flip}
                 disabled={phase !== "live"}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-all active:scale-90 disabled:opacity-40"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-all disabled:opacity-40"
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -434,7 +434,7 @@ export function MobileCamera({
               aria-label="Take photo"
               onClick={capture}
               disabled={phase !== "live"}
-              className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white/90 bg-white/10 transition-transform active:scale-90 disabled:opacity-40"
+              className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white/90 bg-white/10 transition-transform disabled:opacity-40"
               style={bounceKey > 0 ? { animation: "cam-bounce 320ms ease-out" } : undefined}
             >
               <span className="h-14 w-14 rounded-full bg-white" aria-hidden="true" />
@@ -449,7 +449,7 @@ export function MobileCamera({
                     setPreview(lastShot);
                     setPhase("preview");
                   }}
-                  className="h-12 w-12 overflow-hidden rounded-xl border border-white/30 transition-transform active:scale-90"
+                  className="h-12 w-12 overflow-hidden rounded-xl border border-white/30 transition-transform"
                 >
                   <img src={lastShot.url} alt="" className="h-full w-full object-cover" />
                 </button>

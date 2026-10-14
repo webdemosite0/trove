@@ -427,7 +427,7 @@ export function NewTroWizard({
             onClick={checkpointForAccount}
             title={identityValid ? "Create this Tro" : "Finish the Identity step first (name, role, instructions)"}
             className={cn(
-              "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100",
+              "btn-grad inline-flex items-center gap-2 rounded-[var(--r-control)] px-5 py-2.5 text-[13.5px] font-medium text-ink transition  disabled:cursor-not-allowed ",
               focusRing,
             )}
           >
@@ -464,7 +464,7 @@ export function NewTroWizard({
                 <Link
                   href="/signup"
                   className={cn(
-                    "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold text-ink transition hover:scale-[1.03]",
+                    "btn-grad inline-flex items-center gap-2 rounded-[var(--r-control)] px-5 py-2.5 text-[13.5px] font-medium text-ink transition ",
                     focusRing,
                   )}
                 >
@@ -953,7 +953,7 @@ export function NewTroWizard({
                 disabled={pending || !identityValid}
                 onClick={checkpointForAccount}
                 className={cn(
-                  "btn-grad inline-flex items-center gap-2 rounded-xl px-5 py-2 text-[13.5px] font-semibold text-ink transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:hover:scale-100",
+                  "btn-grad inline-flex items-center gap-2 rounded-[var(--r-control)] px-5 py-2 text-[13.5px] font-medium text-ink transition  disabled:cursor-not-allowed ",
                   focusRing,
                 )}
               >

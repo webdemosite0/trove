@@ -239,7 +239,7 @@ export function DownloadApps() {
             <button
               type="button"
               onClick={() => void install(recommended)}
-              className="btn-grad inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
+              className="btn-grad inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--r-control)] px-4 py-2.5 text-[13px] font-medium text-white shadow-sm transition"
             >
               {installed ? <FiCheck size={16} /> : <FiDownload size={16} />}
               {recommendedNative
@@ -278,7 +278,7 @@ export function DownloadApps() {
                   "group rounded-xl border p-4 text-left transition",
                   active
                     ? "border-accent/35 bg-accent-soft/60 shadow-[var(--sh-1)]"
-                    : "border-line-strong bg-canvas hover:-translate-y-0.5 hover:border-accent/25 hover:bg-hover/70",
+                    : "border-line-strong bg-canvas  hover:border-accent/25 hover:bg-hover/70",
                 )}
               >
                 <div className="flex items-start gap-3">

@@ -151,7 +151,7 @@ export function CreditMeter({
     <div
       role="dialog"
       className={cn(
-        "absolute z-50 w-64 overflow-hidden rounded-xl border border-line bg-raised p-3 shadow-lg",
+        "absolute z-50 w-64 overflow-hidden rounded-xl border border-line bg-raised p-3 shadow-[var(--shadow-md)]",
         collapsed ? "bottom-0 left-full ml-2" : "bottom-full left-0 mb-2",
       )}
     >

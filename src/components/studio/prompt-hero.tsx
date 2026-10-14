@@ -39,7 +39,7 @@ export function PromptHero({
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <div className="flex flex-1 flex-col items-center justify-center px-5 pb-16">
         <div className="w-full max-w-2xl">
-          <h1 className="text-center text-[28px] font-semibold tracking-tight text-ink sm:text-[36px]">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-center text-ink">
             {title}
           </h1>
 

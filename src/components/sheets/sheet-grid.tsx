@@ -350,7 +350,7 @@ function ToolBtn({
       aria-label={label}
       title={label}
       className={cn(
-        "shrink-0 rounded-full px-3 py-1.5 text-[12px] font-medium transition active:scale-95 disabled:opacity-40",
+        "shrink-0 rounded-full px-3 py-1.5 text-[12px] font-medium transition  disabled:opacity-40",
         danger
           ? "bg-critical/10 text-critical hover:bg-critical/15"
           : "bg-sunk text-ink-2 hover:bg-hover hover:text-ink",

@@ -394,7 +394,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       <header className="flex shrink-0 items-center gap-2 px-4 pb-2 pt-4 sm:px-6 sm:pt-6">
         <Link
           href="/documents"
-          className="grid size-10 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-hover hover:text-ink active:scale-95"
+          className="grid size-10 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-hover hover:text-ink"
           aria-label="Back to documents"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -405,7 +405,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
           type="button"
           onClick={() => setAiOpen((v) => !v)}
           className={cn(
-            "flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition active:scale-95",
+            "flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition ",
             aiOpen ? "bg-accent text-white" : "bg-accent/10 text-accent hover:bg-accent/15",
           )}
           aria-expanded={aiOpen}
@@ -453,7 +453,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
                 type="button"
                 onClick={() => void runAi()}
                 disabled={aiBusy || !aiPrompt.trim()}
-                className="grid h-12 shrink-0 place-items-center rounded-xl bg-accent px-5 text-[15px] font-semibold text-white transition active:scale-95 disabled:opacity-50"
+                className="grid h-9 shrink-0 place-items-center rounded-[var(--r-control)] bg-accent px-5 text-[13.5px] font-medium text-white transition disabled:opacity-50"
               >
                 {aiBusy ? "Writing…" : "Write"}
               </button>
@@ -481,14 +481,14 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
                   <button
                     type="button"
                     onClick={() => insertAi(false)}
-                    className="grid h-11 flex-1 place-items-center rounded-xl bg-accent text-[14.5px] font-semibold text-white transition active:scale-95"
+                    className="grid h-9 flex-1 place-items-center rounded-[var(--r-control)] bg-accent text-[13.5px] font-medium text-white transition"
                   >
                     Insert into document
                   </button>
                   <button
                     type="button"
                     onClick={() => insertAi(true)}
-                    className="grid h-11 flex-1 place-items-center rounded-xl bg-sunk text-[14.5px] font-semibold text-ink transition active:scale-95"
+                    className="grid h-11 flex-1 place-items-center rounded-xl bg-sunk text-[14.5px] font-semibold text-ink transition"
                   >
                     Replace document
                   </button>
@@ -529,7 +529,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => format(b.cmd)}
-            className="grid size-10 shrink-0 place-items-center rounded-xl text-ink-2 transition hover:bg-hover hover:text-ink active:scale-95"
+            className="grid size-10 shrink-0 place-items-center rounded-xl text-ink-2 transition hover:bg-hover hover:text-ink"
             aria-label={b.label}
             title={b.label}
           >
@@ -548,7 +548,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => format(b.cmd, b.val)}
-            className="grid h-10 shrink-0 place-items-center rounded-xl px-3 text-[13.5px] font-semibold text-ink-2 transition hover:bg-hover hover:text-ink active:scale-95"
+            className="grid h-10 shrink-0 place-items-center rounded-xl px-3 text-[13.5px] font-semibold text-ink-2 transition hover:bg-hover hover:text-ink"
             aria-label={b.label}
             title={b.label}
           >
@@ -565,7 +565,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => format(b.cmd)}
-            className="grid size-10 shrink-0 place-items-center rounded-xl text-ink-2 transition hover:bg-hover hover:text-ink active:scale-95"
+            className="grid size-10 shrink-0 place-items-center rounded-xl text-ink-2 transition hover:bg-hover hover:text-ink"
             aria-label={b.label}
             title={b.label}
           >
@@ -579,7 +579,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => format("removeFormat")}
-          className="grid h-10 shrink-0 place-items-center rounded-xl px-3 text-[13.5px] font-medium text-ink-4 transition hover:bg-hover hover:text-ink active:scale-95"
+          className="grid h-10 shrink-0 place-items-center rounded-xl px-3 text-[13.5px] font-medium text-ink-4 transition hover:bg-hover hover:text-ink"
           aria-label="Clear formatting"
           title="Clear formatting"
         >

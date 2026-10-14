@@ -49,7 +49,7 @@ export function TeamHome({
             <div className="mt-6 flex flex-wrap gap-2.5">
               <Link
                 href="/team"
-                className="btn-grad inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold text-white"
+                className="btn-grad inline-flex h-9 items-center gap-2 rounded-[var(--r-control)] px-4 text-[13px] font-medium text-white"
               >
                 <FiPlus size={15} />
                 Set up Team workspace
@@ -130,7 +130,7 @@ export function TeamHome({
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/chat"
-                className="btn-grad inline-flex h-10 items-center gap-2 rounded-xl px-4 text-[12.5px] font-semibold text-white"
+                className="btn-grad inline-flex h-9 items-center gap-2 rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white"
               >
                 <FiZap size={14} />
                 Start with Trove

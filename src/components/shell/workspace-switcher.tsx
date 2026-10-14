@@ -79,7 +79,7 @@ function CompactAvatar({
         type="button"
         onClick={toggleCollapsed}
         aria-label={`Workspace: ${pillLabel}. Expand sidebar to switch.`}
-        className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl text-[13px] font-bold text-white ring-1 ring-line transition-transform hover:scale-[1.03]"
+        className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl text-[13px] font-bold text-white ring-1 ring-line transition-transform"
         style={{ backgroundColor: pillColor }}
       >
         {pillLetter}
@@ -260,7 +260,7 @@ export function WorkspaceSwitcher({
 
   const menu = open ? (
     <div
-      className="absolute left-0 top-full z-50 mt-1.5 w-full min-w-[224px] overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-lg"
+      className="absolute left-0 top-full z-50 mt-1.5 w-full min-w-[224px] overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-[var(--shadow-md)]"
       role="menu"
       aria-label="Workspaces"
     >
@@ -401,7 +401,7 @@ export function WorkspaceSwitcher({
             type="button"
             onClick={create}
             disabled={busy || !draft.trim()}
-            className="btn-grad h-8 shrink-0 rounded-lg px-3 text-[12.5px] font-semibold disabled:opacity-50"
+            className="btn-grad h-8 shrink-0 rounded-[var(--r-control)] px-3 text-[12.5px] font-medium disabled:opacity-50"
           >
             Create
           </button>

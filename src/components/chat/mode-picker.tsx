@@ -147,7 +147,7 @@ export function ModePicker({
         } else if (e.key === "Tab") close({ restore: false });
       }}
       className={cn(
-        "nx-in z-[200] overflow-hidden border border-line bg-white shadow-xl dark:bg-raised",
+        "nx-in z-[200] overflow-hidden border border-line bg-white shadow-[var(--shadow-md)] dark:bg-raised",
         touch
           ? "fixed inset-x-3 bottom-3 rounded-[var(--r-card)]"
           : "fixed rounded-xl",

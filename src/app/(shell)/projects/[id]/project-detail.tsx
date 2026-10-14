@@ -84,7 +84,7 @@ export function ProjectDetail({
           <FiFolder size={22} className="text-ink" />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[22px] font-semibold tracking-tight text-ink">Project workspace</h1>
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">Project workspace</h1>
           <p className="mt-1 text-[14px] text-ink-3">
             Keep the brief current. Use chat to plan, draft, and ship with your team.
           </p>
@@ -152,7 +152,7 @@ export function ProjectDetail({
             type="button"
             disabled={busy || name.trim().length < 2}
             onClick={() => void save()}
-            className="flex items-center gap-2 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[14px] font-medium text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-medium text-white disabled:opacity-50"
           >
             {busy ? <FiLoader size={15} className="animate-spin" /> : null}
             {saved ? "Saved" : "Save changes"}

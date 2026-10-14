@@ -127,7 +127,7 @@ function FeaturedCard({
           type="button"
           disabled={disabled || busy}
           onClick={onConnect}
-          className="w-full rounded-xl bg-accent px-4 py-2.5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+          className="w-full rounded-[var(--r-control)] bg-accent px-4 py-2.5 text-[13.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
         >
           {busy ? "Connecting…" : "Connect"}
         </button>
@@ -440,7 +440,7 @@ export function IntegrationsView({
           <>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-ink">
+                <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
                   Integrations
                 </h1>
                 <p className="mt-1.5 text-[15px] text-ink-3">

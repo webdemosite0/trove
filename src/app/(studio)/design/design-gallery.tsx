@@ -125,7 +125,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
         {/* Header */}
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-[22px] font-bold tracking-tight text-ink sm:text-[26px]">
+            <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
               Design
             </h1>
             <p className="mt-0.5 text-[13.5px] text-ink-3">
@@ -135,7 +135,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
           <button
             type="button"
             onClick={() => setShowPicker(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-4 py-3 text-[14px] font-semibold text-white shadow-lg shadow-accent/25 transition active:scale-95"
+            className="flex shrink-0 items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-4 py-3 text-[13.5px] font-medium text-white shadow-[var(--shadow-sm)] transition"
           >
             <FiPlus size={18} />
             New design
@@ -150,7 +150,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
               type="button"
               onClick={() => setCategory(c.id)}
               className={cn(
-                "shrink-0 rounded-full px-4 py-2.5 text-[13.5px] font-medium transition active:scale-95",
+                "shrink-0 rounded-full px-4 py-2.5 text-[13.5px] font-medium transition ",
                 category === c.id
                   ? "bg-accent/15 text-accent"
                   : "bg-raised text-ink-3 hover:text-ink",
@@ -178,7 +178,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
             <button
               type="button"
               onClick={() => setShowPicker(true)}
-              className="mt-5 flex items-center gap-1.5 rounded-xl bg-accent px-5 py-3 text-[14px] font-semibold text-white transition active:scale-95"
+              className="mt-5 flex items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-5 py-3 text-[13.5px] font-medium text-white transition"
             >
               <FiPlus size={18} />
               New design
@@ -223,7 +223,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
                     type="button"
                     aria-label={`Delete ${d.name}`}
                     onClick={() => remove(d.id)}
-                    className="absolute right-2 top-2 grid size-9 place-items-center rounded-xl bg-black/50 text-white opacity-100 backdrop-blur transition hover:bg-critical/80 active:scale-95 sm:opacity-0 sm:group-hover:opacity-100"
+                    className="absolute right-2 top-2 grid size-9 place-items-center rounded-xl bg-black/50 text-white opacity-100 backdrop-blur transition hover:bg-critical/80 sm:opacity-0 sm:group-hover:opacity-100"
                   >
                     <FiTrash2 size={15} />
                   </button>

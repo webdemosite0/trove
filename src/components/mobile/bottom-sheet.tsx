@@ -239,7 +239,7 @@ export function BottomSheet({
               type="button"
               onClick={beginClose}
               aria-label="Close"
-              className="grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition active:scale-95 active:bg-hover"
+              className="grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition active:bg-hover"
             >
               <Ico icon={FiX} motion="shake" size={17} />
             </button>

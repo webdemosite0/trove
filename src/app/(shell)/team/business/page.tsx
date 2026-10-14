@@ -20,7 +20,7 @@ export default async function TeamBusinessPage() {
         <p className="mt-2 text-[13px] text-ink-3">
           Create or join a Team workspace before using shared business context.
         </p>
-        <Link href="/team" className="btn-grad mt-5 inline-flex h-10 items-center rounded-xl px-4 text-[12.5px] font-semibold text-white">
+        <Link href="/team" className="btn-grad mt-5 inline-flex h-9 items-center rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white">
           Open Team overview
         </Link>
       </section>

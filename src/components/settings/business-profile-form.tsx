@@ -228,7 +228,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             type="button"
             onClick={() => void save()}
             disabled={state === "loading"}
-            className="btn-grad inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_10px_28px_-14px_var(--btn-glow)] disabled:opacity-60 sm:w-auto sm:rounded-xl"
+            className="btn-grad inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--r-control)] px-4 py-2.5 text-[13px] font-medium text-white disabled:opacity-60 sm:w-auto sm:rounded-xl"
           >
             {state === "loading" ? (
               <Ico icon={FiLoader} motion="spin" size={15} live />

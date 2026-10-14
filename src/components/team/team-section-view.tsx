@@ -306,7 +306,7 @@ export function TeamSectionView({
               type="button"
               onClick={() => void act("share-project", { projectId: shareProjectId })}
               disabled={!shareProjectId || Boolean(busy)}
-              className="btn-grad inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-50"
+              className="btn-grad inline-flex h-9 items-center gap-1.5 rounded-[var(--r-control)] px-3 text-[12px] font-medium text-white disabled:opacity-50"
             >
               <FiPlus size={13} />
               Share
@@ -389,7 +389,7 @@ export function TeamSectionView({
                 type="button"
                 onClick={() => void act("rename", { name })}
                 disabled={name.trim().length < 2 || Boolean(busy)}
-                className="btn-grad rounded-xl px-4 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                className="btn-grad rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white disabled:opacity-50"
               >
                 Save
               </button>
@@ -524,7 +524,7 @@ function InviteForm({
         type="button"
         onClick={onInvite}
         disabled={busy || !email.trim()}
-        className="btn-grad inline-flex h-10 items-center justify-center gap-1.5 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-50"
+        className="btn-grad inline-flex h-9 items-center justify-center gap-1.5 rounded-[var(--r-control)] px-3 text-[12px] font-medium text-white disabled:opacity-50"
       >
         <FiPlus size={13} />
         Invite
@@ -617,7 +617,7 @@ function GateCard({
       <p className="mt-2 max-w-[58ch] text-[13px] leading-relaxed text-ink-3">{body}</p>
       <Link
         href={href}
-        className="btn-grad mt-5 inline-flex h-10 items-center rounded-xl px-4 text-[12.5px] font-semibold text-white"
+        className="btn-grad mt-5 inline-flex h-9 items-center rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white"
       >
         {action}
       </Link>

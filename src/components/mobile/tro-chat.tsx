@@ -85,7 +85,7 @@ export function MobileTroChat({ agent }: { agent: AgentRow }) {
         <Link
           href="/tros"
           aria-label="Back to Tros"
-          className="grid size-10 place-items-center rounded-full text-ink-3 transition active:scale-95"
+          className="grid size-10 place-items-center rounded-full text-ink-3 transition"
         >
           <FiArrowLeft size={22} />
         </Link>
@@ -126,7 +126,7 @@ export function MobileTroChat({ agent }: { agent: AgentRow }) {
             {turns.map((t) =>
               t.role === "user" ? (
                 <div key={t.id} className="flex justify-end">
-                  <div className="max-w-[85%] rounded-xl rounded-br-lg bg-accent px-4 py-3 text-[15px] text-white">
+                  <div className="max-w-[85%] rounded-[var(--r-control)] rounded-br-lg bg-accent px-4 py-3 text-[13.5px] text-white">
                     {t.text}
                   </div>
                 </div>

@@ -1960,7 +1960,7 @@ export function AgentChat({
                   >
                     <Ico icon={t.icon} size={16} />
                     {t.badge ? (
-                      <span className="absolute -right-0.5 -top-0.5 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+                      <span className="absolute -right-0.5 -top-0.5 grid min-h-[18px] min-w-[18px] place-items-center rounded-full bg-accent px-1 text-[10px] font-medium text-white">
                         {t.badge > 99 ? "99+" : t.badge}
                       </span>
                     ) : null}
@@ -2009,7 +2009,7 @@ export function AgentChat({
                 <button
                   type="submit"
                   disabled={busy || computerBusy}
-                  className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+                  className="shrink-0 rounded-[var(--r-control)] bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
                 >
                   Go
                 </button>

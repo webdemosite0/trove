@@ -247,7 +247,7 @@ export function ChatImage({
           <img
             src={src}
             alt={alt || "Image"}
-            className="max-h-[min(90dvh,920px)] max-w-[min(96vw,1100px)] rounded-xl object-contain shadow-2xl"
+            className="max-h-[min(90dvh,920px)] max-w-[min(96vw,1100px)] rounded-xl object-contain shadow-[var(--shadow-md)]"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

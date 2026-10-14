@@ -37,7 +37,7 @@ export function ThinkingBall({ size = 20 }: { size?: number }) {
         style={{ animation: "trove-think-spin 1.6s linear infinite reverse" }}
       >
         <span
-          className="absolute left-1/2 top-0 size-[4px] -translate-x-1/2 -translate-y-[1px] rounded-full bg-white shadow-[0_0_6px_2px_rgba(139,92,246,0.7)]"
+          className="absolute left-1/2 top-0 size-[4px] -translate-x-1/2 -translate-y-[1px] rounded-full bg-white"
         />
       </span>
       <style>{`

@@ -219,7 +219,7 @@ export function CommandPalette({ recents = [] }: { recents?: Recent[] }) {
         className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
         onClick={() => setOpen(false)}
       />
-      <div className="relative w-full max-w-[580px] overflow-hidden rounded-xl border border-line bg-raised shadow-2xl">
+      <div className="relative w-full max-w-[580px] overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--shadow-md)]">
         <div className="flex items-center gap-2 border-b border-line px-4">
           <SearchIcon size={16} className="shrink-0 text-ink-4" aria-hidden />
           <input

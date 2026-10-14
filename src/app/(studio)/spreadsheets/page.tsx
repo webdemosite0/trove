@@ -109,7 +109,7 @@ export default async function SheetsPage() {
             </svg>
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-[22px] font-semibold tracking-tight text-ink sm:text-[26px]">
+            <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
               Spreadsheets
             </h1>
             <p className="text-[13px] text-ink-3">
@@ -118,7 +118,7 @@ export default async function SheetsPage() {
           </div>
           <Link
             href="/spreadsheets/new"
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-sm transition hover:brightness-110 active:scale-95"
+            className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-[13.5px] font-medium text-white shadow-sm transition hover:brightness-110"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
               <path d="M12 5v14M5 12h14" />

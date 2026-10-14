@@ -44,7 +44,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink sm:text-[32px]">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
             Decks
           </h1>
           <p className="mt-1 text-[13.5px] text-ink-3 sm:text-[14.5px]">
@@ -53,7 +53,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
         </div>
         <Link
           href="/slides/new"
-          className="btn-grad inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-[14px] font-semibold text-white transition active:scale-[0.97] sm:px-5 sm:py-3"
+          className="btn-grad inline-flex shrink-0 items-center gap-2 rounded-[var(--r-control)] px-4 py-2.5 text-[13.5px] font-medium text-white transition active:scale-[0.97] sm:px-5 sm:py-3"
         >
           <Ico icon={FiPlus} size={17} />
           New deck
@@ -104,7 +104,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
           </div>
           <Link
             href="/slides/new"
-            className="btn-grad mt-8 inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.97]"
+            className="btn-grad mt-8 inline-flex items-center gap-2 rounded-[var(--r-control)] px-6 py-3.5 text-[13.5px] font-medium text-white transition active:scale-[0.97]"
           >
             <Ico icon={FiPlus} size={18} />
             Create a deck
@@ -122,7 +122,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
                 href={`/slides/${d.id}`}
                 className={cn(
                   "block overflow-hidden rounded-xl border border-line bg-raised",
-                  "transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_32px_-12px_rgba(124,92,255,0.35)]",
+                  "transition-all duration-200  hover:border-accent/40 hover:shadow-[0_12px_32px_-12px_rgba(124,92,255,0.35)]",
                 )}
               >
                 <div className="relative">

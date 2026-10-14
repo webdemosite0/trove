@@ -24,7 +24,7 @@ export function MobileTrosHome({ agents }: { agents: AgentRow[] }) {
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       {/* Header */}
       <div className="shrink-0 px-5 pb-3 pt-6">
-        <h1 className="text-[28px] font-bold tracking-tight text-ink">Tros</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">Tros</h1>
         <p className="mt-1 text-[14px] text-ink-3">
           Your AI specialists
         </p>
@@ -52,7 +52,7 @@ export function MobileTrosHome({ agents }: { agents: AgentRow[] }) {
             </p>
             <Link
               href="/tros?new=1"
-              className="mt-4 rounded-full bg-accent px-6 py-3 text-[15px] font-semibold text-white"
+              className="mt-4 rounded-full bg-accent px-6 py-3 text-[13.5px] font-medium text-white"
             >
               Create your first Tro
             </Link>
@@ -96,7 +96,7 @@ export function MobileTrosHome({ agents }: { agents: AgentRow[] }) {
       <Link
         href="/tros?new=1"
         aria-label="New Tro"
-        className="fixed bottom-24 right-5 grid size-14 place-items-center rounded-full bg-accent text-white shadow-lg shadow-accent/30 transition active:scale-95"
+        className="fixed bottom-24 right-5 grid size-14 place-items-center rounded-full bg-accent text-white shadow-[var(--shadow-md)] transition"
       >
         <FiPlus size={24} />
       </Link>

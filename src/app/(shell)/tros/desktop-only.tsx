@@ -51,7 +51,7 @@ export function TrosDesktopOnly() {
         ))}
       </div>
 
-      <h1 className="mt-8 text-[28px] font-semibold tracking-tight text-ink">
+      <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-8 text-ink">
         Tros isn&apos;t on the web
       </h1>
       <p className="mt-3 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-3">
@@ -65,7 +65,7 @@ export function TrosDesktopOnly() {
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
-            "btn-grad inline-flex h-12 items-center justify-center gap-2.5 rounded-xl text-[14.5px] font-semibold",
+            "btn-grad inline-flex h-9 items-center justify-center gap-2.5 rounded-[var(--r-control)] text-[13.5px] font-medium",
             loading && "pointer-events-none opacity-70",
           )}
         >

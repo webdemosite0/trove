@@ -279,7 +279,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 Welcome to Trove
               </p>
-              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
+              <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] ob-rise mt-1.5 text-ink">
                 What do you want to build first?
               </h1>
               <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
@@ -348,7 +348,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 About you
               </p>
-              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
+              <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] ob-rise mt-1.5 text-ink">
                 A little about you.
               </h1>
               <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
@@ -435,7 +435,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
                 Optional
               </p>
-              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
+              <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] ob-rise mt-1.5 text-ink">
                 Add your business?
               </h1>
               <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
@@ -567,7 +567,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <p className="ob-fade text-[11.5px] font-semibold uppercase tracking-[0.14em] text-accent">
                 You&apos;re ready
               </p>
-              <h1 className="ob-rise mt-1.5 text-[26px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[28px]">
+              <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] ob-rise mt-1.5 text-ink">
                 {displayName ? `Let's build, ${displayName.split(" ")[0]}.` : "Let's build."}
               </h1>
               <p className="ob-rise-d1 mt-1.5 text-[13.5px] leading-5 text-ink-3">
@@ -635,7 +635,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               type="button"
               disabled={!canNext || analysisState === "loading"}
               onClick={() => (step === 2 ? void continueFromBusiness() : go(step + 1))}
-              className="btn-grad inline-flex h-12 min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-semibold disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+              className="btn-grad inline-flex h-9 min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full px-6 text-[13.5px] font-medium disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
             >
               {step === 2 && businessName.trim().length >= 2 && analysisState === "idle"
                 ? "Analyze & continue"
@@ -649,7 +649,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               type="button"
               disabled={pending}
               onClick={submit}
-              className="btn-grad inline-flex h-12 min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-semibold disabled:opacity-60 sm:flex-none"
+              className="btn-grad inline-flex h-9 min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full px-6 text-[13.5px] font-medium disabled:opacity-60 sm:flex-none"
             >
               {pending ? "Opening…" : "Enter Trove"}
               <FiArrowRight size={16} aria-hidden />

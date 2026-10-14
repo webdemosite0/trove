@@ -74,7 +74,7 @@ export default async function TrosArtifactsPage() {
     <div className="mx-auto max-w-[920px] px-5 py-10 lg:px-8">
       <header className="mb-8">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">Tros</p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-ink">Artifacts</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-1 text-ink">Artifacts</h1>
         <p className="mt-2 max-w-[52ch] text-[14px] text-ink-3">
           Real files your Tros have saved — documents, sheets, decks, notes, and code.
         </p>

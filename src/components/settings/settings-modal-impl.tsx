@@ -143,7 +143,7 @@ export function SettingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-[min(720px,92dvh)] w-full max-w-[920px] overflow-hidden rounded-xl border border-line bg-rail shadow-2xl"
+        className="relative flex h-[min(720px,92dvh)] w-full max-w-[920px] overflow-hidden rounded-xl border border-line bg-rail shadow-[var(--shadow-md)]"
       >
         <aside className="flex w-[220px] shrink-0 flex-col border-r border-line bg-sunk/40">
           <div className="flex items-center justify-between px-4 py-3">

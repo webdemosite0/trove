@@ -81,7 +81,7 @@ export function ThemePicker() {
               aria-checked={active}
               onClick={() => choose(o.value)}
               className={cn(
-                "group rounded-xl border bg-raised p-2.5 text-left transition-[border-color,box-shadow,transform] hover:-translate-y-0.5",
+                "group rounded-xl border bg-raised p-2.5 text-left transition-[border-color,box-shadow,transform] ",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
                 active
                   ? "border-accent shadow-[0_0_0_1px_var(--color-accent),var(--elev)]"

@@ -124,7 +124,7 @@ function WhenSheet({
                 onClose();
               }
             }}
-            className="flex-1 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-semibold transition-transform active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-medium transition-transform active:scale-[0.98] disabled:opacity-50"
           >
             Set time
           </button>
@@ -333,13 +333,13 @@ export function RemindersView({
     return (
       <div className="nx-in mx-auto flex min-h-screen max-w-[480px] flex-col items-center justify-center px-5 text-center">
         <Bot size={68} accent="#fbbf24" />
-        <h1 className="mt-6 text-[22px] font-semibold text-ink">Reminders</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-6 text-ink">Reminders</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-3">
           Tell Trove what to remind you about and it will notify you.
         </p>
         <Link
           href="/login"
-          className="mt-7 rounded-[var(--r-control)] btn-grad px-5 py-2.5 text-[14px] font-medium transition-transform hover:scale-105"
+          className="mt-7 rounded-[var(--r-control)] btn-grad px-5 py-2.5 text-[13.5px] font-medium transition-transform"
         >
           Log in
         </Link>
@@ -349,7 +349,7 @@ export function RemindersView({
 
   return (
     <div {...sheetZoom.backgroundProps} className="nx-in mx-auto min-h-screen max-w-[720px] px-5 py-10 lg:px-8">
-      <h1 className="text-[24px] font-semibold text-ink">Reminders</h1>
+      <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">Reminders</h1>
       <p className="mt-1.5 text-[13.5px] text-ink-3">
         {pending.length} pending · notifications fire while Trove is open in a tab.
       </p>
@@ -379,7 +379,7 @@ export function RemindersView({
           {permission === "default" ? (
             <button
               onClick={ask}
-              className="shrink-0 rounded-[var(--r-control)] btn-grad px-3.5 py-2 text-[13px] font-medium transition-transform hover:scale-[1.03]"
+              className="shrink-0 rounded-[var(--r-control)] btn-grad px-3.5 py-2 text-[13px] font-medium transition-transform"
             >
               Enable
             </button>
@@ -488,7 +488,7 @@ export function RemindersView({
               });
               titleRef.current?.focus({ preventScroll: true });
             }}
-            className="mt-6 inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-semibold transition-transform hover:scale-[1.03] active:scale-95"
+            className="mt-6 inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-medium transition-transform"
           >
             <Ico icon={FiPlus} motion="open" size={15} /> New reminder
           </button>

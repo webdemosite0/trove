@@ -69,7 +69,7 @@ export function InstructionsForm({ initial }: { initial: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[14px] font-medium disabled:opacity-60"
+        className="rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-medium disabled:opacity-60"
       >
         {pending ? "Saving…" : "Save instructions"}
       </button>

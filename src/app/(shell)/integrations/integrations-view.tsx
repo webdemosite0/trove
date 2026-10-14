@@ -206,7 +206,7 @@ export function IntegrationsView({
         {!bare ? (
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-ink">
+            <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
               Plugins
             </h1>
             <p className="mt-1.5 text-[15px] text-ink-3">
@@ -265,7 +265,7 @@ export function IntegrationsView({
                   key={s.id}
                   href={`/integrations/${s.id}`}
                   title={s.name}
-                  className="group relative grid size-[68px] place-items-center rounded-xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:scale-105 hover:ring-line-strong"
+                  className="group relative grid size-[68px] place-items-center rounded-xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:ring-line-strong"
                 >
                   <ServiceMark id={s.id} name={s.name} size={52} />
                 </Link>

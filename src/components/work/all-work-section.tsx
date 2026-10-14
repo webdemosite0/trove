@@ -184,7 +184,7 @@ export async function AllWorkSection({
             <Link
               key={`${item.source}:${item.kind}:${item.id}`}
               href={item.href}
-              className="group overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--sh-1)] transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--elev)]"
+              className="group overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--sh-1)] transition duration-200 hover:border-line-strong hover:shadow-[var(--elev)]"
             >
               <Preview item={item} />
               <div className="flex items-center gap-3 border-t border-line px-3.5 py-3">

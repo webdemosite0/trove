@@ -236,7 +236,7 @@ export function TeamShell({
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-50 bg-black/35 backdrop-blur-[2px] lg:hidden"
           />
-          <aside className="fixed inset-y-0 left-0 z-[60] w-[min(86vw,300px)] border-r border-line bg-rail shadow-2xl lg:hidden">
+          <aside className="fixed inset-y-0 left-0 z-[60] w-[min(86vw,300px)] border-r border-line bg-rail shadow-[var(--shadow-md)] lg:hidden">
             <button
               type="button"
               onClick={() => setOpen(false)}

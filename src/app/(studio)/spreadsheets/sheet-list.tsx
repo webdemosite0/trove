@@ -59,7 +59,7 @@ export function SheetList({ cards }: { cards: SheetCard[] }) {
           </p>
           <Link
             href="/spreadsheets/new"
-            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 active:scale-95"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-[13.5px] font-medium text-white transition hover:brightness-110"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
               <path d="M12 5v14M5 12h14" />
@@ -71,7 +71,7 @@ export function SheetList({ cards }: { cards: SheetCard[] }) {
               <Link
                 key={idea}
                 href={`/spreadsheets/new?q=${encodeURIComponent(idea)}`}
-                className="rounded-full border border-line bg-raised px-3.5 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:text-ink active:scale-95"
+                className="rounded-full border border-line bg-raised px-3.5 py-1.5 text-[12.5px] text-ink-2 transition hover:border-accent/40 hover:text-ink"
               >
                 {idea}
               </Link>
@@ -84,7 +84,7 @@ export function SheetList({ cards }: { cards: SheetCard[] }) {
             <Link
               key={c.id}
               href={c.href}
-              className="group overflow-hidden rounded-xl border border-line bg-raised transition hover:border-accent/30 hover:shadow-lg active:scale-[0.99]"
+              className="group overflow-hidden rounded-xl border border-line bg-raised transition hover:border-accent/30 hover:shadow-[var(--shadow-md)] active:scale-[0.99]"
             >
               {/* Mini preview */}
               <div className="border-b border-line bg-canvas p-3">

@@ -19,7 +19,7 @@ export function TrosTeamOnly() {
         ))}
       </div>
 
-      <h1 className="mt-8 text-[28px] font-semibold tracking-tight text-ink">
+      <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-8 text-ink">
         Tros is on Pro and Team
       </h1>
       <p className="mt-3 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-3">
@@ -30,7 +30,7 @@ export function TrosTeamOnly() {
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/plans"
-          className="btn-grad inline-flex h-12 items-center justify-center rounded-xl px-6 text-[14.5px] font-semibold"
+          className="btn-grad inline-flex h-9 items-center justify-center rounded-[var(--r-control)] px-6 text-[13.5px] font-medium"
         >
           View plans
         </Link>

@@ -606,11 +606,11 @@ export function TrosView({
           ))}
         </div>
         <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.22em] text-violet-500">Tros</p>
-        <h1 className="mt-2 text-[30px] font-semibold tracking-tight text-ink">Meet your specialists</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-2 text-ink">Meet your specialists</h1>
         <p className="mt-3 max-w-[42ch] text-[15px] leading-relaxed text-ink-3">
           Ten unique mascots. Each Tro gets a personality, brief, and toolkit — built like a real team.
         </p>
-        <Link href="/login" className="mt-8 rounded-full btn-grad px-6 py-2.5 text-[14px] font-semibold shadow-lg shadow-violet-500/25 transition hover:scale-[1.03]">
+        <Link href="/login" className="mt-8 rounded-full btn-grad px-6 py-2.5 text-[13.5px] font-medium shadow-[var(--shadow-sm)] transition">
           Log in to continue
         </Link>
       </div>
@@ -631,7 +631,7 @@ export function TrosView({
       />
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[300px] border-r border-line bg-canvas shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[300px] border-r border-line bg-canvas shadow-[var(--shadow-md)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden",
           navOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -703,7 +703,7 @@ export function TrosView({
             </div>
             <Link
               href="/tros/new"
-              className="btn-grad inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-semibold text-ink transition hover:scale-[1.03]"
+              className="btn-grad inline-flex shrink-0 items-center gap-1.5 rounded-[var(--r-control)] px-3.5 py-2 text-[13px] font-medium text-ink transition"
             >
               <Ico icon={FiPlus} size={14} />
               <span className="hidden sm:inline">New Tro</span>
@@ -865,7 +865,7 @@ export function TrosView({
                       <Link
                         key={t.id}
                         href={`/tros/${t.agentId}`}
-                        className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+                        className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-violet-500/35"
                       >
                         <div className="flex items-center gap-2.5">
                           {agent ? (
@@ -923,7 +923,7 @@ export function TrosView({
                   <button
                     type="button"
                     onClick={assignTask}
-                    className="btn-grad shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold text-ink transition hover:scale-[1.03]"
+                    className="btn-grad shrink-0 rounded-full px-4 py-2 text-[13px] font-medium text-ink transition"
                   >
                     Assign a task
                   </button>
@@ -1048,7 +1048,7 @@ export function TrosView({
                   <Link
                     key={t.slug}
                     href={templateHref(t)}
-                    className="group w-[248px] shrink-0 snap-start overflow-hidden rounded-xl border border-line bg-raised/70 transition duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_24px_54px_-20px_rgba(139,92,246,0.55)]"
+                    className="group w-[248px] shrink-0 snap-start overflow-hidden rounded-xl border border-line bg-raised/70 transition duration-300 hover:border-violet-500/40"
                   >
                     <div
                       className="relative grid h-[148px] place-items-center overflow-hidden"
@@ -1094,7 +1094,7 @@ export function TrosView({
                   e.preventDefault();
                   if (brief.trim()) router.push(`/tros/new?describe=${encodeURIComponent(brief.trim())}`);
                 }}
-                className="flex w-full items-center gap-2 rounded-xl border border-line bg-raised/85 p-2 pl-4 shadow-[0_20px_50px_-24px_rgba(139,92,246,0.45)] transition focus-within:border-violet-500/55"
+                className="flex w-full items-center gap-2 rounded-xl border border-line bg-raised/85 p-2 pl-4 transition focus-within:border-violet-500/55"
               >
                 <Ico icon={FiZap} motion="sparkle" size={16} className="shrink-0 text-violet-500" />
                 <input
@@ -1107,7 +1107,7 @@ export function TrosView({
                 <button
                   type="submit"
                   disabled={!brief.trim()}
-                  className="btn-grad shrink-0 rounded-xl px-4 py-2 text-[13px] font-semibold text-ink transition hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
+                  className="btn-grad shrink-0 rounded-[var(--r-control)] px-4 py-2 text-[13px] font-medium text-ink transition disabled:opacity-40"
                 >
                   Hire
                 </button>
@@ -1117,7 +1117,7 @@ export function TrosView({
                   <Link
                     key={s.title}
                     href={wizardHref(s.draft)}
-                    className="group flex items-center gap-3 rounded-xl border border-line bg-raised/70 px-3.5 py-3 text-left transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.55)]"
+                    className="group flex items-center gap-3 rounded-xl border border-line bg-raised/70 px-3.5 py-3 text-left transition duration-300 hover:border-violet-500/40"
                   >
                     <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
                       <Ico icon={s.icon} size={16} />
@@ -1143,7 +1143,7 @@ export function TrosView({
                     <Link
                       key={art.id}
                       href={`/tros/${art.agentId}`}
-                      className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+                      className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-violet-500/35"
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500">
@@ -1185,7 +1185,7 @@ export function TrosView({
                     key={s}
                     href={`/tros/new?species=${s}`}
                     title={`Hire a Tro — ${SPECIES_META[s].label}`}
-                    className="flex w-[92px] shrink-0 flex-col items-center rounded-xl border border-line/70 bg-raised/50 px-2 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35"
+                    className="flex w-[92px] shrink-0 flex-col items-center rounded-xl border border-line/70 bg-raised/50 px-2 py-3 transition duration-300 hover:border-violet-500/35"
                   >
                     <Bot size={44} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
                     <span className="mt-1.5 text-[11px] font-semibold text-ink">{SPECIES_META[s].label}</span>
@@ -1310,7 +1310,7 @@ function CreateModal({ initial, onClose }: { initial: Draft; onClose: () => void
           <button type="button" onClick={onClose} className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink-2 hover:bg-hover">
             Cancel
           </button>
-          <button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2 text-[13px] font-semibold text-ink disabled:opacity-60">
+          <button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2 text-[13px] font-medium text-ink disabled:opacity-60">
             {pending ? <FiLoader size={14} className="animate-spin" /> : null}
             Create Tro
           </button>

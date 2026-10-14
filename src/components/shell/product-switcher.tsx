@@ -115,7 +115,7 @@ export function ProductSwitcher({
       {open ? (
         <div
           className={cn(
-            "absolute z-50 overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-lg",
+            "absolute z-50 overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-[var(--shadow-md)]",
             collapsed ? "left-full top-0 ml-2 w-52" : "left-0 top-full mt-1 w-full min-w-[200px]",
           )}
         >

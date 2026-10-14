@@ -132,7 +132,7 @@ function IconBtn({
       aria-label={label}
       title={label}
       className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-xl transition-colors active:scale-95 disabled:pointer-events-none disabled:opacity-30",
+        "grid size-9 shrink-0 place-items-center rounded-xl transition-colors  disabled:pointer-events-none disabled:opacity-30",
         active ? "bg-accent/15 text-accent" : "text-ink-3 hover:bg-hover hover:text-ink",
       )}
     >
@@ -564,7 +564,7 @@ export function DeckEditor({
           <span className="mx-auto mb-5 grid size-14 place-items-center rounded-xl bg-accent/12 text-accent">
             <Ico icon={TbSparkles} motion="lift" size={26} />
           </span>
-          <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink sm:text-[30px]">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
             Describe your deck
           </h1>
           <p className="mx-auto mt-2 max-w-[40ch] text-[14.5px] text-ink-3">
@@ -591,7 +591,7 @@ export function DeckEditor({
             <button
               type="submit"
               disabled={!aiInput.trim()}
-              className="btn-grad grid size-11 shrink-0 place-items-center rounded-xl text-white transition active:scale-95 disabled:opacity-40"
+              className="btn-grad grid size-11 shrink-0 place-items-center rounded-xl text-white transition disabled:opacity-40"
               aria-label="Generate deck"
             >
               <Ico icon={TbSparkles} size={19} />
@@ -714,7 +714,7 @@ export function DeckEditor({
             <Ico icon={FiMoreHorizontal} size={18} />
           </IconBtn>
           {menuOpen ? (
-            <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-xl border border-line bg-raised p-1.5 shadow-xl">
+            <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-xl border border-line bg-raised p-1.5 shadow-[var(--shadow-md)]">
               <button
                 type="button"
                 onClick={() => { exportPptx(); setMenuOpen(false); }}
@@ -796,7 +796,7 @@ export function DeckEditor({
                     void askAi(p);
                   }}
                   disabled={busy}
-                  className="rounded-xl bg-accent px-3 py-1.5 text-[12.5px] font-semibold text-white transition active:scale-95 disabled:opacity-40"
+                  className="rounded-[var(--r-control)] bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition disabled:opacity-40"
                 >
                   Retry
                 </button>
@@ -808,7 +808,7 @@ export function DeckEditor({
                     void askAi(p);
                   }}
                   disabled={busy}
-                  className="rounded-xl border border-line bg-raised px-3 py-1.5 text-[12.5px] font-semibold text-ink transition hover:border-accent/50 active:scale-95 disabled:opacity-40"
+                  className="rounded-xl border border-line bg-raised px-3 py-1.5 text-[12.5px] font-semibold text-ink transition hover:border-accent/50 disabled:opacity-40"
                 >
                   Repair
                 </button>
@@ -851,7 +851,7 @@ export function DeckEditor({
                 <Ico icon={FiChevronDown} size={14} />
               </button>
               {layoutsOpen && slide ? (
-                <div className="absolute left-0 top-11 z-40 grid w-[300px] grid-cols-3 gap-1.5 rounded-xl border border-line bg-raised p-2.5 shadow-xl">
+                <div className="absolute left-0 top-11 z-40 grid w-[300px] grid-cols-3 gap-1.5 rounded-xl border border-line bg-raised p-2.5 shadow-[var(--shadow-md)]">
                   {LAYOUTS.map((l) => (
                     <button
                       key={l.id}
@@ -906,7 +906,7 @@ export function DeckEditor({
             {/* Thinking overlay while generating */}
             {busy ? (
               <div className="absolute inset-0 z-20 grid place-items-center bg-canvas/70 backdrop-blur-[2px]">
-                <div className="flex flex-col items-center gap-3 rounded-xl border border-line bg-raised px-8 py-6 shadow-2xl">
+                <div className="flex flex-col items-center gap-3 rounded-xl border border-line bg-raised px-8 py-6 shadow-[var(--shadow-md)]">
                   <Thinking label="Dreaming up your slides" size={30} />
                   <p className="max-w-[30ch] text-center text-[13px] text-ink-3">
                     Writing copy, choosing a theme and laying out {total ? "a new version" : "your deck"}…
@@ -982,7 +982,7 @@ export function DeckEditor({
                 <button
                   type="submit"
                   disabled={!aiInput.trim() || busy}
-                  className="btn-grad grid size-10 shrink-0 place-items-center rounded-xl text-white transition active:scale-95 disabled:opacity-40"
+                  className="btn-grad grid size-10 shrink-0 place-items-center rounded-xl text-white transition disabled:opacity-40"
                   aria-label="Apply AI edit"
                 >
                   <Ico icon={TbSparkles} size={17} />
@@ -1093,7 +1093,7 @@ export function DeckEditor({
           type="button"
           onClick={() => setAiSheetOpen(true)}
           aria-label="Edit deck with AI"
-          className="btn-grad fixed bottom-6 right-5 z-30 grid size-13 place-items-center rounded-full p-3.5 text-white shadow-[0_12px_32px_-8px_rgba(124,92,255,0.6)] transition active:scale-95 sm:bottom-8 sm:right-8"
+          className="btn-grad fixed bottom-6 right-5 z-30 grid size-13 place-items-center rounded-full p-3.5 text-white shadow-[0_12px_32px_-8px_rgba(124,92,255,0.6)] transition sm:bottom-8 sm:right-8"
         >
           <Ico icon={TbSparkles} size={22} />
         </button>

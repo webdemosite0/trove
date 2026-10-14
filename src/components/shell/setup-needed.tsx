@@ -36,7 +36,7 @@ export function SetupNeeded({
         <Ico icon={FiDatabase} motion="stack" size={26} />
       </span>
 
-      <h1 className="mt-6 text-[26px] font-semibold tracking-tight text-ink">
+      <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-6 text-ink">
         {ephemeral
           ? "Trove needs a database that lasts"
           : "Trove needs a database"}

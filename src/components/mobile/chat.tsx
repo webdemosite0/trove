@@ -97,19 +97,13 @@ export function MobileChat({
       <div className="mobile-chat flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain">
         <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col px-3.5 pb-6 pt-[clamp(20px,5vh,48px)] sm:px-4">
           <div className="nx-rise flex flex-col items-center text-center">
-            <div className="relative grid size-14 place-items-center">
-              <span
-                aria-hidden
-                className="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-sky-500/20 blur-xl"
-              />
-              <span className="relative grid size-12 place-items-center rounded-xl border border-line-strong bg-raised/90 shadow-[var(--sh-2)]">
-                <TroveOrb size={29} />
-              </span>
-            </div>
-            <h1 className="mt-5 text-[clamp(1.45rem,1.2rem+1.5vw,1.75rem)] font-semibold tracking-[-0.04em] text-ink">
+            <span className="grid size-11 place-items-center rounded-xl border border-line bg-raised">
+              <TroveOrb size={26} />
+            </span>
+            <h1 className="mt-4 text-[1.5rem] font-semibold tracking-[-0.02em] text-ink">
               What can I help with?
             </h1>
-            <p className="mt-2 max-w-[36ch] text-[15px] leading-relaxed text-ink-4">
+            <p className="mt-1.5 max-w-[36ch] text-[14.5px] leading-relaxed text-ink-4">
               Hi {name}. Ask anything, or connect tools from Plugins.
             </p>
           </div>
@@ -128,29 +122,29 @@ export function MobileChat({
 
           {error ? <Problem message={error} onRetry={retry} /> : null}
 
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
             {PROMPTS.map((item) => (
               <button
                 key={item.label}
                 type="button"
                 onClick={() => setDraft(item.prompt)}
                 className={cn(
-                  "flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-raised/75 px-4 text-[13.5px] font-medium text-ink-2 shadow-[var(--sh-1)] transition active:scale-95",
+                  "flex h-10 shrink-0 items-center gap-2 rounded-full border border-line bg-raised px-3.5 text-[13.5px] font-medium text-ink-2 transition-colors active:bg-hover",
                   item.tone === "violet" && "active:bg-violet-500/10",
                   item.tone === "sky" && "active:bg-sky-500/10",
                   item.tone === "emerald" && "active:bg-emerald-500/10",
                 )}
               >
-                <item.icon size={16} className="text-accent" />
+                <item.icon size={15} className="text-ink-4" />
                 {item.label}
               </button>
             ))}
             <button
               type="button"
               onClick={() => openSettings("integrations")}
-              className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/8 px-4 text-[13.5px] font-medium text-ink-2 transition active:scale-95"
+              className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-line bg-raised px-3.5 text-[13.5px] font-medium text-ink-2 transition-colors active:bg-hover"
             >
-              <TbPlugConnected size={16} className="text-accent" />
+              <TbPlugConnected size={15} className="text-ink-4" />
               Plugins
             </button>
           </div>
@@ -158,7 +152,7 @@ export function MobileChat({
           {activity.length ? (
             <section className="mt-8">
               <div className="mb-2.5 flex items-center justify-between px-1">
-                <h2 className="text-[12.5px] font-bold uppercase tracking-[0.14em] text-ink-4">
+                <h2 className="text-[13px] font-medium text-ink-4">
                   Recent
                 </h2>
                 <Link
@@ -168,7 +162,7 @@ export function MobileChat({
                   Home
                 </Link>
               </div>
-              <div className="overflow-hidden rounded-xl border border-line bg-raised/70 shadow-[var(--sh-1)]">
+              <div className="overflow-hidden rounded-xl border border-line bg-raised">
                 {activity.slice(0, 6).map((recent, index) => (
                   <Link
                     key={`${recent.kind}-${recent.href}-${recent.title}`}
@@ -178,7 +172,7 @@ export function MobileChat({
                       index > 0 && "border-t border-line/70",
                     )}
                   >
-                    <span className="grid size-8.5 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/10 to-sky-500/10 text-accent">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-[var(--r-control)] border border-line bg-sunk text-ink-3">
                       <TbSparkles size={16} />
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink-2">
@@ -235,7 +229,7 @@ export function MobileChat({
       </div>
 
       <div
-        className="mobile-composer-dock shrink-0 border-t border-line/55 bg-canvas/92 px-2.5 pt-2 backdrop-blur-2xl sm:px-3"
+        className="mobile-composer-dock shrink-0 border-t border-line bg-canvas px-2.5 pt-2 sm:px-3"
         style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}
       >
         <div className="mx-auto max-w-[640px]">

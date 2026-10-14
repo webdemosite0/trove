@@ -142,10 +142,10 @@ export function YourWork({
               >
                 <Link
                     href={r.href || "/chat"}
-                    className="group flex h-full items-start gap-3 rounded-[16px] border border-line/80 bg-canvas/50 p-3 transition duration-200 hover:-translate-y-0.5 hover:border-accent/35 hover:bg-hover/40 hover:shadow-[0_12px_40px_-24px_rgba(124,92,255,0.45)]"
+                    className="group flex h-full items-start gap-3 rounded-[16px] border border-line/80 bg-canvas/50 p-3 transition duration-200 hover:border-accent/35 hover:bg-hover/40 hover:shadow-[0_12px_40px_-24px_rgba(124,92,255,0.45)]"
                   >
                     <span
-                      className="grid size-9 shrink-0 place-items-center rounded-[12px] border border-white/5 transition group-hover:scale-105"
+                      className="grid size-9 shrink-0 place-items-center rounded-[12px] border border-white/5 transition"
                       style={{
                         background: `linear-gradient(145deg, color-mix(in oklab, ${m.tone} 55%, transparent), transparent)`,
                         color: m.tone,

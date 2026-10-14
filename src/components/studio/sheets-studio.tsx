@@ -120,21 +120,21 @@ export function SheetsStudio({
             <button
               type="button"
               onClick={() => dispatch("sheets-add-row")}
-              className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-accent/40 hover:text-ink active:scale-95"
+              className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-accent/40 hover:text-ink"
             >
               + Row
             </button>
             <button
               type="button"
               onClick={() => dispatch("sheets-add-col")}
-              className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-accent/40 hover:text-ink active:scale-95"
+              className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-accent/40 hover:text-ink"
             >
               + Column
             </button>
             <button
               type="button"
               onClick={() => dispatch("sheets-clear")}
-              className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-critical/40 hover:text-critical active:scale-95"
+              className="rounded-full border border-line bg-sunk px-3.5 py-1.5 text-[12.5px] font-medium text-ink-2 transition hover:border-critical/40 hover:text-critical"
             >
               Clear
             </button>

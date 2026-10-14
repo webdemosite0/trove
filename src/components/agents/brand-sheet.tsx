@@ -100,7 +100,7 @@ export function ImageLightbox({
         <img
           src={img.src}
           alt={img.title}
-          className="max-h-full max-w-full rounded-xl object-contain shadow-2xl"
+          className="max-h-full max-w-full rounded-xl object-contain shadow-[var(--shadow-md)]"
         />
       </div>
     </div>

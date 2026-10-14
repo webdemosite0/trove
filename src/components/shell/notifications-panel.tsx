@@ -195,7 +195,7 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
                         type="button"
                         onClick={() => void accept(invite.id)}
                         disabled={Boolean(busyId)}
-                        className="btn-grad inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[11.5px] font-semibold text-white disabled:opacity-50"
+                        className="btn-grad inline-flex h-8 items-center gap-1.5 rounded-[var(--r-control)] px-3 text-[11.5px] font-medium text-white disabled:opacity-50"
                       >
                         <FiCheck size={13} />
                         {busyId === invite.id ? "Joining…" : "Accept"}

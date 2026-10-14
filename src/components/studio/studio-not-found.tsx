@@ -64,7 +64,7 @@ export function StudioNotFound({ kind }: { kind: StudioNotFoundKind }) {
         </p>
         <Link
           href={c.libraryHref}
-          className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 active:scale-95"
+          className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-[13.5px] font-medium text-white transition hover:brightness-110"
         >
           Back to {c.libraryLabel}
         </Link>

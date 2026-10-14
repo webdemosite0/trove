@@ -102,7 +102,7 @@ export function TroSkillsPanel() {
         <button
           type="button"
           onClick={openCreate}
-          className="flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:brightness-110"
+          className="flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110"
         >
           <FiPlus size={13} /> New skill
         </button>
@@ -177,7 +177,7 @@ export function TroSkillsPanel() {
 
       {showForm ? (
         <div className="fixed inset-0 z-[70] grid place-items-center bg-black/40 p-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-xl border border-line bg-raised p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border border-line bg-raised p-5 shadow-[var(--shadow-md)]">
             <div className="flex items-center justify-between">
               <h3 className="text-[15px] font-semibold text-ink">
                 {editing ? "Edit skill" : "New skill"}
@@ -264,7 +264,7 @@ export function TroSkillsPanel() {
                 type="button"
                 onClick={() => void save()}
                 disabled={saving || !name.trim() || !instructions.trim()}
-                className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-[13px] font-medium text-white transition hover:brightness-110 disabled:opacity-50"
               >
                 <FiZap size={13} />
                 {saving ? "Saving…" : editing ? "Save changes" : "Create skill"}

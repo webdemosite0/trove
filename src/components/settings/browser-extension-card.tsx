@@ -163,7 +163,7 @@ export function BrowserExtensionCard() {
             type="button"
             disabled={busy}
             onClick={() => void pair()}
-            className="rounded-xl bg-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-[var(--r-control)] bg-accent px-4 py-2 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {busy ? "…" : "Connect a browser"}
           </button>

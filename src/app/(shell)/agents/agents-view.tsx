@@ -47,13 +47,13 @@ export function AgentsView({
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_20%,color-mix(in_oklab,var(--color-accent)_18%,transparent),transparent_55%)]" />
         <Bot size={88} state="idle" seed="trove-hero" />
         <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.2em] text-accent">Tros</p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-tight text-ink">Your AI team</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-2 text-ink">Your AI team</h1>
         <p className="mt-3 max-w-[42ch] text-[15px] leading-relaxed text-ink-3">
           Specialists with their own brief, tools, and personality. Log in to build your first Tro.
         </p>
         <Link
           href="/login"
-          className="mt-8 rounded-full btn-grad px-6 py-2.5 text-[14px] font-semibold shadow-lg shadow-accent/20 transition hover:scale-[1.03]"
+          className="mt-8 rounded-full btn-grad px-6 py-2.5 text-[13.5px] font-medium shadow-[var(--shadow-sm)] transition"
         >
           Log in to continue
         </Link>
@@ -68,7 +68,7 @@ export function AgentsView({
       <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent">Workspace</p>
-          <h1 className="mt-1 text-[30px] font-semibold tracking-tight text-ink">Tros</h1>
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-1 text-ink">Tros</h1>
           <p className="mt-2 max-w-[48ch] text-[14.5px] leading-relaxed text-ink-3">
             A team of specialists — each with a unique splashy, brief, and toolkit.
           </p>
@@ -76,7 +76,7 @@ export function AgentsView({
         {agents.length > 0 ? (
           <Link
             href="/tros/new"
-            className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-semibold shadow-md shadow-accent/15 transition hover:scale-[1.03]"
+            className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2.5 text-[13.5px] font-medium shadow-md transition"
           >
             <Ico icon={FiPlus} motion="open" size={16} /> New Tro
           </Link>
@@ -104,7 +104,7 @@ export function AgentsView({
             return (
               <div
                 key={a.id}
-                className="group relative overflow-hidden rounded-xl border border-line bg-raised/80 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition duration-300 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-[0_20px_50px_-28px_rgba(0,0,0,0.45)]"
+                className="group relative overflow-hidden rounded-xl border border-line bg-raised/80 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition duration-300 hover:border-accent/30 hover:shadow-[0_20px_50px_-28px_rgba(0,0,0,0.45)]"
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div
@@ -288,7 +288,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2 text-[13px] font-semibold disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full btn-grad px-5 py-2 text-[13px] font-medium disabled:opacity-60"
             >
               {pending ? <Ico icon={FiLoader} motion="spin" size={15} className="animate-spin" /> : null}
               Create Tro

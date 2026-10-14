@@ -78,7 +78,7 @@ function ShareSheet({
               onShare();
               onClose();
             }}
-            className="flex-1 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-semibold transition-transform active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-medium transition-transform active:scale-[0.98] disabled:opacity-50"
           >
             Share
           </button>
@@ -252,7 +252,7 @@ export function TeamWorkspaceView({
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-accent">
                   Private Team workspace
                 </p>
-                <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.03em] text-ink">
+                <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-1 text-ink">
                   Work together inside Trove
                 </h1>
                 <p className="mt-2 max-w-[60ch] text-[13.5px] leading-relaxed text-ink-3">
@@ -284,7 +284,7 @@ export function TeamWorkspaceView({
                       type="button"
                       onClick={() => void act("accept", { inviteId: invite.id })}
                       disabled={Boolean(busy)}
-                      className="btn-grad inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                      className="btn-grad inline-flex h-9 items-center justify-center gap-2 rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white disabled:opacity-50"
                     >
                       <FiCheck size={14} />
                       {busy === "accept" ? "Joining…" : "Join team"}
@@ -317,7 +317,7 @@ export function TeamWorkspaceView({
                         type="button"
                         onClick={() => void act("create", { name: teamName })}
                         disabled={teamName.trim().length < 2 || Boolean(busy)}
-                        className="btn-grad h-10 rounded-xl px-4 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                        className="btn-grad h-9 rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white disabled:opacity-50"
                       >
                         {busy === "create" ? "Creating…" : "Create team"}
                       </button>
@@ -342,7 +342,7 @@ export function TeamWorkspaceView({
                 </p>
                 <Link
                   href={state.businessEligible ? "/plans" : "/settings/business"}
-                  className="btn-grad mt-4 inline-flex h-10 items-center rounded-xl px-4 text-[12.5px] font-semibold text-white"
+                  className="btn-grad mt-4 inline-flex h-9 items-center rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white"
                 >
                   {state.businessEligible
                     ? currentPlan === "team"
@@ -378,7 +378,7 @@ export function TeamWorkspaceView({
         {state.team.role === "owner" ? (
           <Link
             href="/plans"
-            className="btn-grad mt-5 inline-flex h-10 items-center rounded-xl px-4 text-[12.5px] font-semibold text-white"
+            className="btn-grad mt-5 inline-flex h-9 items-center rounded-[var(--r-control)] px-4 text-[12.5px] font-medium text-white"
           >
             Reactivate Team
           </Link>
@@ -406,7 +406,7 @@ export function TeamWorkspaceView({
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-accent">
               Team workspace
             </p>
-            <h1 className="mt-1 text-[26px] font-semibold tracking-[-0.035em] text-ink">
+            <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-1 text-ink">
               {state.team.name}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-ink-3">
@@ -635,7 +635,7 @@ export function TeamWorkspaceView({
                 type="button"
                 onClick={() => void act("invite", { email: inviteEmail, role: inviteRole })}
                 disabled={!inviteEmail.includes("@") || Boolean(busy)}
-                className="btn-grad h-10 rounded-xl px-4 text-[12px] font-semibold text-white disabled:opacity-50"
+                className="btn-grad h-9 rounded-[var(--r-control)] px-4 text-[12px] font-medium text-white disabled:opacity-50"
               >
                 {busy === "invite" ? "Inviting…" : "Invite"}
               </button>
@@ -748,7 +748,7 @@ export function TeamWorkspaceView({
                     type="button"
                     onClick={() => void act("share-project", { projectId: shareProjectId })}
                     disabled={!shareProjectId || Boolean(busy)}
-                    className="btn-grad h-10 rounded-xl px-3 text-[12px] font-semibold text-white disabled:opacity-50"
+                    className="btn-grad h-9 rounded-[var(--r-control)] px-3 text-[12px] font-medium text-white disabled:opacity-50"
                   >
                     Share
                   </button>

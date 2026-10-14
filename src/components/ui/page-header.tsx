@@ -36,7 +36,7 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0">
-        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em] text-ink">
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] text-ink">
           {title}
         </h1>
         {subtitle ? (

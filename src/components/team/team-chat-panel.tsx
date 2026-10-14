@@ -265,7 +265,7 @@ function ChatSurface({
             className={cn(
               "grid size-9 shrink-0 place-items-center rounded-xl transition",
               text.trim() && !sending
-                ? "btn-grad text-white shadow-sm active:scale-95"
+                ? "btn-grad text-white shadow-sm "
                 : "bg-sunk text-ink-4",
             )}
           >
@@ -541,7 +541,7 @@ export function TeamChatPanel({
             } catch {}
             void load(true);
           }}
-          className="fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-xl border border-violet-400/20 bg-raised/95 px-3.5 py-2.5 text-[12px] font-semibold text-ink shadow-[var(--elev)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-violet-400/40 xl:flex"
+          className="fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-xl border border-violet-400/20 bg-raised/95 px-3.5 py-2.5 text-[12px] font-semibold text-ink shadow-[var(--elev)] backdrop-blur-xl transition hover:border-violet-400/40 xl:flex"
           aria-label="Open Team chat"
         >
           <span className="grid size-7 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 via-fuchsia-500/15 to-sky-500/15 text-violet-500 dark:text-violet-300">

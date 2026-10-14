@@ -187,14 +187,14 @@ export function ProjectsView({
         <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20 ring-1 ring-line">
           <FiFolder size={28} className="text-ink" />
         </div>
-        <h1 className="mt-6 text-[22px] font-semibold text-ink">Projects</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-6 text-ink">Projects</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-3">
           Create company projects, keep briefs in one place, and work with your team.
           Log in to get started.
         </p>
         <Link
           href="/login"
-          className="mt-7 rounded-[var(--r-control)] btn-grad px-5 py-2.5 text-[14px] font-medium transition-transform hover:scale-105"
+          className="mt-7 rounded-[var(--r-control)] btn-grad px-5 py-2.5 text-[13.5px] font-medium transition-transform"
         >
           Log in to continue
         </Link>
@@ -222,7 +222,7 @@ export function ProjectsView({
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="flex items-center gap-2 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[14px] font-medium transition-transform duration-[var(--t-hover)] ease-[var(--ease-ui)] hover:scale-[1.03]"
+              className="flex items-center gap-2 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-medium transition-transform duration-[var(--t-hover)] ease-[var(--ease-ui)]"
             >
               <Ico icon={FiPlus} motion="open" size={16} /> New project
             </button>
@@ -249,7 +249,7 @@ export function ProjectsView({
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="flex items-center gap-2 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[14px] font-medium transition-transform hover:scale-[1.03]"
+              className="flex items-center gap-2 rounded-[var(--r-control)] btn-grad px-4 py-2.5 text-[13.5px] font-medium transition-transform"
             >
               <Ico icon={FiPlus} motion="open" size={16} /> New project
             </button>
@@ -261,7 +261,7 @@ export function ProjectsView({
             <article
               key={p.id}
               {...lp.itemProps(p.id)}
-              className="nx-in group relative flex flex-col rounded-[var(--r-panel)] border border-line bg-rail p-5 transition-all duration-[var(--t-hover)] hover:-translate-y-0.5 hover:border-line-strong"
+              className="nx-in group relative flex flex-col rounded-[var(--r-panel)] border border-line bg-rail p-5 transition-all duration-[var(--t-hover)] hover:border-line-strong"
               style={{ animationDelay: `${i * 40}ms`, animationFillMode: "backwards" }}
             >
               <button
@@ -276,7 +276,7 @@ export function ProjectsView({
               <Link href={`/projects/${encodeURIComponent(p.id)}`} className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between">
                   <div
-                    className="grid h-11 w-11 place-items-center rounded-xl ring-1 ring-line transition-transform duration-200 group-hover:scale-105"
+                    className="grid h-11 w-11 place-items-center rounded-xl ring-1 ring-line transition-transform duration-200"
                     style={{
                       background: `linear-gradient(135deg, hsl(${hueFor(p.name)} 65% 55% / 0.18), hsl(${(hueFor(p.name) + 40) % 360} 65% 55% / 0.08))`,
                       color: `hsl(${hueFor(p.name)} 55% 42%)`,

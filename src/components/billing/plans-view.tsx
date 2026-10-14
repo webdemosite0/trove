@@ -280,7 +280,7 @@ export function PlansView({
               )}
             >
               {t.id === "pro" ? (
-                <span className="absolute -top-2.5 left-6 rounded-full bg-accent px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                <span className="absolute -top-2.5 left-6 rounded-full bg-accent px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
                   Popular
                 </span>
               ) : null}
@@ -333,7 +333,7 @@ export function PlansView({
                     type="button"
                     disabled={busy || !stripeReady || !buyable}
                     onClick={() => onChoose(t.id)}
-                    className="btn-grad flex h-10 w-full items-center justify-center gap-2 rounded-xl text-[13px] font-semibold disabled:opacity-50"
+                    className="btn-grad flex h-9 w-full items-center justify-center gap-2 rounded-[var(--r-control)] text-[13px] font-medium disabled:opacity-50"
                   >
                     {busy ? (
                       <>
