@@ -26,7 +26,7 @@ export function TopBar({
     );
 
   return (
-    <header className="nx-no-print sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-canvas/80 px-4 backdrop-blur-xl sm:gap-3 lg:px-5">
+    <header className="nx-no-print sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b border-line bg-canvas px-4 sm:gap-2.5 lg:px-5">
       <button
         onClick={() => setOpen(true)}
         aria-label="Open menu"
@@ -38,14 +38,14 @@ export function TopBar({
       <button
         onClick={openPalette}
         className={cn(
-          "tap-44 group flex h-9 min-w-0 max-w-[420px] flex-1 items-center gap-2.5 rounded-[var(--r-control)]",
-          "border border-line bg-sunk px-3 text-left transition-colors",
-          "hover:border-line-strong hover:bg-hover",
+          "tap-44 group flex h-8 min-w-0 max-w-[360px] flex-1 items-center gap-2 rounded-[var(--r-control)]",
+          "border border-line bg-canvas px-2.5 text-left transition-colors",
+          "hover:border-line-strong",
         )}
       >
-        <Ico icon={TbSearch} motion="scan" size={16} className="shrink-0 text-ink-4" />
-        <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink-4">
-          Jump to…
+        <Ico icon={TbSearch} motion="scan" size={15} className="shrink-0 text-ink-4" />
+        <span className="min-w-0 flex-1 truncate text-[13px] text-ink-4">
+          Search or jump to…
         </span>
         <kbd className="hidden shrink-0 rounded-[var(--r-tight)] border border-line px-1.5 py-0.5 text-[10.5px] tabular-nums text-ink-4 sm:inline">
           ⌘K
@@ -60,15 +60,12 @@ export function TopBar({
         aria-label="Download Trove"
         title="Download Trove"
         className={cn(
-          "hover-glow tap-44 group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line",
-          "bg-raised px-2.5 text-[12.5px] font-medium text-ink-2 transition-colors",
-          "hover:border-accent/40 hover:bg-accent/[0.06] hover:text-ink",
-          "sm:px-3",
+          "tap-44 group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--r-control)]",
+          "px-2 text-[13px] text-ink-3 transition-colors hover:bg-hover hover:text-ink",
         )}
       >
-        <Ico icon={FiDownload} motion="nudge" size={15} className="text-ink-3 group-hover:text-accent" />
-        <span className="hidden sm:inline">Download</span>
-        <span className="hidden font-semibold text-ink md:inline">Trove</span>
+        <Ico icon={FiDownload} motion="nudge" size={15} />
+        <span className="hidden md:inline">Download app</span>
       </button>
 
       <NotificationsPanel due={due} />
@@ -81,7 +78,7 @@ export function TopBar({
         type="button"
         onClick={() => setSettingsOpen(true)}
         aria-label="Account settings"
-        className="tap-44 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-[12px] font-semibold text-accent transition-transform duration-[var(--t-hover)] ease-[var(--ease-ui)] hover:scale-105 sm:h-8 sm:w-8"
+        className="tap-44 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line bg-sunk text-[12px] font-semibold text-ink-2 transition-colors hover:border-line-strong hover:text-ink sm:h-7 sm:w-7"
       >
         {(initial ?? "Y").slice(0, 1).toUpperCase()}
       </button>

@@ -123,7 +123,7 @@ export function StarterCards({
     <section className={className} aria-labelledby="starter-heading">
       <h2
         id="starter-heading"
-        className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-4"
+        className="mb-2.5 text-left text-[12.5px] font-medium text-ink-4"
       >
         Start with something
       </h2>
@@ -139,24 +139,20 @@ export function StarterCards({
             type="button"
             onClick={() => onPick(s.prompt)}
             className={cn(
-              "group flex flex-col rounded-[var(--r-card)] border border-line bg-canvas p-4 text-left",
-              "shadow-[var(--sh-1)] transition-[transform,border-color,box-shadow] duration-[var(--t-hover)]",
-              "hover:-translate-y-[2px] hover:border-accent/35 hover:shadow-[var(--sh-2)]",
+              "group flex flex-col rounded-[var(--r-card)] border border-line bg-canvas p-3.5 text-left",
+              "transition-colors duration-[var(--t-hover)] hover:border-line-strong hover:bg-sunk",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
             )}
           >
             <span className="flex items-center gap-2.5">
-              <span
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-control)]"
-                style={{ background: `color-mix(in srgb, ${s.tone} 14%, transparent)` }}
-              >
-                <s.icon size={16} style={{ color: `color-mix(in srgb, ${s.tone}, #000 var(--tint-darken))` }} />
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[var(--r-control)] border border-line bg-sunk text-ink-3">
+                <s.icon size={15} />
               </span>
               {/* Two lines of space whether the title needs them or not, so a
                   card whose title wraps does not push its description below
                   its neighbours'. The alternative is copy that may never grow,
                   which is not a thing a layout should depend on. */}
-              <span className="flex min-w-0 flex-1 items-center text-[14px] font-medium leading-snug text-ink sm:min-h-[2.7em]">
+              <span className="flex min-w-0 flex-1 items-center text-[13.5px] font-medium leading-snug text-ink">
                 {s.label}
               </span>
               <FiArrowRight
@@ -165,17 +161,10 @@ export function StarterCards({
               />
             </span>
 
-            <span className="mt-2.5 block text-[12.5px] leading-relaxed text-ink-3">
+            <span className="mt-1.5 block text-[12.5px] leading-relaxed text-ink-4">
               {s.copy}
             </span>
 
-            {/* Decoration, and on a phone it is decoration that costs a
-                third of the card's height — four of these turned the home
-                screen into a long scroll. The icon and the sentence carry the
-                card at that width. */}
-            <span className="mt-3.5 hidden rounded-[var(--r-control)] border border-line bg-sunk p-2.5 sm:block">
-              <Preview kind={s.preview} tone={s.tone} />
-            </span>
           </button>
         ))}
       </div>

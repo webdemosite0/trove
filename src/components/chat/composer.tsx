@@ -239,10 +239,10 @@ export function Composer({
       data-disabled={locked}
       data-focused={focused}
       className={cn(
-        "composer group relative w-full max-w-full border backdrop-blur-md transition-all duration-200",
+        "composer group relative w-full max-w-full border transition-[border-color,box-shadow] duration-150",
         dark
-          ? "rounded-xl border-white/10 bg-[#141417] shadow-[0_18px_50px_-24px_rgba(0,0,0,0.65)] focus-within:border-white/25 focus-within:shadow-[0_24px_70px_-24px_rgba(0,0,0,0.8)]"
-          : "bg-raised/95 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.28)] focus-within:border-accent/40 focus-within:shadow-[0_24px_70px_-24px_rgba(99,102,241,0.45)]",
+          ? "rounded-xl border-white/10 bg-[#141417] shadow-[var(--shadow-sm)] focus-within:border-white/25"
+          : "bg-raised shadow-[var(--shadow-sm)] focus-within:border-line-strong focus-within:shadow-[var(--shadow-md)]",
         !dark && (compact ? "rounded-xl border-line" : "rounded-xl border-line"),
         locked && "opacity-60",
       )}
@@ -451,11 +451,9 @@ export function Composer({
             disabled={!ready}
             aria-label="Send"
             className={cn(
-              "hover-glow grid place-items-center rounded-full transition-all duration-200",
-              "size-11",
-              ready
-                ? "btn-grad text-white shadow-[0_8px_24px_-8px_var(--btn-glow)] hover:shadow-[0_10px_28px_-6px_var(--btn-glow)] active:scale-95"
-                : "bg-sunk text-ink-4",
+              "grid place-items-center rounded-[var(--r-control)] transition-colors duration-150",
+              "size-9",
+              ready ? "btn-grad text-white" : "bg-sunk text-ink-4",
             )}
           >
             {busy && !hasContent ? (

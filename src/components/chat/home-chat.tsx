@@ -71,32 +71,20 @@ export function HomeChat({
   if (turns.length === 0) {
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(99,102,241,0.1), transparent 60%), radial-gradient(ellipse 30% 24% at 90% 30%, rgba(244,114,182,0.06), transparent 55%)",
-          }}
-        />
-        <div className="relative z-[1] flex flex-1 flex-col items-center px-5 pb-14 pt-[6vh] lg:pt-[9vh]">
-          <div className="w-full max-w-[720px] text-center">
+        <div className="relative flex flex-1 flex-col items-center px-5 pb-14 pt-[8vh] lg:pt-[12vh]">
+          <div className="w-full max-w-[680px] text-center">
             <div className="nx-rise">
-              <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-violet-400/40 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-sky-500/10 px-3 py-1 text-[12px] font-medium text-violet-700 dark:border-violet-300/30 dark:text-violet-300">
-                <span className="text-[13px]">✦</span>
-                Powered by Trove AI
-              </div>
               <Greeting name={name} />
-              <h1 className="mt-2.5 text-[clamp(2.1rem,1.1rem+2.8vw,3.35rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">
-                What will you build today?
+              <h1 className="mt-2 text-[clamp(1.75rem,1.2rem+1.6vw,2.4rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-ink">
+                What should we make today?
               </h1>
-              <p className="mx-auto mt-3 max-w-[42ch] text-[15.5px] leading-relaxed text-ink-3">
-                Describe an idea, automate a task, or create something new.
+              <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px] leading-relaxed text-ink-3">
+                Describe the work. Trove builds the file: a doc, a sheet, a deck or a site.
               </p>
             </div>
 
             <div
-              className="nx-rise mt-8"
+              className="nx-rise mt-7"
               style={{ animationDelay: "80ms", animationFillMode: "backwards" }}
             >
               <Composer
@@ -134,23 +122,15 @@ export function HomeChat({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 30% at 50% 0%, rgba(99,102,241,0.07), transparent 65%)",
-        }}
-      />
-      <header className="relative z-20 shrink-0 border-b border-line/70 bg-canvas/80 px-5 backdrop-blur-md lg:px-8">
-        <div className="mx-auto flex h-14 max-w-[760px] items-center gap-3">
-          <p className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink-2">{turns[0]?.text.slice(0, 64)}</p>
+      <header className="relative z-20 shrink-0 border-b border-line bg-canvas px-5 lg:px-8">
+        <div className="mx-auto flex h-12 max-w-[760px] items-center gap-3">
+          <p className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-ink-2">{turns[0]?.text.slice(0, 64)}</p>
           <button
             type="button"
             onClick={clear}
-            className="hover-glow shrink-0 rounded-full border border-line bg-raised px-3.5 py-1.5 text-[13px] font-medium text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
+            className="shrink-0 rounded-[var(--r-control)] border border-line bg-raised px-3 py-1 text-[13px] font-medium text-ink-2 shadow-[var(--shadow-sm)] transition-colors hover:bg-hover hover:text-ink"
           >
-            New Chat
+            New chat
           </button>
         </div>
       </header>
@@ -192,7 +172,7 @@ export function HomeChat({
         </div>
       </div>
 
-      <div className="relative shrink-0 bg-gradient-to-t from-canvas via-canvas/95 to-transparent px-5 pb-5 pt-6 lg:px-8">
+      <div className="relative shrink-0 bg-canvas px-5 pb-4 pt-3 lg:px-8">
         <div className="mx-auto max-w-[760px]">
           <Composer onSend={send} placeholder="Reply…" busy={busy} onStop={stop} compact {...composerProps} />
           <p className="mt-2.5 text-center text-[11.5px] text-ink-4">

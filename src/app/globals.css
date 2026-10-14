@@ -67,8 +67,21 @@
   --r-control: 8px;
   --r-chip: 999px;
   --r-hero: 16px;
+  --r-card: 12px;
+  --r-tight: 6px;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.45), 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 16px 40px -12px rgb(0 0 0 / 0.55), 0 1px 2px rgb(0 0 0 / 0.3);
+  /* Older names used across components, mapped onto the calm scale. */
+  --sh-1: var(--shadow-sm);
+  --sh-2: var(--shadow-md);
+  --sh-3: var(--shadow-lg);
+  --elev: var(--shadow-md);
+  --elev-lift: var(--shadow-lg);
+  --t-hover: 160ms;
+  --t-panel: 200ms;
+  --ease-ui: cubic-bezier(0.32, 0.72, 0, 1);
+  --tint-darken: 30%;
   color-scheme: dark;
 }
 
@@ -102,6 +115,7 @@
   --focus-line: rgb(109 40 217 / 0.7);
   --shadow-sm: 0 1px 2px rgb(16 16 20 / 0.05);
   --shadow-md: 0 4px 16px -6px rgb(16 16 20 / 0.12), 0 1px 2px rgb(16 16 20 / 0.05);
+  --shadow-lg: 0 16px 40px -12px rgb(16 16 20 / 0.18), 0 1px 2px rgb(16 16 20 / 0.05);
   color-scheme: light;
 }
 
@@ -135,6 +149,7 @@
   --focus-line: rgb(167 139 250 / 0.75);
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.45), 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 16px 40px -12px rgb(0 0 0 / 0.55), 0 1px 2px rgb(0 0 0 / 0.3);
   color-scheme: dark;
 }
 

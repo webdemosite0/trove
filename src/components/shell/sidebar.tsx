@@ -114,13 +114,11 @@ function NavLink({
           aria-label={item.label}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "mx-auto flex h-9 w-9 items-center justify-center rounded-xl transition-all",
-            active
-              ? "bg-accent/15 text-ink ring-1 ring-accent/40"
-              : "text-ink-2 hover:bg-hover hover:text-ink",
+            "mx-auto flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+            active ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
           )}
         >
-          <Icon size={19} />
+          <Icon size={18} />
         </Link>
       </Tooltip>
     );
@@ -132,13 +130,11 @@ function NavLink({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-10 items-center gap-3 rounded-xl px-3 text-[13.5px] transition-colors",
-        active
-          ? "bg-hover font-medium text-ink ring-1 ring-line"
-          : "text-ink-2 hover:bg-hover hover:text-ink",
+        "flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13.5px] transition-colors",
+        active ? "bg-hover font-medium text-ink" : "text-ink-3 hover:bg-hover hover:text-ink",
       )}
     >
-      <Icon size={18} className={cn("shrink-0", active ? "text-ink" : "text-ink-3")} />
+      <Icon size={16} className={cn("shrink-0", active ? "text-ink" : "text-ink-4")} />
       <span className="min-w-0 truncate">{item.label}</span>
     </Link>
   );
@@ -192,7 +188,7 @@ function AccountMenu({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors hover:bg-hover"
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-hover"
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sunk text-[12px] font-semibold text-ink ring-1 ring-line">
           {initial}
@@ -210,7 +206,7 @@ function AccountMenu({
       </button>
 
       {open ? (
-        <div className="absolute bottom-full left-0 z-50 mb-2 w-full min-w-[200px] overflow-hidden rounded-xl border border-line bg-raised py-1 shadow-lg">
+        <div className="absolute bottom-full left-0 z-50 mb-2 w-full min-w-[200px] overflow-hidden rounded-lg border border-line bg-raised py-1 shadow-[var(--shadow-md)]">
           <button
             type="button"
             className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-ink-2 hover:bg-hover"
@@ -322,7 +318,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={closeDrawer}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink lg:hidden"
           aria-label="Close sidebar"
         >
           <FiX size={18} />
@@ -331,7 +327,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={toggleCollapsed}
-          className="hidden h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink lg:flex"
+          className="hidden h-9 w-9 items-center justify-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink lg:flex"
           aria-label={compact ? "Expand sidebar" : "Collapse sidebar"}
           title={compact ? "Expand" : "Collapse"}
         >
@@ -350,26 +346,26 @@ export function Sidebar({
               href={isTros ? "/tros/new" : "/chat"}
               onClick={onNavigate}
               aria-label={isTros ? "New Tro" : "New chat"}
-              className="btn-grad mx-auto flex h-10 w-10 items-center justify-center rounded-xl"
+              className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-raised text-ink shadow-[var(--shadow-sm)] transition-colors hover:bg-hover"
             >
-              <FiPlus size={18} />
+              <FiPlus size={17} />
             </Link>
           </Tooltip>
         ) : (
           <Link
             href={isTros ? "/tros/new" : "/chat"}
             onClick={onNavigate}
-            className="btn-grad flex h-10 w-full items-center justify-center gap-2 rounded-xl text-[13.5px] font-semibold"
+            className="flex h-9 w-full items-center gap-2 rounded-lg border border-line bg-raised px-2.5 text-[13.5px] font-medium text-ink shadow-[var(--shadow-sm)] transition-colors hover:bg-hover"
           >
-            <FiPlus size={16} />
-            {isTros ? "New Tro" : "New chat"}
+            <FiPlus size={15} className="text-ink-3" />
+            <span className="flex-1 text-left">{isTros ? "New Tro" : "New chat"}</span>
           </Link>
         )}
       </div>
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden px-2 pb-3">
         {!compact ? (
-          <p className="px-2 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+          <p className="px-2.5 pb-1 pt-2 text-[11.5px] font-medium text-ink-4">
             {isTros ? "Tros" : "Workspace"}
           </p>
         ) : (
@@ -389,7 +385,7 @@ export function Sidebar({
         {createItems.length > 0 ? (
           <>
             {!compact ? (
-              <p className="px-2 pb-1.5 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+              <p className="px-2.5 pb-1 pt-5 text-[11.5px] font-medium text-ink-4">
                 Create
               </p>
             ) : (
@@ -410,7 +406,7 @@ export function Sidebar({
         {moreItems.length > 0 ? (
           <>
             {!compact ? (
-              <p className="px-2 pb-1.5 pt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-4">
+              <p className="px-2.5 pb-1 pt-5 text-[11.5px] font-medium text-ink-4">
                 More
               </p>
             ) : (
@@ -451,7 +447,7 @@ export function Sidebar({
                   onNavigate();
                   openSettings("general");
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
                 aria-label="Settings"
               >
                 <FiSettings size={16} />
@@ -461,7 +457,7 @@ export function Sidebar({
               <Link
                 href={isTros ? "/plans?from=tros" : "/plans?from=trove"}
                 onClick={onNavigate}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
                 aria-label="Plans"
               >
                 <FiCreditCard size={16} />
@@ -474,7 +470,7 @@ export function Sidebar({
                   onNavigate();
                   openSettings("help");
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-3 hover:bg-hover hover:text-ink"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-4 hover:bg-hover hover:text-ink"
                 aria-label="Help"
               >
                 <TbHelpCircle size={16} />
@@ -486,7 +482,7 @@ export function Sidebar({
         ) : null}
 
         {balance && !compact ? (
-          <div className="flex items-center justify-between rounded-xl bg-sunk px-3 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-line px-2.5 py-1.5">
             <span className="text-[11px] text-ink-4">Credits</span>
             <span className="text-[11px] font-semibold tabular-nums text-ink">
               {formatCredits(Number(balance.remaining))}

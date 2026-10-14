@@ -191,7 +191,7 @@ export function MobileShell({
       )}
     >
       <header
-        className="mobile-shell-header sticky top-0 z-40 flex items-center gap-1.5 border-b border-line/55 bg-canvas/90 px-2 backdrop-blur-2xl"
+        className="mobile-shell-header sticky top-0 z-40 flex items-center gap-1.5 border-b border-line bg-canvas px-2"
         style={{
           minHeight: "calc(52px + env(safe-area-inset-top))",
           paddingTop: "env(safe-area-inset-top)",
@@ -201,14 +201,14 @@ export function MobileShell({
           type="button"
           aria-label="Open navigation"
           onClick={() => setOpen(true)}
-          className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+          className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition-colors active:bg-hover"
         >
           <Ico icon={FiMenu} motion="menu" size={20} />
         </button>
 
         <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
           {isChat ? <TroveOrb size={22} /> : null}
-          <span className="truncate text-[14.5px] font-semibold tracking-[-0.015em] text-ink">
+          <span className="truncate text-[15px] font-semibold text-ink">
             {title}
           </span>
         </div>
@@ -219,14 +219,14 @@ export function MobileShell({
             type="button"
             aria-label={studioNewLabel}
             onClick={() => router.push(studioNewHref)}
-            className="mobile-header-swap grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+            className="mobile-header-swap grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition-colors active:bg-hover"
           >
             <Ico icon={FiPlus} motion="pop" size={20} />
           </button>
           <Link
             href="/reminders"
             aria-label={dueCount > 0 ? `Reminders, ${dueCount} due` : "Reminders"}
-            className="relative grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+            className="relative grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition-colors active:bg-hover"
           >
             <Ico icon={FiBell} motion="ring" size={20} />
             {dueCount > 0 ? (
@@ -241,7 +241,7 @@ export function MobileShell({
             aria-expanded={menuOpen}
             aria-haspopup="menu"
             onClick={() => setMenuOpen((v) => !v)}
-            className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition active:scale-95 active:bg-hover"
+            className="grid size-11 shrink-0 place-items-center rounded-full text-ink-2 transition-colors active:bg-hover"
           >
             <Ico icon={FiMoreHorizontal} motion="nudge" size={20} />
           </button>
@@ -259,7 +259,7 @@ export function MobileShell({
               <div
                 role="menu"
                 aria-label="More actions"
-                className="mobile-more-menu fixed right-2 z-[71] w-60 overflow-hidden rounded-xl border border-line/70 bg-raised shadow-2xl"
+                className="mobile-more-menu fixed right-2 z-[71] w-60 overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--shadow-md)]"
                 style={{ top: "calc(58px + env(safe-area-inset-top))" }}
               >
                 <div className="py-1.5">
@@ -315,7 +315,7 @@ export function MobileShell({
       {!isChat && !studio ? (
         <nav
           aria-label="Primary"
-          className="mobile-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line/60 bg-canvas/92 backdrop-blur-2xl"
+          className="mobile-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <ul className="mx-auto flex h-14 max-w-[560px] items-stretch justify-between px-1">
@@ -327,8 +327,8 @@ export function MobileShell({
                     href={tab.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "mobile-tab flex w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-medium transition active:scale-95",
-                      active ? "text-accent" : "text-ink-4",
+                      "mobile-tab flex w-full flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition-colors",
+                      active ? "text-ink" : "text-ink-4",
                     )}
                   >
                     <Ico
@@ -336,7 +336,7 @@ export function MobileShell({
                       motion={tab.motion}
                       size={20}
                       active={active}
-                      className={active ? "text-accent" : "text-ink-3"}
+                      className={active ? "text-ink" : "text-ink-4"}
                     />
                     <span className="truncate">{tab.label}</span>
                   </Link>
@@ -375,9 +375,9 @@ export function MobileShell({
             <Link
               href="/chat"
               onClick={() => setOpen(false)}
-              className="btn-grad flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold text-white"
+              className="flex h-10 w-full items-center gap-2 rounded-lg border border-line bg-raised px-3 text-[14px] font-medium text-ink shadow-[var(--shadow-sm)] transition-colors active:bg-hover"
             >
-              <Ico icon={FiPlus} motion="grow" size={15} />
+              <Ico icon={FiPlus} motion="grow" size={15} className="text-ink-3" />
               New chat
             </Link>
           </div>
