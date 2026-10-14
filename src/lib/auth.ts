@@ -260,6 +260,9 @@ export async function startSession(
     path: "/",
     ...(persistent ? { maxAge: SESSION_DAYS * 86_400 } : {}),
   });
+  // Not a secret: only says "this browser has an account", so a signed-out
+  // visit lands on sign-in instead of sign-up.
+  jar.set("nx_known", "1", { sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 365 * 86_400 });
 }
 
 export async function resetPassword(userId: string, password: string) {

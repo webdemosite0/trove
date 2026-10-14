@@ -15,6 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { finishOnboarding } from "@/app/actions/onboarding";
+import { clearAnonymousDraft, loadAnonymousDraft } from "@/lib/anonymous-draft";
 import { BrandLockup } from "@/components/brand/logo";
 import { TroveOrb } from "@/components/brand/orb";
 import { ThemeToggle } from "@/components/shell/theme";
@@ -88,6 +89,17 @@ function recommendedPlan(accountType: "business" | "individual" | "student" | nu
   return { id: "free", label: "Free", why: "200 credits a month, no card" };
 }
 
+/** A sensible first stop for a homepage brief; the person can still change it. */
+function guessGoal(text: string): (typeof GOALS)[number]["id"] {
+  const t = text.toLowerCase();
+  // Documents first: "a one-page investor update" is a document, not a website.
+  if (/\b(memo|report|proposal|brief|letter|document|doc|update|plan|guide|deck)\b/.test(t)) return "documents";
+  if (/\b(spreadsheet|sheet|model|budget|forecast|table|csv)\b/.test(t)) return "spreadsheets";
+  if (/\b(site|website|landing|web ?page|portfolio|shop|store)\b/.test(t)) return "website";
+  if (/\b(app|script|code|api|bot)\b/.test(t)) return "code";
+  return "explore";
+}
+
 const STEP_LABELS = ["Your first build", "About you", "Business context", "Ready"];
 
 export function OnboardingFlow({ name, email }: { name: string; email: string }) {
@@ -95,6 +107,18 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
   const [displayName, setDisplayName] = useState(name || "");
   const [goal, setGoal] = useState<(typeof GOALS)[number]["id"] | null>(null);
   const [idea, setIdea] = useState("");
+
+  // A brief typed on the homepage before signing up: don't ask for it twice.
+  // It's taken over here (and leaves with the redirect as ?q=), so chat won't offer it again.
+  useEffect(() => {
+    const saved = loadAnonymousDraft<{ text?: unknown }>("chat");
+    if (!saved) return;
+    clearAnonymousDraft("chat");
+    const text = typeof saved.data?.text === "string" ? saved.data.text.trim().slice(0, 500) : "";
+    if (!text) return;
+    setIdea((current) => current || text);
+    setGoal((current) => current ?? guessGoal(text));
+  }, []);
   const [role, setRole] = useState<string | null>(null);
   const [accountType, setAccountType] = useState<"business" | "individual" | "student" | null>(null);
   const [businessName, setBusinessName] = useState("");

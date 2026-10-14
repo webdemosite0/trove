@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Backdrop } from "@/components/shell/backdrop";
+import { ChatBubble } from "@/components/landing/chat-bubble";
 import { Footer } from "@/components/landing/footer";
 import { LandingNav } from "@/components/landing/nav";
 import { Hero } from "@/components/landing/hero";
@@ -78,6 +79,7 @@ export default async function Landing() {
       </main>
 
       <Footer />
+      <ChatBubble />
     </div>
   );
 }

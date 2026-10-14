@@ -37,31 +37,15 @@ export function Backdrop() {
         />
       </div>
 
-      {/* Dark theme — richer depth, soft blue/violet atmosphere */}
+      {/* Dark theme — the same flat #212121 as the homepage, with faint violet glows */}
       <div className="absolute inset-0 nx-bg-dark">
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, #0a0718 0%, #080714 42%, #060611 100%)",
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 50% at 50% -10%, rgba(124,58,237,0.30), transparent 60%)," +
-              "radial-gradient(ellipse 45% 40% at 12% 20%, rgba(37,99,235,0.22), transparent 55%)," +
-              "radial-gradient(ellipse 40% 35% at 88% 15%, rgba(217,70,239,0.16), transparent 55%)," +
-              "radial-gradient(ellipse 50% 40% at 70% 90%, rgba(14,165,233,0.13), transparent 60%)," +
-              "radial-gradient(ellipse 38% 32% at 15% 88%, rgba(45,212,191,0.09), transparent 58%)",
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 45% at 50% 100%, rgba(0,0,0,0.45), transparent 55%)",
+              "radial-gradient(ellipse 50% 42% at 6% 16%, rgba(139,92,246,0.16), transparent 72%)," +
+              "radial-gradient(ellipse 46% 38% at 96% 12%, rgba(99,102,241,0.13), transparent 70%)," +
+              "radial-gradient(ellipse 55% 45% at 90% 92%, rgba(139,92,246,0.08), transparent 74%)",
           }}
         />
       </div>

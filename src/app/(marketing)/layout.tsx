@@ -1,5 +1,6 @@
 import { Backdrop } from "@/components/shell/backdrop";
 import { LandingNav } from "@/components/landing/nav";
+import { ChatBubble } from "@/components/landing/chat-bubble";
 import { Footer } from "@/components/landing/footer";
 
 /**
@@ -25,6 +26,7 @@ export default function MarketingLayout({
       <LandingNav />
       <main className="flex-1">{children}</main>
       <Footer />
+      <ChatBubble />
     </div>
   );
 }

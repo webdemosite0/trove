@@ -242,11 +242,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: WHOP_PIXEL }} />
-        {/* Thunderbolt chat bubble */}
-        <script
-          defer
-          src="https://www.thunderbolt.com/gateway/api/v1/thunderbolt-ui/embed.js"
-        />
+        {/* Thunderbolt chat bubble: public pages only, see components/landing/chat-bubble.tsx */}
         <StructuredData />
       </head>
       <body className="antialiased">

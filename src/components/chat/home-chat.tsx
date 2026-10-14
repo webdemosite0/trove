@@ -1,5 +1,6 @@
 "use client";
 
+import { useRestoredBrief } from "@/lib/use-restored-brief";
 import { useEffect, useState } from "react";
 
 import { FailureNote } from "@/components/ui/failure-note";
@@ -30,6 +31,7 @@ export function HomeChat({
 }) {
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = useState(initialDraft);
+  useRestoredBrief({ initial: initialDraft, enabled: !restored, onRestore: setDraft });
   const [activity, setActivity] = useState<Recent[]>(initialActivity);
 
   useEffect(() => {
@@ -98,6 +100,7 @@ export function HomeChat({
               style={{ animationDelay: "80ms", animationFillMode: "backwards" }}
             >
               <Composer
+                key={draft ? "brief" : "empty"}
                 onSend={send}
                 initialValue={draft}
                 placeholder="Ask anything, or describe what to create…"

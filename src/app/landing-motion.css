@@ -159,6 +159,19 @@
   animation: lp-aurora 18s ease-in-out infinite;
 }
 
+/* Dark theme: the homepage backdrop stayed lavender, washing out the white
+   headline and nav. Match the app's dark surface (#212121) with faint glows. */
+:root[data-theme="dark"] .landing-scene,
+:root[data-theme="dark"] .landing-scene__photo {
+  background-color: #212121;
+}
+:root[data-theme="dark"] .landing-scene__photo {
+  background-image:
+    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(139, 92, 246, 0.16), transparent 72%),
+    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(99, 102, 241, 0.13), transparent 70%),
+    radial-gradient(ellipse 55% 45% at 90% 92%, rgba(139, 92, 246, 0.08), transparent 74%);
+}
+
 /* Grid lines removed */
 .landing-grid {
   display: none;

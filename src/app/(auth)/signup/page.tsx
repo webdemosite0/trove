@@ -11,9 +11,9 @@ export const metadata = {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; ref?: string }>;
+  searchParams: Promise<{ error?: string; ref?: string; next?: string }>;
 }) {
-  const { error, ref } = await searchParams;
+  const { error, ref, next } = await searchParams;
   return (
     <AuthCard
       mode="signup"
@@ -21,6 +21,7 @@ export default async function SignupPage({
       microsoftEnabled={microsoftConfigured()}
       oauthError={error}
       referralCode={ref}
+      next={next}
     />
   );
 }

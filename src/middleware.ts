@@ -205,7 +205,8 @@ export function middleware(req: NextRequest) {
   }
 
   const url = req.nextUrl.clone();
-  url.pathname = "/login";
+  // Returning people sign in; first-time visitors (no account on this browser) sign up.
+  url.pathname = req.cookies.has("nx_known") ? "/login" : "/signup";
   url.search = "";
   if (pathname !== "/") url.searchParams.set("next", pathname + search);
 

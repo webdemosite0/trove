@@ -1,5 +1,6 @@
 "use client";
 
+import { saveAnonymousDraft } from "@/lib/anonymous-draft";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -148,6 +149,9 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
       router.push("/chat");
       return;
     }
+    // Kept on this device too, so the brief survives sign-up, Google/Microsoft
+    // sign-in and onboarding, whichever way the visitor gets into the app.
+    saveAnonymousDraft("chat", { text: idea.slice(0, 2000) }, "/chat");
     router.push(`/chat?q=${encodeURIComponent(idea.slice(0, 2000))}`);
   }
 

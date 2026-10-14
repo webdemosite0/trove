@@ -108,9 +108,9 @@
   --color-ink-4: #8e8e96;
   --color-line: #2c2c30;
   --color-line-strong: #3f3f45;
-  --color-accent: #8ab4f8;
-  --color-accent-soft: #1a2332;
-  --color-violet: #a0a0a0;
+  --color-accent: #a78bfa;
+  --color-accent-soft: #261f3d;
+  --color-violet: #a78bfa;
   --color-positive: #81c995;
   --color-positive-soft: #1a2a1f;
   --color-caution: #fdd663;
@@ -118,12 +118,12 @@
   --color-critical-soft: #2a1a1a;
   --shade: #ffffff;
   --ground: #000000;
-  --btn-a: #3c4043;
-  --btn-b: #2f3133;
+  --btn-a: #7c3aed;
+  --btn-b: #6d28d9;
   --btn-ink: #ffffff;
-  --btn-glow: rgb(138 180 248 / 0.25);
-  --focus-ring: rgb(138 180 248 / 0.28);
-  --focus-line: rgb(138 180 248 / 0.7);
+  --btn-glow: rgb(124 58 237 / 0.35);
+  --focus-ring: rgb(167 139 250 / 0.3);
+  --focus-line: rgb(167 139 250 / 0.75);
   color-scheme: dark;
 }
 

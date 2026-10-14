@@ -11,7 +11,10 @@
  * once the work is actually created.
  */
 
-export type AnonymousDraftKind = "tro";
+export type AnonymousDraftKind = "tro" | "chat";
+
+/** Drafts older than this are ignored (and removed) when read. */
+const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const PREFIX = "trove:anon-draft:";
 
@@ -68,6 +71,10 @@ export function loadAnonymousDraft<T = Record<string, unknown>>(
   try {
     const parsed = JSON.parse(raw) as AnonymousDraft<T>;
     if (!parsed || typeof parsed !== "object" || parsed.kind !== kind) return null;
+    if (typeof parsed.savedAt !== "number" || Date.now() - parsed.savedAt > MAX_AGE_MS) {
+      store.removeItem(keyFor(kind));
+      return null;
+    }
     return parsed;
   } catch {
     return null;

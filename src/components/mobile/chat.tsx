@@ -1,5 +1,6 @@
 "use client";
 
+import { useRestoredBrief } from "@/lib/use-restored-brief";
 import * as React from "react";
 import Link from "next/link";
 import {
@@ -51,6 +52,7 @@ export function MobileChat({
 }) {
   const [mode, setMode] = React.useState<ModeId>(DEFAULT_MODE);
   const [draft, setDraft] = React.useState(initialDraft);
+  useRestoredBrief({ initial: initialDraft, enabled: !restored, onRestore: setDraft });
   const { openSettings } = useNav();
   const [activity, setActivity] = React.useState<Recent[]>(initialActivity);
 

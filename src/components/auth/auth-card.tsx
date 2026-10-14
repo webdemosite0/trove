@@ -45,6 +45,17 @@ function MicrosoftIcon() {
   );
 }
 
+/** The homepage brief inside next=/chat?q=…, if any. */
+function briefFromNext(next?: string): string {
+  if (!next || !next.startsWith("/chat")) return "";
+  try {
+    const q = new URL(next, "https://x.invalid").searchParams.get("q") ?? "";
+    return q.trim().slice(0, 300);
+  } catch {
+    return "";
+  }
+}
+
 export function AuthCard({
   mode,
   googleEnabled = true,
@@ -66,6 +77,15 @@ export function AuthCard({
   referralCode?: string;
 }) {
   const isLogin = mode === "login";
+  // A brief typed on the homepage travels as next=/chat?q=…; show it so people know it's kept.
+  const brief = briefFromNext(next);
+  const withNext = (path: string, extra?: string) => {
+    const params = new URLSearchParams();
+    if (extra) params.set("ref", extra);
+    if (next) params.set("next", next);
+    const q = params.toString();
+    return q ? `${path}?${q}` : path;
+  };
   const [state, action, pending] = useActionState<AuthState, FormData>(
     isLogin ? logIn : signUp,
     {},
@@ -111,6 +131,16 @@ export function AuthCard({
             : "Create one workspace for your AI projects, business context, and connected tools."}
         </p>
       </div>
+
+      {brief ? (
+        <div className="mt-5 rounded-xl border border-accent/20 bg-accent-soft px-3.5 py-3 text-left">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-accent">Your brief is saved</p>
+          <p className="mt-1 line-clamp-3 text-[13px] leading-5 text-ink-2">&ldquo;{brief}&rdquo;</p>
+          <p className="mt-1 text-[12px] text-ink-3">
+            {isLogin ? "Sign in and Trove picks it up in chat." : "Create your free account and Trove picks it up in chat."}
+          </p>
+        </div>
+      ) : null}
 
       {justVerified || passwordReset ? (
         <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-emerald-300/40 bg-emerald-500/10 dark:border-emerald-400/20 px-3.5 py-3 text-left">
@@ -287,7 +317,7 @@ export function AuthCard({
           <>
             New to Trove?{" "}
             <Link
-              href={refCode ? `/signup?ref=${encodeURIComponent(refCode)}` : "/signup"}
+              href={withNext("/signup", refCode || undefined)}
               className="font-semibold text-accent transition hover:opacity-80"
             >
               Create account
@@ -296,7 +326,7 @@ export function AuthCard({
         ) : (
           <>
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-accent transition hover:opacity-80">
+            <Link href={withNext("/login")} className="font-semibold text-accent transition hover:opacity-80">
               Login
             </Link>
           </>
