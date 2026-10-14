@@ -34,16 +34,20 @@ export default async function StudioLayout({
   if (!user) redirect("/login");
 
   if (await isMobile()) {
+    // Studio pages call useNav(), so the phone layout needs the provider too
+    // (without it Documents, Sheets, Slides and Design crashed on phones).
     return (
-      <ToastProvider>
-        <Backdrop />
-        <MobileShell
-          user={{ name: user.name, email: user.email }}
-          balance={null}
-        >
-          {children}
-        </MobileShell>
-      </ToastProvider>
+      <NavProvider>
+        <ToastProvider>
+          <Backdrop />
+          <MobileShell
+            user={{ name: user.name, email: user.email }}
+            balance={null}
+          >
+            {children}
+          </MobileShell>
+        </ToastProvider>
+      </NavProvider>
     );
   }
 

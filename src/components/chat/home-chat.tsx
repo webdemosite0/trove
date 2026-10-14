@@ -82,7 +82,7 @@ export function HomeChat({
         <div className="relative z-[1] flex flex-1 flex-col items-center px-5 pb-14 pt-[6vh] lg:pt-[9vh]">
           <div className="w-full max-w-[720px] text-center">
             <div className="nx-rise">
-              <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-violet-300/30 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-sky-500/10 px-3 py-1 text-[12px] font-medium text-violet-300">
+              <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-violet-400/40 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-sky-500/10 px-3 py-1 text-[12px] font-medium text-violet-700 dark:border-violet-300/30 dark:text-violet-300">
                 <span className="text-[13px]">✦</span>
                 Powered by Trove AI
               </div>

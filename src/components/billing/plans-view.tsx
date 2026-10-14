@@ -209,7 +209,7 @@ export function PlansView({
             </span>
           </div>
           {currentPlan ? (
-            <span className="rounded-full bg-sunk px-3 py-1 text-[12px] font-medium capitalize text-ink-2">
+            <span className="rounded-full border border-accent/25 bg-accent-soft px-3 py-1 text-[12px] font-medium capitalize text-accent">
               {currentPlan} plan
             </span>
           ) : null}

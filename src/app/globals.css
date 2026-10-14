@@ -219,6 +219,11 @@ body {
   color: var(--btn-ink);
 }
 .btn-grad:hover { filter: brightness(1.05); }
+
+:root[data-theme="dark"] .bg-accent,
+:root[data-theme="dark"] .hover\:bg-accent:hover {
+  background-color: #7c3aed;
+}
 .btn-grad:disabled { opacity: 0.6; }
 .btn-grad,
 .btn-grad * { color: var(--btn-ink); }

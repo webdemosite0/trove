@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Backdrop } from "@/components/shell/backdrop";
 import { PlansBackLink } from "@/components/billing/plans-back-link";
+import { BrandLockup } from "@/components/brand/logo";
 
 /**
  * Billing / plans — full-page, no app sidebar.
@@ -23,10 +24,7 @@ export default function BillingLayout({
               className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-hover"
               aria-label="Trove home"
             >
-              <span className="grid size-8 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-[13px] font-bold text-white shadow-sm shadow-violet-500/30">
-                T
-              </span>
-              <span className="text-[15px] font-semibold tracking-tight text-ink">Trove</span>
+              <BrandLockup orbSize={28} wordSize={17} />
             </Link>
             <span className="hidden h-4 w-px bg-line sm:block" aria-hidden />
             <span className="hidden text-[13px] font-medium text-ink-3 sm:inline">Plans</span>
