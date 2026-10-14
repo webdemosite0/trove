@@ -111,7 +111,7 @@ function MessageRow({
 
         <div
           className={cn(
-            "whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-left text-[12.5px] leading-relaxed",
+            "whitespace-pre-wrap break-words rounded-xl px-3 py-2 text-left text-[12.5px] leading-relaxed",
             mine
               ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-[0_8px_24px_-14px_rgba(79,70,229,.75)]"
               : "border border-line bg-sunk/80 text-ink-2",
@@ -160,7 +160,7 @@ function ChatSurface({
         "flex min-h-0 flex-col overflow-hidden bg-raised",
         compact
           ? "h-full"
-          : "rounded-[22px] border border-line-strong shadow-[var(--elev)]",
+          : "rounded-xl border border-line-strong shadow-[var(--elev)]",
       )}
     >
       <header className="relative shrink-0 overflow-hidden border-b border-line px-4 py-3.5">
@@ -221,7 +221,7 @@ function ChatSurface({
         ) : (
           <div className="grid h-full min-h-[180px] place-items-center px-5 text-center">
             <div>
-              <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500/12 to-sky-500/12 text-accent">
+              <span className="mx-auto grid size-11 place-items-center rounded-xl bg-gradient-to-br from-violet-500/12 to-sky-500/12 text-accent">
                 <FiMessageSquare size={18} />
               </span>
               <p className="mt-3 text-[12.5px] font-semibold text-ink">
@@ -239,7 +239,7 @@ function ChatSurface({
         {error ? (
           <p className="mb-2 px-1 text-[10.5px] text-critical">{error}</p>
         ) : null}
-        <div className="flex items-end gap-2 rounded-2xl border border-line-strong bg-raised p-1.5 shadow-[var(--sh-1)] focus-within:border-accent/60">
+        <div className="flex items-end gap-2 rounded-xl border border-line-strong bg-raised p-1.5 shadow-[var(--sh-1)] focus-within:border-accent/60">
           <textarea
             value={text}
             onChange={(event) => setText(event.target.value.slice(0, 4000))}
@@ -541,7 +541,7 @@ export function TeamChatPanel({
             } catch {}
             void load(true);
           }}
-          className="fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-2xl border border-violet-400/20 bg-raised/95 px-3.5 py-2.5 text-[12px] font-semibold text-ink shadow-[var(--elev)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-violet-400/40 xl:flex"
+          className="fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-xl border border-violet-400/20 bg-raised/95 px-3.5 py-2.5 text-[12px] font-semibold text-ink shadow-[var(--elev)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-violet-400/40 xl:flex"
           aria-label="Open Team chat"
         >
           <span className="grid size-7 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 via-fuchsia-500/15 to-sky-500/15 text-violet-500 dark:text-violet-300">
@@ -563,7 +563,7 @@ export function TeamChatPanel({
           setUnread(0);
           void load(true);
         }}
-        className="fixed right-4 top-[4.5rem] z-40 grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
+        className="fixed right-4 top-[4.5rem] z-40 grid size-11 place-items-center rounded-xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
         aria-label="Open Team chat"
       >
         <FiUsers size={19} />
@@ -576,7 +576,7 @@ export function TeamChatPanel({
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm xl:hidden">
-          <div className="absolute inset-x-0 bottom-0 top-12 flex flex-col overflow-hidden rounded-t-[22px] border border-line bg-raised shadow-[var(--elev)]">
+          <div className="absolute inset-x-0 bottom-0 top-12 flex flex-col overflow-hidden rounded-t-xl border border-line bg-raised shadow-[var(--elev)]">
             <ChatSurface
               compact
               team={state.team}

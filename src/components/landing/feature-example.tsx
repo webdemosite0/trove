@@ -13,7 +13,7 @@ import {
 
 function Frame({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-raised shadow-[0_24px_60px_-28px_rgba(15,23,42,0.25)]">
+    <div className="overflow-hidden rounded-xl border border-line bg-raised shadow-[0_24px_60px_-28px_rgba(15,23,42,0.25)]">
       <div className="flex h-10 items-center gap-2 border-b border-line bg-rail/60 px-3">
         <span className="flex gap-1.5" aria-hidden>
           <span className="size-2.5 rounded-full bg-zinc-300" />
@@ -135,7 +135,7 @@ function DeckExample() {
   const slide = DECK[idx];
   return (
     <div>
-      <div className="overflow-hidden rounded-2xl border border-line bg-zinc-900 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.35)]">
+      <div className="overflow-hidden rounded-xl border border-line bg-zinc-900 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.35)]">
         <div className="flex min-h-[300px] flex-col justify-between p-7 sm:min-h-[340px] sm:p-10">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-400/90">

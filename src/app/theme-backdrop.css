@@ -1,18 +1,13 @@
 /*
- * Theme backdrop + surface polish.
- * Static only — no animated layers.
+ * Theme backdrop — clean & calm (2026-10 redesign).
+ * A plain canvas in both themes: no washes, glows or photo backgrounds.
  */
 
 .nx-photo-bg {
   position: absolute;
   inset: 0;
-  background-color: #f7f3ff;
-  background-image:
-    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.35), transparent 72%),
-    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.28), transparent 70%),
-    linear-gradient(180deg, #f7f5ff 0%, #eef1ff 45%, #f3f5fb 100%);
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  background-color: var(--color-canvas);
+  background-image: none;
 }
 
 .nx-photo-bg::after { content: none; }
@@ -23,9 +18,10 @@
 :root[data-theme="dark"] .nx-bg-light { opacity: 0; visibility: hidden; }
 :root[data-theme="dark"] .nx-bg-dark { opacity: 1; visibility: visible; }
 
-/* Dark mode — flat neutral (ChatGPT / Grok style) */
+.nx-bg-light,
+.nx-bg-dark,
 :root[data-theme="dark"] .nx-photo-bg,
 :root[data-theme="dark"] .nx-bg-dark {
-  background-color: #212121 !important;
+  background-color: var(--color-canvas) !important;
   background-image: none !important;
 }

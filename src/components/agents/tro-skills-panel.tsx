@@ -125,7 +125,7 @@ export function TroSkillsPanel() {
           skills.map((skill) => (
             <div
               key={skill.id}
-              className="rounded-2xl border border-line bg-raised p-3"
+              className="rounded-xl border border-line bg-raised p-3"
             >
               <div className="flex items-start gap-2.5">
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/10 text-[18px]">
@@ -177,7 +177,7 @@ export function TroSkillsPanel() {
 
       {showForm ? (
         <div className="fixed inset-0 z-[70] grid place-items-center bg-black/40 p-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-3xl border border-line bg-raised p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border border-line bg-raised p-5 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-[15px] font-semibold text-ink">
                 {editing ? "Edit skill" : "New skill"}

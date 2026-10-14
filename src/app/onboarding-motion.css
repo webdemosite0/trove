@@ -43,17 +43,16 @@
   color: var(--color-ink);
 }
 
+/* Clean & calm: plain canvas behind onboarding, no washes or floating orbs. */
 .ob-bg {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background:
-    radial-gradient(ellipse 55% 42% at 8% 0%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 70%),
-    radial-gradient(ellipse 48% 36% at 96% 8%, color-mix(in oklab, var(--color-violet) 14%, transparent), transparent 68%),
-    linear-gradient(180deg, var(--color-canvas) 0%, var(--color-sunk) 100%);
+  background: var(--color-canvas);
 }
 
 .ob-orbs {
+  display: none;
   pointer-events: none;
   position: absolute;
   inset: 0;

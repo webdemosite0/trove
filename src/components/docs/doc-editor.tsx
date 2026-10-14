@@ -433,7 +433,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
       {/* AI panel */}
       {aiOpen ? (
         <div className="shrink-0 px-4 pb-2 sm:px-6">
-          <div className="rounded-3xl border border-accent/25 bg-raised p-4 shadow-sm">
+          <div className="rounded-xl border border-accent/25 bg-raised p-4 shadow-sm">
             <div className="flex items-center gap-2.5">
               <input
                 value={aiPrompt}
@@ -445,7 +445,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
                   }
                 }}
                 placeholder="Write a… (e.g. launch announcement for our app)"
-                className="h-12 min-w-0 flex-1 rounded-2xl border border-line/60 bg-canvas px-4 text-[15px] text-ink placeholder:text-ink-4 focus:border-accent focus:outline-none"
+                className="h-12 min-w-0 flex-1 rounded-xl border border-line/60 bg-canvas px-4 text-[15px] text-ink placeholder:text-ink-4 focus:border-accent focus:outline-none"
                 aria-label="AI writing prompt"
                 disabled={aiBusy}
               />
@@ -453,7 +453,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
                 type="button"
                 onClick={() => void runAi()}
                 disabled={aiBusy || !aiPrompt.trim()}
-                className="grid h-12 shrink-0 place-items-center rounded-2xl bg-accent px-5 text-[15px] font-semibold text-white transition active:scale-95 disabled:opacity-50"
+                className="grid h-12 shrink-0 place-items-center rounded-xl bg-accent px-5 text-[15px] font-semibold text-white transition active:scale-95 disabled:opacity-50"
               >
                 {aiBusy ? "Writing…" : "Write"}
               </button>
@@ -466,7 +466,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
             ) : null}
 
             {aiError ? (
-              <p className="mt-3 rounded-2xl bg-critical/10 px-4 py-3 text-[13.5px] text-critical">
+              <p className="mt-3 rounded-xl bg-critical/10 px-4 py-3 text-[13.5px] text-critical">
                 {aiError}
               </p>
             ) : null}
@@ -474,21 +474,21 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
             {aiResult ? (
               <div className="mt-3">
                 <div
-                  className="max-h-56 overflow-y-auto overflow-x-auto rounded-2xl border border-line/60 bg-canvas p-4 text-[14px] leading-relaxed text-ink [&_h2]:mb-1 [&_h2]:mt-3 [&_h2]:text-[16px] [&_h2]:font-semibold [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_td]:break-words"
+                  className="max-h-56 overflow-y-auto overflow-x-auto rounded-xl border border-line/60 bg-canvas p-4 text-[14px] leading-relaxed text-ink [&_h2]:mb-1 [&_h2]:mt-3 [&_h2]:text-[16px] [&_h2]:font-semibold [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_td]:break-words"
                   dangerouslySetInnerHTML={{ __html: aiResult }}
                 />
                 <div className="mt-3 flex gap-2.5">
                   <button
                     type="button"
                     onClick={() => insertAi(false)}
-                    className="grid h-11 flex-1 place-items-center rounded-2xl bg-accent text-[14.5px] font-semibold text-white transition active:scale-95"
+                    className="grid h-11 flex-1 place-items-center rounded-xl bg-accent text-[14.5px] font-semibold text-white transition active:scale-95"
                   >
                     Insert into document
                   </button>
                   <button
                     type="button"
                     onClick={() => insertAi(true)}
-                    className="grid h-11 flex-1 place-items-center rounded-2xl bg-sunk text-[14.5px] font-semibold text-ink transition active:scale-95"
+                    className="grid h-11 flex-1 place-items-center rounded-xl bg-sunk text-[14.5px] font-semibold text-ink transition active:scale-95"
                   >
                     Replace document
                   </button>

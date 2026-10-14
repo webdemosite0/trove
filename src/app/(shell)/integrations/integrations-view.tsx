@@ -265,7 +265,7 @@ export function IntegrationsView({
                   key={s.id}
                   href={`/integrations/${s.id}`}
                   title={s.name}
-                  className="group relative grid size-[68px] place-items-center rounded-2xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:scale-105 hover:ring-line-strong"
+                  className="group relative grid size-[68px] place-items-center rounded-xl bg-raised shadow-[var(--elev)] ring-1 ring-line transition hover:scale-105 hover:ring-line-strong"
                 >
                   <ServiceMark id={s.id} name={s.name} size={52} />
                 </Link>
@@ -281,10 +281,10 @@ export function IntegrationsView({
               const on = byId.has(s.id);
               return (
                 <li key={s.id}>
-                  <div className="group flex items-center gap-4 rounded-2xl px-3 py-3.5 transition hover:bg-hover/70">
+                  <div className="group flex items-center gap-4 rounded-xl px-3 py-3.5 transition hover:bg-hover/70">
                     <Link
                       href={`/integrations/${s.id}`}
-                      className="grid size-[62px] shrink-0 place-items-center rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line"
+                      className="grid size-[62px] shrink-0 place-items-center rounded-xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line"
                     >
                       <ServiceMark id={s.id} name={s.name} size={46} />
                     </Link>
@@ -355,8 +355,8 @@ export function IntegrationsView({
             {catalog === null && !catalogError ? (
               <div className="mt-4 grid gap-1 sm:grid-cols-2" aria-label="Loading apps">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 rounded-2xl px-3 py-3">
-                    <div className="size-[54px] shrink-0 animate-pulse rounded-2xl bg-sunk" />
+                  <div key={i} className="flex items-center gap-4 rounded-xl px-3 py-3">
+                    <div className="size-[54px] shrink-0 animate-pulse rounded-xl bg-sunk" />
                     <div className="flex-1 space-y-2">
                       <div className="h-3.5 w-2/5 animate-pulse rounded-md bg-sunk" />
                       <div className="h-3 w-3/5 animate-pulse rounded-md bg-sunk" />
@@ -375,8 +375,8 @@ export function IntegrationsView({
                 <ul className="mt-4 grid gap-1 sm:grid-cols-2">
                   {allApps.slice(0, shownCount).map((a) => (
                     <li key={a.slug}>
-                      <div className="group flex items-center gap-4 rounded-2xl px-3 py-3 transition hover:bg-hover/70">
-                        <span className="grid size-[54px] shrink-0 place-items-center overflow-hidden rounded-2xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line transition group-hover:scale-[1.04]">
+                      <div className="group flex items-center gap-4 rounded-xl px-3 py-3 transition hover:bg-hover/70">
+                        <span className="grid size-[54px] shrink-0 place-items-center overflow-hidden rounded-xl bg-raised shadow-[var(--sh-1)] ring-1 ring-line transition group-hover:scale-[1.04]">
                           {a.logo ? (
                             <img
                               src={a.logo}
@@ -421,7 +421,7 @@ export function IntegrationsView({
                   <button
                     type="button"
                     onClick={() => setShownCount((c) => c + 48)}
-                    className="mt-4 w-full rounded-2xl border border-line bg-raised py-3 text-[13px] font-medium text-ink-3 shadow-[var(--sh-1)] transition hover:border-line-strong hover:text-ink"
+                    className="mt-4 w-full rounded-xl border border-line bg-raised py-3 text-[13px] font-medium text-ink-3 shadow-[var(--sh-1)] transition hover:border-line-strong hover:text-ink"
                   >
                     Show more apps
                   </button>

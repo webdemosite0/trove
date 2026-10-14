@@ -30,13 +30,13 @@ export function TrosTeamOnly() {
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/plans"
-          className="btn-grad inline-flex h-12 items-center justify-center rounded-2xl px-6 text-[14.5px] font-semibold"
+          className="btn-grad inline-flex h-12 items-center justify-center rounded-xl px-6 text-[14.5px] font-semibold"
         >
           View plans
         </Link>
         <Link
           href="/dashboard"
-          className="inline-flex h-12 items-center justify-center rounded-2xl border border-line bg-raised px-6 text-[14px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
+          className="inline-flex h-12 items-center justify-center rounded-xl border border-line bg-raised px-6 text-[14px] font-medium text-ink-2 transition hover:bg-hover hover:text-ink"
         >
           Back to Trove
         </Link>

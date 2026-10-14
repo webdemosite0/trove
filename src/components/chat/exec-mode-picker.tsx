@@ -105,7 +105,7 @@ export function ExecModePicker({
           items.current[(i - 1 + OPTIONS.length) % OPTIONS.length]?.focus();
         } else if (e.key === "Tab") setOpen(false);
       }}
-      className="nx-in fixed z-[200] overflow-hidden rounded-2xl border border-line bg-canvas shadow-[0_24px_60px_-12px_rgba(0,0,0,0.7)]"
+      className="nx-in fixed z-[200] overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_24px_60px_-12px_rgba(0,0,0,0.7)]"
       style={
         coords
           ? { left: coords.left, bottom: coords.bottom, width: coords.width }

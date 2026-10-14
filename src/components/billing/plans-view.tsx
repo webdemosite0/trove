@@ -181,12 +181,12 @@ export function PlansView({
       </div>
 
       {checkout === "cancelled" ? (
-        <div className="mt-6 rounded-2xl border border-line bg-raised px-4 py-3 text-[13.5px] text-ink-2">
+        <div className="mt-6 rounded-xl border border-line bg-raised px-4 py-3 text-[13.5px] text-ink-2">
           Checkout cancelled. No charges were made.
         </div>
       ) : null}
       {waiting ? (
-        <div className="mt-6 flex items-center gap-2 rounded-2xl border border-line bg-raised px-4 py-3 text-[13.5px] text-ink-2">
+        <div className="mt-6 flex items-center gap-2 rounded-xl border border-line bg-raised px-4 py-3 text-[13.5px] text-ink-2">
           <FiLoader size={16} className="animate-spin" /> Confirming your subscription…
         </div>
       ) : null}
@@ -198,7 +198,7 @@ export function PlansView({
 
       {balance && signedIn ? (
         <>
-          <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-raised/70 px-5 py-4">
+          <div className="mt-8 flex flex-wrap items-center gap-4 rounded-xl border border-line bg-raised/70 px-5 py-4">
           <div className="flex items-center gap-2 text-[13px] text-ink-2">
             <FiZap size={15} className="text-accent" />
             <span>
@@ -275,7 +275,7 @@ export function PlansView({
             <div
               key={t.id}
               className={cn(
-                "relative flex flex-col rounded-3xl border bg-raised p-6",
+                "relative flex flex-col rounded-xl border bg-raised p-6",
                 active ? "border-accent ring-1 ring-accent/30" : "border-line",
               )}
             >
@@ -364,7 +364,7 @@ export function PlansView({
 
       <section className="mt-16">
         <h2 className="text-[18px] font-semibold text-ink">Compare plans</h2>
-        <div className="mt-4 overflow-x-auto rounded-2xl border border-line">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-line">
           <table className="w-full min-w-[640px] text-left text-[13px]">
             <thead>
               <tr className="border-b border-line bg-sunk/50">

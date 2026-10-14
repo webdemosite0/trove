@@ -102,7 +102,7 @@ export default async function SheetsPage() {
     <div className="h-full min-h-0 overflow-y-auto overscroll-contain bg-canvas">
       <div className="mx-auto w-full max-w-[1100px] px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
         <div className="mb-6 flex items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-positive/15 text-positive">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-positive/15 text-positive">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />

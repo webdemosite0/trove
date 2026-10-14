@@ -206,20 +206,20 @@ export default function PricingPage() {
           model input and output, metered on actual usage — never a flat fee per artifact.
         </p>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-line bg-raised/60 p-5">
+          <div className="rounded-xl border border-line bg-raised/60 p-5">
             <p className="text-[13px] font-bold text-ink">Short answers</p>
             <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
               A quick reply or small edit costs <strong className="font-semibold text-ink">1–2 credits</strong>.
             </p>
           </div>
-          <div className="rounded-2xl border border-line bg-raised/60 p-5">
+          <div className="rounded-xl border border-line bg-raised/60 p-5">
             <p className="text-[13px] font-bold text-ink">Real artifacts</p>
             <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
               Documents, decks, and sites cost proportionally more — longer work uses
               more tokens. You&apos;re metered on what the models actually generate.
             </p>
           </div>
-          <div className="rounded-2xl border border-line bg-raised/60 p-5">
+          <div className="rounded-xl border border-line bg-raised/60 p-5">
             <p className="text-[13px] font-bold text-ink">Always visible</p>
             <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">
               Your remaining balance — e.g. <span className="font-mono text-[12.5px]">164 / 200</span> — and
@@ -231,7 +231,7 @@ export default function PricingPage() {
           Credits reset monthly. Unused credits don&apos;t roll over.
         </p>
 
-        <div className="mt-8 rounded-2xl border border-line bg-raised/60 p-5 sm:p-6">
+        <div className="mt-8 rounded-xl border border-line bg-raised/60 p-5 sm:p-6">
           <h3 className="text-[15px] font-semibold text-ink">What your credits buy</h3>
           <p className="mt-1 text-[12.5px] text-ink-4">
             Rough estimates, measured from the real examples on this site. Longer work and

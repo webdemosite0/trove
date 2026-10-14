@@ -93,7 +93,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div className="grid grid-cols-2 gap-1 rounded-2xl border border-line bg-sunk/75 p-1 sm:hidden">
+      <div className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-sunk/75 p-1 sm:hidden">
         <button
           type="button"
           onClick={() => setMobileView("profile")}
@@ -122,7 +122,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
 
       <section
         className={cn(
-          "overflow-hidden rounded-[22px] border border-line-strong bg-raised shadow-[var(--elev)] sm:rounded-[24px]",
+          "overflow-hidden rounded-xl border border-line-strong bg-raised shadow-[var(--elev)] sm:rounded-xl",
           mobileView !== "profile" && "hidden sm:block",
         )}
       >
@@ -136,7 +136,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             }}
           />
           <div className="relative flex items-start gap-3">
-            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent ring-1 ring-accent/15">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/15">
               <FiBriefcase size={20} />
             </span>
             <div>
@@ -163,7 +163,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Acme Studio"
               maxLength={120}
-              className="h-[52px] w-full rounded-2xl border border-line-strong bg-sunk px-4 text-[14px] text-ink outline-none transition focus:border-accent focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+              className="h-[52px] w-full rounded-xl border border-line-strong bg-sunk px-4 text-[14px] text-ink outline-none transition focus:border-accent focus:shadow-[0_0_0_4px_var(--focus-ring)]"
             />
           </label>
 
@@ -180,7 +180,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
                 placeholder="yourbusiness.com"
                 maxLength={500}
                 className={cn(
-                  "h-12 w-full rounded-2xl border bg-sunk pl-11 pr-4 text-[14px] text-ink outline-none transition focus:border-accent focus:shadow-[0_0_0_4px_var(--focus-ring)]",
+                  "h-12 w-full rounded-xl border bg-sunk pl-11 pr-4 text-[14px] text-ink outline-none transition focus:border-accent focus:shadow-[0_0_0_4px_var(--focus-ring)]",
                   url && !validUrl(url) ? "border-critical" : "border-line-strong",
                 )}
               />
@@ -206,7 +206,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             <button
               type="button"
               onClick={() => picker.current?.click()}
-              className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-sunk/70 px-4 py-4 text-left transition hover:border-accent/45 hover:bg-accent-soft/40"
+              className="flex w-full items-center gap-3 rounded-xl border border-dashed border-line-strong bg-sunk/70 px-4 py-4 text-left transition hover:border-accent/45 hover:bg-accent-soft/40"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-raised text-accent shadow-[var(--sh-1)]">
                 <FiUpload size={17} />
@@ -228,7 +228,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             type="button"
             onClick={() => void save()}
             disabled={state === "loading"}
-            className="btn-grad inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_10px_28px_-14px_var(--btn-glow)] disabled:opacity-60 sm:w-auto sm:rounded-xl"
+            className="btn-grad inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_10px_28px_-14px_var(--btn-glow)] disabled:opacity-60 sm:w-auto sm:rounded-xl"
           >
             {state === "loading" ? (
               <Ico icon={FiLoader} motion="spin" size={15} live />
@@ -249,7 +249,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             mobileView !== "context" && "hidden sm:grid",
           )}
         >
-          <div className="rounded-[20px] border border-line bg-raised p-4 shadow-[var(--sh-1)] sm:p-5">
+          <div className="rounded-xl border border-line bg-raised p-4 shadow-[var(--sh-1)] sm:p-5">
             <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-accent">
               <FiFileText size={14} />
               Learned business
@@ -262,7 +262,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             </dl>
           </div>
 
-          <div className="rounded-[20px] border border-violet-400/20 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/[0.06] to-sky-500/10 p-4 shadow-[var(--sh-1)] sm:p-5">
+          <div className="rounded-xl border border-violet-400/20 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/[0.06] to-sky-500/10 p-4 shadow-[var(--sh-1)] sm:p-5">
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-accent">Automatic business instructions</p>
             <p className="mt-2 text-[11.5px] leading-relaxed text-ink-4">
               Trove refreshes this block when you update the business profile. Your older/manual instructions remain separate and are preserved.
@@ -273,8 +273,8 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
           </div>
         </section>
       ) : mobileView === "context" ? (
-        <div className="rounded-[22px] border border-dashed border-line-strong bg-sunk/55 p-6 text-center sm:hidden">
-          <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-accent">
+        <div className="rounded-xl border border-dashed border-line-strong bg-sunk/55 p-6 text-center sm:hidden">
+          <span className="mx-auto grid size-11 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-accent">
             <FiBriefcase size={18} />
           </span>
           <p className="mt-3 text-[13px] font-semibold text-ink">No business context yet</p>

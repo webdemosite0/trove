@@ -3,127 +3,138 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Register theme colors with Tailwind so utilities — including opacity
- * modifiers like bg-raised/90 — are actually generated. The values below
- * are the dark defaults; [data-theme="light"] overrides keep working
- * because utilities reference var(--color-*) at runtime. */
+/* Clean & calm design system (2026-10 redesign).
+ * Neutral greys, thin 1px lines, one violet accent, small radii, flat surfaces.
+ * Register theme colors with Tailwind so utilities — including opacity
+ * modifiers like bg-raised/90 — are generated. The values below are the
+ * dark defaults; [data-theme="light"] overrides them at runtime. */
 @theme {
-  --color-canvas: #212121;
-  --color-rail: #171717;
-  --color-sunk: #29292d;
-  --color-raised: #2f2f2f;
-  --color-hover: #3a3a3e;
-  --color-ink: #ececec;
-  --color-ink-2: #ececec;
+  --color-canvas: #141416;
+  --color-rail: #111113;
+  --color-sunk: #1b1b1e;
+  --color-raised: #1c1c1f;
+  --color-hover: #26262a;
+  --color-ink: #ededef;
+  --color-ink-2: #d4d4d8;
   --color-ink-3: #a1a1aa;
-  --color-ink-4: #8e8e96;
-  --color-line: #2c2c30;
-  --color-line-strong: #3f3f45;
-  --color-accent: #8ab4f8;
-  --color-accent-soft: #1a2332;
-  --color-violet: #a0a0a0;
-  --color-positive: #81c995;
-  --color-positive-soft: #1a2a1f;
-  --color-caution: #fdd663;
-  --color-critical: #f28b82;
-  --color-critical-soft: #2a1a1a;
+  --color-ink-4: #7c7c85;
+  --color-line: #27272b;
+  --color-line-strong: #36363c;
+  --color-accent: #a78bfa;
+  --color-accent-soft: #221d36;
+  --color-violet: #a78bfa;
+  --color-positive: #6ee7b7;
+  --color-positive-soft: #10271f;
+  --color-caution: #fcd34d;
+  --color-critical: #fca5a5;
+  --color-critical-soft: #2a1717;
 }
 
 :root {
-  --color-canvas: #212121;
-  --color-rail: #171717;
-  --color-sunk: #29292d;
-  --color-raised: #2f2f2f;
-  --color-hover: #3a3a3e;
-  --color-ink: #ececec;
-  --color-ink-2: #ececec;
+  --color-canvas: #141416;
+  --color-rail: #111113;
+  --color-sunk: #1b1b1e;
+  --color-raised: #1c1c1f;
+  --color-hover: #26262a;
+  --color-ink: #ededef;
+  --color-ink-2: #d4d4d8;
   --color-ink-3: #a1a1aa;
-  --color-ink-4: #8e8e96;
-  --color-line: #2c2c30;
-  --color-line-strong: #3f3f45;
-  --color-accent: #8ab4f8;
-  --color-accent-soft: #1a2332;
-  --color-violet: #a0a0a0;
-  --color-positive: #81c995;
-  --color-positive-soft: #1a2a1f;
-  --color-caution: #fdd663;
-  --color-critical: #f28b82;
-  --color-critical-soft: #2a1a1a;
+  --color-ink-4: #7c7c85;
+  --color-line: #27272b;
+  --color-line-strong: #36363c;
+  --color-accent: #a78bfa;
+  --color-accent-soft: #221d36;
+  --color-violet: #a78bfa;
+  --color-positive: #6ee7b7;
+  --color-positive-soft: #10271f;
+  --color-caution: #fcd34d;
+  --color-critical: #fca5a5;
+  --color-critical-soft: #2a1717;
   --shade: #ffffff;
   --ground: #000000;
-  --btn-a: #3c4043;
-  --btn-b: #2f3133;
+  /* Primary buttons: one flat violet, no gradient, no glow. */
+  --btn-a: #7c3aed;
+  --btn-b: #7c3aed;
   --btn-ink: #ffffff;
-  --btn-glow: rgb(138 180 248 / 0.25);
-  --focus-ring: rgb(138 180 248 / 0.28);
-  --focus-line: rgb(138 180 248 / 0.7);
+  --btn-glow: transparent;
+  --focus-ring: rgb(167 139 250 / 0.28);
+  --focus-line: rgb(167 139 250 / 0.75);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display-face), var(--font-sans);
+  /* One typeface everywhere keeps it calm; headings use Inter too. */
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono-code), ui-monospace, monospace;
-  --r-panel: 22px;
-  --r-control: 14px;
+  --r-panel: 12px;
+  --r-control: 8px;
   --r-chip: 999px;
+  --r-hero: 16px;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.45), 0 1px 2px rgb(0 0 0 / 0.3);
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  --color-canvas: #f7f6f3;
-  --color-rail: #fbfaf8;
-  --color-sunk: #f1efea;
+  --color-canvas: #ffffff;
+  --color-rail: #fafafa;
+  --color-sunk: #f6f6f7;
   --color-raised: #ffffff;
-  --color-hover: #edebe5;
-  --color-ink: #101014;
-  --color-ink-2: #101014;
-  --color-ink-3: #3f3f4a;
-  --color-ink-4: #63636f;
-  --color-line: #e6e3dc;
-  --color-line-strong: #d6d2c8;
-  --color-accent: #4f46e5;
-  --color-accent-soft: #eeecfd;
-  --color-violet: #6366f1;
-  --color-positive: #0b6553;
-  --color-positive-soft: #e7f5f0;
-  --color-critical: #c2325a;
-  --color-critical-soft: #fce8ee;
-  --shade: #1a1f36;
+  --color-hover: #f2f2f4;
+  --color-ink: #18181b;
+  --color-ink-2: #27272a;
+  --color-ink-3: #52525b;
+  --color-ink-4: #71717a;
+  --color-line: #e7e7ea;
+  --color-line-strong: #d6d6db;
+  --color-accent: #6d28d9;
+  --color-accent-soft: #f4f0ff;
+  --color-violet: #6d28d9;
+  --color-positive: #047857;
+  --color-positive-soft: #ecfdf5;
+  --color-caution: #b45309;
+  --color-critical: #b91c1c;
+  --color-critical-soft: #fef2f2;
+  --shade: #18181b;
   --ground: #ffffff;
-  --btn-a: #4f46e5;
-  --btn-b: #4338ca;
+  --btn-a: #6d28d9;
+  --btn-b: #6d28d9;
   --btn-ink: #ffffff;
-  --btn-glow: rgb(79 70 229 / 0.45);
-  --focus-ring: rgb(79 70 229 / 0.28);
-  --focus-line: rgb(79 70 229 / 0.75);
+  --btn-glow: transparent;
+  --focus-ring: rgb(109 40 217 / 0.22);
+  --focus-line: rgb(109 40 217 / 0.7);
+  --shadow-sm: 0 1px 2px rgb(16 16 20 / 0.05);
+  --shadow-md: 0 4px 16px -6px rgb(16 16 20 / 0.12), 0 1px 2px rgb(16 16 20 / 0.05);
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --color-canvas: #212121;
-  --color-rail: #171717;
-  --color-sunk: #29292d;
-  --color-raised: #2f2f2f;
-  --color-hover: #3a3a3e;
-  --color-ink: #ececec;
-  --color-ink-2: #ececec;
+  --color-canvas: #141416;
+  --color-rail: #111113;
+  --color-sunk: #1b1b1e;
+  --color-raised: #1c1c1f;
+  --color-hover: #26262a;
+  --color-ink: #ededef;
+  --color-ink-2: #d4d4d8;
   --color-ink-3: #a1a1aa;
-  --color-ink-4: #8e8e96;
-  --color-line: #2c2c30;
-  --color-line-strong: #3f3f45;
+  --color-ink-4: #7c7c85;
+  --color-line: #27272b;
+  --color-line-strong: #36363c;
   --color-accent: #a78bfa;
-  --color-accent-soft: #261f3d;
+  --color-accent-soft: #221d36;
   --color-violet: #a78bfa;
-  --color-positive: #81c995;
-  --color-positive-soft: #1a2a1f;
-  --color-caution: #fdd663;
-  --color-critical: #f28b82;
-  --color-critical-soft: #2a1a1a;
+  --color-positive: #6ee7b7;
+  --color-positive-soft: #10271f;
+  --color-caution: #fcd34d;
+  --color-critical: #fca5a5;
+  --color-critical-soft: #2a1717;
   --shade: #ffffff;
   --ground: #000000;
   --btn-a: #7c3aed;
-  --btn-b: #6d28d9;
+  --btn-b: #7c3aed;
   --btn-ink: #ffffff;
-  --btn-glow: rgb(124 58 237 / 0.35);
-  --focus-ring: rgb(167 139 250 / 0.3);
+  --btn-glow: transparent;
+  --focus-ring: rgb(167 139 250 / 0.28);
   --focus-line: rgb(167 139 250 / 0.75);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.45), 0 1px 2px rgb(0 0 0 / 0.3);
   color-scheme: dark;
 }
 
@@ -132,19 +143,19 @@
  * theme. All theme-token utilities (bg-canvas, text-ink, …) resolve to these
  * values inside [data-tro-light], so existing components render correctly. */
 [data-tro-light] {
-  --color-canvas: #faf9ff;
-  --color-rail: #ffffff;
-  --color-sunk: #f5f3ff;
+  --color-canvas: #ffffff;
+  --color-rail: #fafafa;
+  --color-sunk: #f6f6f7;
   --color-raised: #ffffff;
-  --color-hover: #ede9fe;
-  --color-ink: #1e1b2e;
-  --color-ink-2: #2e2a45;
-  --color-ink-3: #5b5678;
-  --color-ink-4: #8b87a3;
-  --color-line: #e9e4f7;
-  --color-line-strong: #d9d2ef;
+  --color-hover: #f2f2f4;
+  --color-ink: #18181b;
+  --color-ink-2: #27272a;
+  --color-ink-3: #52525b;
+  --color-ink-4: #71717a;
+  --color-line: #e7e7ea;
+  --color-line-strong: #d6d6db;
   --color-accent: #6d28d9;
-  --color-accent-soft: #f0ebfd;
+  --color-accent-soft: #f4f0ff;
   --color-violet: #6d28d9;
   --color-positive: #0b6553;
   --color-positive-soft: #e7f5f0;
@@ -154,10 +165,10 @@
   --shade: #1a1f36;
   --ground: #ffffff;
   --btn-a: #6d28d9;
-  --btn-b: #5b21b6;
+  --btn-b: #6d28d9;
   --btn-ink: #ffffff;
-  --btn-glow: rgb(109 40 217 / 0.35);
-  --focus-ring: rgb(109 40 217 / 0.28);
+  --btn-glow: transparent;
+  --focus-ring: rgb(109 40 217 / 0.22);
   --focus-line: rgb(109 40 217 / 0.7);
   color-scheme: light;
 }
@@ -215,10 +226,11 @@ body {
 
 .btn-grad {
   background-color: var(--btn-a);
-  background-image: linear-gradient(135deg, var(--btn-a), var(--btn-b));
+  background-image: none;
   color: var(--btn-ink);
+  box-shadow: var(--shadow-sm) !important;
 }
-.btn-grad:hover { filter: brightness(1.05); }
+.btn-grad:hover { filter: brightness(1.08); }
 
 :root[data-theme="dark"] .bg-accent,
 :root[data-theme="dark"] .hover\:bg-accent:hover {
@@ -229,10 +241,8 @@ body {
 .btn-grad * { color: var(--btn-ink); }
 
 .wordmark-gradient {
-  background-image: linear-gradient(90deg, var(--color-ink), var(--color-ink-3));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background-image: none;
+  color: var(--color-ink);
 }
 
 .chip {
@@ -254,14 +264,7 @@ body {
   transition: box-shadow 0.25s ease, filter 0.25s ease, background-color 0.2s ease;
 }
 .hover-glow:hover {
-  filter: brightness(1.12);
-  box-shadow:
-    0 0 16px -4px var(--glow, rgb(138 180 248 / 0.4)),
-    inset 0 0 0 1px rgb(255 255 255 / 0.07);
-}
-:root[data-theme="light"] .hover-glow:hover {
-  box-shadow:
-    0 0 16px -4px var(--glow, rgb(79 70 229 / 0.25)),
-    inset 0 0 0 1px rgb(0 0 0 / 0.05);
+  filter: none;
+  box-shadow: none;
 }
 

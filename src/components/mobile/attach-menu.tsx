@@ -159,7 +159,7 @@ export function AttachMenu({
                 : {}),
             } as React.CSSProperties
           }
-          className="spring-popover absolute w-[232px] rounded-[20px] border border-line-strong bg-raised/92 p-1.5 shadow-[var(--sh-2)] backdrop-blur-xl"
+          className="spring-popover absolute w-[232px] rounded-xl border border-line-strong bg-raised/92 p-1.5 shadow-[var(--sh-2)] backdrop-blur-xl"
         >
           {items.map((item) => (
             <button

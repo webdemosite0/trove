@@ -135,7 +135,7 @@ function useAccent(): [string, (v: string) => void] {
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl bg-raised p-5 dark:bg-raised", className)}>{children}</div>
+    <div className={cn("rounded-xl bg-raised p-5 dark:bg-raised", className)}>{children}</div>
   );
 }
 
@@ -296,7 +296,7 @@ export function SettingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-[100dvh] w-full overflow-hidden bg-canvas text-ink sm:h-[min(720px,calc(100dvh-3rem))] sm:max-w-[980px] sm:rounded-[20px] sm:shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)]"
+        className="relative flex h-[100dvh] w-full overflow-hidden bg-canvas text-ink sm:h-[min(720px,calc(100dvh-3rem))] sm:max-w-[980px] sm:rounded-xl sm:shadow-[0_32px_80px_-16px_rgb(0_0_0/0.7)]"
       >
         {/* Left nav — desktop */}
         <aside className="hidden w-[248px] shrink-0 flex-col bg-sunk sm:flex">
@@ -433,7 +433,7 @@ export function SettingsModal({
             ) : null}
 
             {section === "integrations" ? (
-              <div data-theme="dark" className="rounded-2xl">
+              <div data-theme="dark" className="rounded-xl">
                 <BrowserExtensionCard />
                 {integrations ? (
                   <IntegrationsView
@@ -951,7 +951,7 @@ function LegalPane() {
           <Link
             key={l.href}
             href={l.href}
-            className="flex items-center justify-between rounded-2xl bg-raised p-5 transition-colors hover:bg-sunk"
+            className="flex items-center justify-between rounded-xl bg-raised p-5 transition-colors hover:bg-sunk"
           >
             <span className="text-[15px] font-medium">{l.title}</span>
             <FiExternalLink size={15} className="text-ink-4" />

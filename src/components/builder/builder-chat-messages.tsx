@@ -56,7 +56,7 @@ export function BuilderChatMessages({
         if (m.role === "user") {
           return (
             <div key={m.id} className="flex justify-end">
-              <div className="max-w-[92%] rounded-2xl rounded-br-md bg-raised px-3.5 py-2.5 text-[14.5px] leading-relaxed text-ink shadow-sm">
+              <div className="max-w-[92%] rounded-xl rounded-br-md bg-raised px-3.5 py-2.5 text-[14.5px] leading-relaxed text-ink shadow-sm">
                 {m.text}
               </div>
             </div>

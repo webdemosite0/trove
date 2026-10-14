@@ -147,7 +147,7 @@ export function TeamSectionView({
             return (
               <div
                 key={member.userId}
-                className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-sunk/55 p-3.5"
+                className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-sunk/55 p-3.5"
               >
                 <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-[13px] font-semibold text-ink">
                   {member.name.slice(0, 1).toUpperCase()}
@@ -223,7 +223,7 @@ export function TeamSectionView({
                 state.invites.map((invite) => (
                   <div
                     key={invite.id}
-                    className="flex items-center gap-3 rounded-2xl border border-line bg-sunk/55 p-3.5"
+                    className="flex items-center gap-3 rounded-xl border border-line bg-sunk/55 p-3.5"
                   >
                     <FiMail size={15} className="text-accent" />
                     <span className="min-w-0 flex-1">
@@ -289,7 +289,7 @@ export function TeamSectionView({
         icon={<FiFolder size={19} />}
       >
         {shareable.length ? (
-          <div className="flex gap-2 rounded-2xl border border-line bg-sunk/55 p-3">
+          <div className="flex gap-2 rounded-xl border border-line bg-sunk/55 p-3">
             <select
               value={shareProjectId}
               onChange={(e) => setShareProjectId(e.target.value)}
@@ -321,7 +321,7 @@ export function TeamSectionView({
               return (
                 <div
                   key={project.id}
-                  className="rounded-2xl border border-line bg-gradient-to-br from-sky-500/[0.07] to-violet-500/[0.07] p-4"
+                  className="rounded-xl border border-line bg-gradient-to-br from-sky-500/[0.07] to-violet-500/[0.07] p-4"
                 >
                   <div className="flex items-start gap-3">
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-raised text-sky-600 shadow-sm dark:text-sky-300">
@@ -457,7 +457,7 @@ export function TeamSectionView({
       </SectionCard>
 
       {state.team.role === "owner" ? (
-        <section className="rounded-[22px] border border-critical/25 bg-critical-soft/40 p-5">
+        <section className="rounded-xl border border-critical/25 bg-critical-soft/40 p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-critical">Danger zone</p>
           <h2 className="mt-1 text-[16px] font-semibold text-ink">Delete Team workspace</h2>
           <p className="mt-1 text-[11.5px] leading-relaxed text-ink-3">
@@ -504,7 +504,7 @@ function InviteForm({
   onInvite: () => void;
 }) {
   return (
-    <div className="grid gap-2 rounded-2xl border border-line bg-sunk/55 p-3 sm:grid-cols-[1fr_120px_auto]">
+    <div className="grid gap-2 rounded-xl border border-line bg-sunk/55 p-3 sm:grid-cols-[1fr_120px_auto]">
       <input
         type="email"
         value={email}
@@ -545,7 +545,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--elev)]">
+    <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--elev)]">
       <div className="flex items-start gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-accent">
           {icon}
@@ -579,7 +579,7 @@ function RolePill({ role }: { role: string }) {
 
 function Empty({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-line-strong px-4 py-8 text-center text-[12px] text-ink-4">
+    <div className="rounded-xl border border-dashed border-line-strong px-4 py-8 text-center text-[12px] text-ink-4">
       {text}
     </div>
   );
@@ -587,7 +587,7 @@ function Empty({ text }: { text: string }) {
 
 function ReadOnlyNotice({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-sunk/55 p-4 text-[12px] leading-relaxed text-ink-3">
+    <div className="rounded-xl border border-line bg-sunk/55 p-4 text-[12px] leading-relaxed text-ink-3">
       {text}
     </div>
   );
@@ -609,8 +609,8 @@ function GateCard({
   action: string;
 }) {
   return (
-    <section className="rounded-[22px] border border-line-strong bg-raised p-6 shadow-[var(--elev)]">
-      <span className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-accent">
+    <section className="rounded-xl border border-line-strong bg-raised p-6 shadow-[var(--elev)]">
+      <span className="grid size-11 place-items-center rounded-xl bg-accent-soft text-accent">
         <FiShield size={18} />
       </span>
       <h2 className="mt-4 text-[19px] font-semibold text-ink">{title}</h2>

@@ -298,7 +298,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                       aria-checked={on}
                       onClick={() => setGoal(g.id)}
                       className={cn(
-                        "ob-card flex flex-col rounded-2xl border bg-raised p-3 text-left transition",
+                        "ob-card flex flex-col rounded-xl border bg-raised p-3 text-left transition",
                         on
                           ? "border-accent ring-2 ring-[var(--focus-ring)]"
                           : "border-line hover:border-line-strong",
@@ -336,7 +336,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                       ? "e.g. A calm clinic site with services, doctors, and a booking button…"
                       : "e.g. A one-page pitch outline for our seed round…"
                   }
-                  className="w-full resize-none rounded-2xl border border-line-strong bg-raised p-3 text-[14px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+                  className="w-full resize-none rounded-xl border border-line-strong bg-raised p-3 text-[14px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
                 />
               </label>
             </>
@@ -361,7 +361,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   autoFocus
-                  className="h-11 w-full rounded-2xl border border-line-strong bg-raised px-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+                  className="h-11 w-full rounded-xl border border-line-strong bg-raised px-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
                   placeholder="Alex Rivera"
                 />
               </label>
@@ -411,7 +411,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                         aria-checked={on}
                         onClick={() => setAccountType(item.id)}
                         className={cn(
-                          "flex flex-col items-center gap-1.5 rounded-2xl border bg-raised p-3 text-center transition",
+                          "flex flex-col items-center gap-1.5 rounded-xl border bg-raised p-3 text-center transition",
                           on
                             ? "border-accent ring-2 ring-[var(--focus-ring)]"
                             : "border-line hover:border-line-strong",
@@ -443,10 +443,10 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               </p>
 
               {analysisState === "loading" ? (
-                <div className="ob-rise-d2 mt-7 rounded-[24px] border border-line bg-raised p-5">
+                <div className="ob-rise-d2 mt-7 rounded-xl border border-line bg-raised p-5">
                   <div className="relative mx-auto grid size-28 place-items-center">
                     <span className="ob-ai-ring ob-ai-spin absolute inset-0 rounded-full border border-accent/25" />
-                    <span className="relative z-10 grid size-16 place-items-center rounded-3xl border border-line bg-canvas">
+                    <span className="relative z-10 grid size-16 place-items-center rounded-xl border border-line bg-canvas">
                       <TroveOrb size={34} state="thinking" />
                     </span>
                   </div>
@@ -481,7 +481,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                   </div>
                 </div>
               ) : analysisState === "success" && analysis ? (
-                <div className="ob-rise-d2 mt-7 rounded-2xl border border-positive/20 bg-positive-soft/60 p-4">
+                <div className="ob-rise-d2 mt-7 rounded-xl border border-positive/20 bg-positive-soft/60 p-4">
                   <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-positive">
                     <FiCheck size={14} aria-hidden /> Personalized
                   </div>
@@ -502,7 +502,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                         setAnalysisState("idle");
                         setAnalysis(null);
                       }}
-                      className="h-11 w-full rounded-2xl border border-line-strong bg-raised px-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
+                      className="h-11 w-full rounded-xl border border-line-strong bg-raised px-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
                       placeholder="Acme Studio"
                     />
                   </label>
@@ -518,7 +518,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                           setAnalysis(null);
                         }}
                         className={cn(
-                          "h-11 w-full rounded-2xl border bg-raised pl-10 pr-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]",
+                          "h-11 w-full rounded-xl border bg-raised pl-10 pr-4 text-[14.5px] text-ink outline-none transition placeholder:text-ink-4 focus:border-[var(--focus-line)] focus:shadow-[0_0_0_4px_var(--focus-ring)]",
                           businessUrl && !validBusinessUrl(businessUrl) ? "border-critical" : "border-line-strong",
                         )}
                         placeholder="yourbusiness.com"
@@ -528,7 +528,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                       <span className="mt-1 block text-[11px] text-critical">Enter a valid public website URL.</span>
                     ) : null}
                   </label>
-                  <label className="flex cursor-pointer items-center gap-2.5 rounded-2xl border border-dashed border-line-strong bg-raised px-3.5 py-2.5 transition hover:border-accent">
+                  <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-dashed border-line-strong bg-raised px-3.5 py-2.5 transition hover:border-accent">
                     <FiFileText size={15} className="shrink-0 text-ink-3" aria-hidden />
                     <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-2">
                       {profileFile ? profileFile.name : "Attach a company profile (PDF, doc, image…)"}
@@ -543,7 +543,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                   </label>
                   {profileError ? <span className="-mt-2 block text-[11px] text-critical">{profileError}</span> : null}
                   {analysisState === "error" ? (
-                    <div className="rounded-2xl border border-critical/25 bg-critical/10 p-3.5">
+                    <div className="rounded-xl border border-critical/25 bg-critical/10 p-3.5">
                       <p className="text-[12.5px] font-medium text-critical">Analysis didn&apos;t finish.</p>
                       <p className="mt-0.5 text-[11.5px] leading-5 text-ink-3">{analysisError}</p>
                     </div>
@@ -554,7 +554,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               <button
                 type="button"
                 onClick={() => go(3)}
-                className="ob-rise-d3 mt-4 w-full rounded-2xl border border-dashed border-line-strong py-3 text-[13px] font-medium text-ink-3 transition hover:border-accent hover:text-ink"
+                className="ob-rise-d3 mt-4 w-full rounded-xl border border-dashed border-line-strong py-3 text-[13px] font-medium text-ink-3 transition hover:border-accent hover:text-ink"
               >
                 Skip for now — I&apos;ll add this later
               </button>
@@ -584,7 +584,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                 ].map((row) => {
                   const Icon = row.icon;
                   return (
-                    <li key={row.text} className="flex items-center gap-2.5 rounded-2xl border border-line bg-raised p-3">
+                    <li key={row.text} className="flex items-center gap-2.5 rounded-xl border border-line bg-raised p-3">
                       <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
                         <Icon size={14} aria-hidden />
                       </span>
@@ -594,7 +594,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
                 })}
               </ul>
 
-              <div className="ob-rise-d3 mt-3 rounded-2xl bg-sunk/60 p-3.5 text-[12px] leading-relaxed text-ink-3">
+              <div className="ob-rise-d3 mt-3 rounded-xl bg-sunk/60 p-3.5 text-[12px] leading-relaxed text-ink-3">
                 We recommend <strong className="font-semibold text-ink">{plan.label}</strong> ({plan.why}).
                 You&apos;re starting on <strong className="font-semibold text-ink">Free</strong> — upgrade
                 anytime from settings. Paid plans never activate without checkout.

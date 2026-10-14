@@ -30,12 +30,12 @@ export function AuthReferralAnnouncement() {
       <div
         role="status"
         aria-live="polite"
-        className="pointer-events-auto w-full max-w-[620px] overflow-hidden rounded-[22px] p-[1px] shadow-[0_18px_60px_-22px_rgba(0,0,0,0.45)]"
+        className="pointer-events-auto w-full max-w-[620px] overflow-hidden rounded-xl p-[1px] shadow-[0_18px_60px_-22px_rgba(0,0,0,0.45)]"
         style={{
           background: "linear-gradient(135deg, #f472b6, #a78bfa, #38bdf8, #fbbf24)",
         }}
       >
-        <div className="relative overflow-hidden rounded-[21px] bg-rail/95 px-4 py-4 backdrop-blur-xl dark:bg-black/75 sm:px-5">
+        <div className="relative overflow-hidden rounded-xl bg-rail/95 px-4 py-4 backdrop-blur-xl dark:bg-black/75 sm:px-5">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full opacity-45 blur-3xl"

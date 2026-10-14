@@ -51,7 +51,7 @@ export function PromptHero({
             }}
             className="mt-6"
           >
-            <div className="rounded-[20px] border border-line bg-raised p-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition focus-within:border-accent/50">
+            <div className="rounded-xl border border-line bg-raised p-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition focus-within:border-accent/50">
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}

@@ -99,7 +99,7 @@ function ToolButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-w-[64px] flex-col items-center gap-1 rounded-2xl px-3 py-2.5 text-[11px] font-medium transition active:scale-95",
+        "flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-3 py-2.5 text-[11px] font-medium transition active:scale-95",
         active ? "bg-accent/15 text-accent" : "text-ink-2 hover:bg-hover",
       )}
     >
@@ -817,7 +817,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
                 className="fixed inset-0 z-10 cursor-default"
                 onClick={() => setMoreOpen(false)}
               />
-              <div className="absolute bottom-full right-0 z-20 mb-2 flex gap-1 rounded-2xl border border-line bg-raised p-2 shadow-xl">
+              <div className="absolute bottom-full right-0 z-20 mb-2 flex gap-1 rounded-xl border border-line bg-raised p-2 shadow-xl">
                 <ToolButton icon={<FiSquare size={19} />} label="Rect" active={false} onClick={() => { setMoreOpen(false); addShape("rect"); }} />
                 <ToolButton
                   icon={<span className="block size-[19px] rounded-full border-[2.5px] border-current" />}

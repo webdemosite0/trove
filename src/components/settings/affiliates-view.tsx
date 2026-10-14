@@ -68,7 +68,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
 
   return (
     <div className="space-y-5 pb-8">
-      <section className="relative overflow-hidden rounded-[26px] border border-line-strong bg-raised p-6 shadow-[var(--elev)] sm:p-8">
+      <section className="relative overflow-hidden rounded-xl border border-line-strong bg-raised p-6 shadow-[var(--elev)] sm:p-8">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-90"
@@ -106,7 +106,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
             />
           </div>
 
-          <div className="mt-5 overflow-hidden rounded-2xl border border-amber-300/60 bg-amber-50/80 shadow-[var(--elev)] dark:border-amber-400/20 dark:bg-amber-950/20">
+          <div className="mt-5 overflow-hidden rounded-xl border border-amber-300/60 bg-amber-50/80 shadow-[var(--elev)] dark:border-amber-400/20 dark:bg-amber-950/20">
             <div className="px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -212,7 +212,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
               ring: "from-amber-400 to-orange-500",
             },
           ].map((step) => (
-            <li key={step.n} className="rounded-2xl border border-line-strong bg-canvas p-4 shadow-[var(--elev)]">
+            <li key={step.n} className="rounded-xl border border-line-strong bg-canvas p-4 shadow-[var(--elev)]">
               <span
                 className={cn(
                   "inline-flex size-8 items-center justify-center rounded-full bg-gradient-to-br text-[13px] font-bold text-white",
@@ -256,7 +256,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
 
 function StatChip({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <div className="rounded-2xl border border-line-strong bg-canvas/85 p-3.5 shadow-[var(--elev)] backdrop-blur">
+    <div className="rounded-xl border border-line-strong bg-canvas/85 p-3.5 shadow-[var(--elev)] backdrop-blur">
       <p className="text-[11px] font-medium uppercase tracking-wide text-ink-4">{label}</p>
       <p
         className={cn(

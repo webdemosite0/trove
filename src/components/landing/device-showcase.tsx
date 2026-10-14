@@ -82,7 +82,7 @@ export function DeviceShowcase() {
                   What will you build today?
                 </h3>
 
-                <div className="mx-auto mt-5 max-w-[520px] rounded-2xl border border-line bg-raised p-4 shadow-sm">
+                <div className="mx-auto mt-5 max-w-[520px] rounded-xl border border-line bg-raised p-4 shadow-sm">
                   <p className="text-[13px] text-ink-4">
                     Describe anything you want Trove to build…
                   </p>

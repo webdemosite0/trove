@@ -65,7 +65,7 @@ export function TrosDesktopOnly() {
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
-            "btn-grad inline-flex h-12 items-center justify-center gap-2.5 rounded-2xl text-[14.5px] font-semibold",
+            "btn-grad inline-flex h-12 items-center justify-center gap-2.5 rounded-xl text-[14.5px] font-semibold",
             loading && "pointer-events-none opacity-70",
           )}
         >

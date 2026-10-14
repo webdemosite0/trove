@@ -198,7 +198,7 @@ export function ProductProof() {
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-4 sm:text-[11px]">
               Before — the brief, sent as one message
             </p>
-            <div className="flex-1 rounded-[18px] border border-line bg-raised p-4 sm:p-5">
+            <div className="flex-1 rounded-xl border border-line bg-raised p-4 sm:p-5">
               <div className="flex items-center gap-2.5">
                 <span className="grid size-8 place-items-center rounded-full bg-violet-500/15 text-[13px] font-bold text-violet-700 dark:text-violet-300">
                   M
@@ -243,7 +243,7 @@ export function ProductProof() {
                 <span className="truncate">Download {active.file}</span>
               </button>
             </div>
-            <div className="overflow-hidden rounded-[18px] border border-line bg-white shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)]">
+            <div className="overflow-hidden rounded-xl border border-line bg-white shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)]">
               <div
                 role="tablist"
                 aria-label="Finished files"

@@ -180,8 +180,8 @@ export function ProjectPicker({
             className={cn(
               "z-[160] overflow-hidden border border-line-strong bg-raised/98 shadow-[0_22px_70px_rgba(0,0,0,.2)] backdrop-blur-xl",
               compact
-                ? "fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] max-h-[72dvh] rounded-[24px]"
-                : "absolute bottom-[calc(100%+8px)] left-0 w-[min(330px,calc(100vw-24px))] rounded-2xl",
+                ? "fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] max-h-[72dvh] rounded-xl"
+                : "absolute bottom-[calc(100%+8px)] left-0 w-[min(330px,calc(100vw-24px))] rounded-xl",
             )}
           >
             <div className="border-b border-line px-3.5 py-3">

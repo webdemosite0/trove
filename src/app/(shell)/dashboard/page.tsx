@@ -173,7 +173,7 @@ export default async function MePage() {
         {/* command bar */}
         <Link
           href="/chat"
-          className="group mt-7 flex max-w-[640px] items-center gap-3.5 rounded-2xl border border-line bg-raised/90 px-4 py-3 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.28)] backdrop-blur transition hover:border-line-strong hover:shadow-[0_20px_56px_-18px_rgba(99,102,241,0.35)]"
+          className="group mt-7 flex max-w-[640px] items-center gap-3.5 rounded-xl border border-line bg-raised/90 px-4 py-3 shadow-[0_16px_48px_-20px_rgba(15,23,42,0.28)] backdrop-blur transition hover:border-line-strong hover:shadow-[0_20px_56px_-18px_rgba(99,102,241,0.35)]"
         >
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25">
             <FiZap size={16} />
@@ -221,7 +221,7 @@ export default async function MePage() {
                   <Link
                     key={r.id}
                     href={r.href || "/chat"}
-                    className="group flex flex-col rounded-2xl border border-line bg-raised/80 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_40px_-20px_rgba(15,23,42,0.3)]"
+                    className="group flex flex-col rounded-xl border border-line bg-raised/80 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_40px_-20px_rgba(15,23,42,0.3)]"
                   >
                     <span
                       className="mb-3 grid size-9 place-items-center rounded-xl"
@@ -257,7 +257,7 @@ export default async function MePage() {
                   key={t.label}
                   href={t.href}
                   className={cn(
-                    "group relative overflow-hidden rounded-2xl border border-line bg-raised/80 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_40px_-20px_rgba(99,102,241,0.35)]",
+                    "group relative overflow-hidden rounded-xl border border-line bg-raised/80 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_16px_40px_-20px_rgba(99,102,241,0.35)]",
                     t.large && "col-span-2",
                   )}
                 >
@@ -303,7 +303,7 @@ export default async function MePage() {
                 </>
               );
               const cls =
-                "group rounded-2xl border border-line bg-raised/80 px-4 py-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong";
+                "group rounded-xl border border-line bg-raised/80 px-4 py-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong";
               return s.settingsSection ? (
                 <OpenSettingsButton key={s.label} section={s.settingsSection} className={cls}>
                   {inner}

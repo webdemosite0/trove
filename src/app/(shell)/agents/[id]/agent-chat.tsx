@@ -131,7 +131,7 @@ function ArtifactCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-ink/[0.08] bg-ink/[0.03] px-3 py-2.5 transition hover:border-line-strong">
+    <div className="mt-2 flex items-center gap-3 rounded-xl border border-ink/[0.08] bg-ink/[0.03] px-3 py-2.5 transition hover:border-line-strong">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
         <ArtifactIcon kind={block.kind} size={17} />
       </span>
@@ -208,7 +208,7 @@ function ArtifactPreview({
   onDelete: () => void;
 }) {
   return (
-    <div className="mb-3 overflow-hidden rounded-2xl border border-ink/[0.08] bg-raised">
+    <div className="mb-3 overflow-hidden rounded-xl border border-ink/[0.08] bg-raised">
       <div className="flex items-center gap-2 border-b border-ink/[0.06] px-3 py-2">
         <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent/12 text-accent">
           <ArtifactIcon kind={artifact.kind} size={14} />
@@ -1774,7 +1774,7 @@ export function AgentChat({
                 <button
                   type="button"
                   onClick={() => setViewer(artifacts[0])}
-                  className="flex w-full items-center gap-3 rounded-2xl border border-ink/[0.08] bg-ink/[0.03] px-3 py-2.5 text-left transition hover:border-line-strong"
+                  className="flex w-full items-center gap-3 rounded-xl border border-ink/[0.08] bg-ink/[0.03] px-3 py-2.5 text-left transition hover:border-line-strong"
                 >
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
                     <ArtifactIcon kind={artifacts[0].kind} size={17} />
@@ -1806,7 +1806,7 @@ export function AgentChat({
               <button
                 type="button"
                 onClick={() => openSettings("integrations")}
-                className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-2xl border border-ink/[0.07] bg-ink/[0.02] px-4 py-2.5 text-left transition hover:border-line hover:bg-ink/[0.04]"
+                className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-xl border border-ink/[0.07] bg-ink/[0.02] px-4 py-2.5 text-left transition hover:border-line hover:bg-ink/[0.04]"
               >
                 <span className="text-[13px] font-medium text-ink-2">Connect your integrations</span>
                 <FiArrowRight size={15} className="shrink-0 text-ink-3" />
@@ -2350,14 +2350,14 @@ export function AgentChat({
               onChange={(e) => setEditText(e.target.value)}
               rows={18}
               spellCheck={false}
-              className="mt-4 w-full resize-y rounded-2xl border border-line bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none focus:border-accent/50"
+              className="mt-4 w-full resize-y rounded-xl border border-line bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none focus:border-accent/50"
             />
           ) : viewer.kind === "brand" ? (
-            <div className="mt-4 max-h-[70vh] overflow-y-auto rounded-2xl border border-line bg-canvas/40">
+            <div className="mt-4 max-h-[70vh] overflow-y-auto rounded-xl border border-line bg-canvas/40">
               <BrandSheetView content={viewer.content} />
             </div>
           ) : viewer.kind === "website" ? (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white">
+            <div className="mt-4 overflow-hidden rounded-xl border border-line bg-white">
               <iframe
                 title={viewer.title}
                 srcDoc={viewer.content}
@@ -2366,13 +2366,13 @@ export function AgentChat({
               />
             </div>
           ) : viewer.kind === "code" ? (
-            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 p-4">
+            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-xl border border-line bg-canvas/60 p-4">
               <pre className="whitespace-pre-wrap break-words font-mono text-[12.5px] leading-relaxed text-ink">
                 {viewer.content}
               </pre>
             </div>
           ) : (
-            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-2xl border border-line bg-canvas/60 px-5 py-4">
+            <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-xl border border-line bg-canvas/60 px-5 py-4">
               <Markdown text={viewer.content} compact />
             </div>
           )

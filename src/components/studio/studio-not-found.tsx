@@ -47,7 +47,7 @@ export function StudioNotFound({ kind }: { kind: StudioNotFoundKind }) {
     <div className="grid h-full min-h-0 place-items-center bg-canvas">
       <div className="flex max-w-[380px] flex-col items-center gap-3 px-6 py-16 text-center">
         <span
-          className="grid size-14 place-items-center rounded-3xl"
+          className="grid size-14 place-items-center rounded-xl"
           style={{
             background: `color-mix(in oklab, ${c.tone} 18%, transparent)`,
             color: c.tone,

@@ -54,7 +54,7 @@ export function AnnouncementBanner() {
     <div className="relative z-30 px-3 pb-0 pt-3 sm:px-5">
       <div
         className={cn(
-          "ann-card relative mx-auto max-w-5xl overflow-hidden rounded-[18px] border border-line/80",
+          "ann-card relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-line/80",
           "bg-raised/85 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.28)]",
           "ring-1 ring-black/[0.03] dark:ring-white/[0.06]",
         )}

@@ -79,7 +79,7 @@ const NAV: {
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl bg-raised p-5 dark:bg-raised", className)}>{children}</div>
+    <div className={cn("rounded-xl bg-raised p-5 dark:bg-raised", className)}>{children}</div>
   );
 }
 
@@ -143,7 +143,7 @@ export function SettingsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-[min(720px,92dvh)] w-full max-w-[920px] overflow-hidden rounded-2xl border border-line bg-rail shadow-2xl"
+        className="relative flex h-[min(720px,92dvh)] w-full max-w-[920px] overflow-hidden rounded-xl border border-line bg-rail shadow-2xl"
       >
         <aside className="flex w-[220px] shrink-0 flex-col border-r border-line bg-sunk/40">
           <div className="flex items-center justify-between px-4 py-3">
@@ -198,7 +198,7 @@ export function SettingsModal({
             ) : null}
 
             {section === "integrations" ? (
-              <div data-theme="dark" className="rounded-2xl">
+              <div data-theme="dark" className="rounded-xl">
                 {integrations ? (
                   <IntegrationsView
                     bare
@@ -289,7 +289,7 @@ export function SettingsModal({
                   <Link
                     key={l.href}
                     href={l.href}
-                    className="flex items-center justify-between rounded-2xl bg-raised p-5 hover:bg-sunk"
+                    className="flex items-center justify-between rounded-xl bg-raised p-5 hover:bg-sunk"
                   >
                     <span className="text-[15px] font-medium">{l.label}</span>
                     <FiExternalLink size={15} className="text-ink-4" />

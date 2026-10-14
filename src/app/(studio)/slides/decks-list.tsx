@@ -53,7 +53,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
         </div>
         <Link
           href="/slides/new"
-          className="btn-grad inline-flex shrink-0 items-center gap-2 rounded-2xl px-4 py-2.5 text-[14px] font-semibold text-white transition active:scale-[0.97] sm:px-5 sm:py-3"
+          className="btn-grad inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-[14px] font-semibold text-white transition active:scale-[0.97] sm:px-5 sm:py-3"
         >
           <Ico icon={FiPlus} size={17} />
           New deck
@@ -73,7 +73,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search decks…"
             autoComplete="off"
-            className="w-full rounded-2xl border border-line bg-raised py-3 pl-11 pr-4 text-[14.5px] text-ink placeholder:text-ink-4 focus:border-accent/50 focus:outline-none"
+            className="w-full rounded-xl border border-line bg-raised py-3 pl-11 pr-4 text-[14.5px] text-ink placeholder:text-ink-4 focus:border-accent/50 focus:outline-none"
           />
         </div>
       ) : null}
@@ -81,7 +81,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
       {/* Empty state */}
       {decks.length === 0 ? (
         <div className="mt-10 text-center">
-          <div className="mx-auto mb-5 grid size-16 place-items-center rounded-3xl bg-accent/12 text-accent">
+          <div className="mx-auto mb-5 grid size-16 place-items-center rounded-xl bg-accent/12 text-accent">
             <Ico icon={FiPlay} motion="lift" size={28} />
           </div>
           <h2 className="text-[19px] font-semibold text-ink">
@@ -104,7 +104,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
           </div>
           <Link
             href="/slides/new"
-            className="btn-grad mt-8 inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.97]"
+            className="btn-grad mt-8 inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.97]"
           >
             <Ico icon={FiPlus} size={18} />
             Create a deck
@@ -121,7 +121,7 @@ export function DecksList({ decks }: { decks: DeckSummary[] }) {
               <Link
                 href={`/slides/${d.id}`}
                 className={cn(
-                  "block overflow-hidden rounded-3xl border border-line bg-raised",
+                  "block overflow-hidden rounded-xl border border-line bg-raised",
                   "transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_32px_-12px_rgba(124,92,255,0.35)]",
                 )}
               >

@@ -100,9 +100,9 @@ export function MobileChat({
             <div className="relative grid size-14 place-items-center">
               <span
                 aria-hidden
-                className="absolute inset-0 rounded-[20px] bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-sky-500/20 blur-xl"
+                className="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-sky-500/20 blur-xl"
               />
-              <span className="relative grid size-12 place-items-center rounded-[18px] border border-line-strong bg-raised/90 shadow-[var(--sh-2)]">
+              <span className="relative grid size-12 place-items-center rounded-xl border border-line-strong bg-raised/90 shadow-[var(--sh-2)]">
                 <TroveOrb size={29} />
               </span>
             </div>
@@ -168,7 +168,7 @@ export function MobileChat({
                   Home
                 </Link>
               </div>
-              <div className="overflow-hidden rounded-[18px] border border-line bg-raised/70 shadow-[var(--sh-1)]">
+              <div className="overflow-hidden rounded-xl border border-line bg-raised/70 shadow-[var(--sh-1)]">
                 {activity.slice(0, 6).map((recent, index) => (
                   <Link
                     key={`${recent.kind}-${recent.href}-${recent.title}`}

@@ -152,7 +152,7 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-[calc(100%+6px)] z-40 w-[min(100vw-1.5rem,320px)] overflow-hidden rounded-2xl border border-line-strong bg-raised shadow-[var(--elev)]"
+          className="absolute right-0 top-[calc(100%+6px)] z-40 w-[min(100vw-1.5rem,320px)] overflow-hidden rounded-xl border border-line-strong bg-raised shadow-[var(--elev)]"
         >
           <div className="flex items-center justify-between border-b border-line px-3.5 py-2.5">
             <p className="text-[12.5px] font-semibold text-ink">Notifications</p>

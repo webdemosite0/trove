@@ -39,7 +39,7 @@ export function CrewSection() {
             <Link
               key={m.name}
               href="/tros"
-              className="group flex items-center gap-2.5 rounded-2xl border border-line bg-canvas p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/40"
+              className="group flex items-center gap-2.5 rounded-xl border border-line bg-canvas p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/40"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

@@ -58,7 +58,7 @@ function SizePicker({ onClose }: { onClose: () => void }) {
       aria-label="New design"
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-raised p-5 sm:rounded-3xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-xl bg-raised p-5 sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -80,7 +80,7 @@ function SizePicker({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={() => create(s.id)}
               disabled={creating !== null}
-              className="rounded-2xl border border-line/70 bg-sunk/60 p-4 text-left transition hover:border-accent active:scale-[0.97] disabled:opacity-60"
+              className="rounded-xl border border-line/70 bg-sunk/60 p-4 text-left transition hover:border-accent active:scale-[0.97] disabled:opacity-60"
             >
               <span
                 className="mb-2 block rounded-md bg-gradient-to-br from-[#8b5cf6] to-[#3b82f6]"
@@ -135,7 +135,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
           <button
             type="button"
             onClick={() => setShowPicker(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-accent px-4 py-3 text-[14px] font-semibold text-white shadow-lg shadow-accent/25 transition active:scale-95"
+            className="flex shrink-0 items-center gap-1.5 rounded-xl bg-accent px-4 py-3 text-[14px] font-semibold text-white shadow-lg shadow-accent/25 transition active:scale-95"
           >
             <FiPlus size={18} />
             New design
@@ -163,8 +163,8 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
 
         {/* Gallery */}
         {!filtered.length ? (
-          <div className="flex flex-col items-center rounded-3xl border border-dashed border-line-strong bg-raised/50 px-6 py-16 text-center">
-            <span className="mb-4 grid size-16 place-items-center rounded-3xl bg-accent/10 text-accent">
+          <div className="flex flex-col items-center rounded-xl border border-dashed border-line-strong bg-raised/50 px-6 py-16 text-center">
+            <span className="mb-4 grid size-16 place-items-center rounded-xl bg-accent/10 text-accent">
               <FiImage size={28} />
             </span>
             <p className="text-[16px] font-semibold text-ink">
@@ -178,7 +178,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
             <button
               type="button"
               onClick={() => setShowPicker(true)}
-              className="mt-5 flex items-center gap-1.5 rounded-2xl bg-accent px-5 py-3 text-[14px] font-semibold text-white transition active:scale-95"
+              className="mt-5 flex items-center gap-1.5 rounded-xl bg-accent px-5 py-3 text-[14px] font-semibold text-white transition active:scale-95"
             >
               <FiPlus size={18} />
               New design
@@ -191,7 +191,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
               return (
                 <div
                   key={d.id}
-                  className="group relative overflow-hidden rounded-2xl border border-line/60 bg-raised transition hover:border-line-strong"
+                  className="group relative overflow-hidden rounded-xl border border-line/60 bg-raised transition hover:border-line-strong"
                 >
                   <button
                     type="button"

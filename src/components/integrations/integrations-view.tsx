@@ -73,9 +73,9 @@ function FeaturedCard({
   disconnecting: boolean;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl border border-line bg-raised p-5 shadow-[var(--sh-1)]">
+    <div className="flex flex-col rounded-xl border border-line bg-raised p-5 shadow-[var(--sh-1)]">
       <div className="flex items-start justify-between gap-3">
-        <span className="grid size-[56px] place-items-center rounded-2xl bg-white shadow-[var(--sh-1)] ring-1 ring-line">
+        <span className="grid size-[56px] place-items-center rounded-xl bg-white shadow-[var(--sh-1)] ring-1 ring-line">
           <ServiceMark id={service.id} name={service.name} size={42} />
         </span>
         {badge ? (
@@ -93,7 +93,7 @@ function FeaturedCard({
       <div className="mt-4 flex-1" />
       {connected ? (
         <div>
-          <div className="flex w-full items-center justify-between gap-2 rounded-2xl border border-positive/30 bg-positive-soft px-4 py-2.5">
+          <div className="flex w-full items-center justify-between gap-2 rounded-xl border border-positive/30 bg-positive-soft px-4 py-2.5">
             <span className="inline-flex shrink-0 items-center gap-2 text-[13.5px] font-medium text-positive">
               <FiCheck size={15} /> Connected
             </span>
@@ -118,7 +118,7 @@ function FeaturedCard({
       ) : service.viaBrowser ? (
         <span
           title="No connection needed — your Tro drives this through its cloud browser. Just @mention it in chat."
-          className="flex w-full items-center justify-center rounded-2xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-[13.5px] font-medium text-accent"
+          className="flex w-full items-center justify-center rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-[13.5px] font-medium text-accent"
         >
           Via browser — no setup needed
         </span>
@@ -127,7 +127,7 @@ function FeaturedCard({
           type="button"
           disabled={disabled || busy}
           onClick={onConnect}
-          className="w-full rounded-2xl bg-accent px-4 py-2.5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+          className="w-full rounded-xl bg-accent px-4 py-2.5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
         >
           {busy ? "Connecting…" : "Connect"}
         </button>
@@ -468,7 +468,7 @@ export function IntegrationsView({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search integrations..."
-                className="h-12 w-full rounded-2xl border border-line bg-raised pl-11 pr-4 text-[14px] text-ink outline-none shadow-[var(--sh-1)] placeholder:text-ink-4 focus:border-accent"
+                className="h-12 w-full rounded-xl border border-line bg-raised pl-11 pr-4 text-[14px] text-ink outline-none shadow-[var(--sh-1)] placeholder:text-ink-4 focus:border-accent"
               />
             </label>
             <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-4">
@@ -588,11 +588,11 @@ export function IntegrationsView({
             {catalog === null && !catalogError ? (
               <div className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading apps">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="rounded-2xl border border-line bg-raised p-5">
-                    <div className="size-[56px] animate-pulse rounded-2xl bg-sunk" />
+                  <div key={i} className="rounded-xl border border-line bg-raised p-5">
+                    <div className="size-[56px] animate-pulse rounded-xl bg-sunk" />
                     <div className="mt-3.5 h-4 w-2/5 animate-pulse rounded-md bg-sunk" />
                     <div className="mt-2 h-3.5 w-3/5 animate-pulse rounded-md bg-sunk" />
-                    <div className="mt-4 h-10 w-full animate-pulse rounded-2xl bg-sunk" />
+                    <div className="mt-4 h-10 w-full animate-pulse rounded-xl bg-sunk" />
                   </div>
                 ))}
               </div>
@@ -635,7 +635,7 @@ export function IntegrationsView({
                   <button
                     type="button"
                     onClick={() => setShownCount((n) => n + 48)}
-                    className="mt-4 w-full rounded-2xl border border-line bg-raised py-3 text-[13px] font-medium text-ink-3 shadow-[var(--sh-1)] transition hover:border-line-strong hover:text-ink"
+                    className="mt-4 w-full rounded-xl border border-line bg-raised py-3 text-[13px] font-medium text-ink-3 shadow-[var(--sh-1)] transition hover:border-line-strong hover:text-ink"
                   >
                     Show more apps
                   </button>

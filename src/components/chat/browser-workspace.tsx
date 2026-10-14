@@ -342,8 +342,8 @@ export function BrowserWorkspace({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[20px] border border-violet-400/20 bg-raised shadow-[var(--sh-2)]",
-        compact && "rounded-2xl",
+        "overflow-hidden rounded-xl border border-violet-400/20 bg-raised shadow-[var(--sh-2)]",
+        compact && "rounded-xl",
       )}
     >
       <div

@@ -46,7 +46,7 @@ function Column({
   items: { label: string; href: string; icon: typeof TbWorld; tone: string }[];
 }) {
   return (
-    <div className="rounded-3xl border border-line bg-raised/50 p-6 sm:p-7">
+    <div className="rounded-xl border border-line bg-raised/50 p-6 sm:p-7">
       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-600">{eyebrow}</p>
       <h3 className="mt-2 text-[19px] font-semibold tracking-tight text-ink">{title}</h3>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">{body}</p>
@@ -98,7 +98,7 @@ export function Architecture() {
             body="Research, code, agents, and Tros do the work with you — and remember the brief."
             items={WORK}
           />
-          <div className="rounded-3xl border border-line bg-raised/50 p-6 sm:p-7">
+          <div className="rounded-xl border border-line bg-raised/50 p-6 sm:p-7">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-600">Connect</p>
             <h3 className="mt-2 text-[19px] font-semibold tracking-tight text-ink">Your apps, plugged in</h3>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
@@ -214,7 +214,7 @@ export function TrosWorkflow() {
                     width={56}
                     height={56}
                     loading="lazy"
-                    className="size-14 rounded-2xl bg-raised object-cover ring-1 ring-line sm:size-16"
+                    className="size-14 rounded-xl bg-raised object-cover ring-1 ring-line sm:size-16"
                     style={{ boxShadow: done ? `0 8px 24px -8px ${w.accent}66` : undefined }}
                   />
                   {current && (
@@ -224,7 +224,7 @@ export function TrosWorkflow() {
                     </span>
                   )}
                 </span>
-                <div className="min-w-0 flex-1 rounded-2xl border border-line bg-raised/60 px-4 py-3">
+                <div className="min-w-0 flex-1 rounded-xl border border-line bg-raised/60 px-4 py-3">
                   <div className="flex flex-wrap items-baseline gap-x-2">
                     <span className="text-[14.5px] font-semibold text-ink">{w.name}</span>
                     <span

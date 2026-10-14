@@ -55,7 +55,7 @@ export function PermissionModal({
         role="dialog"
         aria-modal="true"
         aria-label={`Connect ${name}`}
-        className="relative flex max-h-[88dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-line bg-canvas shadow-[var(--elev)]"
+        className="relative flex max-h-[88dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-xl border border-line bg-canvas shadow-[var(--elev)]"
       >
         {/* Top bar: Back left, X right */}
         <div className="flex items-center justify-between px-5 pt-4">
@@ -78,7 +78,7 @@ export function PermissionModal({
 
         {/* Header: logo + name + description */}
         <div className="flex items-start gap-4 px-6 pt-2">
-          <span className="grid size-[64px] shrink-0 place-items-center rounded-2xl bg-white shadow-[var(--sh-1)] ring-1 ring-line">
+          <span className="grid size-[64px] shrink-0 place-items-center rounded-xl bg-white shadow-[var(--sh-1)] ring-1 ring-line">
             <ServiceMark id={serviceId} name={name} size={48} />
           </span>
           <div className="min-w-0 pt-0.5">
@@ -108,7 +108,7 @@ export function PermissionModal({
                     aria-checked={active}
                     disabled={busy}
                     onClick={() => setSelected(level.id)}
-                    className={`flex w-full items-start gap-3.5 rounded-2xl border p-4 text-left transition ${
+                    className={`flex w-full items-start gap-3.5 rounded-xl border p-4 text-left transition ${
                       active
                         ? "border-accent/60 bg-accent/[0.08]"
                         : "border-line bg-[#1e1e20] hover:border-line-strong"

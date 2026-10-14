@@ -29,7 +29,7 @@ export function TeamNav({
   const canAdmin = role === "owner" || role === "admin";
 
   return (
-    <nav className="flex gap-1 overflow-x-auto rounded-2xl border border-line bg-raised/85 p-1 shadow-[var(--sh-1)] scrollbar-none">
+    <nav className="flex gap-1 overflow-x-auto rounded-xl border border-line bg-raised/85 p-1 shadow-[var(--sh-1)] scrollbar-none">
       {ITEMS.filter((item) => !item.adminOnly || canAdmin).map((item) => {
         const active =
           pathname === item.href ||

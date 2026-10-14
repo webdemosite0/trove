@@ -162,7 +162,7 @@ export function ConnectorMentionMenu({
   return (
     <div
       className={cn(
-        "absolute z-40 overflow-hidden rounded-2xl border border-line bg-raised/98 shadow-[0_18px_50px_rgba(0,0,0,.16)] backdrop-blur-xl",
+        "absolute z-40 overflow-hidden rounded-xl border border-line bg-raised/98 shadow-[0_18px_50px_rgba(0,0,0,.16)] backdrop-blur-xl",
         compact
           ? "bottom-full mb-2 left-2 right-2"
           : "bottom-full mb-2 left-3 w-[min(340px,calc(100%-24px))]",

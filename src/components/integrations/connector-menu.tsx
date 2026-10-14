@@ -39,7 +39,7 @@ export function ConnectorMenu({
     return (
       <div
         className={cn(
-          "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-2xl border border-line bg-raised/95 p-3 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
+          "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-xl border border-line bg-raised/95 p-3 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
           className,
         )}
       >
@@ -56,7 +56,7 @@ export function ConnectorMenu({
   return (
     <div
       className={cn(
-        "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-2xl border border-line bg-raised/95 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
+        "absolute bottom-full left-0 z-50 mb-2 w-[300px] overflow-hidden rounded-xl border border-line bg-raised/95 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl",
         className,
       )}
       role="listbox"
@@ -122,7 +122,7 @@ export function ConnectorApproval({
   onDeny: () => void;
 }) {
   return (
-    <div className="nx-rise my-3 overflow-hidden rounded-[20px] border border-line bg-gradient-to-br from-raised via-rail/80 to-sunk p-4 shadow-[0_20px_60px_-36px_rgba(124,92,255,0.45)]">
+    <div className="nx-rise my-3 overflow-hidden rounded-xl border border-line bg-gradient-to-br from-raised via-rail/80 to-sunk p-4 shadow-[0_20px_60px_-36px_rgba(124,92,255,0.45)]">
       <div className="flex items-start gap-3">
         <ServiceMark id={serviceId ?? name.toLowerCase()} name={name} size={44} />
         <div className="min-w-0 flex-1">

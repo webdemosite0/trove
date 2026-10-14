@@ -166,7 +166,7 @@ export function StudioSplit({
               <div
                 key={i}
                 className={cn(
-                  "max-w-[90%] rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed",
+                  "max-w-[90%] rounded-xl px-3.5 py-2.5 text-[13.5px] leading-relaxed",
                   m.role === "user"
                     ? "ml-auto bg-accent text-white"
                     : "bg-sunk text-ink-2",

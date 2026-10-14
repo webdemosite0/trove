@@ -28,7 +28,7 @@ export function IntegrationNetwork() {
   return (
     <section id="integrations" className="px-5 py-16 lg:py-24">
       <div className="mx-auto max-w-[1120px]">
-        <div className="overflow-hidden rounded-[32px] border border-line bg-raised/80 shadow-[0_36px_100px_-52px_rgba(79,70,229,0.5)] backdrop-blur-xl">
+        <div className="overflow-hidden rounded-xl border border-line bg-raised/80 shadow-[0_36px_100px_-52px_rgba(79,70,229,0.5)] backdrop-blur-xl">
           <div className="grid items-center gap-10 p-6 sm:p-9 lg:grid-cols-[0.88fr_1.12fr] lg:p-12">
             <Reveal>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-600">
@@ -99,7 +99,7 @@ export function IntegrationNetwork() {
                   <circle cx="50" cy="50" r="22" fill="none" stroke="#8b5cf6" strokeOpacity="0.08" strokeWidth="0.5" />
                 </svg>
 
-                <div className="absolute left-1/2 top-1/2 z-20 flex size-[92px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[28px] border border-violet-300/40 bg-raised dark:border-violet-400/20 shadow-[0_24px_70px_-20px_rgba(99,102,241,0.45)] sm:size-[108px]">
+                <div className="absolute left-1/2 top-1/2 z-20 flex size-[92px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-xl border border-violet-300/40 bg-raised dark:border-violet-400/20 shadow-[0_24px_70px_-20px_rgba(99,102,241,0.45)] sm:size-[108px]">
                   <TroveOrb size={38} state="idle" />
                   <span className="mt-2 text-[11px] font-semibold tracking-tight text-zinc-900">Trove</span>
                 </div>
@@ -115,7 +115,7 @@ export function IntegrationNetwork() {
                     }}
                   >
                     <div className="group flex flex-col items-center gap-1.5">
-                      <span className="grid size-11 place-items-center rounded-2xl border border-line bg-raised shadow-[0_12px_30px_-14px_rgba(15,23,42,0.45)] transition group-hover:-translate-y-1 group-hover:shadow-lg sm:size-12">
+                      <span className="grid size-11 place-items-center rounded-xl border border-line bg-raised shadow-[0_12px_30px_-14px_rgba(15,23,42,0.45)] transition group-hover:-translate-y-1 group-hover:shadow-lg sm:size-12">
                         <ServiceMark id={tool.id} name={tool.name} size={34} className="rounded-[10px]" />
                       </span>
                       <span className="rounded-full border border-line bg-raised/90 px-2 py-0.5 text-[9.5px] font-medium text-ink-3 shadow-sm backdrop-blur sm:text-[10.5px]">

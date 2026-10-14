@@ -26,7 +26,7 @@ function Card({
     <Link
       href={href}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-3xl border border-line bg-raised p-6 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-[0_24px_64px_-24px_rgba(99,102,241,0.35)] sm:p-7",
+        "group relative flex flex-col overflow-hidden rounded-xl border border-line bg-raised p-6 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-[0_24px_64px_-24px_rgba(99,102,241,0.35)] sm:p-7",
         className,
       )}
     >
@@ -52,7 +52,7 @@ function CardHead({
   return (
     <div className="mb-5">
       <span
-        className="mb-4 grid size-11 place-items-center rounded-2xl transition-transform duration-300 group-hover:scale-110"
+        className="mb-4 grid size-11 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110"
         style={{ background: `${tone}1a`, color: tone }}
       >
         <Icon size={20} />
@@ -89,7 +89,7 @@ export function Bento() {
               title="Designs with a canvas"
               desc="Social posts, posters, logos, thumbnails — compose on a real canvas and export crisp PNGs."
             />
-            <div className="relative mt-2 overflow-hidden rounded-2xl border border-line">
+            <div className="relative mt-2 overflow-hidden rounded-xl border border-line">
               <div className="flex items-center gap-1.5 border-b border-line bg-sunk/60 px-3 py-2">
                 <span className="size-2 rounded-full bg-line-strong" />
                 <span className="size-2 rounded-full bg-line-strong" />
@@ -132,7 +132,7 @@ export function Bento() {
               title="Documents that download as Word"
               desc="Memos, proposals, reports — polished and exportable as real .docx."
             />
-            <div className="mt-2 space-y-1.5 rounded-2xl border border-line bg-sunk/50 p-4">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-line bg-sunk/50 p-4">
               {[92, 78, 85].map((w, i) => (
                 <div key={i} className="h-2 rounded-full bg-line" style={{ width: `${w}%` }} />
               ))}
@@ -147,7 +147,7 @@ export function Bento() {
               title="Sheets with real formulas"
               desc="Models, budgets, and pricing grids that compute — exported as .xlsx."
             />
-            <div className="mt-2 grid grid-cols-4 gap-1 rounded-2xl border border-line bg-sunk/50 p-3">
+            <div className="mt-2 grid grid-cols-4 gap-1 rounded-xl border border-line bg-sunk/50 p-3">
               {Array.from({ length: 12 }).map((_, i) => (
                 <div
                   key={i}

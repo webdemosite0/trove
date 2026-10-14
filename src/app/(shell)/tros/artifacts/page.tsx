@@ -81,7 +81,7 @@ export default async function TrosArtifactsPage() {
       </header>
 
       {groups.size === 0 ? (
-        <div className="rounded-3xl border border-dashed border-line-strong bg-raised/40 px-6 py-16 text-center">
+        <div className="rounded-xl border border-dashed border-line-strong bg-raised/40 px-6 py-16 text-center">
           <p className="text-[15px] font-medium text-ink">No artifacts yet</p>
           <Link
             href="/tros"
@@ -110,7 +110,7 @@ export default async function TrosArtifactsPage() {
                   <li key={a.id}>
                     <Link
                       href={`/tros/${g.id}`}
-                      className="flex items-center gap-3 rounded-2xl border border-line bg-raised/60 px-4 py-3 transition hover:border-line-strong hover:bg-raised"
+                      className="flex items-center gap-3 rounded-xl border border-line bg-raised/60 px-4 py-3 transition hover:border-line-strong hover:bg-raised"
                     >
                       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/12 text-accent">
                         <ArtifactIcon kind={(str(a.kind) as ArtifactKind) || "doc"} size={16} />

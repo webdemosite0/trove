@@ -51,7 +51,7 @@ export function FeatureWorkflow({
           <li
             key={s.label}
             className={cn(
-              "relative flex-1 rounded-2xl border p-4 transition-all duration-500",
+              "relative flex-1 rounded-xl border p-4 transition-all duration-500",
               lit ? "border-line bg-raised opacity-100" : "border-line/60 bg-raised/40 opacity-45",
             )}
           >

@@ -74,7 +74,7 @@ export default function SecurityPage() {
         {PRACTICES.map((p) => (
           <section
             key={p.heading}
-            className="rounded-2xl border border-line bg-raised/60 p-5"
+            className="rounded-xl border border-line bg-raised/60 p-5"
           >
             <h2 className="flex items-start gap-2 text-[14.5px] font-semibold text-ink">
               <FiCheck size={16} className="mt-0.5 shrink-0 text-emerald-600" aria-hidden />

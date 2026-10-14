@@ -142,34 +142,15 @@
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  background-color: #f4f2ff;
+  background-color: var(--color-canvas);
 }
 
+/* Clean & calm: a plain canvas, no aurora wash. */
 .landing-scene__photo {
   position: absolute;
   inset: 0;
-  background-color: #f4f2ff;
-  background-image:
-    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(186, 170, 255, 0.5), transparent 72%),
-    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(160, 175, 255, 0.42), transparent 70%),
-    radial-gradient(ellipse 55% 45% at 90% 92%, rgba(200, 190, 255, 0.32), transparent 74%),
-    radial-gradient(ellipse 50% 40% at 8% 94%, rgba(175, 185, 255, 0.26), transparent 72%),
-    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(255, 255, 255, 0.78), transparent 68%),
-    linear-gradient(180deg, #f7f5ff 0%, #eef1ff 45%, #f3f5fb 100%);
-  animation: lp-aurora 18s ease-in-out infinite;
-}
-
-/* Dark theme: the homepage backdrop stayed lavender, washing out the white
-   headline and nav. Match the app's dark surface (#212121) with faint glows. */
-:root[data-theme="dark"] .landing-scene,
-:root[data-theme="dark"] .landing-scene__photo {
-  background-color: #212121;
-}
-:root[data-theme="dark"] .landing-scene__photo {
-  background-image:
-    radial-gradient(ellipse 50% 42% at 6% 16%, rgba(139, 92, 246, 0.16), transparent 72%),
-    radial-gradient(ellipse 46% 38% at 96% 12%, rgba(99, 102, 241, 0.13), transparent 70%),
-    radial-gradient(ellipse 55% 45% at 90% 92%, rgba(139, 92, 246, 0.08), transparent 74%);
+  background-color: var(--color-canvas);
+  background-image: none;
 }
 
 /* Grid lines removed */

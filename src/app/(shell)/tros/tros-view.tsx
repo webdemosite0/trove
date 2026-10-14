@@ -56,7 +56,7 @@ const TOOLS = [
 ];
 
 const field =
-  "w-full rounded-2xl border border-line-strong bg-sunk/80 px-4 py-3 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-[14px]";
+  "w-full rounded-xl border border-line-strong bg-sunk/80 px-4 py-3 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-[14px]";
 
 type Draft = { name: string; role: string; instructions: string; tools?: string[] };
 
@@ -773,7 +773,7 @@ export function TrosView({
                     <Link
                       key={p.id}
                       href={`/tros/${p.agentId}`}
-                      className="group flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 transition hover:border-amber-500/50 hover:bg-amber-500/[0.1]"
+                      className="group flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 transition hover:border-amber-500/50 hover:bg-amber-500/[0.1]"
                     >
                       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-amber-500">
                         <FiCheck size={16} />
@@ -804,7 +804,7 @@ export function TrosView({
                         key={`${a.kind}-${a.id}`}
                         href={`/tros/${a.agentId}`}
                         className={cn(
-                          "group flex items-center gap-3 rounded-2xl border px-4 py-3 transition",
+                          "group flex items-center gap-3 rounded-xl border px-4 py-3 transition",
                           a.kind === "failed"
                             ? "border-red-500/30 bg-red-500/[0.06] hover:border-red-500/50 hover:bg-red-500/[0.1]"
                             : "border-line bg-raised/70 hover:border-violet-500/40",
@@ -865,7 +865,7 @@ export function TrosView({
                       <Link
                         key={t.id}
                         href={`/tros/${t.agentId}`}
-                        className="group rounded-2xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+                        className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
                       >
                         <div className="flex items-center gap-2.5">
                           {agent ? (
@@ -915,7 +915,7 @@ export function TrosView({
                 </div>
               ) : null}
               {attention.length === 0 && pendingApprovals.length === 0 && activeTasks.length === 0 ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-line px-5 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-line px-5 py-4">
                   <span className="inline-flex items-center gap-2.5 text-[13.5px] text-ink-2">
                     <FiCheck size={18} className="shrink-0 opacity-60" />
                     All quiet — no active tasks.
@@ -949,7 +949,7 @@ export function TrosView({
                 </Link>
               </div>
               {ordered.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-line px-6 py-10 text-center">
+                <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center">
                   <p className="text-[14px] font-semibold text-ink">
                     {agents.length === 0 ? "No Tros yet" : "No matches"}
                   </p>
@@ -960,7 +960,7 @@ export function TrosView({
                   </p>
                 </div>
               ) : query ? (
-                <div className="overflow-hidden rounded-2xl border border-line bg-raised/50">
+                <div className="overflow-hidden rounded-xl border border-line bg-raised/50">
                   {ordered.map((a, i) => (
                     <RosterRow
                       key={a.id}
@@ -976,7 +976,7 @@ export function TrosView({
                   {managers.map((m) => {
                     const reports = ordered.filter((c) => c.parent_id === m.id);
                     return (
-                      <div key={m.id} className="overflow-hidden rounded-2xl border border-line bg-raised/50">
+                      <div key={m.id} className="overflow-hidden rounded-xl border border-line bg-raised/50">
                         <RosterRow agent={m} state={agentState(m.id)} task={agentTask(m.id)} />
                         {reports.length > 0 ? (
                           <div className="border-t border-line/60 bg-sunk/30">
@@ -1001,7 +1001,7 @@ export function TrosView({
                       <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-4">
                         Independent
                       </p>
-                      <div className="overflow-hidden rounded-2xl border border-line bg-raised/50">
+                      <div className="overflow-hidden rounded-xl border border-line bg-raised/50">
                         {independents.map((a, i) => (
                           <RosterRow
                             key={a.id}
@@ -1048,7 +1048,7 @@ export function TrosView({
                   <Link
                     key={t.slug}
                     href={templateHref(t)}
-                    className="group w-[248px] shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-raised/70 transition duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_24px_54px_-20px_rgba(139,92,246,0.55)]"
+                    className="group w-[248px] shrink-0 snap-start overflow-hidden rounded-xl border border-line bg-raised/70 transition duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_24px_54px_-20px_rgba(139,92,246,0.55)]"
                   >
                     <div
                       className="relative grid h-[148px] place-items-center overflow-hidden"
@@ -1094,7 +1094,7 @@ export function TrosView({
                   e.preventDefault();
                   if (brief.trim()) router.push(`/tros/new?describe=${encodeURIComponent(brief.trim())}`);
                 }}
-                className="flex w-full items-center gap-2 rounded-2xl border border-line bg-raised/85 p-2 pl-4 shadow-[0_20px_50px_-24px_rgba(139,92,246,0.45)] transition focus-within:border-violet-500/55"
+                className="flex w-full items-center gap-2 rounded-xl border border-line bg-raised/85 p-2 pl-4 shadow-[0_20px_50px_-24px_rgba(139,92,246,0.45)] transition focus-within:border-violet-500/55"
               >
                 <Ico icon={FiZap} motion="sparkle" size={16} className="shrink-0 text-violet-500" />
                 <input
@@ -1117,7 +1117,7 @@ export function TrosView({
                   <Link
                     key={s.title}
                     href={wizardHref(s.draft)}
-                    className="group flex items-center gap-3 rounded-2xl border border-line bg-raised/70 px-3.5 py-3 text-left transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.55)]"
+                    className="group flex items-center gap-3 rounded-xl border border-line bg-raised/70 px-3.5 py-3 text-left transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-[0_18px_44px_-18px_rgba(139,92,246,0.55)]"
                   >
                     <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
                       <Ico icon={s.icon} size={16} />
@@ -1143,7 +1143,7 @@ export function TrosView({
                     <Link
                       key={art.id}
                       href={`/tros/${art.agentId}`}
-                      className="group rounded-2xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
+                      className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35 hover:shadow-[0_18px_44px_-20px_rgba(139,92,246,0.5)]"
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500">
@@ -1185,7 +1185,7 @@ export function TrosView({
                     key={s}
                     href={`/tros/new?species=${s}`}
                     title={`Hire a Tro — ${SPECIES_META[s].label}`}
-                    className="flex w-[92px] shrink-0 flex-col items-center rounded-2xl border border-line/70 bg-raised/50 px-2 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35"
+                    className="flex w-[92px] shrink-0 flex-col items-center rounded-xl border border-line/70 bg-raised/50 px-2 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-violet-500/35"
                   >
                     <Bot size={44} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
                     <span className="mt-1.5 text-[11px] font-semibold text-ink">{SPECIES_META[s].label}</span>
@@ -1240,7 +1240,7 @@ function CreateModal({ initial, onClose }: { initial: Draft; onClose: () => void
   return (
     <Modal open onClose={onClose} title="New Tro" description="Name the specialist — a mascot is assigned automatically.">
       <form action={action} className="mt-4 space-y-4">
-        <div className="flex items-center gap-4 rounded-2xl border border-line bg-sunk/50 px-4 py-3">
+        <div className="flex items-center gap-4 rounded-xl border border-line bg-sunk/50 px-4 py-3">
           <Bot size={56} species={previewSpecies} accent={accent} state={pending ? "working" : "idle"} />
           <div>
             <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-ink-4">Preview mascot</p>

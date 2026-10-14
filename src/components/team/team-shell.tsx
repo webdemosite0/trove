@@ -96,7 +96,7 @@ function TeamRail({
 
       <div className="px-4 pb-4 pt-5">
         <div className="flex items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-sky-500/20 ring-1 ring-violet-400/20">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-sky-500/20 ring-1 ring-violet-400/20">
             <TroveOrb size={25} />
           </span>
           <div className="min-w-0">

@@ -93,7 +93,7 @@ export function BrowserExtensionCard() {
   };
 
   return (
-    <div className="mb-4 rounded-2xl border border-line bg-raised p-4">
+    <div className="mb-4 rounded-xl border border-line bg-raised p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[14px] font-semibold text-ink">Browser extension</p>

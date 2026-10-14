@@ -561,7 +561,7 @@ export function DeckEditor({
     return (
       <div className="nx-in mx-auto flex min-h-full w-full max-w-[720px] flex-col justify-center px-5 py-10">
         <div className="text-center">
-          <span className="mx-auto mb-5 grid size-14 place-items-center rounded-3xl bg-accent/12 text-accent">
+          <span className="mx-auto mb-5 grid size-14 place-items-center rounded-xl bg-accent/12 text-accent">
             <Ico icon={TbSparkles} motion="lift" size={26} />
           </span>
           <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink sm:text-[30px]">
@@ -579,7 +579,7 @@ export function DeckEditor({
             void askAi(aiInput);
           }}
         >
-          <div className="flex items-center gap-2 rounded-3xl border border-line bg-raised p-2 pl-5 shadow-[0_8px_32px_-16px_rgba(124,92,255,0.4)] focus-within:border-accent/50">
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-raised p-2 pl-5 shadow-[0_8px_32px_-16px_rgba(124,92,255,0.4)] focus-within:border-accent/50">
             <input
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}
@@ -591,7 +591,7 @@ export function DeckEditor({
             <button
               type="submit"
               disabled={!aiInput.trim()}
-              className="btn-grad grid size-11 shrink-0 place-items-center rounded-2xl text-white transition active:scale-95 disabled:opacity-40"
+              className="btn-grad grid size-11 shrink-0 place-items-center rounded-xl text-white transition active:scale-95 disabled:opacity-40"
               aria-label="Generate deck"
             >
               <Ico icon={TbSparkles} size={19} />
@@ -714,7 +714,7 @@ export function DeckEditor({
             <Ico icon={FiMoreHorizontal} size={18} />
           </IconBtn>
           {menuOpen ? (
-            <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-2xl border border-line bg-raised p-1.5 shadow-xl">
+            <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-xl border border-line bg-raised p-1.5 shadow-xl">
               <button
                 type="button"
                 onClick={() => { exportPptx(); setMenuOpen(false); }}
@@ -851,7 +851,7 @@ export function DeckEditor({
                 <Ico icon={FiChevronDown} size={14} />
               </button>
               {layoutsOpen && slide ? (
-                <div className="absolute left-0 top-11 z-40 grid w-[300px] grid-cols-3 gap-1.5 rounded-2xl border border-line bg-raised p-2.5 shadow-xl">
+                <div className="absolute left-0 top-11 z-40 grid w-[300px] grid-cols-3 gap-1.5 rounded-xl border border-line bg-raised p-2.5 shadow-xl">
                   {LAYOUTS.map((l) => (
                     <button
                       key={l.id}
@@ -906,7 +906,7 @@ export function DeckEditor({
             {/* Thinking overlay while generating */}
             {busy ? (
               <div className="absolute inset-0 z-20 grid place-items-center bg-canvas/70 backdrop-blur-[2px]">
-                <div className="flex flex-col items-center gap-3 rounded-3xl border border-line bg-raised px-8 py-6 shadow-2xl">
+                <div className="flex flex-col items-center gap-3 rounded-xl border border-line bg-raised px-8 py-6 shadow-2xl">
                   <Thinking label="Dreaming up your slides" size={30} />
                   <p className="max-w-[30ch] text-center text-[13px] text-ink-3">
                     Writing copy, choosing a theme and laying out {total ? "a new version" : "your deck"}…
@@ -952,7 +952,7 @@ export function DeckEditor({
           <div
             role="dialog"
             aria-label="Edit deck with AI"
-            className="w-full max-w-[560px] rounded-t-3xl border border-line bg-raised p-5 pb-8 sm:rounded-3xl sm:p-6"
+            className="w-full max-w-[560px] rounded-t-xl border border-line bg-raised p-5 pb-8 sm:rounded-xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
@@ -970,7 +970,7 @@ export function DeckEditor({
                 void askAi(aiInput);
               }}
             >
-              <div className="flex items-center gap-2 rounded-2xl border border-line bg-sunk p-2 pl-4 focus-within:border-accent/50">
+              <div className="flex items-center gap-2 rounded-xl border border-line bg-sunk p-2 pl-4 focus-within:border-accent/50">
                 <input
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
@@ -1059,7 +1059,7 @@ export function DeckEditor({
           <div
             role="alertdialog"
             aria-label="Delete deck"
-            className="w-full max-w-[380px] rounded-3xl border border-line bg-raised p-6"
+            className="w-full max-w-[380px] rounded-xl border border-line bg-raised p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-[16px] font-semibold text-ink">Delete this deck?</h2>
@@ -1071,14 +1071,14 @@ export function DeckEditor({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="flex-1 rounded-2xl border border-line py-2.5 text-[14px] font-semibold text-ink transition hover:bg-hover"
+                className="flex-1 rounded-xl border border-line py-2.5 text-[14px] font-semibold text-ink transition hover:bg-hover"
               >
                 Keep it
               </button>
               <button
                 type="button"
                 onClick={() => void deleteDeck()}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-critical py-2.5 text-[14px] font-semibold text-white transition active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-critical py-2.5 text-[14px] font-semibold text-white transition active:scale-[0.98]"
               >
                 <Ico icon={FiTrash2} size={15} /> Delete
               </button>

@@ -259,7 +259,7 @@ export function MobileShell({
               <div
                 role="menu"
                 aria-label="More actions"
-                className="mobile-more-menu fixed right-2 z-[71] w-60 overflow-hidden rounded-2xl border border-line/70 bg-raised shadow-2xl"
+                className="mobile-more-menu fixed right-2 z-[71] w-60 overflow-hidden rounded-xl border border-line/70 bg-raised shadow-2xl"
                 style={{ top: "calc(58px + env(safe-area-inset-top))" }}
               >
                 <div className="py-1.5">

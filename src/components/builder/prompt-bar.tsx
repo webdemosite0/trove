@@ -58,7 +58,7 @@ export function PromptBar({
     });
   }
 
-  const radius = variant === "Square" ? "rounded-xl" : "rounded-[22px]";
+  const radius = variant === "Square" ? "rounded-xl" : "rounded-xl";
 
   return (
     <div

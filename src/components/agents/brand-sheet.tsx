@@ -138,7 +138,7 @@ function HexCopy({ hex }: { hex: string }) {
 
 function ImagePlaceholder({ label }: { label: string }) {
   return (
-    <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-line-strong bg-canvas/50 p-4 text-center">
+    <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong bg-canvas/50 p-4 text-center">
       <FiImage size={22} className="text-ink-4" />
       <p className="text-[11.5px] text-ink-4">{label}</p>
     </div>
@@ -181,7 +181,7 @@ export function BrandSheetView({
   return (
     <div className={cn("w-full", compact ? "p-3" : "p-5")}>
       {/* Logo hero */}
-      <div className="overflow-hidden rounded-2xl border border-line bg-canvas/60">
+      <div className="overflow-hidden rounded-xl border border-line bg-canvas/60">
         {sheet.logoUrl ? (
           <button
             type="button"

@@ -40,13 +40,13 @@ export function SheetList({ cards }: { cards: SheetCard[] }) {
       </div>
 
       {filtered.length === 0 && q ? (
-        <div className="rounded-3xl border border-dashed border-line px-6 py-14 text-center">
+        <div className="rounded-xl border border-dashed border-line px-6 py-14 text-center">
           <p className="text-[15px] font-medium text-ink">No matches for “{q}”</p>
           <p className="mt-1 text-[13px] text-ink-3">Try a different search, or start a new sheet.</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-line px-6 py-12 text-center sm:py-16">
-          <span className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-positive/15 text-positive">
+        <div className="rounded-xl border border-dashed border-line px-6 py-12 text-center sm:py-16">
+          <span className="mx-auto mb-4 grid size-14 place-items-center rounded-xl bg-positive/15 text-positive">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
@@ -84,7 +84,7 @@ export function SheetList({ cards }: { cards: SheetCard[] }) {
             <Link
               key={c.id}
               href={c.href}
-              className="group overflow-hidden rounded-3xl border border-line bg-raised transition hover:border-accent/30 hover:shadow-lg active:scale-[0.99]"
+              className="group overflow-hidden rounded-xl border border-line bg-raised transition hover:border-accent/30 hover:shadow-lg active:scale-[0.99]"
             >
               {/* Mini preview */}
               <div className="border-b border-line bg-canvas p-3">

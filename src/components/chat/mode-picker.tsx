@@ -150,7 +150,7 @@ export function ModePicker({
         "nx-in z-[200] overflow-hidden border border-line bg-white shadow-xl dark:bg-raised",
         touch
           ? "fixed inset-x-3 bottom-3 rounded-[var(--r-card)]"
-          : "fixed rounded-2xl",
+          : "fixed rounded-xl",
       )}
       style={
         touch || !coords

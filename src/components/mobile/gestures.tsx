@@ -594,7 +594,7 @@ export function useLongPress({
           role="menu"
           aria-label="Item actions"
           className={cn(
-            "fixed z-[301] overflow-hidden rounded-2xl border border-line bg-raised",
+            "fixed z-[301] overflow-hidden rounded-xl border border-line bg-raised",
             "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.55)]",
             !reduce && "transition-all duration-200",
           )}

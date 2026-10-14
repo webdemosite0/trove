@@ -80,7 +80,7 @@ function Dropdown({
           "absolute left-1/2 top-full z-50 -translate-x-1/2 pt-2",
           product ? "w-[440px]" : "w-[280px]",
         )}>
-          <div className="overflow-hidden rounded-2xl border border-line bg-raised p-2 shadow-[var(--elev-lift)]">
+          <div className="overflow-hidden rounded-xl border border-line bg-raised p-2 shadow-[var(--elev-lift)]">
             {product ? (
               <div className="grid grid-cols-2 gap-1">
                 {PRODUCT_LINKS.map((l) => {
@@ -263,14 +263,14 @@ export function LandingNav() {
             <Link
               href="/signup"
               onClick={() => setMobileOpen(false)}
-              className="btn-grad flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl text-[15px] font-semibold"
+              className="btn-grad flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl text-[15px] font-semibold"
             >
               Start building <FiArrowRight size={15} aria-hidden />
             </Link>
             <Link
               href="/templates"
               onClick={() => setMobileOpen(false)}
-              className="flex min-h-[48px] items-center justify-center rounded-2xl border border-line text-[15px] font-medium text-ink"
+              className="flex min-h-[48px] items-center justify-center rounded-xl border border-line text-[15px] font-medium text-ink"
             >
               View examples
             </Link>

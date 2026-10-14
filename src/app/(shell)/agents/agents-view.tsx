@@ -29,7 +29,7 @@ const TOOLS = [
 ];
 
 const field =
-  "w-full rounded-2xl border border-line-strong bg-sunk/80 px-4 py-3 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-[14px]";
+  "w-full rounded-xl border border-line-strong bg-sunk/80 px-4 py-3 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-[14px]";
 
 export function AgentsView({
   agents,
@@ -86,7 +86,7 @@ export function AgentsView({
       {agents.length === 0 ? (
         <Link
           href="/tros/new"
-          className="group flex w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-line-strong bg-raised/40 px-6 py-20 text-center transition hover:border-accent/40 hover:bg-raised/70"
+          className="group flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-line-strong bg-raised/40 px-6 py-20 text-center transition hover:border-accent/40 hover:bg-raised/70"
         >
           <Bot size={72} seed="empty" state="idle" />
           <h2 className="mt-5 text-[18px] font-semibold text-ink">Create your first Tro</h2>
@@ -104,7 +104,7 @@ export function AgentsView({
             return (
               <div
                 key={a.id}
-                className="group relative overflow-hidden rounded-[24px] border border-line bg-raised/80 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition duration-300 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-[0_20px_50px_-28px_rgba(0,0,0,0.45)]"
+                className="group relative overflow-hidden rounded-xl border border-line bg-raised/80 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition duration-300 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-[0_20px_50px_-28px_rgba(0,0,0,0.45)]"
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div
@@ -150,9 +150,9 @@ export function AgentsView({
 
           <Link
             href="/tros/new"
-            className="flex min-h-[220px] flex-col items-center justify-center rounded-[24px] border border-dashed border-line-strong bg-transparent text-ink-3 transition hover:border-accent/40 hover:bg-raised/50 hover:text-ink"
+            className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-line-strong bg-transparent text-ink-3 transition hover:border-accent/40 hover:bg-raised/50 hover:text-ink"
           >
-            <span className="grid size-12 place-items-center rounded-2xl bg-sunk">
+            <span className="grid size-12 place-items-center rounded-xl bg-sunk">
               <FiPlus size={20} />
             </span>
             <span className="mt-3 text-[13.5px] font-semibold">Add Tro</span>

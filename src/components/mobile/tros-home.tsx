@@ -32,7 +32,7 @@ export function MobileTrosHome({ agents }: { agents: AgentRow[] }) {
 
       {/* Search */}
       <div className="shrink-0 px-5 pb-3">
-        <div className="flex items-center gap-2.5 rounded-2xl bg-sunk px-4 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl bg-sunk px-4 py-3">
           <FiSearch size={18} className="shrink-0 text-ink-4" />
           <input
             value={query}
@@ -63,7 +63,7 @@ export function MobileTrosHome({ agents }: { agents: AgentRow[] }) {
               <Link
                 key={a.id}
                 href={`/tros/${a.id}`}
-                className="flex items-center gap-4 rounded-3xl border border-line/60 bg-raised p-4 shadow-sm transition active:scale-[0.98]"
+                className="flex items-center gap-4 rounded-xl border border-line/60 bg-raised p-4 shadow-sm transition active:scale-[0.98]"
               >
                 <Bot size={56} seed={a.id} accent={a.accent} state="idle" />
                 <div className="min-w-0 flex-1">

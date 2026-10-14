@@ -213,7 +213,7 @@ export function BottomSheet({
         }}
         className={cn(
           "nx-sheet-panel absolute inset-x-0 bottom-0 mx-auto flex max-h-[86dvh] w-full max-w-[560px] flex-col overflow-hidden",
-          "rounded-t-[26px] border-t border-line bg-raised shadow-[0_-24px_64px_-16px_rgba(0,0,0,0.5)] outline-none",
+          "rounded-t-xl border-t border-line bg-raised shadow-[0_-24px_64px_-16px_rgba(0,0,0,0.5)] outline-none",
         )}
       >
         <div

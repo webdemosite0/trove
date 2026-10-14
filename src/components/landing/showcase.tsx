@@ -64,7 +64,7 @@ export function ProductMockup() {
         <Reveal delay={100} y={40} className="mt-12">
           <div
             aria-label="Demonstration of Trove building a document from chat"
-            className="relative overflow-hidden rounded-[24px] border border-zinc-200/90 bg-white shadow-[0_40px_100px_-40px_rgba(79,70,229,0.35)]"
+            className="relative overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-[0_40px_100px_-40px_rgba(79,70,229,0.35)]"
           >
             <div className="flex h-12 items-center border-b border-zinc-200/80 bg-white px-4">
               <span className="text-[13px] font-semibold text-zinc-800">CliniLamp proposal</span>
@@ -79,17 +79,17 @@ export function ProductMockup() {
             </div>
             <div className="grid min-h-[360px] lg:grid-cols-[340px_minmax(0,1fr)]">
               <div className="border-b border-zinc-200/80 bg-[#fbfbfc] p-4 lg:border-b-0 lg:border-r">
-                <div className="ml-auto max-w-[91%] rounded-2xl rounded-tr-md bg-zinc-900 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white">
+                <div className="ml-auto max-w-[91%] rounded-xl rounded-tr-md bg-zinc-900 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white">
                   Draft a premium product proposal for CliniLamp with a modern healthcare feel.
                 </div>
                 {phase >= 1 ? (
-                  <div className="mt-3 max-w-[94%] rounded-2xl rounded-tl-md border border-zinc-200 bg-white px-3.5 py-2.5 text-[12.5px] text-zinc-700">
+                  <div className="mt-3 max-w-[94%] rounded-xl rounded-tl-md border border-zinc-200 bg-white px-3.5 py-2.5 text-[12.5px] text-zinc-700">
                     {phase === 1 ? "Drafting your document…" : "Your first draft is ready. Keep refining in chat."}
                   </div>
                 ) : null}
               </div>
               <div className="min-h-[280px] bg-[#f5f5f7] p-5">
-                <div className="h-full rounded-[20px] border border-zinc-200 bg-white p-7 shadow-sm">
+                <div className="h-full rounded-xl border border-zinc-200 bg-white p-7 shadow-sm">
                   <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-600">
                     Healthcare lighting
                   </p>
@@ -144,7 +144,7 @@ export function WhyGallery() {
           <div
             key={g.title}
             className={cn(
-              "flex h-[180px] w-[220px] flex-col justify-end rounded-[22px] border border-zinc-200/50 bg-gradient-to-br p-6 shadow-md",
+              "flex h-[180px] w-[220px] flex-col justify-end rounded-xl border border-zinc-200/50 bg-gradient-to-br p-6 shadow-md",
               g.tone,
             )}
           >

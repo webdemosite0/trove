@@ -96,7 +96,7 @@ export function YourWork({
         className={cn("mx-auto w-full max-w-[1100px] px-5 pb-8 pt-4 lg:px-8", className)}
         aria-label="Your work"
       >
-        <div className="nx-rise rounded-[20px] border border-dashed border-line px-4 py-6 text-center text-[13px] text-ink-4">
+        <div className="nx-rise rounded-xl border border-dashed border-line px-4 py-6 text-center text-[13px] text-ink-4">
           {emptyHint}
         </div>
       </section>
@@ -113,7 +113,7 @@ export function YourWork({
       )}
       aria-label="Your work"
     >
-      <div className="nx-rise overflow-hidden rounded-[24px] border border-line bg-gradient-to-br from-raised/95 via-rail/50 to-sunk/60 p-4 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.55)] backdrop-blur-md sm:p-5">
+      <div className="nx-rise overflow-hidden rounded-xl border border-line bg-gradient-to-br from-raised/95 via-rail/50 to-sunk/60 p-4 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.55)] backdrop-blur-md sm:p-5">
         <header className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-4">

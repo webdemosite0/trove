@@ -74,7 +74,7 @@ export function TroPicker({
       {open ? (
         <div
           role="listbox"
-          className="absolute bottom-full left-0 z-30 mb-2 max-h-[280px] w-[240px] overflow-y-auto rounded-2xl border border-line-strong bg-raised p-1.5 shadow-2xl shadow-black/25"
+          className="absolute bottom-full left-0 z-30 mb-2 max-h-[280px] w-[240px] overflow-y-auto rounded-xl border border-line-strong bg-raised p-1.5 shadow-2xl shadow-black/25"
         >
           <p className="px-2.5 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-ink-4">
             Send to

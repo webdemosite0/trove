@@ -16,7 +16,7 @@ export function TrosSettingsSection() {
           return (
             <div
               key={species}
-              className="flex flex-col items-center rounded-2xl border border-line/60 bg-raised p-4 text-center transition hover:border-line hover:bg-hover/50"
+              className="flex flex-col items-center rounded-xl border border-line/60 bg-raised p-4 text-center transition hover:border-line hover:bg-hover/50"
             >
               <Bot size={64} species={species} state="idle" />
               <p className="mt-2 text-[14px] font-semibold text-ink">

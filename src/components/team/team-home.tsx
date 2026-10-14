@@ -26,7 +26,7 @@ export function TeamHome({
   if (!team) {
     return (
       <div className="mx-auto w-full max-w-[1040px] px-5 pb-16 pt-10 lg:px-8 lg:pt-14">
-        <div className="relative overflow-hidden rounded-[28px] border border-line-strong bg-raised p-6 shadow-[var(--elev)] sm:p-8">
+        <div className="relative overflow-hidden rounded-xl border border-line-strong bg-raised p-6 shadow-[var(--elev)] sm:p-8">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -66,7 +66,7 @@ export function TeamHome({
         </div>
 
         {state.pendingInvites.length ? (
-          <section className="mt-5 rounded-[22px] border border-violet-400/20 bg-violet-500/[0.06] p-5">
+          <section className="mt-5 rounded-xl border border-violet-400/20 bg-violet-500/[0.06] p-5">
             <div className="flex items-center gap-2">
               <FiMail size={16} className="text-violet-500 dark:text-violet-300" />
               <h2 className="text-[14px] font-semibold text-ink">Team invitations</h2>
@@ -99,7 +99,7 @@ export function TeamHome({
   return (
     <div className="relative min-h-[calc(100dvh-3.5rem)] overflow-hidden">
       <div className="mx-auto w-full max-w-[1120px] px-5 pb-16 pt-9 lg:px-8 lg:pt-12">
-        <header className="relative overflow-hidden rounded-[28px] border border-line-strong bg-raised p-6 shadow-[var(--elev)] sm:p-7">
+        <header className="relative overflow-hidden rounded-xl border border-line-strong bg-raised p-6 shadow-[var(--elev)] sm:p-7">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -155,7 +155,7 @@ export function TeamHome({
           ].map(([label, value, note, tint]) => (
             <div
               key={String(label)}
-              className={"relative overflow-hidden rounded-[20px] border border-line-strong bg-gradient-to-br " + tint + " p-4 shadow-[var(--sh-1)]"}
+              className={"relative overflow-hidden rounded-xl border border-line-strong bg-gradient-to-br " + tint + " p-4 shadow-[var(--sh-1)]"}
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-4">{label}</p>
               <p className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink">{value}</p>
@@ -165,7 +165,7 @@ export function TeamHome({
         </section>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-[24px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+          <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-sky-600 dark:text-sky-300">
@@ -185,7 +185,7 @@ export function TeamHome({
                 <Link
                   key={project.id}
                   href={"/project/" + encodeURIComponent(project.id) + "/preview"}
-                  className="group flex items-center gap-3 rounded-2xl border border-line bg-sunk/55 p-3.5 transition hover:border-line-strong hover:bg-hover/70"
+                  className="group flex items-center gap-3 rounded-xl border border-line bg-sunk/55 p-3.5 transition hover:border-line-strong hover:bg-hover/70"
                 >
                   <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-sky-600 dark:text-sky-300">
                     <FiFolder size={16} />
@@ -199,7 +199,7 @@ export function TeamHome({
                   <FiArrowRight size={14} className="text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-ink" />
                 </Link>
               )) : (
-                <div className="rounded-2xl border border-dashed border-line-strong px-5 py-8 text-center">
+                <div className="rounded-xl border border-dashed border-line-strong px-5 py-8 text-center">
                   <FiFolder size={20} className="mx-auto text-ink-4" />
                   <p className="mt-2 text-[13px] font-medium text-ink">No shared projects yet</p>
                   <p className="mt-1 text-[11.5px] text-ink-4">Share a project from the Team workspace.</p>
@@ -208,7 +208,7 @@ export function TeamHome({
             </div>
           </section>
 
-          <section className="rounded-[24px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+          <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-violet-600 dark:text-violet-300">

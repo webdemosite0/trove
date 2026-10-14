@@ -141,7 +141,7 @@ export function WorkspaceSetup({
       <section
         suppressHydrationWarning
         aria-label="Workspace setup complete"
-        className="mt-7 flex items-center gap-3 rounded-2xl border border-line bg-raised/80 px-4 py-3"
+        className="mt-7 flex items-center gap-3 rounded-xl border border-line bg-raised/80 px-4 py-3"
       >
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
           <TbSparkles size={17} aria-hidden />
@@ -171,7 +171,7 @@ export function WorkspaceSetup({
     <section
       suppressHydrationWarning
       aria-label="Workspace setup"
-      className="mt-7 overflow-hidden rounded-2xl border border-line bg-raised/80"
+      className="mt-7 overflow-hidden rounded-xl border border-line bg-raised/80"
     >
       <div className="border-b border-line/70 px-4 pb-3.5 pt-4 sm:px-5">
         <div className="flex items-baseline justify-between gap-3">

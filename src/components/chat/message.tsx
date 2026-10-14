@@ -91,7 +91,7 @@ export function Message({
             {files.map((f, i) => (
               <span
                 key={`${f.name}-${i}`}
-                className="flex items-center gap-2 rounded-2xl border border-line bg-raised py-1.5 pl-1.5 pr-2.5 shadow-sm"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised py-1.5 pl-1.5 pr-2.5 shadow-sm"
               >
                 {f.kind === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -125,7 +125,7 @@ export function Message({
         ) : null}
         <div
           className={cn(
-            "max-w-[min(85%,560px)] rounded-[20px] rounded-br-lg border px-4 py-2.5 text-[15px] leading-relaxed shadow-[0_2px_12px_-6px_rgba(15,23,42,0.15)]",
+            "max-w-[min(85%,560px)] rounded-xl rounded-br-lg border px-4 py-2.5 text-[15px] leading-relaxed shadow-[0_2px_12px_-6px_rgba(15,23,42,0.15)]",
             dark
               ? "border-[#2b3d5f]/70 bg-[#1d2f4d] text-[#e9f1ff]"
               : "border-line/60 bg-sunk text-ink",
@@ -190,7 +190,7 @@ export function Message({
           ) : null}
         </div>
       ) : (
-        <div className="rounded-2xl border border-line bg-raised/60 p-4">
+        <div className="rounded-xl border border-line bg-raised/60 p-4">
           <p className="text-[14px] text-ink-3">
             That didn&apos;t come back with a reply — likely a hiccup on our side.
           </p>
@@ -209,7 +209,7 @@ export function Message({
       {!pending && truncated ? (
         <div
           role="status"
-          className="mt-3 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07] p-4"
+          className="mt-3 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] p-4"
         >
           <div className="flex items-center gap-2">
             <Ico icon={FiAlertTriangle} motion="lift" size={15} className="text-amber-500" />

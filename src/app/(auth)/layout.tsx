@@ -92,10 +92,10 @@ export default function AuthLayout({
               {BENEFITS.map(({ icon: Icon, title, body, tone }) => (
                 <div
                   key={title}
-                  className="rounded-[20px] border border-line bg-canvas/50 p-4 backdrop-blur-sm"
+                  className="rounded-xl border border-line bg-canvas/50 p-4 backdrop-blur-sm"
                 >
                   <span
-                    className={`grid size-10 place-items-center rounded-2xl bg-gradient-to-br ${tone}`}
+                    className={`grid size-10 place-items-center rounded-xl bg-gradient-to-br ${tone}`}
                   >
                     <Icon size={17} />
                   </span>
@@ -106,8 +106,8 @@ export default function AuthLayout({
             </div>
 
             <div className="relative z-10 mt-auto pt-8">
-              <div className="overflow-hidden rounded-[26px] border border-line-strong bg-canvas/70 p-3 shadow-[var(--sh-2)] backdrop-blur-sm">
-                <div className="rounded-[20px] border border-line bg-raised p-3">
+              <div className="overflow-hidden rounded-xl border border-line-strong bg-canvas/70 p-3 shadow-[var(--sh-2)] backdrop-blur-sm">
+                <div className="rounded-xl border border-line bg-raised p-3">
                   <div className="flex items-center gap-2 border-b border-line pb-3">
                     <span className="size-2 rounded-full bg-rose-400/70" />
                     <span className="size-2 rounded-full bg-amber-400/70" />
@@ -118,7 +118,7 @@ export default function AuthLayout({
                   </div>
 
                   <div className="mt-3 grid grid-cols-[150px_1fr] gap-3">
-                    <div className="space-y-2 rounded-2xl border border-line bg-sunk/70 p-2.5">
+                    <div className="space-y-2 rounded-xl border border-line bg-sunk/70 p-2.5">
                       {["Chat", "Projects", "Integrations", "Automations"].map((item, index) => (
                         <div
                           key={item}
@@ -133,7 +133,7 @@ export default function AuthLayout({
                       ))}
                     </div>
 
-                    <div className="rounded-2xl border border-line bg-sunk/55 p-3">
+                    <div className="rounded-xl border border-line bg-sunk/55 p-3">
                       <div className="rounded-xl border border-line bg-raised p-3">
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-[10px] font-semibold text-ink">Launch workspace</span>
@@ -160,7 +160,7 @@ export default function AuthLayout({
           </aside>
 
           <section className="mx-auto flex w-full max-w-[500px] flex-col justify-center lg:max-w-[470px]">
-            <div className="rounded-[28px] border border-line-strong bg-raised/88 px-5 py-7 shadow-[var(--elev-lift)] backdrop-blur-xl sm:px-8 sm:py-9">
+            <div className="rounded-xl border border-line-strong bg-raised/88 px-5 py-7 shadow-[var(--elev-lift)] backdrop-blur-xl sm:px-8 sm:py-9">
               <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
                 <BrandLockup orbSize={28} wordSize={19} sweep={false} />
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sunk px-2.5 py-1 text-[10px] font-medium text-ink-4">

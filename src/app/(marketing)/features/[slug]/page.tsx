@@ -79,7 +79,7 @@ export default async function FeaturePage({
         <header className="max-w-[640px]">
           <span
             aria-hidden
-            className="mb-6 grid h-12 w-12 place-items-center rounded-2xl"
+            className="mb-6 grid h-12 w-12 place-items-center rounded-xl"
             style={{ background: `${feature.tone}1f`, color: feature.tone }}
           >
             <Icon size={24} />
@@ -124,7 +124,7 @@ export default async function FeaturePage({
             <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-4">
               From one prompt
             </h2>
-            <blockquote className="mt-3 rounded-2xl border border-line bg-sunk/60 px-5 py-4 text-[15px] font-medium leading-relaxed text-ink">
+            <blockquote className="mt-3 rounded-xl border border-line bg-sunk/60 px-5 py-4 text-[15px] font-medium leading-relaxed text-ink">
               {extras.prompt}
             </blockquote>
             <FeatureWorkflow steps={extras.workflow} tone={feature.tone} />
@@ -132,7 +132,7 @@ export default async function FeaturePage({
         )}
 
         {/* Key capabilities */}
-        <section className="mt-12 rounded-2xl border border-line bg-rail/50 p-6">
+        <section className="mt-12 rounded-xl border border-line bg-rail/50 p-6">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-4">
             What you get
           </h2>
@@ -172,7 +172,7 @@ export default async function FeaturePage({
         {extras && (
           <section className="mt-14">
             <h2 className="text-[19px] font-semibold text-ink">Frequently asked</h2>
-            <div className="mt-4 divide-y divide-line rounded-2xl border border-line bg-raised/40">
+            <div className="mt-4 divide-y divide-line rounded-xl border border-line bg-raised/40">
               {extras.faqs.map((f) => (
                 <details key={f.q} className="group px-5 py-4">
                   <summary className="cursor-pointer list-none text-[14.5px] font-medium text-ink [&::-webkit-details-marker]:hidden">
@@ -201,7 +201,7 @@ export default async function FeaturePage({
                   <li key={o.slug}>
                     <Link
                       href={`/features/${o.slug}`}
-                      className="flex items-start gap-3 rounded-2xl border border-line bg-canvas p-4 transition hover:border-line-strong hover:bg-hover/40"
+                      className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-4 transition hover:border-line-strong hover:bg-hover/40"
                     >
                       <OIcon
                         size={18}

@@ -52,7 +52,7 @@ function ProductVisual() {
         aria-hidden
         className="pointer-events-none absolute -inset-x-8 -top-12 bottom-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(99,102,241,0.22),transparent_70%)] blur-2xl dark:bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(129,140,248,0.28),transparent_70%)]"
       />
-      <div className="lp-hero-in relative overflow-hidden rounded-2xl border border-line bg-raised shadow-[0_40px_120px_-32px_rgba(99,102,241,0.4)] sm:rounded-3xl" style={{ animationDelay: "340ms" }}>
+      <div className="lp-hero-in relative overflow-hidden rounded-xl border border-line bg-raised shadow-[0_40px_120px_-32px_rgba(99,102,241,0.4)] sm:rounded-xl" style={{ animationDelay: "340ms" }}>
         {/* window chrome */}
         <div className="flex items-center gap-2 border-b border-line bg-sunk/60 px-4 py-3">
           <span className="size-2.5 rounded-full bg-[#ff5f57]" />
@@ -66,13 +66,13 @@ function ProductVisual() {
           {/* chat side */}
           <div className="space-y-3 border-b border-line p-4 sm:border-b-0 sm:border-r sm:p-5">
             <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white shadow-lg shadow-violet-500/20">
+              <div className="max-w-[85%] rounded-xl rounded-br-md bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white shadow-lg shadow-violet-500/20">
                 Build a landing page for my coffee roastery — warm, premium, with a wholesale section.
               </div>
             </div>
             <div className="flex items-start gap-2.5">
               <TroveOrb size={26} state="idle" />
-              <div className="max-w-[88%] rounded-2xl rounded-tl-md border border-line bg-sunk/70 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ink-2">
+              <div className="max-w-[88%] rounded-xl rounded-tl-md border border-line bg-sunk/70 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ink-2">
                 On it — drafting the page now. Hero, story, roast lineup, and wholesale inquiry below.
                 <span className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                   <span className="relative flex size-1.5">
@@ -206,8 +206,8 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         </p>
 
         <div className="lp-hero-in mx-auto mt-6 max-w-[760px] sm:mt-9" style={{ animationDelay: "200ms" }}>
-          <div className="rounded-[20px] border border-line bg-raised/85 p-1.5 shadow-[0_24px_80px_-24px_rgba(99,102,241,0.4),0_0_0_1px_rgba(99,102,241,0.07)] backdrop-blur-xl sm:rounded-[26px] sm:p-2">
-            <div className="relative flex min-h-[72px] flex-col rounded-[15px] bg-gradient-to-b from-sunk/90 to-raised px-3.5 py-3 ring-1 ring-line sm:min-h-[88px] sm:rounded-[20px] sm:px-5 sm:py-3.5">
+          <div className="rounded-xl border border-line bg-raised/85 p-1.5 shadow-[0_24px_80px_-24px_rgba(99,102,241,0.4),0_0_0_1px_rgba(99,102,241,0.07)] backdrop-blur-xl sm:rounded-xl sm:p-2">
+            <div className="relative flex min-h-[72px] flex-col rounded-[15px] bg-gradient-to-b from-sunk/90 to-raised px-3.5 py-3 ring-1 ring-line sm:min-h-[88px] sm:rounded-xl sm:px-5 sm:py-3.5">
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}

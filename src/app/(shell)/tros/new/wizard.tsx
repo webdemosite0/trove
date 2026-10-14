@@ -58,7 +58,7 @@ const STEPS: { id: StepId; label: string; icon: typeof FiUser }[] = [
 ];
 
 const field =
-  "w-full rounded-2xl border border-line bg-ink/[0.04] px-4 py-3 text-[14px] text-ink outline-none transition placeholder:text-ink-4 focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20";
+  "w-full rounded-xl border border-line bg-ink/[0.04] px-4 py-3 text-[14px] text-ink outline-none transition placeholder:text-ink-4 focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20";
 const labelCls = "mb-1.5 block text-[12px] font-semibold text-ink-3";
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas";
@@ -448,7 +448,7 @@ export function NewTroWizard({
         <div
           role="dialog"
           aria-label="Save your work"
-          className="mt-4 rounded-2xl border border-accent/30 bg-accent/[0.07] p-5"
+          className="mt-4 rounded-xl border border-accent/30 bg-accent/[0.07] p-5"
         >
           <div className="flex items-start gap-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-positive/15 text-positive">
@@ -484,7 +484,7 @@ export function NewTroWizard({
           </div>
         </div>
       ) : draftRestored ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-ink/[0.03] px-4 py-3">
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-line bg-ink/[0.03] px-4 py-3">
           <p className="text-[13px] text-ink-2">
             <span className="font-semibold text-ink">Welcome back</span> — your
             unfinished Tro was restored from this device.
@@ -541,7 +541,7 @@ export function NewTroWizard({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Main column */}
-        <div className="min-w-0 rounded-2xl border border-line bg-ink/[0.03] p-5 sm:p-7">
+        <div className="min-w-0 rounded-xl border border-line bg-ink/[0.03] p-5 sm:p-7">
           {step === "identity" ? (
             <section aria-label="Identity">
               <StepHeading icon={FiUser} title="Identity" blurb="Name, description, and system prompt." />
@@ -633,7 +633,7 @@ export function NewTroWizard({
                     if (anonymous) saveAnonymousDraft("tro", snapshotDraft(), "/tros/new");
                   }}
                   className={cn(
-                    "group rounded-2xl border border-line bg-ink/[0.03] p-4 transition hover:border-violet-400/40 hover:bg-ink/[0.06]",
+                    "group rounded-xl border border-line bg-ink/[0.03] p-4 transition hover:border-violet-400/40 hover:bg-ink/[0.06]",
                     focusRing,
                   )}
                 >
@@ -645,7 +645,7 @@ export function NewTroWizard({
                     Chat with a Tro that interviews you and designs the new specialist with you.
                   </span>
                 </Link>
-                <div className="rounded-2xl border border-line bg-ink/[0.03] p-4">
+                <div className="rounded-xl border border-line bg-ink/[0.03] p-4">
                   <span className="grid size-9 place-items-center rounded-xl bg-ink/10 text-ink-2">
                     <FiUpload size={16} />
                   </span>
@@ -705,7 +705,7 @@ export function NewTroWizard({
                       onClick={() => setMode(m.id)}
                       aria-pressed={on}
                       className={cn(
-                        "rounded-2xl border p-4 text-left transition",
+                        "rounded-xl border p-4 text-left transition",
                         focusRing,
                         on
                           ? "border-violet-400/60 bg-violet-400/10"
@@ -778,7 +778,7 @@ export function NewTroWizard({
                   {connectors.map((c) => (
                     <li
                       key={c.service}
-                      className="flex items-center gap-3 rounded-2xl border border-line bg-ink/[0.03] px-4 py-3"
+                      className="flex items-center gap-3 rounded-xl border border-line bg-ink/[0.03] px-4 py-3"
                     >
                       <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
                         <FiCheck size={14} />
@@ -794,7 +794,7 @@ export function NewTroWizard({
                   ))}
                 </ul>
               ) : (
-                <div className="rounded-2xl border border-dashed border-line bg-ink/[0.02] px-4 py-5 text-center">
+                <div className="rounded-xl border border-dashed border-line bg-ink/[0.02] px-4 py-5 text-center">
                   <p className="text-[13px] text-ink-3">No integrations connected yet.</p>
                   {anonymous ? (
                     <p className="mx-auto mt-1.5 max-w-[52ch] text-[12.5px] leading-relaxed text-ink-4">
@@ -824,7 +824,7 @@ export function NewTroWizard({
                   onClick={() => setInvocation("thread")}
                   aria-pressed={invocation === "thread"}
                   className={cn(
-                    "rounded-2xl border p-4 text-left transition",
+                    "rounded-xl border p-4 text-left transition",
                     focusRing,
                     invocation === "thread"
                       ? "border-violet-400/60 bg-violet-400/10"
@@ -848,7 +848,7 @@ export function NewTroWizard({
                   onClick={() => setInvocation("none")}
                   aria-pressed={invocation === "none"}
                   className={cn(
-                    "rounded-2xl border p-4 text-left transition",
+                    "rounded-xl border p-4 text-left transition",
                     focusRing,
                     invocation === "none"
                       ? "border-violet-400/60 bg-violet-400/10"
@@ -972,7 +972,7 @@ export function NewTroWizard({
 
         {/* Preview panel */}
         <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
-          <div className="overflow-hidden rounded-2xl border border-line bg-ink/[0.03]">
+          <div className="overflow-hidden rounded-xl border border-line bg-ink/[0.03]">
             <div className="relative h-28" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}55 60%, #0a0a0c)` }}>
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.25),transparent_60%)]" />
             </div>
@@ -1000,7 +1000,7 @@ export function NewTroWizard({
                 </button>
               </div>
               {avatarOpen ? (
-                <div className="mt-3 rounded-2xl border border-line bg-raised p-3">
+                <div className="mt-3 rounded-xl border border-line bg-raised p-3">
                   <p className={cn(labelCls, "px-1")}>Mascot</p>
                   <div className="grid grid-cols-5 gap-1.5">
                     {SPECIES.map((s) => (
@@ -1101,7 +1101,7 @@ export function NewTroWizard({
 function StepHeading({ icon: Icon, title, blurb }: { icon: typeof FiUser; title: string; blurb: string }) {
   return (
     <div className="flex items-center gap-3.5">
-      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-violet-500/10 text-violet-600 dark:bg-violet-400/15 dark:text-violet-300">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:bg-violet-400/15 dark:text-violet-300">
         <Icon size={19} />
       </span>
       <span>

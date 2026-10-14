@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export function ImageGeneratingCard({ caption }: { caption?: string }) {
   return (
     <div
-      className="nx-in my-2 max-w-[min(100%,420px)] overflow-hidden rounded-2xl border border-line bg-raised shadow-[0_12px_40px_-24px_rgba(0,0,0,0.5)]"
+      className="nx-in my-2 max-w-[min(100%,420px)] overflow-hidden rounded-xl border border-line bg-raised shadow-[0_12px_40px_-24px_rgba(0,0,0,0.5)]"
       aria-live="polite"
       aria-busy="true"
     >
@@ -29,7 +29,7 @@ export function ImageGeneratingCard({ caption }: { caption?: string }) {
           aria-hidden
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <span className="grid size-12 place-items-center rounded-2xl border border-line bg-canvas/80 text-ink shadow-sm backdrop-blur-sm">
+          <span className="grid size-12 place-items-center rounded-xl border border-line bg-canvas/80 text-ink shadow-sm backdrop-blur-sm">
             <Ico icon={FiImage} motion="sparkle" size={22} live className="text-accent" />
           </span>
           <div className="text-center">
@@ -143,7 +143,7 @@ export function ChatImage({
   return (
     <>
       <figure
-        className="group relative my-2 max-w-[min(100%,420px)] select-none overflow-hidden rounded-2xl border border-line bg-sunk shadow-[0_12px_40px_-22px_rgba(0,0,0,0.5)]"
+        className="group relative my-2 max-w-[min(100%,420px)] select-none overflow-hidden rounded-xl border border-line bg-sunk shadow-[0_12px_40px_-22px_rgba(0,0,0,0.5)]"
         onCopy={(e) => {
           e.preventDefault();
           void copyImage();

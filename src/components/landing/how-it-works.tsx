@@ -49,11 +49,11 @@ export function HowItWorks() {
             return (
               <div
                 key={s.n}
-                className="group relative rounded-3xl border border-line bg-raised p-7 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-[0_24px_64px_-24px_rgba(99,102,241,0.3)]"
+                className="group relative rounded-xl border border-line bg-raised p-7 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-[0_24px_64px_-24px_rgba(99,102,241,0.3)]"
               >
                 <div className="flex items-center justify-between">
                   <span
-                    className="grid size-12 place-items-center rounded-2xl transition-transform duration-300 group-hover:scale-110"
+                    className="grid size-12 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110"
                     style={{ background: `${s.tone}1a`, color: s.tone }}
                   >
                     <Icon size={21} />

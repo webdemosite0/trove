@@ -213,7 +213,7 @@ export function DownloadApps() {
 
   return (
     <div className="space-y-5 pb-8">
-      <section className="relative overflow-hidden rounded-[26px] border border-line-strong bg-raised p-5 shadow-[var(--elev)] sm:p-6">
+      <section className="relative overflow-hidden rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--elev)] sm:p-6">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
@@ -275,7 +275,7 @@ export function DownloadApps() {
                 type="button"
                 onClick={() => void install(platform)}
                 className={cn(
-                  "group rounded-2xl border p-4 text-left transition",
+                  "group rounded-xl border p-4 text-left transition",
                   active
                     ? "border-accent/35 bg-accent-soft/60 shadow-[var(--sh-1)]"
                     : "border-line-strong bg-canvas hover:-translate-y-0.5 hover:border-accent/25 hover:bg-hover/70",
@@ -350,7 +350,7 @@ export function DownloadApps() {
           }
           className="border-line-strong bg-raised shadow-[var(--elev)]"
         >
-          <div className="rounded-2xl border border-line-strong bg-canvas p-4">
+          <div className="rounded-xl border border-line-strong bg-canvas p-4">
             <ol className="space-y-3">
               {PLATFORMS.find((platform) => platform.id === selected)?.steps.map((step, index) => (
                 <li key={step} className="flex gap-3 text-[13px] leading-relaxed text-ink-2">
@@ -366,7 +366,7 @@ export function DownloadApps() {
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex items-start gap-3 rounded-2xl border border-line bg-canvas/70 p-4">
+        <div className="flex items-start gap-3 rounded-xl border border-line bg-canvas/70 p-4">
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300">
             <FiFolder size={16} />
           </span>
@@ -377,7 +377,7 @@ export function DownloadApps() {
             </p>
           </div>
         </div>
-        <div className="flex items-start gap-3 rounded-2xl border border-line bg-canvas/70 p-4">
+        <div className="flex items-start gap-3 rounded-xl border border-line bg-canvas/70 p-4">
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-300">
             <FiSmartphone size={16} />
           </span>

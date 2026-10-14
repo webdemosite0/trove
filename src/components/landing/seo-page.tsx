@@ -49,7 +49,7 @@ export function SeoPageView({ page }: { page: SeoPage }) {
         <h2 className="text-[22px] font-semibold tracking-tight text-ink">How it works</h2>
         <ol className="mt-6 grid gap-3 sm:grid-cols-3">
           {page.steps.map((s, i) => (
-            <li key={s.heading} className="rounded-2xl border border-line bg-raised/60 p-5">
+            <li key={s.heading} className="rounded-xl border border-line bg-raised/60 p-5">
               <span className="grid size-8 place-items-center rounded-full bg-violet-500/12 text-[13px] font-bold text-violet-700">
                 {i + 1}
               </span>
@@ -61,7 +61,7 @@ export function SeoPageView({ page }: { page: SeoPage }) {
       </section>
 
       {/* Comparison */}
-      <section className="mt-12 overflow-hidden rounded-2xl border border-line">
+      <section className="mt-12 overflow-hidden rounded-xl border border-line">
         <div className="grid sm:grid-cols-2">
           <div className="bg-sunk/60 p-5 sm:p-6">
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-4">A chatbot</p>
@@ -77,7 +77,7 @@ export function SeoPageView({ page }: { page: SeoPage }) {
       {/* FAQ */}
       <section className="mt-16">
         <h2 className="text-[22px] font-semibold tracking-tight text-ink">Frequently asked</h2>
-        <div className="mt-5 divide-y divide-line rounded-2xl border border-line bg-raised/40">
+        <div className="mt-5 divide-y divide-line rounded-xl border border-line bg-raised/40">
           {page.faqs.map((f, i) => {
             const open = openFaq === i;
             return (

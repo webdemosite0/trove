@@ -50,7 +50,7 @@ function PreviewModal({ template, onClose }: { template: Template; onClose: () =
   return (
     <div ref={dialogRef} className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={template.title}>
       <button type="button" aria-label="Dismiss preview" className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={onClose} tabIndex={-1} />
-      <div className="relative flex max-h-[92vh] w-full max-w-[860px] flex-col overflow-hidden rounded-2xl border border-line bg-raised shadow-2xl">
+      <div className="relative flex max-h-[92vh] w-full max-w-[860px] flex-col overflow-hidden rounded-xl border border-line bg-raised shadow-2xl">
         <div className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3 sm:px-5">
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-[15px] font-semibold text-ink">{template.title}</h2>
@@ -115,7 +115,7 @@ export function TemplatesGallery() {
         {items.map((t, i) => (
           <article
             key={t.id}
-            className="nx-in group flex flex-col overflow-hidden rounded-2xl border border-line bg-raised transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)]"
+            className="nx-in group flex flex-col overflow-hidden rounded-xl border border-line bg-raised transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)]"
             style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
           >
             <button

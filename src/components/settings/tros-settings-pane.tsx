@@ -87,7 +87,7 @@ export function TrosPane({
 
   return (
     <div>
-      <div className="relative overflow-hidden rounded-2xl border border-line bg-sunk/40 p-6">
+      <div className="relative overflow-hidden rounded-xl border border-line bg-sunk/40 p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_20%,rgba(99,102,241,0.12),transparent_55%)]" />
 
         <div className="relative mb-5 flex items-end justify-start" aria-hidden>
@@ -136,7 +136,7 @@ export function TrosPane({
       </div>
 
       <p className="mb-2.5 mt-7 text-[13px] font-medium text-ink-3">Team</p>
-      <div className="rounded-2xl bg-raised p-5">
+      <div className="rounded-xl bg-raised p-5">
         <p className="text-[13.5px] leading-relaxed text-ink-3">
           Each Tro has its own mascot — a unique personality for research, design, code, and more.
         </p>
@@ -157,7 +157,7 @@ export function TrosPane({
       </div>
 
       <p className="mb-2.5 mt-7 text-[13px] font-medium text-ink-3">General</p>
-      <div className="rounded-2xl bg-raised p-5">
+      <div className="rounded-xl bg-raised p-5">
         <ToggleRow
           label="Auto-start cloud computer"
           hint="When a Tro needs the browser, start a cloud session automatically. Applies to new sessions in the desktop app."
@@ -179,7 +179,7 @@ export function TrosPane({
       </div>
 
       <p className="mb-2.5 mt-7 text-[13px] font-medium text-ink-3">Appearance</p>
-      <div className="rounded-2xl bg-raised p-5">
+      <div className="rounded-xl bg-raised p-5">
         <ToggleRow
           label="Animated mascots while working"
           hint="Play idle and working animations on Tro avatars during a session."

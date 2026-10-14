@@ -126,7 +126,7 @@ export function MobileTroChat({ agent }: { agent: AgentRow }) {
             {turns.map((t) =>
               t.role === "user" ? (
                 <div key={t.id} className="flex justify-end">
-                  <div className="max-w-[85%] rounded-3xl rounded-br-lg bg-accent px-4 py-3 text-[15px] text-white">
+                  <div className="max-w-[85%] rounded-xl rounded-br-lg bg-accent px-4 py-3 text-[15px] text-white">
                     {t.text}
                   </div>
                 </div>
@@ -153,7 +153,7 @@ export function MobileTroChat({ agent }: { agent: AgentRow }) {
           </div>
         )}
         {error ? (
-          <p className="mt-3 rounded-2xl bg-critical/10 px-4 py-3 text-[13.5px] text-critical">
+          <p className="mt-3 rounded-xl bg-critical/10 px-4 py-3 text-[13.5px] text-critical">
             {error}
           </p>
         ) : null}

@@ -234,7 +234,7 @@ export function TeamWorkspaceView({
   if (!state.team) {
     return (
       <div className="mx-auto w-full max-w-[860px] px-5 py-8 lg:px-8">
-        <div className="overflow-hidden rounded-[26px] border border-line-strong bg-raised shadow-[var(--elev)]">
+        <div className="overflow-hidden rounded-xl border border-line-strong bg-raised shadow-[var(--elev)]">
           <div className="relative overflow-hidden border-b border-line px-6 py-6">
             <div
               aria-hidden
@@ -245,7 +245,7 @@ export function TeamWorkspaceView({
               }}
             />
             <div className="relative flex items-start gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-accent ring-1 ring-accent/20">
+              <span className="grid size-11 place-items-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/20">
                 <FiUsers size={20} />
               </span>
               <div>
@@ -272,7 +272,7 @@ export function TeamWorkspaceView({
                 {state.pendingInvites.map((invite) => (
                   <div
                     key={invite.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-violet-400/20 bg-violet-500/8 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-xl border border-violet-400/20 bg-violet-500/8 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <p className="text-[14px] font-semibold text-ink">{invite.teamName}</p>
@@ -295,7 +295,7 @@ export function TeamWorkspaceView({
             ) : null}
 
             {state.canCreateTeam ? (
-              <div className="rounded-2xl border border-line-strong bg-sunk/70 p-4">
+              <div className="rounded-xl border border-line-strong bg-sunk/70 p-4">
                 <div className="flex items-start gap-3">
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-raised text-accent shadow-[var(--sh-1)]">
                     <FiPlus size={16} />
@@ -327,7 +327,7 @@ export function TeamWorkspaceView({
               </div>
             ) : state.pendingInvites.length === 0 ? (
               <div className={cn(
-                "rounded-2xl border p-5",
+                "rounded-xl border p-5",
                 state.businessEligible
                   ? "border-line-strong bg-sunk/70"
                   : "border-sky-400/20 bg-gradient-to-br from-sky-500/[0.08] via-violet-500/[0.06] to-fuchsia-500/[0.08]",
@@ -362,8 +362,8 @@ export function TeamWorkspaceView({
 
   if (!state.teamPlanActive) {
     return (
-      <div className="rounded-[24px] border border-line-strong bg-raised p-6 shadow-[var(--elev)]">
-        <span className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-accent">
+      <div className="rounded-xl border border-line-strong bg-raised p-6 shadow-[var(--elev)]">
+        <span className="grid size-11 place-items-center rounded-xl bg-accent-soft text-accent">
           <FiShield size={18} />
         </span>
         <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.13em] text-accent">
@@ -392,7 +392,7 @@ export function TeamWorkspaceView({
 
   return (
     <div className="mx-auto w-full max-w-[1040px] px-5 py-8 lg:px-8">
-      <header className="relative overflow-hidden rounded-[26px] border border-line-strong bg-raised p-6 shadow-[var(--elev)]">
+      <header className="relative overflow-hidden rounded-xl border border-line-strong bg-raised p-6 shadow-[var(--elev)]">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
@@ -483,7 +483,7 @@ export function TeamWorkspaceView({
           <div
             key={item.label}
             className={cn(
-              "relative overflow-hidden rounded-[20px] border border-line-strong bg-gradient-to-br p-4 shadow-[var(--sh-1)]",
+              "relative overflow-hidden rounded-xl border border-line-strong bg-gradient-to-br p-4 shadow-[var(--sh-1)]",
               item.tone,
             )}
           >
@@ -498,7 +498,7 @@ export function TeamWorkspaceView({
         ))}
       </section>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-raised/75 px-3.5 py-3">
+      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-raised/75 px-3.5 py-3">
         <span className="inline-flex items-center gap-2 text-[12px] font-medium text-ink-3">
           <FiShield size={13} className="text-positive" />
           Private, membership-enforced workspace
@@ -521,7 +521,7 @@ export function TeamWorkspaceView({
       ) : null}
 
       {lastInviteLink ? (
-        <div className="mt-4 rounded-2xl border border-violet-400/25 bg-violet-500/8 px-4 py-3">
+        <div className="mt-4 rounded-xl border border-violet-400/25 bg-violet-500/8 px-4 py-3">
           <p className="text-[12px] font-semibold text-ink">Invitation created</p>
           <p className="mt-1 text-[11.5px] text-ink-3">
             Share this link with the invitee while they are signed in as the invited email.
@@ -544,7 +544,7 @@ export function TeamWorkspaceView({
       ) : null}
 
       {canAdmin ? (
-        <section className="mt-4 rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+        <section className="mt-4 rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-accent">
@@ -561,7 +561,7 @@ export function TeamWorkspaceView({
               </p>
             </div>
             {state.seats ? (
-              <div className="min-w-[140px] rounded-2xl border border-line bg-sunk/70 px-3.5 py-3 text-center">
+              <div className="min-w-[140px] rounded-xl border border-line bg-sunk/70 px-3.5 py-3 text-center">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-4">
                   Remaining
                 </p>
@@ -578,7 +578,7 @@ export function TeamWorkspaceView({
                 type="button"
                 disabled={Boolean(seatBusy)}
                 onClick={() => void buySeats(pkg.seats)}
-                className="rounded-2xl border border-line-strong bg-sunk/60 px-3 py-3 text-left transition hover:border-accent/40 hover:bg-hover disabled:opacity-50"
+                className="rounded-xl border border-line-strong bg-sunk/60 px-3 py-3 text-left transition hover:border-accent/40 hover:bg-hover disabled:opacity-50"
               >
                 <p className="text-[12.5px] font-semibold text-ink">{pkg.label}</p>
                 <p className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-ink">
@@ -595,7 +595,7 @@ export function TeamWorkspaceView({
       ) : null}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <section id="members" className="scroll-mt-24 rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+        <section id="members" className="scroll-mt-24 rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-violet-500 dark:text-violet-300">
@@ -610,7 +610,7 @@ export function TeamWorkspaceView({
           </div>
 
           {state.canInvite ? (
-            <div className="mt-4 grid gap-2 rounded-2xl border border-line bg-sunk/70 p-3 sm:grid-cols-[1fr_120px_auto]">
+            <div className="mt-4 grid gap-2 rounded-xl border border-line bg-sunk/70 p-3 sm:grid-cols-[1fr_120px_auto]">
               <div className="relative">
                 <FiMail
                   size={14}
@@ -641,7 +641,7 @@ export function TeamWorkspaceView({
               </button>
             </div>
           ) : canAdmin && state.seats?.atLimit ? (
-            <div className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-[12px] text-ink-2">
+            <div className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-[12px] text-ink-2">
               All seats are in use. Purchase a package above to invite more people.
             </div>
           ) : null}
@@ -688,7 +688,7 @@ export function TeamWorkspaceView({
         </section>
 
         <div className="space-y-5">
-          <section className="rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+          <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-sky-600 dark:text-sky-300">
@@ -792,7 +792,7 @@ export function TeamWorkspaceView({
                   );
                 })
               ) : (
-                <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-line-strong px-4 py-8 text-center">
+                <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-line-strong px-4 py-8 text-center">
                   <span className="grid size-11 place-items-center rounded-full bg-sunk text-ink-3">
                     <FiFolder size={18} />
                   </span>
@@ -810,7 +810,7 @@ export function TeamWorkspaceView({
           </section>
 
           {canAdmin && state.invites.length ? (
-            <section className="rounded-[22px] border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
+            <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
               <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-amber-600 dark:text-amber-300">
                 Pending invites
               </p>

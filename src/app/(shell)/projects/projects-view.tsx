@@ -184,7 +184,7 @@ export function ProjectsView({
   if (!signedIn) {
     return (
       <div className="nx-in mx-auto flex min-h-0 max-w-[520px] flex-1 flex-col items-center justify-center px-5 py-16 text-center">
-        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20 ring-1 ring-line">
+        <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20 ring-1 ring-line">
           <FiFolder size={28} className="text-ink" />
         </div>
         <h1 className="mt-6 text-[22px] font-semibold text-ink">Projects</h1>
@@ -239,7 +239,7 @@ export function ProjectsView({
       {projects.length === 0 ? (
         <EmptyState
           illustration={
-            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20">
+            <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20">
               <FiFolder size={28} className="text-ink" />
             </div>
           }
@@ -317,7 +317,7 @@ export function ProjectsView({
 
       <Modal open={creating} onClose={() => !busy && setCreating(false)} title="New project">
         <div className="space-y-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-line bg-sunk/60 px-3.5 py-3">
+          <div className="flex items-center gap-3 rounded-xl border border-line bg-sunk/60 px-3.5 py-3">
             <span
               className="grid size-10 shrink-0 place-items-center rounded-xl ring-1 ring-line"
               style={

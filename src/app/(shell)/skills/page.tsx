@@ -76,7 +76,7 @@ export default function SkillsPage() {
             </>
           );
           const cls =
-            "group rounded-[18px] border border-line bg-rail p-4 text-left transition hover:border-accent/35 hover:bg-hover/40";
+            "group rounded-xl border border-line bg-rail p-4 text-left transition hover:border-accent/35 hover:bg-hover/40";
           return "settingsSection" in s && s.settingsSection ? (
             <OpenSettingsButton key={s.id} section={s.settingsSection} className={cls}>
               {inner}

@@ -81,11 +81,11 @@ function Preview({ item }: { item: WorkItem }) {
   if (item.kind === "chat") {
     return (
       <div className="aspect-[16/10] space-y-3 bg-[#f8f8fa] p-4">
-        <div className="mr-8 rounded-2xl rounded-bl-md bg-white px-3 py-2 shadow-sm">
+        <div className="mr-8 rounded-xl rounded-bl-md bg-white px-3 py-2 shadow-sm">
           <div className="h-2 w-4/5 rounded-full bg-black/[0.08]" />
           <div className="mt-1.5 h-2 w-2/3 rounded-full bg-black/[0.06]" />
         </div>
-        <div className="ml-10 rounded-2xl rounded-br-md bg-black px-3 py-2">
+        <div className="ml-10 rounded-xl rounded-br-md bg-black px-3 py-2">
           <div className="h-2 w-3/4 rounded-full bg-white/45" />
         </div>
       </div>
@@ -119,7 +119,7 @@ function Preview({ item }: { item: WorkItem }) {
   if (item.kind === "agent") {
     return (
       <div className="grid aspect-[16/10] place-items-center bg-[radial-gradient(circle_at_50%_38%,rgba(99,102,241,.16),transparent_34%),#fafafa]">
-        <div className="grid size-14 place-items-center rounded-2xl border border-indigo-200/70 bg-white text-[15px] font-semibold text-indigo-600 shadow-sm">
+        <div className="grid size-14 place-items-center rounded-xl border border-indigo-200/70 bg-white text-[15px] font-semibold text-indigo-600 shadow-sm">
           AI
         </div>
       </div>
@@ -184,7 +184,7 @@ export async function AllWorkSection({
             <Link
               key={`${item.source}:${item.kind}:${item.id}`}
               href={item.href}
-              className="group overflow-hidden rounded-[18px] border border-line bg-raised shadow-[var(--sh-1)] transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--elev)]"
+              className="group overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--sh-1)] transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--elev)]"
             >
               <Preview item={item} />
               <div className="flex items-center gap-3 border-t border-line px-3.5 py-3">

@@ -44,7 +44,7 @@ export function TrustSection() {
             const Icon = p.Icon;
             return (
               <Reveal key={p.title} delay={i * 60}>
-                <div className="h-full rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div className="h-full rounded-xl border border-zinc-200/90 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                   <span className="grid size-10 place-items-center rounded-xl bg-violet-50 text-violet-600">
                     <Icon size={18} />
                   </span>
