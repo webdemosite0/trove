@@ -95,17 +95,22 @@ export function MobileChat({
   if (turns.length === 0) {
     return (
       <div className="mobile-chat relative flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
-        <div aria-hidden className="lv-glow top-[60px]" />
-        <div className="relative z-[1] mx-auto flex w-full max-w-[560px] flex-1 flex-col px-3.5 pb-6 pt-[clamp(20px,5vh,48px)] sm:px-4">
-          <div className="nx-rise flex flex-col items-center text-center">
-            <span className="grid size-11 place-items-center rounded-xl border border-line bg-raised">
+        {/* Lovable-style: the sunset gradient behind the greeting and prompt. */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[460px]">
+          <div className="lv-hero lv-hero--compact h-full">
+            <div className="lv-hero-fade" />
+          </div>
+        </div>
+        <div className="relative z-[1] mx-auto flex w-full max-w-[560px] flex-1 flex-col px-3.5 pb-6 pt-[clamp(28px,7vh,64px)] sm:px-4">
+          <div className="nx-rise flex flex-col items-center text-center text-white">
+            <span className="grid size-11 place-items-center rounded-xl border border-white/15 bg-white/10 backdrop-blur">
               <TroveOrb size={26} />
             </span>
-            <h1 className="mt-4 text-[1.5rem] font-semibold tracking-[-0.02em] text-ink">
-              What can I help with?
+            <h1 className="mt-4 text-[1.7rem] font-semibold tracking-[-0.03em]">
+              Ready to build, {name.split(" ")[0]}?
             </h1>
-            <p className="mt-1.5 max-w-[36ch] text-[14.5px] leading-relaxed text-ink-4">
-              Hi {name}. Ask anything, or connect tools from Plugins.
+            <p className="mt-1.5 max-w-[36ch] text-[14.5px] leading-relaxed text-white/75">
+              Describe the work. Trove builds the file.
             </p>
           </div>
 
