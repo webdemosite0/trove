@@ -364,7 +364,7 @@ function RosterRow({
   const summary = roleSummary(agent);
   const context =
     task && task.status === "working" ? (
-      <span className="truncate text-violet-500/90">Working on: {task.title || "a task"}</span>
+      <span className="truncate text-blue-500/90">Working on: {task.title || "a task"}</span>
     ) : task && task.status === "waiting" ? (
       <span className="truncate text-amber-500/90">Waiting on: {task.title || "input"}</span>
     ) : task ? (
@@ -407,7 +407,7 @@ function RosterRow({
         <span className={cn("block truncate text-[12px]", summary.dim ? "text-ink-4" : "text-ink-2")}>{summary.text}</span>
         <span className="block truncate text-[11.5px]">{context}</span>
       </span>
-      <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+      <Ico icon={FiArrowRight} size={14} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-blue-500" />
     </Link>
   );
 }
@@ -605,7 +605,7 @@ export function TrosView({
             </div>
           ))}
         </div>
-        <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.22em] text-violet-500">Tros</p>
+        <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-500">Tros</p>
         <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-2 text-ink">Meet your specialists</h1>
         <p className="mt-3 max-w-[42ch] text-[15px] leading-relaxed text-ink-3">
           Ten unique mascots. Each Tro gets a personality, brief, and toolkit — built like a real team.
@@ -683,7 +683,7 @@ export function TrosView({
                 </a>
               ) : null}
               {teams.length > 0 ? (
-                <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-violet-500">
+                <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-500">
                   {teams.length} team{teams.length === 1 ? "" : "s"}
                 </span>
               ) : null}
@@ -698,7 +698,7 @@ export function TrosView({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search Tros…  ( / )"
                 aria-label="Search Tros"
-                className="w-full rounded-xl border border-line bg-sunk/60 py-2 pl-9 pr-3 text-[13px] text-ink outline-none transition placeholder:text-ink-4 focus:border-violet-500/50"
+                className="w-full rounded-xl border border-line bg-sunk/60 py-2 pl-9 pr-3 text-[13px] text-ink outline-none transition placeholder:text-ink-4 focus:border-blue-500/50"
               />
             </div>
             <Link
@@ -807,7 +807,7 @@ export function TrosView({
                           "group flex items-center gap-3 rounded-xl border px-4 py-3 transition",
                           a.kind === "failed"
                             ? "border-red-500/30 bg-red-500/[0.06] hover:border-red-500/50 hover:bg-red-500/[0.1]"
-                            : "border-line bg-raised/70 hover:border-violet-500/40",
+                            : "border-line bg-raised/70 hover:border-blue-500/40",
                         )}
                       >
                         <span
@@ -865,7 +865,7 @@ export function TrosView({
                       <Link
                         key={t.id}
                         href={`/tros/${t.agentId}`}
-                        className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-violet-500/35"
+                        className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-blue-500/35"
                       >
                         <div className="flex items-center gap-2.5">
                           {agent ? (
@@ -904,7 +904,7 @@ export function TrosView({
                             <FiClock size={12} />
                             {timeAgo(t.createdAt)} elapsed
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-violet-500">
+                          <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-blue-500">
                             {nextAction}
                             <Ico icon={FiArrowRight} size={12} className="transition group-hover:translate-x-0.5" />
                           </span>
@@ -942,7 +942,7 @@ export function TrosView({
                 </div>
                 <Link
                   href="/tros/new"
-                  className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-violet-500 transition hover:text-violet-400"
+                  className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-blue-500 transition hover:text-blue-400"
                 >
                   <Ico icon={FiPlus} size={13} />
                   New Tro
@@ -981,7 +981,7 @@ export function TrosView({
                         {reports.length > 0 ? (
                           <div className="border-t border-line/60 bg-sunk/30">
                             {reports.map((r, j) => (
-                              <div key={r.id} className="ml-4 border-l-2 border-violet-500/25">
+                              <div key={r.id} className="ml-4 border-l-2 border-blue-500/25">
                                 <RosterRow
                                   agent={r}
                                   state={agentState(r.id)}
@@ -1031,7 +1031,7 @@ export function TrosView({
                 </div>
                 <Link
                   href="/tros/new"
-                  className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-violet-500 transition hover:text-violet-400"
+                  className="inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-blue-500 transition hover:text-blue-400"
                 >
                   Create custom
                   <Ico icon={FiArrowRight} size={13} />
@@ -1048,7 +1048,7 @@ export function TrosView({
                   <Link
                     key={t.slug}
                     href={templateHref(t)}
-                    className="group w-[248px] shrink-0 snap-start overflow-hidden rounded-xl border border-line bg-raised/70 transition duration-300 hover:border-violet-500/40"
+                    className="group w-[248px] shrink-0 snap-start overflow-hidden rounded-xl border border-line bg-raised/70 transition duration-300 hover:border-blue-500/40"
                   >
                     <div
                       className="relative grid h-[148px] place-items-center overflow-hidden"
@@ -1074,7 +1074,7 @@ export function TrosView({
                           </span>
                         ))}
                       </div>
-                      <span className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-violet-500">
+                      <span className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-blue-500">
                         Use template
                         <Ico icon={FiArrowRight} size={12} className="transition group-hover:translate-x-0.5" />
                       </span>
@@ -1094,9 +1094,9 @@ export function TrosView({
                   e.preventDefault();
                   if (brief.trim()) router.push(`/tros/new?describe=${encodeURIComponent(brief.trim())}`);
                 }}
-                className="flex w-full items-center gap-2 rounded-xl border border-line bg-raised/85 p-2 pl-4 transition focus-within:border-violet-500/55"
+                className="flex w-full items-center gap-2 rounded-xl border border-line bg-raised/85 p-2 pl-4 transition focus-within:border-blue-500/55"
               >
-                <Ico icon={FiZap} motion="sparkle" size={16} className="shrink-0 text-violet-500" />
+                <Ico icon={FiZap} motion="sparkle" size={16} className="shrink-0 text-blue-500" />
                 <input
                   value={brief}
                   onChange={(e) => setBrief(e.target.value)}
@@ -1117,16 +1117,16 @@ export function TrosView({
                   <Link
                     key={s.title}
                     href={wizardHref(s.draft)}
-                    className="group flex items-center gap-3 rounded-xl border border-line bg-raised/70 px-3.5 py-3 text-left transition duration-300 hover:border-violet-500/40"
+                    className="group flex items-center gap-3 rounded-xl border border-line bg-raised/70 px-3.5 py-3 text-left transition duration-300 hover:border-blue-500/40"
                   >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500 transition group-hover:bg-violet-500 group-hover:text-white">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-500 transition group-hover:bg-blue-500 group-hover:text-white">
                       <Ico icon={s.icon} size={16} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-[13px] font-semibold text-ink">{s.title}</span>
                       <span className="block truncate text-[11.5px] text-ink-3">{s.desc}</span>
                     </span>
-                    <Ico icon={FiArrowRight} size={13} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-violet-500" />
+                    <Ico icon={FiArrowRight} size={13} className="shrink-0 text-ink-4 transition group-hover:translate-x-0.5 group-hover:text-blue-500" />
                   </Link>
                 ))}
               </div>
@@ -1143,10 +1143,10 @@ export function TrosView({
                     <Link
                       key={art.id}
                       href={`/tros/${art.agentId}`}
-                      className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-violet-500/35"
+                      className="group rounded-xl border border-line bg-raised/70 p-4 transition duration-300 hover:border-blue-500/35"
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500">
+                        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-500">
                           <FiFileText size={15} />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -1185,7 +1185,7 @@ export function TrosView({
                     key={s}
                     href={`/tros/new?species=${s}`}
                     title={`Hire a Tro — ${SPECIES_META[s].label}`}
-                    className="flex w-[92px] shrink-0 flex-col items-center rounded-xl border border-line/70 bg-raised/50 px-2 py-3 transition duration-300 hover:border-violet-500/35"
+                    className="flex w-[92px] shrink-0 flex-col items-center rounded-xl border border-line/70 bg-raised/50 px-2 py-3 transition duration-300 hover:border-blue-500/35"
                   >
                     <Bot size={44} species={s} accent={SPECIES_META[s].defaultAccent} state="idle" />
                     <span className="mt-1.5 text-[11px] font-semibold text-ink">{SPECIES_META[s].label}</span>

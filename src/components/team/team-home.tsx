@@ -36,7 +36,7 @@ export function TeamHome({
             }}
           />
           <div className="relative">
-            <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">
               <FiUsers size={13} />
               Team plan
             </span>
@@ -66,9 +66,9 @@ export function TeamHome({
         </div>
 
         {state.pendingInvites.length ? (
-          <section className="mt-5 rounded-xl border border-violet-400/20 bg-violet-500/[0.06] p-5">
+          <section className="mt-5 rounded-xl border border-blue-400/20 bg-blue-500/[0.06] p-5">
             <div className="flex items-center gap-2">
-              <FiMail size={16} className="text-violet-500 dark:text-violet-300" />
+              <FiMail size={16} className="text-blue-500 dark:text-blue-300" />
               <h2 className="text-[14px] font-semibold text-ink">Team invitations</h2>
             </div>
             <div className="mt-3 space-y-2">
@@ -111,7 +111,7 @@ export function TeamHome({
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.13em] text-violet-600 dark:text-violet-300">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/20 bg-blue-500/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.13em] text-blue-600 dark:text-blue-300">
                   <FiUsers size={12} />
                   Team workspace
                 </span>
@@ -148,7 +148,7 @@ export function TeamHome({
 
         <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ["Members", state.members.length, "People with access", "from-violet-500/16 to-fuchsia-500/8"],
+            ["Members", state.members.length, "People with access", "from-blue-500/16 to-fuchsia-500/8"],
             ["Shared projects", state.projects.length, "Available to the team", "from-sky-500/16 to-cyan-500/8"],
             ["Pending invites", state.invites.length, "Waiting to join", "from-amber-500/16 to-orange-500/8"],
             ["Your projects", state.ownedProjects.length, "Ready to share", "from-emerald-500/16 to-teal-500/8"],
@@ -187,7 +187,7 @@ export function TeamHome({
                   href={"/project/" + encodeURIComponent(project.id) + "/preview"}
                   className="group flex items-center gap-3 rounded-xl border border-line bg-sunk/55 p-3.5 transition hover:border-line-strong hover:bg-hover/70"
                 >
-                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500/15 to-violet-500/15 text-sky-600 dark:text-sky-300">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-500/15 to-blue-500/15 text-sky-600 dark:text-sky-300">
                     <FiFolder size={16} />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -211,7 +211,7 @@ export function TeamHome({
           <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
             <div className="flex items-end justify-between gap-3">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-violet-600 dark:text-violet-300">
+                <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-blue-600 dark:text-blue-300">
                   People
                 </p>
                 <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.02em] text-ink">
@@ -226,7 +226,7 @@ export function TeamHome({
             <div className="mt-4 space-y-2.5">
               {state.members.slice(0, 5).map((member) => (
                 <div key={member.userId} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500/18 to-sky-500/15 text-[11px] font-bold text-violet-600 dark:text-violet-300">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500/18 to-sky-500/15 text-[11px] font-bold text-blue-600 dark:text-blue-300">
                     {(member.name || member.email).slice(0, 1).toUpperCase()}
                   </span>
                   <span className="min-w-0 flex-1">

@@ -80,7 +80,7 @@ export function ProjectDetail({
       </Link>
 
       <div className="mt-5 flex items-start gap-4">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20 ring-1 ring-line">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-500/20 via-sky-500/15 to-fuchsia-500/20 ring-1 ring-line">
           <FiFolder size={22} className="text-ink" />
         </div>
         <div className="min-w-0 flex-1">

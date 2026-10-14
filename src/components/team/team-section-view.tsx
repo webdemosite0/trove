@@ -149,7 +149,7 @@ export function TeamSectionView({
                 key={member.userId}
                 className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-sunk/55 p-3.5"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-[13px] font-semibold text-ink">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500/15 to-sky-500/15 text-[13px] font-semibold text-ink">
                   {member.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -237,7 +237,7 @@ export function TeamSectionView({
                     <button
                       type="button"
                       onClick={() => void copyInviteLink(invite.id)}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-raised px-2.5 text-[10.5px] font-medium text-ink-3 transition hover:border-violet-400/30 hover:bg-violet-500/10 hover:text-ink"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-raised px-2.5 text-[10.5px] font-medium text-ink-3 transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-ink"
                       title="Copy invitation link"
                     >
                       <FiCopy size={12} />
@@ -321,7 +321,7 @@ export function TeamSectionView({
               return (
                 <div
                   key={project.id}
-                  className="rounded-xl border border-line bg-gradient-to-br from-sky-500/[0.07] to-violet-500/[0.07] p-4"
+                  className="rounded-xl border border-line bg-gradient-to-br from-sky-500/[0.07] to-blue-500/[0.07] p-4"
                 >
                   <div className="flex items-start gap-3">
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-raised text-sky-600 shadow-sm dark:text-sky-300">
@@ -547,7 +547,7 @@ function SectionCard({
   return (
     <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--elev)]">
       <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-accent">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-500/15 to-sky-500/15 text-accent">
           {icon}
         </span>
         <div>
@@ -568,7 +568,7 @@ function RolePill({ role }: { role: string }) {
         role === "owner"
           ? "bg-amber-500/10 text-amber-600 dark:text-amber-300"
           : role === "admin"
-            ? "bg-violet-500/10 text-violet-600 dark:text-violet-300"
+            ? "bg-blue-500/10 text-blue-600 dark:text-blue-300"
             : "bg-sunk text-ink-3",
       )}
     >

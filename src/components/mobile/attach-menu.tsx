@@ -169,7 +169,7 @@ export function AttachMenu({
               onClick={() => select(item.id)}
               className="spring-press flex min-h-[56px] w-full items-center gap-3 rounded-[14px] px-2.5 py-2 text-left active:bg-hover"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-violet-500/10 text-violet-300">
+              <span className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-blue-500/10 text-blue-300">
                 <Ico icon={item.icon} size={20} />
               </span>
               <span className="min-w-0 flex-1">

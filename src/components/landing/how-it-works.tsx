@@ -31,7 +31,7 @@ export function HowItWorks() {
     <section className="relative px-4 py-14 sm:px-5 sm:py-24">
       <div className="mx-auto max-w-[1140px]">
         <div className="mx-auto max-w-[620px] text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-400">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
             How it works
           </p>
           <h2 className="mt-3 text-[clamp(1.7rem,1.3rem+2vw,2.6rem)] font-semibold tracking-[-0.035em] text-ink">

@@ -46,7 +46,7 @@ export default async function TeamBusinessPage() {
     <div className="grid gap-4 lg:grid-cols-[1fr_.85fr]">
       <section className="rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--elev)]">
         <div className="flex items-start gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-accent">
+          <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-blue-500/15 to-sky-500/15 text-accent">
             <FiBriefcase size={18} />
           </span>
           <div className="min-w-0 flex-1">
@@ -86,8 +86,8 @@ export default async function TeamBusinessPage() {
         </dl>
       </section>
 
-      <section className="rounded-xl border border-violet-400/20 bg-gradient-to-br from-violet-500/[0.08] to-sky-500/[0.08] p-5">
-        <p className="text-[10.5px] font-bold uppercase tracking-[0.13em] text-violet-600 dark:text-violet-300">
+      <section className="rounded-xl border border-blue-400/20 bg-gradient-to-br from-blue-500/[0.08] to-sky-500/[0.08] p-5">
+        <p className="text-[10.5px] font-bold uppercase tracking-[0.13em] text-blue-600 dark:text-blue-300">
           Shared AI context
         </p>
         <h2 className="mt-1 text-[17px] font-semibold text-ink">

@@ -47,7 +47,7 @@ function Column({
 }) {
   return (
     <div className="rounded-xl border border-line bg-raised/50 p-6 sm:p-7">
-      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-600">{eyebrow}</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">{eyebrow}</p>
       <h3 className="mt-2 text-[19px] font-semibold tracking-tight text-ink">{title}</h3>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">{body}</p>
       <ul className="mt-5 space-y-1">
@@ -99,7 +99,7 @@ export function Architecture() {
             items={WORK}
           />
           <div className="rounded-xl border border-line bg-raised/50 p-6 sm:p-7">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-600">Connect</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">Connect</p>
             <h3 className="mt-2 text-[19px] font-semibold tracking-tight text-ink">Your apps, plugged in</h3>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-3">
               4,000+ integrations over OAuth. Your AI works with real data.
@@ -112,7 +112,7 @@ export function Architecture() {
               ))}
               <Link
                 href="/features/integrations"
-                className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-[12.5px] font-semibold text-violet-700 transition hover:bg-violet-100"
+                className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[12.5px] font-semibold text-blue-700 transition hover:bg-blue-100"
               >
                 + 4,000 more <FiArrowRight size={12} aria-hidden />
               </Link>
@@ -182,7 +182,7 @@ export function TrosWorkflow() {
     <section ref={ref} className="px-4 py-20 sm:px-5 lg:py-24">
       <div className="mx-auto max-w-[1100px]">
         <div className="mx-auto max-w-[680px] text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">
             Tros working together
           </p>
           <h2 className="mt-2.5 text-[clamp(1.6rem,1.2rem+2vw,2.4rem)] font-semibold tracking-[-0.03em] text-ink">

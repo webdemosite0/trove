@@ -84,11 +84,11 @@ function TeamRail({
         <Link
           href="/dashboard"
           onClick={onNavigate}
-          className="group flex h-10 items-center gap-2 rounded-xl border border-line bg-raised/80 px-3 text-[12px] font-semibold text-ink-2 shadow-[var(--sh-1)] transition hover:border-violet-400/30 hover:bg-violet-500/10 hover:text-ink"
+          className="group flex h-10 items-center gap-2 rounded-xl border border-line bg-raised/80 px-3 text-[12px] font-semibold text-ink-2 shadow-[var(--sh-1)] transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-ink"
         >
           <FiArrowLeft
             size={14}
-            className="text-ink-4 transition group-hover:-translate-x-0.5 group-hover:text-violet-500 dark:group-hover:text-violet-300"
+            className="text-ink-4 transition group-hover:-translate-x-0.5 group-hover:text-blue-500 dark:group-hover:text-blue-300"
           />
           <span>Back to Trove</span>
         </Link>
@@ -96,11 +96,11 @@ function TeamRail({
 
       <div className="px-4 pb-4 pt-5">
         <div className="flex items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-sky-500/20 ring-1 ring-violet-400/20">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-500/20 via-fuchsia-500/15 to-sky-500/20 ring-1 ring-blue-400/20">
             <TroveOrb size={25} />
           </span>
           <div className="min-w-0">
-            <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">
+            <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-300">
               Team workspace
             </p>
             <p className="mt-0.5 truncate text-[14px] font-semibold text-ink">
@@ -109,7 +109,7 @@ function TeamRail({
           </div>
         </div>
 
-        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-[10.5px] font-semibold text-violet-600 dark:text-violet-300">
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-blue-400/20 bg-blue-500/10 px-2.5 py-1 text-[10.5px] font-semibold text-blue-600 dark:text-blue-300">
           <FiShield size={11} />
           {roleLabel(role)}
         </div>
@@ -136,7 +136,7 @@ function TeamRail({
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition",
                 active
-                  ? "bg-gradient-to-r from-violet-500/15 via-fuchsia-500/[0.08] to-sky-500/10 text-ink ring-1 ring-violet-400/20"
+                  ? "bg-gradient-to-r from-blue-500/15 via-fuchsia-500/[0.08] to-sky-500/10 text-ink ring-1 ring-blue-400/20"
                   : "text-ink-2 hover:bg-hover hover:text-ink",
               )}
             >
@@ -144,7 +144,7 @@ function TeamRail({
                 className={cn(
                   "grid size-8 shrink-0 place-items-center rounded-xl transition",
                   active
-                    ? "bg-raised text-violet-600 shadow-[var(--sh-1)] dark:text-violet-300"
+                    ? "bg-raised text-blue-600 shadow-[var(--sh-1)] dark:text-blue-300"
                     : "bg-sunk/70 text-ink-4 group-hover:text-ink-2",
                 )}
               >
@@ -163,7 +163,7 @@ function TeamRail({
                 className={cn(
                   "shrink-0 transition",
                   active
-                    ? "text-violet-500 dark:text-violet-300"
+                    ? "text-blue-500 dark:text-blue-300"
                     : "text-ink-4 opacity-0 group-hover:opacity-100",
                 )}
               />
@@ -215,7 +215,7 @@ export function TeamShell({
           <p className="truncate text-[12px] font-semibold text-ink">
             {teamName || "Team"}
           </p>
-          <p className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-violet-600 dark:text-violet-300">
+          <p className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300">
             Team workspace · {roleLabel(role)}
           </p>
         </div>

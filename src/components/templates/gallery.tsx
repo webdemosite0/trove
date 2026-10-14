@@ -102,7 +102,7 @@ export function TemplatesGallery() {
             className={cn(
               "min-h-[44px] rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition",
               filter === k.id
-                ? "border-violet-300 bg-violet-50 text-violet-700"
+                ? "border-blue-300 bg-blue-50 text-blue-700"
                 : "border-line bg-raised text-ink-3 hover:border-zinc-300 hover:text-ink",
             )}
           >

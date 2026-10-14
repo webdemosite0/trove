@@ -266,13 +266,13 @@ export function TeamWorkspaceView({
           <div className="space-y-5 p-6">
             {state.pendingInvites.length ? (
               <div className="space-y-3">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-violet-500 dark:text-violet-300">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-blue-500 dark:text-blue-300">
                   Invitations for you
                 </p>
                 {state.pendingInvites.map((invite) => (
                   <div
                     key={invite.id}
-                    className="flex flex-col gap-3 rounded-xl border border-violet-400/20 bg-violet-500/8 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-xl border border-blue-400/20 bg-blue-500/8 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <p className="text-[14px] font-semibold text-ink">{invite.teamName}</p>
@@ -330,7 +330,7 @@ export function TeamWorkspaceView({
                 "rounded-xl border p-5",
                 state.businessEligible
                   ? "border-line-strong bg-sunk/70"
-                  : "border-sky-400/20 bg-gradient-to-br from-sky-500/[0.08] via-violet-500/[0.06] to-fuchsia-500/[0.08]",
+                  : "border-sky-400/20 bg-gradient-to-br from-sky-500/[0.08] via-blue-500/[0.06] to-fuchsia-500/[0.08]",
               )}>
                 <p className="text-[14px] font-semibold text-ink">
                   {state.businessEligible ? "Team membership required" : "Team is a business plan"}
@@ -418,7 +418,7 @@ export function TeamWorkspaceView({
                   {state.seats.used}/{state.seats.limit} seats
                 </span>
               ) : null}
-              <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-violet-600 dark:text-violet-300">
+              <span className="rounded-full border border-blue-400/20 bg-blue-500/10 px-2.5 py-1 text-blue-600 dark:text-blue-300">
                 {roleLabel(state.team.role)}
               </span>
               <span className="rounded-full border border-line bg-raised/80 px-2.5 py-1">
@@ -447,7 +447,7 @@ export function TeamWorkspaceView({
             label: "Members",
             value: String(state.members.length),
             note: "Active workspace access",
-            tone: "from-violet-500/16 to-fuchsia-500/8",
+            tone: "from-blue-500/16 to-fuchsia-500/8",
           },
           {
             label: "Seats",
@@ -521,7 +521,7 @@ export function TeamWorkspaceView({
       ) : null}
 
       {lastInviteLink ? (
-        <div className="mt-4 rounded-xl border border-violet-400/25 bg-violet-500/8 px-4 py-3">
+        <div className="mt-4 rounded-xl border border-blue-400/25 bg-blue-500/8 px-4 py-3">
           <p className="text-[12px] font-semibold text-ink">Invitation created</p>
           <p className="mt-1 text-[11.5px] text-ink-3">
             Share this link with the invitee while they are signed in as the invited email.
@@ -598,7 +598,7 @@ export function TeamWorkspaceView({
         <section id="members" className="scroll-mt-24 rounded-xl border border-line-strong bg-raised p-5 shadow-[var(--sh-1)]">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-violet-500 dark:text-violet-300">
+              <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-blue-500 dark:text-blue-300">
                 Members
               </p>
               <h2 className="mt-1 text-[17px] font-semibold text-ink">People & permissions</h2>
@@ -655,7 +655,7 @@ export function TeamWorkspaceView({
 
               return (
                 <div key={member.userId} className="flex items-center gap-3 py-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-[12px] font-bold text-violet-600 dark:text-violet-300">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500/15 to-sky-500/15 text-[12px] font-bold text-blue-600 dark:text-blue-300">
                     {(member.name || member.email).slice(0, 1).toUpperCase()}
                   </span>
                   <div className="min-w-0 flex-1">

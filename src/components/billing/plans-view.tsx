@@ -315,7 +315,7 @@ export function PlansView({
                 {businessOnlyLocked ? (
                   <Link
                     href="/dashboard?settings=general"
-                    className="flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-400/30 bg-violet-500/10 px-3 text-[12.5px] font-semibold text-violet-700 transition hover:bg-violet-500/15 dark:text-violet-300"
+                    className="flex h-10 items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 px-3 text-[12.5px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:text-blue-300"
                   >
                     Set up Business profile
                     <FiArrowRight size={14} />

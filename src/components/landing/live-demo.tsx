@@ -323,7 +323,7 @@ export function LiveDemo() {
 
       <div className="mx-auto max-w-[1100px]">
         <div className="mx-auto max-w-[720px] text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">
             Live build
           </p>
           <h2 className="mt-2.5 text-[clamp(1.6rem,1.2rem+2vw,2.5rem)] font-semibold tracking-[-0.03em] text-ink">
@@ -346,7 +346,7 @@ export function LiveDemo() {
                 onClick={() => select(i)}
                 className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition ${
                   active
-                    ? "border-violet-300 bg-violet-50 text-violet-700 shadow-sm"
+                    ? "border-blue-300 bg-blue-50 text-blue-700 shadow-sm"
                     : "border-line bg-raised text-ink-3 hover:border-zinc-300 hover:text-ink"
                 }`}
                 aria-pressed={active}
@@ -382,7 +382,7 @@ export function LiveDemo() {
               <div className="rounded-xl rounded-tl-sm border border-line bg-raised p-3 text-[13.5px] leading-relaxed text-ink shadow-sm">
                 {scenario.prompt.slice(0, typedLen)}
                 {phase === "typing" && (
-                  <span className="ml-0.5 inline-block h-[1.05em] w-[2px] animate-pulse bg-violet-500 align-middle" />
+                  <span className="ml-0.5 inline-block h-[1.05em] w-[2px] animate-pulse bg-blue-500 align-middle" />
                 )}
               </div>
 

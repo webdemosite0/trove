@@ -51,7 +51,7 @@ export function ProductMockup() {
     <section className="px-5 py-16 lg:py-24">
       <div className="mx-auto max-w-[1120px]">
         <Reveal className="text-center">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-blue-600">
             Live workspace
           </p>
           <h2 className="mx-auto mt-3 max-w-[28ch] text-[clamp(1.85rem,1.2rem+1.9vw,2.7rem)] font-semibold tracking-[-0.03em] text-zinc-900">
@@ -71,7 +71,7 @@ export function ProductMockup() {
               <span
                 className={cn(
                   "ml-auto rounded-full px-3 py-1.5 text-[10.5px] font-semibold text-white",
-                  published ? "bg-emerald-600" : "bg-gradient-to-r from-violet-600 to-indigo-600",
+                  published ? "bg-emerald-600" : "bg-gradient-to-r from-blue-600 to-blue-600",
                 )}
               >
                 {published ? "Published ✓" : "Publish"}
@@ -90,7 +90,7 @@ export function ProductMockup() {
               </div>
               <div className="min-h-[280px] bg-[#f5f5f7] p-5">
                 <div className="h-full rounded-xl border border-zinc-200 bg-white p-7 shadow-sm">
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-600">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-blue-600">
                     Healthcare lighting
                   </p>
                   <h3 className="mt-2 text-[1.6rem] font-semibold tracking-tight text-zinc-950">
@@ -114,7 +114,7 @@ export function HubDiagram() {
 }
 
 const GALLERY = [
-  { title: "Q3 Report", label: "Document", tone: "from-violet-500 to-indigo-600", light: false },
+  { title: "Q3 Report", label: "Document", tone: "from-blue-500 to-blue-600", light: false },
   { title: "Pitch Deck", label: "Decks", tone: "from-zinc-100 to-zinc-200", light: true },
   { title: "Budget", label: "Sheets", tone: "from-emerald-500 to-teal-600", light: false },
   { title: "Brand Kit", label: "Design", tone: "from-rose-500 to-pink-600", light: false },
@@ -124,7 +124,7 @@ export function WhyGallery() {
   return (
     <section className="overflow-hidden px-5 py-20 lg:py-28">
       <Reveal className="mx-auto max-w-[720px] text-center">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">Why Trove</p>
+        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-blue-600">Why Trove</p>
         <h2 className="mt-3 text-[clamp(1.9rem,1.2rem+2vw,3rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-zinc-900">
           The hard part was never the blank page
         </h2>
@@ -134,7 +134,7 @@ export function WhyGallery() {
         </p>
         <Link
           href="/documents"
-          className="mt-8 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-5 py-2.5 text-[13.5px] font-semibold text-violet-700 transition hover:bg-violet-100"
+          className="mt-8 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-5 py-2.5 text-[13.5px] font-semibold text-blue-700 transition hover:bg-blue-100"
         >
           Explore documents →
         </Link>

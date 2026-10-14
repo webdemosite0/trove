@@ -33,7 +33,7 @@ const STATUS_TONE: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   paused: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
   done: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  ready: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+  ready: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
 };
 
 function statusLabel(s: string) {
@@ -184,7 +184,7 @@ export function ProjectsView({
   if (!signedIn) {
     return (
       <div className="nx-in mx-auto flex min-h-0 max-w-[520px] flex-1 flex-col items-center justify-center px-5 py-16 text-center">
-        <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20 ring-1 ring-line">
+        <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-blue-500/20 via-sky-500/15 to-fuchsia-500/20 ring-1 ring-line">
           <FiFolder size={28} className="text-ink" />
         </div>
         <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.015em] mt-6 text-ink">Projects</h1>
@@ -239,7 +239,7 @@ export function ProjectsView({
       {projects.length === 0 ? (
         <EmptyState
           illustration={
-            <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-sky-500/15 to-fuchsia-500/20">
+            <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-blue-500/20 via-sky-500/15 to-fuchsia-500/20">
               <FiFolder size={28} className="text-ink" />
             </div>
           }

@@ -100,11 +100,11 @@ export function TroListPanel({
           aria-current={active ? "page" : undefined}
           title={manager ? `${a.name} — reports to ${manager.name}` : a.name}
           className={cn(
-            "flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50",
+            "flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50",
             active
               ? "bg-hover shadow-[inset_2px_0_0_0_#8b5cf6]"
               : "hover:bg-hover/60 hover:translate-x-px",
-            depth > 0 && "ml-7 border-l-2 border-violet-500/25 pl-2.5",
+            depth > 0 && "ml-7 border-l-2 border-blue-500/25 pl-2.5",
           )}
         >
           <span className="relative shrink-0 pt-1">
@@ -123,7 +123,7 @@ export function TroListPanel({
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate text-[13.5px] font-semibold text-ink">{a.name}</span>
                 {depth > 0 ? (
-                  <span className="shrink-0 rounded-full bg-violet-500/12 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                  <span className="shrink-0 rounded-full bg-blue-500/12 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.1em] text-blue-500">
                     Team
                   </span>
                 ) : (childrenOf.get(a.id)?.length ?? 0) > 0 ? (
@@ -163,7 +163,7 @@ export function TroListPanel({
           type="button"
           onClick={onNew}
           title="New Tro (N)"
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2.5 text-[13.5px] font-semibold text-ink shadow-sm transition duration-200 hover:border-violet-500/40 hover:bg-hover hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-raised px-3 py-2.5 text-[13.5px] font-semibold text-ink shadow-sm transition duration-200 hover:border-blue-500/40 hover:bg-hover hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
         >
           <Ico icon={FiPlus} motion="open" size={15} /> New Tro
         </button>

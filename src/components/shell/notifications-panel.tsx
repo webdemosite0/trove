@@ -179,7 +179,7 @@ export function NotificationsPanel({ due = 0 }: { due?: number }) {
                 className="rounded-xl border border-line bg-sunk/50 p-3"
               >
                 <div className="flex items-start gap-2.5">
-                  <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-violet-500/12 text-violet-600 dark:text-violet-300">
+                  <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-blue-500/12 text-blue-600 dark:text-blue-300">
                     <FiUsers size={15} />
                   </span>
                   <div className="min-w-0 flex-1">

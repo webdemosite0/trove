@@ -198,7 +198,7 @@ export function MobileComposer({
   return (
     <div
       className={cn(
-        "composer relative rounded-xl border border-line-strong bg-raised/92 px-1.5 pb-1.5 pt-1.5 shadow-[var(--sh-2)] backdrop-blur-xl",
+        "composer relative rounded-[22px] border border-line bg-raised px-1.5 pb-1.5 pt-1.5 shadow-[var(--shadow-sm)]",
         disabled && "opacity-70",
       )}
     >

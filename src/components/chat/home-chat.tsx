@@ -70,9 +70,10 @@ export function HomeChat({
 
   if (turns.length === 0) {
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain">
+      <div className="relative flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
         <div className="relative flex flex-1 flex-col items-center px-5 pb-14 pt-[8vh] lg:pt-[12vh]">
-          <div className="w-full max-w-[680px] text-center">
+          <div aria-hidden className="lv-glow top-[18vh]" />
+          <div className="relative z-[1] w-full max-w-[680px] text-center">
             <div className="nx-rise">
               <Greeting name={name} />
               <h1 className="mt-2 text-[clamp(1.75rem,1.2rem+1.6vw,2.4rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-ink">

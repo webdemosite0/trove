@@ -43,7 +43,7 @@ export default function ChangelogPage() {
   return (
     <div className="mx-auto max-w-[720px] px-4 pb-24 pt-14 sm:px-5 lg:pt-20">
       <header>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-600">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
           Changelog
         </p>
         <h1 className="mt-2.5 text-[clamp(2rem,1.4rem+2.4vw,3rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">
@@ -57,7 +57,7 @@ export default function ChangelogPage() {
       <div className="mt-10 space-y-8">
         {ENTRIES.map((e) => (
           <article key={e.title} className="relative border-l-2 border-line pl-6">
-            <span aria-hidden className="absolute -left-[5px] top-1.5 size-2 rounded-full bg-violet-500" />
+            <span aria-hidden className="absolute -left-[5px] top-1.5 size-2 rounded-full bg-blue-500" />
             <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-4">{e.date}</p>
             <h2 className="mt-1 text-[19px] font-semibold tracking-tight text-ink">{e.title}</h2>
             <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed text-ink-3">{e.body}</p>

@@ -342,7 +342,7 @@ export function BrowserWorkspace({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-xl border border-violet-400/20 bg-raised shadow-[var(--sh-2)]",
+        "overflow-hidden rounded-xl border border-blue-400/20 bg-raised shadow-[var(--sh-2)]",
         compact && "rounded-xl",
       )}
     >
@@ -353,7 +353,7 @@ export function BrowserWorkspace({
             "linear-gradient(110deg, color-mix(in oklab,var(--color-violet) 14%,transparent), color-mix(in oklab,var(--color-accent) 10%,transparent), color-mix(in oklab,#22d3ee 8%,transparent))",
         }}
       >
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/15 to-sky-500/20 text-violet-600 ring-1 ring-violet-400/15 dark:text-violet-300">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-500/20 via-fuchsia-500/15 to-sky-500/20 text-blue-600 ring-1 ring-blue-400/15 dark:text-blue-300">
           {status === "syncing" ? (
             <FiLoader size={16} className="animate-spin" />
           ) : status === "ready" ? (
@@ -546,7 +546,7 @@ export function BrowserWorkspace({
                     key={file.path}
                     className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[11.5px] hover:bg-hover"
                   >
-                    <FiFile size={12} className="shrink-0 text-violet-500 dark:text-violet-300" />
+                    <FiFile size={12} className="shrink-0 text-blue-500 dark:text-blue-300" />
                     <span className="min-w-0 flex-1 truncate font-mono text-ink-2">
                       {file.path}
                     </span>
@@ -657,7 +657,7 @@ function QuickAction({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line bg-raised px-2.5 text-[10.5px] font-semibold text-ink-3 transition hover:border-violet-400/25 hover:bg-violet-500/10 hover:text-ink disabled:opacity-40"
+      className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-line bg-raised px-2.5 text-[10.5px] font-semibold text-ink-3 transition hover:border-blue-400/25 hover:bg-blue-500/10 hover:text-ink disabled:opacity-40"
     >
       {icon}
       {label}

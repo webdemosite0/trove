@@ -50,7 +50,7 @@ export default function PricingPage() {
   return (
     <div className="mx-auto max-w-[1040px] px-5 pb-24 pt-16 lg:px-8 lg:pt-24">
       <header className="max-w-[640px]">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-600">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-blue-600">
           Plans for solo work and teams
         </p>
         <h1 className="mt-3 text-[clamp(2rem,1.2rem+2.4vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
@@ -98,7 +98,7 @@ export default function PricingPage() {
               )}
             >
               {featured ? (
-                <span className="absolute -top-2.5 left-6 rounded-full bg-violet-600 px-2.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-white">
+                <span className="absolute -top-2.5 left-6 rounded-full bg-blue-600 px-2.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-white">
                   Most popular
                 </span>
               ) : null}
@@ -167,7 +167,7 @@ export default function PricingPage() {
 
       <section className="mt-16 overflow-hidden rounded-[var(--r-hero)] border border-line bg-rail">
         <div className="border-b border-line px-5 py-6 sm:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-600">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600">
             Side-by-side
           </p>
           <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.02em] text-ink sm:text-[24px]">
@@ -284,7 +284,7 @@ export default function PricingPage() {
         </p>
         <Link
           href="/plans"
-          className="mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-violet-700 hover:underline dark:text-violet-300"
+          className="mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-blue-700 hover:underline dark:text-blue-300"
         >
           Open plans in the app
           <FiArrowRight size={15} />

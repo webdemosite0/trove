@@ -15,7 +15,7 @@ export function ImageGeneratingCard({ caption }: { caption?: string }) {
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-sunk">
         <div
-          className="absolute inset-0 animate-pulse bg-gradient-to-br from-violet-500/10 via-sky-500/10 to-fuchsia-500/10"
+          className="absolute inset-0 animate-pulse bg-gradient-to-br from-blue-500/10 via-sky-500/10 to-fuchsia-500/10"
           aria-hidden
         />
         <div

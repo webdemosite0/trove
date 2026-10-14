@@ -226,7 +226,7 @@ function CrewExample() {
       <img
         src="/api/crew/image"
         alt="The ten Tros mascots — Trove's AI specialist crew"
-        className="h-auto w-full bg-gradient-to-b from-violet-50 to-white"
+        className="h-auto w-full bg-gradient-to-b from-blue-50 to-white"
         loading="lazy"
       />
     </Frame>

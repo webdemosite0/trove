@@ -20,9 +20,9 @@
   --color-ink-4: #7c7c85;
   --color-line: #27272b;
   --color-line-strong: #36363c;
-  --color-accent: #a78bfa;
-  --color-accent-soft: #221d36;
-  --color-violet: #a78bfa;
+  --color-accent: #60a5fa;
+  --color-accent-soft: #15233a;
+  --color-violet: #60a5fa;
   --color-positive: #6ee7b7;
   --color-positive-soft: #10271f;
   --color-caution: #fcd34d;
@@ -42,9 +42,9 @@
   --color-ink-4: #7c7c85;
   --color-line: #27272b;
   --color-line-strong: #36363c;
-  --color-accent: #a78bfa;
-  --color-accent-soft: #221d36;
-  --color-violet: #a78bfa;
+  --color-accent: #60a5fa;
+  --color-accent-soft: #15233a;
+  --color-violet: #60a5fa;
   --color-positive: #6ee7b7;
   --color-positive-soft: #10271f;
   --color-caution: #fcd34d;
@@ -53,9 +53,9 @@
   --shade: #ffffff;
   --ground: #000000;
   /* Primary buttons: one flat violet, no gradient, no glow. */
-  --btn-a: #7c3aed;
-  --btn-b: #7c3aed;
-  --btn-ink: #ffffff;
+  --btn-a: #f4f4f5;
+  --btn-b: #f4f4f5;
+  --btn-ink: #18181b;
   --btn-glow: transparent;
   --focus-ring: rgb(167 139 250 / 0.28);
   --focus-line: rgb(167 139 250 / 0.75);
@@ -97,9 +97,9 @@
   --color-ink-4: #71717a;
   --color-line: #e7e7ea;
   --color-line-strong: #d6d6db;
-  --color-accent: #6d28d9;
-  --color-accent-soft: #f4f0ff;
-  --color-violet: #6d28d9;
+  --color-accent: #2563eb;
+  --color-accent-soft: #eff6ff;
+  --color-violet: #2563eb;
   --color-positive: #047857;
   --color-positive-soft: #ecfdf5;
   --color-caution: #b45309;
@@ -107,8 +107,8 @@
   --color-critical-soft: #fef2f2;
   --shade: #18181b;
   --ground: #ffffff;
-  --btn-a: #6d28d9;
-  --btn-b: #6d28d9;
+  --btn-a: #18181b;
+  --btn-b: #18181b;
   --btn-ink: #ffffff;
   --btn-glow: transparent;
   --focus-ring: rgb(109 40 217 / 0.22);
@@ -131,9 +131,9 @@
   --color-ink-4: #7c7c85;
   --color-line: #27272b;
   --color-line-strong: #36363c;
-  --color-accent: #a78bfa;
-  --color-accent-soft: #221d36;
-  --color-violet: #a78bfa;
+  --color-accent: #60a5fa;
+  --color-accent-soft: #15233a;
+  --color-violet: #60a5fa;
   --color-positive: #6ee7b7;
   --color-positive-soft: #10271f;
   --color-caution: #fcd34d;
@@ -141,9 +141,9 @@
   --color-critical-soft: #2a1717;
   --shade: #ffffff;
   --ground: #000000;
-  --btn-a: #7c3aed;
-  --btn-b: #7c3aed;
-  --btn-ink: #ffffff;
+  --btn-a: #f4f4f5;
+  --btn-b: #f4f4f5;
+  --btn-ink: #18181b;
   --btn-glow: transparent;
   --focus-ring: rgb(167 139 250 / 0.28);
   --focus-line: rgb(167 139 250 / 0.75);
@@ -169,9 +169,9 @@
   --color-ink-4: #71717a;
   --color-line: #e7e7ea;
   --color-line-strong: #d6d6db;
-  --color-accent: #6d28d9;
-  --color-accent-soft: #f4f0ff;
-  --color-violet: #6d28d9;
+  --color-accent: #2563eb;
+  --color-accent-soft: #eff6ff;
+  --color-violet: #2563eb;
   --color-positive: #0b6553;
   --color-positive-soft: #e7f5f0;
   --color-caution: #b45309;
@@ -179,8 +179,8 @@
   --color-critical-soft: #fce8ee;
   --shade: #1a1f36;
   --ground: #ffffff;
-  --btn-a: #6d28d9;
-  --btn-b: #6d28d9;
+  --btn-a: #18181b;
+  --btn-b: #18181b;
   --btn-ink: #ffffff;
   --btn-glow: transparent;
   --focus-ring: rgb(109 40 217 / 0.22);
@@ -245,11 +245,11 @@ body {
   color: var(--btn-ink);
   box-shadow: var(--shadow-sm) !important;
 }
-.btn-grad:hover { filter: brightness(1.08); }
+.btn-grad:hover { opacity: 0.88; }
 
 :root[data-theme="dark"] .bg-accent,
 :root[data-theme="dark"] .hover\:bg-accent:hover {
-  background-color: #7c3aed;
+  background-color: #2563eb;
 }
 .btn-grad:disabled { opacity: 0.6; }
 .btn-grad,
@@ -283,3 +283,23 @@ body {
   box-shadow: none;
 }
 
+
+/* Lovable-style glow: a soft blue → pink → orange cloud behind the main prompt. */
+.lv-glow {
+  position: absolute;
+  left: 50%;
+  width: min(1100px, 140vw);
+  height: 560px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(38% 48% at 28% 42%, rgba(59, 130, 246, 0.55), transparent 70%),
+    radial-gradient(36% 46% at 52% 52%, rgba(236, 72, 153, 0.45), transparent 70%),
+    radial-gradient(40% 44% at 72% 66%, rgba(249, 115, 22, 0.42), transparent 70%);
+  filter: blur(64px);
+  opacity: 0.85;
+}
+:root[data-theme="dark"] .lv-glow { opacity: 0.75; }
+@media (max-width: 640px) { .lv-glow { height: 420px; filter: blur(48px); } }
+@media print { .lv-glow { display: none; } }

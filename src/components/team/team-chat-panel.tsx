@@ -76,7 +76,7 @@ function MessageRow({
           message.role === "owner"
             ? "bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-300"
             : message.role === "admin"
-              ? "bg-violet-500/10 text-violet-600 ring-violet-500/20 dark:text-violet-300"
+              ? "bg-blue-500/10 text-blue-600 ring-blue-500/20 dark:text-blue-300"
               : "bg-sky-500/10 text-sky-600 ring-sky-500/20 dark:text-sky-300",
         )}
         title={roleLabel(message.role)}
@@ -100,7 +100,7 @@ function MessageRow({
               message.role === "owner"
                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-300"
                 : message.role === "admin"
-                  ? "bg-violet-500/10 text-violet-600 dark:text-violet-300"
+                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-300"
                   : "bg-sunk text-ink-4",
             )}
           >
@@ -113,7 +113,7 @@ function MessageRow({
           className={cn(
             "whitespace-pre-wrap break-words rounded-xl px-3 py-2 text-left text-[12.5px] leading-relaxed",
             mine
-              ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-[0_8px_24px_-14px_rgba(79,70,229,.75)]"
+              ? "bg-gradient-to-br from-blue-600 to-blue-600 text-white shadow-[0_8px_24px_-14px_rgba(79,70,229,.75)]"
               : "border border-line bg-sunk/80 text-ink-2",
           )}
         >
@@ -173,7 +173,7 @@ function ChatSurface({
           }}
         />
         <div className="relative flex items-center gap-3">
-          <span className="relative grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 via-fuchsia-500/10 to-sky-500/15 text-violet-600 ring-1 ring-violet-500/15 dark:text-violet-300">
+          <span className="relative grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-500/15 via-fuchsia-500/10 to-sky-500/15 text-blue-600 ring-1 ring-blue-500/15 dark:text-blue-300">
             <FiUsers size={16} />
             <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-raised bg-emerald-500" />
           </span>
@@ -221,7 +221,7 @@ function ChatSurface({
         ) : (
           <div className="grid h-full min-h-[180px] place-items-center px-5 text-center">
             <div>
-              <span className="mx-auto grid size-11 place-items-center rounded-xl bg-gradient-to-br from-violet-500/12 to-sky-500/12 text-accent">
+              <span className="mx-auto grid size-11 place-items-center rounded-xl bg-gradient-to-br from-blue-500/12 to-sky-500/12 text-accent">
                 <FiMessageSquare size={18} />
               </span>
               <p className="mt-3 text-[12.5px] font-semibold text-ink">
@@ -541,10 +541,10 @@ export function TeamChatPanel({
             } catch {}
             void load(true);
           }}
-          className="fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-xl border border-violet-400/20 bg-raised/95 px-3.5 py-2.5 text-[12px] font-semibold text-ink shadow-[var(--elev)] backdrop-blur-xl transition hover:border-violet-400/40 xl:flex"
+          className="fixed bottom-5 right-5 z-40 hidden items-center gap-2 rounded-xl border border-blue-400/20 bg-raised/95 px-3.5 py-2.5 text-[12px] font-semibold text-ink shadow-[var(--elev)] backdrop-blur-xl transition hover:border-blue-400/40 xl:flex"
           aria-label="Open Team chat"
         >
-          <span className="grid size-7 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 via-fuchsia-500/15 to-sky-500/15 text-violet-500 dark:text-violet-300">
+          <span className="grid size-7 place-items-center rounded-xl bg-gradient-to-br from-blue-500/15 via-fuchsia-500/15 to-sky-500/15 text-blue-500 dark:text-blue-300">
             <FiUsers size={14} />
           </span>
           Team chat
@@ -563,7 +563,7 @@ export function TeamChatPanel({
           setUnread(0);
           void load(true);
         }}
-        className="fixed right-4 top-[4.5rem] z-40 grid size-11 place-items-center rounded-xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
+        className="fixed right-4 top-[4.5rem] z-40 grid size-11 place-items-center rounded-xl bg-gradient-to-br from-blue-600 via-fuchsia-600 to-blue-600 text-white shadow-[0_16px_40px_-14px_rgba(91,70,220,.8)] xl:hidden"
         aria-label="Open Team chat"
       >
         <FiUsers size={19} />

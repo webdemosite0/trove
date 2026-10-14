@@ -31,7 +31,7 @@ export function IntegrationNetwork() {
         <div className="overflow-hidden rounded-xl border border-line bg-raised/80 shadow-[0_36px_100px_-52px_rgba(79,70,229,0.5)] backdrop-blur-xl">
           <div className="grid items-center gap-10 p-6 sm:p-9 lg:grid-cols-[0.88fr_1.12fr] lg:p-12">
             <Reveal>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-600">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
                 Connected workspace
               </p>
               <h2 className="mt-3 max-w-[14ch] text-[clamp(2rem,1.25rem+2vw,3rem)] font-semibold leading-[1.03] tracking-[-0.035em] text-ink">
@@ -70,7 +70,7 @@ export function IntegrationNetwork() {
                 aria-label="Trove connected to business tools including Gmail, Google Drive, Notion, Slack, GitHub, Figma, Linear, Stripe, Calendar, and HubSpot"
                 className="relative mx-auto aspect-[1.12/1] w-full max-w-[580px]"
               >
-                <div className="absolute inset-[10%] rounded-full bg-gradient-to-br from-violet-100/80 via-indigo-50/20 to-fuchsia-100/60 blur-2xl" />
+                <div className="absolute inset-[10%] rounded-full bg-gradient-to-br from-blue-100/80 via-blue-50/20 to-fuchsia-100/60 blur-2xl" />
                 <svg
                   className="absolute inset-0 h-full w-full"
                   viewBox="0 0 100 100"
@@ -99,7 +99,7 @@ export function IntegrationNetwork() {
                   <circle cx="50" cy="50" r="22" fill="none" stroke="#8b5cf6" strokeOpacity="0.08" strokeWidth="0.5" />
                 </svg>
 
-                <div className="absolute left-1/2 top-1/2 z-20 flex size-[92px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-xl border border-violet-300/40 bg-raised dark:border-violet-400/20 sm:size-[108px]">
+                <div className="absolute left-1/2 top-1/2 z-20 flex size-[92px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-xl border border-blue-300/40 bg-raised dark:border-blue-400/20 sm:size-[108px]">
                   <TroveOrb size={38} state="idle" />
                   <span className="mt-2 text-[11px] font-semibold tracking-tight text-zinc-900">Trove</span>
                 </div>

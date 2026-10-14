@@ -146,7 +146,7 @@ export function ProjectPicker({
           "group inline-flex items-center gap-1.5 rounded-full border transition",
           compact ? "h-8 px-2.5 text-[11.5px]" : "h-9 px-3 text-[12.5px]",
           active || localActive
-            ? "border-violet-400/25 bg-violet-500/10 text-ink "
+            ? "border-blue-400/25 bg-blue-500/10 text-ink "
             : "border-line bg-raised/70 text-ink-3 hover:border-line-strong hover:bg-hover hover:text-ink",
           disabled && "opacity-50",
         )}
@@ -160,7 +160,7 @@ export function ProjectPicker({
               : "Choose project"
         }
       >
-        <FiFolder size={compact ? 13 : 14} className={active || localActive ? "text-violet-500 dark:text-violet-300" : "text-ink-4"} />
+        <FiFolder size={compact ? 13 : 14} className={active || localActive ? "text-blue-500 dark:text-blue-300" : "text-ink-4"} />
         <span className="max-w-[120px] truncate font-medium">
           {localName || active?.name || "Project"}
         </span>
@@ -185,7 +185,7 @@ export function ProjectPicker({
             )}
           >
             <div className="border-b border-line px-3.5 py-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-violet-500 dark:text-violet-300">
+              <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-blue-500 dark:text-blue-300">
                 Project workspace
               </p>
               <p className="mt-1 text-[11.5px] leading-relaxed text-ink-4">
@@ -224,10 +224,10 @@ export function ProjectPicker({
                   }}
                   className={cn(
                     "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-hover",
-                    active?.id === project.id && "bg-violet-500/10",
+                    active?.id === project.id && "bg-blue-500/10",
                   )}
                 >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-violet-500 dark:text-violet-300">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-500/15 to-sky-500/15 text-blue-500 dark:text-blue-300">
                     <FiFolder size={14} />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -301,7 +301,7 @@ export function ProjectPicker({
                       type="button"
                       onClick={() => void createLocal()}
                       disabled={pending || name.trim().length < 2}
-                      className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 py-1.5 text-[11.5px] font-semibold text-violet-700 transition hover:bg-violet-500/15 disabled:opacity-50 dark:text-violet-300"
+                      className="rounded-lg border border-blue-400/25 bg-blue-500/10 px-3 py-1.5 text-[11.5px] font-semibold text-blue-700 transition hover:bg-blue-500/15 disabled:opacity-50 dark:text-blue-300"
                     >
                       Create on device
                     </button>

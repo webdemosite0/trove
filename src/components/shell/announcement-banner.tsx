@@ -61,7 +61,7 @@ export function AnnouncementBanner() {
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-violet-500/5 to-pink-500/10"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-pink-500/10"
         />
 
         <div
@@ -77,7 +77,7 @@ export function AnnouncementBanner() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent sm:bg-gradient-to-r sm:from-transparent sm:to-black/10" />
             </div>
           ) : (
-            <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-600 dark:text-indigo-300">
+            <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/20 text-blue-600 dark:text-blue-300">
               <TbSparkles size={18} />
             </span>
           )}
@@ -85,7 +85,7 @@ export function AnnouncementBanner() {
           <div className={cn("min-w-0 flex-1", hasPhoto ? "px-4 py-3.5 sm:px-5 sm:py-4" : "")}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-indigo-600/80 dark:text-indigo-300/80">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600/80 dark:text-blue-300/80">
                   Announcement
                 </p>
                 <p className="mt-1 text-[15px] font-semibold tracking-tight text-ink">{a.title}</p>
@@ -111,7 +111,7 @@ export function AnnouncementBanner() {
                     onClick={() => setIndex(i)}
                     className={cn(
                       "h-1.5 rounded-full transition-all",
-                      i === index ? "w-5 bg-indigo-500" : "w-1.5 bg-ink-4/40 hover:bg-ink-4/70",
+                      i === index ? "w-5 bg-blue-500" : "w-1.5 bg-ink-4/40 hover:bg-ink-4/70",
                     )}
                   />
                 ))}

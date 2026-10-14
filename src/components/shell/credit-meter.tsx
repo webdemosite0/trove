@@ -25,7 +25,7 @@ function toneClass(l: ReturnType<typeof level>) {
 function fillClass(l: ReturnType<typeof level>) {
   if (l === "out" || l === "critical") return "bg-rose-500";
   if (l === "caution") return "bg-amber-500";
-  return "bg-violet-600";
+  return "bg-blue-600";
 }
 
 export function CreditMeter({
@@ -121,7 +121,7 @@ export function CreditMeter({
           className={cn(
             "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold tabular-nums transition",
             worst === "ok" &&
-              "border-violet-500/25 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+              "border-blue-500/25 bg-blue-500/10 text-blue-700 dark:text-blue-300",
             worst === "caution" &&
               "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
             (worst === "critical" || worst === "out") &&
@@ -133,7 +133,7 @@ export function CreditMeter({
             aria-hidden
             className={cn(
               "size-1.5 rounded-full",
-              worst === "ok" && "bg-violet-500",
+              worst === "ok" && "bg-blue-500",
               worst === "caution" && "bg-amber-500",
               (worst === "critical" || worst === "out") && "bg-rose-500",
             )}

@@ -200,7 +200,7 @@ export function ProductProof() {
             </p>
             <div className="flex-1 rounded-xl border border-line bg-raised p-4 sm:p-5">
               <div className="flex items-center gap-2.5">
-                <span className="grid size-8 place-items-center rounded-full bg-violet-500/15 text-[13px] font-bold text-violet-700 dark:text-violet-300">
+                <span className="grid size-8 place-items-center rounded-full bg-blue-500/15 text-[13px] font-bold text-blue-700 dark:text-blue-300">
                   M
                 </span>
                 <div>

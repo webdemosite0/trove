@@ -34,7 +34,7 @@ export function DeviceShowcase() {
                 <Wordmark size={15} />
               </div>
               <div className="px-2.5 pt-2.5">
-                <div className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-[12px] font-semibold text-white">
+                <div className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-600 text-[12px] font-semibold text-white">
                   + New chat
                 </div>
               </div>
@@ -64,7 +64,7 @@ export function DeviceShowcase() {
               <div className="mt-auto border-t border-line px-3 py-3">
                 <p className="text-[11px] text-ink-4">3,240 / 5,000 credits</p>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sunk">
-                  <div className="h-full w-[65%] rounded-full bg-violet-500" />
+                  <div className="h-full w-[65%] rounded-full bg-blue-500" />
                 </div>
               </div>
             </aside>
@@ -95,7 +95,7 @@ export function DeviceShowcase() {
                         Voice
                       </span>
                     </div>
-                    <span className="grid size-8 place-items-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-sm text-white">
+                    <span className="grid size-8 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-blue-600 text-sm text-white">
                       ↑
                     </span>
                   </div>
@@ -115,7 +115,7 @@ export function DeviceShowcase() {
                 <div className="mx-auto mt-8 max-w-[640px]">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-[12px] font-medium text-ink-3">Recent work</span>
-                    <span className="text-[11px] text-violet-600">View all</span>
+                    <span className="text-[11px] text-blue-600">View all</span>
                   </div>
                   <div className="grid grid-cols-4 gap-2.5">
                     {[

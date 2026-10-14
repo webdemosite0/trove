@@ -43,7 +43,7 @@ export function AuthIllustration() {
           <div className="mt-2 h-1.5 w-full rounded-full bg-white/15" />
           <div className="mt-1.5 h-1.5 w-[72%] rounded-full bg-white/10" />
           <div className="mt-3 grid grid-cols-3 gap-1.5">
-            <div className="h-8 rounded-lg bg-violet-400/20" />
+            <div className="h-8 rounded-lg bg-blue-400/20" />
             <div className="h-8 rounded-lg bg-blue-400/20" />
             <div className="h-8 rounded-lg bg-white/10" />
           </div>

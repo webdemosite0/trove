@@ -128,7 +128,7 @@ export const Markdown = memo(function Markdown({
             <input
               {...props}
               disabled
-              className="mr-1.5 size-3.5 translate-y-[1px] accent-violet-500"
+              className="mr-1.5 size-3.5 translate-y-[1px] accent-blue-500"
             />
           ),
         }}

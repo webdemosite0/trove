@@ -55,12 +55,12 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
     {
       label: "LinkedIn",
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(stats.link)}`,
-      className: "from-blue-500 to-indigo-700",
+      className: "from-blue-500 to-blue-700",
     },
     {
       label: "Email",
       href: `mailto:?subject=${encodeURIComponent("Try Trove with me")}&body=${encodeURIComponent(shareText)}`,
-      className: "from-violet-400 to-fuchsia-600",
+      className: "from-blue-400 to-fuchsia-600",
     },
   ];
 
@@ -203,7 +203,7 @@ export function AffiliatesView({ stats, name }: { stats: Stats; name: string }) 
               n: "2",
               title: "Friend signs up",
               body: "They land on signup with your referral already applied — no code field.",
-              ring: "from-violet-400 to-indigo-500",
+              ring: "from-blue-400 to-blue-500",
             },
             {
               n: "3",

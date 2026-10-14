@@ -151,6 +151,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
 
   return (
     <section className="relative px-4 pb-10 pt-10 sm:px-5 sm:pb-16 sm:pt-16 lg:pt-24">
+      <div aria-hidden className="lv-glow top-[300px] sm:top-[360px]" />
 
       <div className="relative mx-auto max-w-[1060px] text-center">
         <Link
@@ -183,8 +184,8 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         </p>
 
         <div className="lp-hero-in mx-auto mt-6 max-w-[760px] sm:mt-9" style={{ animationDelay: "200ms" }}>
-          <div className="rounded-xl border border-line bg-raised shadow-[var(--shadow-md)]">
-            <div className="relative flex min-h-[72px] flex-col rounded-xl px-3.5 py-3 sm:min-h-[96px] sm:px-4 sm:py-3.5">
+          <div className="rounded-[24px] border border-line bg-raised shadow-[var(--shadow-md)]">
+            <div className="relative flex min-h-[72px] flex-col rounded-[24px] px-4 py-3.5 sm:min-h-[104px] sm:px-5 sm:py-4">
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
@@ -211,7 +212,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                 <button
                   type="button"
                   onClick={() => go()}
-                  className="btn-grad group inline-flex h-9 items-center gap-1.5 rounded-[var(--r-control)] px-4 text-[13.5px] font-medium"
+                  className="btn-grad group inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13.5px] font-medium"
                 >
                   Build
                   <FiArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />

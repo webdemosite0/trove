@@ -367,7 +367,7 @@ export function DownloadApps() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex items-start gap-3 rounded-xl border border-line bg-canvas/70 p-4">
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-300">
             <FiFolder size={16} />
           </span>
           <div>

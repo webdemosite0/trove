@@ -42,7 +42,7 @@ export function TeamNav({
             className={cn(
               "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3 text-[12px] font-medium transition",
               active
-                ? "bg-gradient-to-r from-violet-500/15 to-sky-500/15 text-ink shadow-sm"
+                ? "bg-gradient-to-r from-blue-500/15 to-sky-500/15 text-ink shadow-sm"
                 : "text-ink-3 hover:bg-hover hover:text-ink",
             )}
           >

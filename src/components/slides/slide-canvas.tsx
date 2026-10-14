@@ -238,7 +238,7 @@ function PhotoFrame({ image, thumb }: { image?: string; thumb?: boolean }) {
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="flex h-full min-h-[18cqw] flex-col items-center justify-center gap-[1.2cqw] bg-gradient-to-br from-indigo-500/20 via-violet-500/10 to-pink-500/15 px-[4cqw] text-center">
+        <div className="flex h-full min-h-[18cqw] flex-col items-center justify-center gap-[1.2cqw] bg-gradient-to-br from-blue-500/20 via-blue-500/10 to-pink-500/15 px-[4cqw] text-center">
           <span className="text-[2cqw] font-medium uppercase tracking-[0.12em] text-ink-4">
             Photo
           </span>

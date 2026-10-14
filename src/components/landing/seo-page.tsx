@@ -14,7 +14,7 @@ export function SeoPageView({ page }: { page: SeoPage }) {
     <div className="mx-auto max-w-[920px] px-4 pb-24 pt-14 sm:px-5 lg:pt-20">
       {/* Hero */}
       <header className="max-w-[680px]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-600">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
           Trove · {page.cta}
         </p>
         <h1 className="mt-2.5 text-[clamp(2rem,1.4rem+2.6vw,3.1rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">
@@ -50,7 +50,7 @@ export function SeoPageView({ page }: { page: SeoPage }) {
         <ol className="mt-6 grid gap-3 sm:grid-cols-3">
           {page.steps.map((s, i) => (
             <li key={s.heading} className="rounded-xl border border-line bg-raised/60 p-5">
-              <span className="grid size-8 place-items-center rounded-full bg-violet-500/12 text-[13px] font-bold text-violet-700">
+              <span className="grid size-8 place-items-center rounded-full bg-blue-500/12 text-[13px] font-bold text-blue-700">
                 {i + 1}
               </span>
               <h3 className="mt-3 text-[15px] font-semibold text-ink">{s.heading}</h3>
@@ -67,8 +67,8 @@ export function SeoPageView({ page }: { page: SeoPage }) {
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-4">A chatbot</p>
             <p className="mt-2 text-[14px] leading-relaxed text-ink-3">{page.compare.chatbot}</p>
           </div>
-          <div className="border-t border-line bg-violet-500/[0.06] p-5 sm:border-l sm:border-t-0 sm:p-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-violet-700">Trove</p>
+          <div className="border-t border-line bg-blue-500/[0.06] p-5 sm:border-l sm:border-t-0 sm:p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700">Trove</p>
             <p className="mt-2 text-[14px] font-medium leading-relaxed text-ink">{page.compare.trove}</p>
           </div>
         </div>

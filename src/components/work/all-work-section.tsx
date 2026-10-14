@@ -63,15 +63,15 @@ function Preview({ item }: { item: WorkItem }) {
   if (item.kind === "slides") {
     return (
       <div className="aspect-[16/10] bg-[#f7f6ff] p-4">
-        <div className="flex h-full flex-col justify-between rounded-lg border border-violet-900/10 bg-white p-4 shadow-sm">
+        <div className="flex h-full flex-col justify-between rounded-lg border border-blue-900/10 bg-white p-4 shadow-sm">
           <div>
-            <div className="h-2.5 w-2/3 rounded-full bg-violet-500/25" />
+            <div className="h-2.5 w-2/3 rounded-full bg-blue-500/25" />
             <div className="mt-2 h-2 w-4/5 rounded-full bg-black/[0.07]" />
           </div>
           <p className="line-clamp-2 text-[10px] leading-4 text-black/40">{item.excerpt}</p>
           <div className="flex gap-1">
-            <span className="h-1.5 w-8 rounded-full bg-violet-500/20" />
-            <span className="h-1.5 w-4 rounded-full bg-violet-500/10" />
+            <span className="h-1.5 w-8 rounded-full bg-blue-500/20" />
+            <span className="h-1.5 w-4 rounded-full bg-blue-500/10" />
           </div>
         </div>
       </div>
@@ -105,9 +105,9 @@ function Preview({ item }: { item: WorkItem }) {
             </div>
           </div>
           <div className="p-3">
-            <div className="h-5 w-2/3 rounded-md bg-indigo-100" />
+            <div className="h-5 w-2/3 rounded-md bg-blue-100" />
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="h-10 rounded-md bg-indigo-50" />
+              <div className="h-10 rounded-md bg-blue-50" />
               <div className="h-10 rounded-md bg-sky-50" />
             </div>
           </div>
@@ -119,7 +119,7 @@ function Preview({ item }: { item: WorkItem }) {
   if (item.kind === "agent") {
     return (
       <div className="grid aspect-[16/10] place-items-center bg-[radial-gradient(circle_at_50%_38%,rgba(99,102,241,.16),transparent_34%),#fafafa]">
-        <div className="grid size-14 place-items-center rounded-xl border border-indigo-200/70 bg-white text-[15px] font-semibold text-indigo-600 shadow-sm">
+        <div className="grid size-14 place-items-center rounded-xl border border-blue-200/70 bg-white text-[15px] font-semibold text-blue-600 shadow-sm">
           AI
         </div>
       </div>
@@ -129,10 +129,10 @@ function Preview({ item }: { item: WorkItem }) {
   if (item.kind === "code") {
     return (
       <div className="aspect-[16/10] overflow-hidden bg-[#111214] p-4 font-mono text-[9px] leading-4">
-        <p className="text-violet-300">const <span className="text-sky-300">work</span> = {"{"}</p>
+        <p className="text-blue-300">const <span className="text-sky-300">work</span> = {"{"}</p>
         <p className="pl-4 text-zinc-400">title: <span className="text-emerald-300">&quot;{item.title.slice(0, 28)}&quot;</span>,</p>
         <p className="pl-4 text-zinc-400">saved: <span className="text-amber-300">true</span></p>
-        <p className="text-violet-300">{"}"}</p>
+        <p className="text-blue-300">{"}"}</p>
       </div>
     );
   }

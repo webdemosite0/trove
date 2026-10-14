@@ -12,7 +12,7 @@ export default function TemplatesPage() {
   return (
     <div className="mx-auto max-w-[1100px] px-4 pb-24 pt-14 sm:px-5 lg:pt-20">
       <header className="max-w-[640px]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-600">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
           Templates
         </p>
         <h1 className="mt-2.5 text-[clamp(2rem,1.4rem+2.4vw,3rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">

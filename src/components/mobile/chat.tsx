@@ -94,8 +94,9 @@ export function MobileChat({
 
   if (turns.length === 0) {
     return (
-      <div className="mobile-chat flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain">
-        <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col px-3.5 pb-6 pt-[clamp(20px,5vh,48px)] sm:px-4">
+      <div className="mobile-chat relative flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
+        <div aria-hidden className="lv-glow top-[60px]" />
+        <div className="relative z-[1] mx-auto flex w-full max-w-[560px] flex-1 flex-col px-3.5 pb-6 pt-[clamp(20px,5vh,48px)] sm:px-4">
           <div className="nx-rise flex flex-col items-center text-center">
             <span className="grid size-11 place-items-center rounded-xl border border-line bg-raised">
               <TroveOrb size={26} />
@@ -130,7 +131,7 @@ export function MobileChat({
                 onClick={() => setDraft(item.prompt)}
                 className={cn(
                   "flex h-10 shrink-0 items-center gap-2 rounded-full border border-line bg-raised px-3.5 text-[13.5px] font-medium text-ink-2 transition-colors active:bg-hover",
-                  item.tone === "violet" && "active:bg-violet-500/10",
+                  item.tone === "violet" && "active:bg-blue-500/10",
                   item.tone === "sky" && "active:bg-sky-500/10",
                   item.tone === "emerald" && "active:bg-emerald-500/10",
                 )}

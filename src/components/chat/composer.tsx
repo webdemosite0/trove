@@ -243,7 +243,7 @@ export function Composer({
         dark
           ? "rounded-xl border-white/10 bg-[#141417] shadow-[var(--shadow-sm)] focus-within:border-white/25"
           : "bg-raised shadow-[var(--shadow-sm)] focus-within:border-line-strong focus-within:shadow-[var(--shadow-md)]",
-        !dark && (compact ? "rounded-xl border-line" : "rounded-xl border-line"),
+        !dark && (compact ? "rounded-xl border-line" : "rounded-[22px] border-line"),
         locked && "opacity-60",
       )}
     >
@@ -451,9 +451,9 @@ export function Composer({
             disabled={!ready}
             aria-label="Send"
             className={cn(
-              "grid place-items-center rounded-[var(--r-control)] transition-colors duration-150",
+              "grid place-items-center rounded-full transition-colors duration-150",
               "size-9",
-              ready ? "btn-grad text-white" : "bg-sunk text-ink-4",
+              ready ? "btn-grad" : "bg-sunk text-ink-4",
             )}
           >
             {busy && !hasContent ? (
@@ -468,7 +468,7 @@ export function Composer({
   );
 
   return (
-    <BorderBeam active={beamActive} className={cn("w-full", dark ? "rounded-xl" : "rounded-xl")}>
+    <BorderBeam active={beamActive} className={cn("w-full", dark || compact ? "rounded-xl" : "rounded-[22px]")}>
       {shell}
     </BorderBeam>
   );

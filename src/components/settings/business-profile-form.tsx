@@ -144,7 +144,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
                 <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-ink sm:text-[17px]">
                   Business profile
                 </h2>
-                <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-violet-600 dark:text-violet-300">
+                <span className="rounded-full border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-blue-600 dark:text-blue-300">
                   Business brain
                 </span>
               </div>
@@ -262,7 +262,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
             </dl>
           </div>
 
-          <div className="rounded-xl border border-violet-400/20 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/[0.06] to-sky-500/10 p-4 shadow-[var(--sh-1)] sm:p-5">
+          <div className="rounded-xl border border-blue-400/20 bg-gradient-to-br from-blue-500/10 via-fuchsia-500/[0.06] to-sky-500/10 p-4 shadow-[var(--sh-1)] sm:p-5">
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-accent">Automatic business instructions</p>
             <p className="mt-2 text-[11.5px] leading-relaxed text-ink-4">
               Trove refreshes this block when you update the business profile. Your older/manual instructions remain separate and are preserved.
@@ -274,7 +274,7 @@ export function BusinessProfileForm({ initial }: { initial: BusinessProfile }) {
         </section>
       ) : mobileView === "context" ? (
         <div className="rounded-xl border border-dashed border-line-strong bg-sunk/55 p-6 text-center sm:hidden">
-          <span className="mx-auto grid size-11 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 to-sky-500/15 text-accent">
+          <span className="mx-auto grid size-11 place-items-center rounded-xl bg-gradient-to-br from-blue-500/15 to-sky-500/15 text-accent">
             <FiBriefcase size={18} />
           </span>
           <p className="mt-3 text-[13px] font-semibold text-ink">No business context yet</p>

@@ -94,7 +94,7 @@ export function TroPicker({
                 }}
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition",
-                  active ? "bg-violet-500/15" : "hover:bg-ink/[0.06]",
+                  active ? "bg-blue-500/15" : "hover:bg-ink/[0.06]",
                 )}
               >
                 <span className="relative shrink-0">
@@ -109,7 +109,7 @@ export function TroPicker({
                     {working ? "Working now" : a.role || "Specialist"}
                   </span>
                 </span>
-                {active ? <Ico icon={FiCheck} size={14} className="shrink-0 text-violet-500" /> : null}
+                {active ? <Ico icon={FiCheck} size={14} className="shrink-0 text-blue-500" /> : null}
               </button>
             );
           })}
