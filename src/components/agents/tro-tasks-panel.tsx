@@ -480,7 +480,7 @@ function TaskForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-[var(--r-control)] bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+        className="w-full rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-medium text-canvas transition hover:brightness-110 disabled:opacity-50"
       >
         {saving ? "Saving…" : "Schedule it"}
       </button>

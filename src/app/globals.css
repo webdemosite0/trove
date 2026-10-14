@@ -363,3 +363,12 @@ body {
   background: var(--color-sunk);
   border: 1px solid var(--color-line);
 }
+
+/* Shorter gradient for in-app headers: the colour sits higher so it shows. */
+.lv-hero.lv-hero--compact {
+  background:
+    radial-gradient(60% 70% at 18% 100%, rgba(37, 99, 235, 0.95), transparent 70%),
+    radial-gradient(50% 65% at 52% 105%, rgba(236, 72, 153, 0.9), transparent 70%),
+    radial-gradient(55% 70% at 86% 100%, rgba(249, 115, 22, 0.85), transparent 70%),
+    linear-gradient(180deg, #070918 0%, #121a4a 45%, #2b2a86 75%, #6d3bd8 100%);
+}

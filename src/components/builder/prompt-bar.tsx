@@ -114,7 +114,7 @@ export function PromptBar({
           busy
             ? "bg-sunk text-ink-3"
             : ready
-              ? "bg-accent text-white hover:opacity-90"
+              ? "bg-ink text-canvas hover:opacity-90"
               : "bg-sunk text-ink-4",
         )}
       >

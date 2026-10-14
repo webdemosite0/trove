@@ -480,7 +480,7 @@ export function SheetEditor({
         <button
           type="button"
           onClick={handleSaveClick}
-          className="shrink-0 rounded-full bg-accent px-4 py-2 text-[13px] font-medium text-white transition hover:brightness-110"
+          className="shrink-0 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-canvas transition hover:opacity-90"
         >
           Save
         </button>
@@ -518,7 +518,7 @@ export function SheetEditor({
             <button
               type="submit"
               disabled={busy || !prompt.trim()}
-              className="shrink-0 rounded-full bg-accent px-4 py-2.5 text-[13.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+              className="shrink-0 rounded-full bg-ink px-4 py-2.5 text-[13.5px] font-medium text-canvas transition hover:opacity-90 disabled:opacity-40"
             >
               Build
             </button>
@@ -575,7 +575,7 @@ export function SheetEditor({
               <button
                 type="button"
                 onClick={() => void applyPendingGen()}
-                className="rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:brightness-110"
+                className="rounded-full bg-ink px-3.5 py-1.5 text-[12.5px] font-medium text-canvas transition hover:opacity-90"
               >
                 Apply generated
               </button>

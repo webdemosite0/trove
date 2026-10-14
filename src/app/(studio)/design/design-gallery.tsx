@@ -135,7 +135,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
           <button
             type="button"
             onClick={() => setShowPicker(true)}
-            className="flex shrink-0 items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-4 py-3 text-[13.5px] font-medium text-white shadow-[var(--shadow-sm)] transition"
+            className="flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 py-3 text-[13.5px] font-medium text-canvas shadow-[var(--shadow-sm)] transition"
           >
             <FiPlus size={18} />
             New design
@@ -178,7 +178,7 @@ export function DesignGallery({ docs: initial }: { docs: DesignDoc[] }) {
             <button
               type="button"
               onClick={() => setShowPicker(true)}
-              className="mt-5 flex items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-5 py-3 text-[13.5px] font-medium text-white transition"
+              className="mt-5 flex items-center gap-1.5 rounded-full bg-ink px-5 py-3 text-[13.5px] font-medium text-canvas transition"
             >
               <FiPlus size={18} />
               New design

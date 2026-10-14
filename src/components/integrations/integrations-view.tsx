@@ -127,7 +127,7 @@ function FeaturedCard({
           type="button"
           disabled={disabled || busy}
           onClick={onConnect}
-          className="w-full rounded-[var(--r-control)] bg-accent px-4 py-2.5 text-[13.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+          className="w-full rounded-full bg-ink px-4 py-2.5 text-[13.5px] font-medium text-canvas transition hover:brightness-110 disabled:opacity-40"
         >
           {busy ? "Connecting…" : "Connect"}
         </button>

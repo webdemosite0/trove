@@ -52,7 +52,7 @@ export function MobileTrosHome({ agents }: { agents: AgentRow[] }) {
             </p>
             <Link
               href="/tros?new=1"
-              className="mt-4 rounded-full bg-accent px-6 py-3 text-[13.5px] font-medium text-white"
+              className="mt-4 rounded-full bg-ink px-6 py-3 text-[13.5px] font-medium text-canvas"
             >
               Create your first Tro
             </Link>
@@ -96,7 +96,7 @@ export function MobileTrosHome({ agents }: { agents: AgentRow[] }) {
       <Link
         href="/tros?new=1"
         aria-label="New Tro"
-        className="fixed bottom-24 right-5 grid size-14 place-items-center rounded-full bg-accent text-white shadow-[var(--shadow-md)] transition"
+        className="fixed bottom-24 right-5 grid size-14 place-items-center rounded-full bg-ink text-canvas shadow-[var(--shadow-md)] transition"
       >
         <FiPlus size={24} />
       </Link>

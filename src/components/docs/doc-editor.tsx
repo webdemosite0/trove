@@ -406,7 +406,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
           onClick={() => setAiOpen((v) => !v)}
           className={cn(
             "flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition ",
-            aiOpen ? "bg-accent text-white" : "bg-accent/10 text-accent hover:bg-accent/15",
+            aiOpen ? "bg-ink text-canvas" : "bg-accent/10 text-accent hover:bg-accent/15",
           )}
           aria-expanded={aiOpen}
         >
@@ -453,7 +453,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
                 type="button"
                 onClick={() => void runAi()}
                 disabled={aiBusy || !aiPrompt.trim()}
-                className="grid h-9 shrink-0 place-items-center rounded-[var(--r-control)] bg-accent px-5 text-[13.5px] font-medium text-white transition disabled:opacity-50"
+                className="grid h-9 shrink-0 place-items-center rounded-full bg-ink px-5 text-[13.5px] font-medium text-canvas transition disabled:opacity-50"
               >
                 {aiBusy ? "Writing…" : "Write"}
               </button>
@@ -481,7 +481,7 @@ export function DocEditor({ initial }: { initial: Doc | null }) {
                   <button
                     type="button"
                     onClick={() => insertAi(false)}
-                    className="grid h-9 flex-1 place-items-center rounded-[var(--r-control)] bg-accent text-[13.5px] font-medium text-white transition"
+                    className="grid h-9 flex-1 place-items-center rounded-full bg-ink text-[13.5px] font-medium text-canvas transition"
                   >
                     Insert into document
                   </button>

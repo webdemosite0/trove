@@ -67,9 +67,9 @@ export function StudioChrome({
     <>
       <CommandPalette recents={meta.recents} />
       <MobileViewport />
-      <div className="mobile-viewport flex h-dvh min-h-0 overflow-hidden">
+      <div className="mobile-viewport flex h-dvh min-h-0 overflow-hidden bg-rail">
         <Sidebar user={user} balance={meta.balance} />
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-canvas lg:my-2 lg:mr-2 lg:overflow-hidden lg:rounded-[18px] lg:border lg:border-line lg:shadow-[var(--shadow-sm)]">
           <TopBar
             initial={user.name?.slice(0, 1)}
             due={meta.due}

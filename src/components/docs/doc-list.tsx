@@ -64,7 +64,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
         </div>
         <Link
           href="/documents/new"
-          className="grid h-9 shrink-0 place-items-center gap-2 rounded-[var(--r-control)] bg-accent px-4 text-[13.5px] font-medium text-white shadow-[var(--shadow-sm)] transition sm:flex sm:h-9"
+          className="grid h-9 shrink-0 place-items-center gap-2 rounded-full bg-ink px-4 text-[13.5px] font-medium text-canvas shadow-[var(--shadow-sm)] transition sm:flex sm:h-9"
           aria-label="New document"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
@@ -124,7 +124,7 @@ export function DocList({ initial }: { initial: DocSummary[] }) {
             {!query ? (
               <Link
                 href="/documents/new"
-                className="mt-6 grid h-9 place-items-center rounded-[var(--r-control)] bg-accent px-6 text-[13.5px] font-medium text-white shadow-[var(--shadow-sm)] transition"
+                className="mt-6 grid h-9 place-items-center rounded-full bg-ink px-6 text-[13.5px] font-medium text-canvas shadow-[var(--shadow-sm)] transition"
               >
                 New document
               </Link>

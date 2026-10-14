@@ -71,36 +71,43 @@ export function HomeChat({
   if (turns.length === 0) {
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain">
-        <div className="relative flex flex-1 flex-col items-center px-5 pb-14 pt-[8vh] lg:pt-[12vh]">
-          <div aria-hidden className="lv-glow top-[18vh]" />
-          <div className="relative z-[1] w-full max-w-[680px] text-center">
+        {/* Lovable-style home: the sunset gradient with one big prompt. */}
+        <section className="lv-hero lv-hero--compact shrink-0 px-5 pb-16 pt-[9vh] text-white lg:pb-20 lg:pt-[13vh]">
+          <div className="relative z-[1] mx-auto w-full max-w-[720px] text-center">
             <div className="nx-rise">
-              <Greeting name={name} />
-              <h1 className="mt-2 text-[clamp(1.75rem,1.2rem+1.6vw,2.4rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-ink">
-                What should we make today?
+              <div className="[&_*]:!text-white/75">
+                <Greeting name={name} />
+              </div>
+              <h1 className="mt-2 text-[clamp(2rem,1.3rem+2.2vw,3.1rem)] font-semibold leading-[1.08] tracking-[-0.035em]">
+                Ready to build, {name.split(" ")[0]}?
               </h1>
-              <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px] leading-relaxed text-ink-3">
+              <p className="mx-auto mt-3 max-w-[46ch] text-[15px] leading-relaxed text-white/75">
                 Describe the work. Trove builds the file: a doc, a sheet, a deck or a site.
               </p>
             </div>
 
             <div
-              className="nx-rise mt-7"
+              className="nx-rise mt-8 text-left"
               style={{ animationDelay: "80ms", animationFillMode: "backwards" }}
             >
               <Composer
                 key={draft ? "brief" : "empty"}
                 onSend={send}
                 initialValue={draft}
-                placeholder="Ask anything, or describe what to create…"
+                placeholder="Ask Trove to create…"
                 autoFocus
                 busy={busy}
                 onStop={stop}
                 {...composerProps}
               />
             </div>
+          </div>
+          <div aria-hidden className="lv-hero-fade" />
+        </section>
 
-            <StarterCards className="mt-6" onPick={setDraft} />
+        <div className="relative flex flex-1 flex-col items-center px-5 pb-14">
+          <div className="relative z-[1] w-full max-w-[720px] text-center">
+            <StarterCards className="mt-2" onPick={setDraft} />
             <div className="mt-6">
               <ConnectToolsCard />
             </div>

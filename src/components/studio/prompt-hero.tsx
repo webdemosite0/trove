@@ -73,7 +73,7 @@ export function PromptHero({
                 <button
                   type="submit"
                   disabled={!value.trim() || busy}
-                  className="flex size-10 items-center justify-center rounded-full bg-accent text-white transition hover:opacity-90 disabled:opacity-40"
+                  className="flex size-10 items-center justify-center rounded-full bg-ink text-canvas transition hover:opacity-90 disabled:opacity-40"
                   aria-label="Generate"
                 >
                   {busy ? (

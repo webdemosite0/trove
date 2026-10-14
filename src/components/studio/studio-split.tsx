@@ -187,7 +187,7 @@ export function StudioSplit({
                     type="button"
                     onClick={() => m.failedPrompt && retry(m.failedPrompt)}
                     disabled={busy}
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[12.5px] font-medium text-canvas transition hover:brightness-110 disabled:opacity-40"
                   >
                     <FiRefreshCw size={13} />
                     Retry

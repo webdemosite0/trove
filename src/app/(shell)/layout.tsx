@@ -135,9 +135,9 @@ export default async function ShellLayout({
           Fixed viewport shell: sidebar stays put; only the main column scrolls.
           Split top chrome from the scrollport so long pages never get clipped.
         */}
-        <div className="flex h-dvh max-h-dvh overflow-hidden">
+        <div className="flex h-dvh max-h-dvh overflow-hidden bg-rail">
           <Sidebar user={user} balance={balance} />
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-canvas lg:my-2 lg:mr-2 lg:overflow-hidden lg:rounded-[18px] lg:border lg:border-line lg:shadow-[var(--shadow-sm)]">
             <TopBar initial={user?.name?.slice(0, 1)} due={due} />
             <AnnouncementBanner />
             <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain">

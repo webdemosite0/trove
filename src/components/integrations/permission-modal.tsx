@@ -156,7 +156,7 @@ export function PermissionModal({
             type="button"
             disabled={busy}
             onClick={() => onAuthorize(chosen)}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-[15px] font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3 text-[15px] font-medium text-canvas transition hover:brightness-110 disabled:opacity-50"
           >
             {busy ? (
               <>

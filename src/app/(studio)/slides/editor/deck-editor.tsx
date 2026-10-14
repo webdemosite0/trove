@@ -796,7 +796,7 @@ export function DeckEditor({
                     void askAi(p);
                   }}
                   disabled={busy}
-                  className="rounded-[var(--r-control)] bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition disabled:opacity-40"
+                  className="rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-medium text-canvas transition disabled:opacity-40"
                 >
                   Retry
                 </button>

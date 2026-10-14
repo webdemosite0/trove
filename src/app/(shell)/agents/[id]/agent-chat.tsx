@@ -2009,7 +2009,7 @@ export function AgentChat({
                 <button
                   type="submit"
                   disabled={busy || computerBusy}
-                  className="shrink-0 rounded-[var(--r-control)] bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-40"
+                  className="shrink-0 rounded-full bg-ink px-3 py-1.5 text-[12px] font-medium text-canvas transition hover:brightness-110 disabled:opacity-40"
                 >
                   Go
                 </button>

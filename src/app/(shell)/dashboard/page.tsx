@@ -140,33 +140,38 @@ export default async function MePage() {
 
   return (
     <div className="relative min-h-[calc(100dvh-3.5rem)] overflow-hidden">
-      <div className="relative mx-auto max-w-[960px] px-5 pb-20 pt-10 lg:pt-12">
-        {/* greeting */}
-        <p className="text-[13px] font-medium text-ink-4">
-          {dateStr} · {greet}, {first}
-        </p>
-        <h1 className="mt-1.5 text-[clamp(1.6rem,1.2rem+1.2vw,2.1rem)] font-semibold tracking-[-0.02em] text-ink">
-          What should we make today?
-        </h1>
+      {/* Lovable-style header: the sunset gradient with the command bar. */}
+      <section className="lv-hero lv-hero--compact px-5 pb-16 pt-12 text-white lg:pb-20 lg:pt-16">
+        <div className="relative z-[1] mx-auto max-w-[960px]">
+          <p className="text-[13px] font-medium text-white/70">
+            {dateStr} · {greet}, {first}
+          </p>
+          <h1 className="mt-1.5 text-[clamp(1.9rem,1.3rem+1.8vw,2.8rem)] font-semibold tracking-[-0.035em]">
+            Ready to build, {first}?
+          </h1>
 
-        {/* command bar */}
-        <Link
-          href="/chat"
-          className="group mt-6 flex max-w-[640px] items-center gap-3 rounded-xl border border-line bg-raised px-3.5 py-2.5 shadow-[var(--shadow-sm)] transition-colors hover:border-line-strong"
-        >
-          <span className="grid size-8 shrink-0 place-items-center rounded-[var(--r-control)] border border-line bg-sunk text-ink-3">
-            <FiZap size={15} />
-          </span>
-          <span className="flex-1 truncate text-left text-[15px] text-ink-4 transition-colors group-hover:text-ink-3">
-            Ask anything, or describe what to build…
-          </span>
-          <kbd className="hidden shrink-0 items-center gap-1 rounded-lg border border-line bg-sunk px-2 py-1 text-[11px] font-medium text-ink-4 sm:flex">
-            ⌘K
-          </kbd>
-          <span className="btn-grad grid size-8 shrink-0 place-items-center rounded-[var(--r-control)] text-white">
-            <FiArrowRight size={16} />
-          </span>
-        </Link>
+          <Link
+            href="/chat"
+            className="lv-prompt group mt-7 flex max-w-[680px] items-center gap-3 px-4 py-3.5 text-ink"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-sunk text-ink-3">
+              <FiZap size={15} />
+            </span>
+            <span className="flex-1 truncate text-left text-[15.5px] text-ink-4 transition-colors group-hover:text-ink-3">
+              Ask Trove to create…
+            </span>
+            <kbd className="hidden shrink-0 items-center gap-1 rounded-lg border border-line bg-sunk px-2 py-1 text-[11px] font-medium text-ink-4 sm:flex">
+              ⌘K
+            </kbd>
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-ink text-canvas">
+              <FiArrowRight size={16} />
+            </span>
+          </Link>
+        </div>
+        <div aria-hidden className="lv-hero-fade" />
+      </section>
+
+      <div className="relative mx-auto max-w-[960px] px-5 pb-20">
 
         {/* workspace setup checklist — real completion states only, never 0% */}
         <WorkspaceSetup

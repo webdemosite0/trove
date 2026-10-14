@@ -486,7 +486,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
           onClick={exportPNG}
           aria-label="Export design"
           title="Export design"
-          className="flex shrink-0 items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-3.5 py-2.5 text-[13.5px] font-medium text-white transition"
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3.5 py-2.5 text-[13.5px] font-medium text-canvas transition"
         >
           <FiDownload size={16} />
           <span className="hidden sm:inline">Export</span>
@@ -758,7 +758,7 @@ export function DesignEditor({ doc: initial }: { doc: DesignDoc }) {
                   type="button"
                   onClick={generate}
                   disabled={generating || !aiPrompt.trim()}
-                  className="flex shrink-0 items-center gap-1.5 rounded-[var(--r-control)] bg-accent px-4 py-3 text-[13.5px] font-medium text-white transition disabled:opacity-50"
+                  className="flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 py-3 text-[13.5px] font-medium text-canvas transition disabled:opacity-50"
                 >
                   <TbSparkles size={16} />
                   Create

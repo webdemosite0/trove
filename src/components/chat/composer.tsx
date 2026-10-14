@@ -243,7 +243,7 @@ export function Composer({
         dark
           ? "rounded-xl border-white/10 bg-[#141417] shadow-[var(--shadow-sm)] focus-within:border-white/25"
           : "bg-raised shadow-[var(--shadow-sm)] focus-within:border-line-strong focus-within:shadow-[var(--shadow-md)]",
-        !dark && (compact ? "rounded-xl border-line" : "rounded-[22px] border-line"),
+        !dark && (compact ? "rounded-[18px] border-line" : "rounded-[22px] border-line"),
         locked && "opacity-60",
       )}
     >
@@ -468,7 +468,7 @@ export function Composer({
   );
 
   return (
-    <BorderBeam active={beamActive} className={cn("w-full", dark || compact ? "rounded-xl" : "rounded-[22px]")}>
+    <BorderBeam active={beamActive} className={cn("w-full", dark || compact ? "rounded-[18px]" : "rounded-[22px]")}>
       {shell}
     </BorderBeam>
   );
