@@ -613,7 +613,7 @@ export function OnboardingFlow({ name, email }: { name: string; email: string })
               type="button"
               onClick={() => go(step - 1)}
               disabled={analysisState === "loading"}
-              className="h-12 min-w-[88px] rounded-full border border-line-strong bg-raised px-5 text-[13.5px] font-medium text-ink-2 transition active:scale-[0.98] hover:bg-hover disabled:opacity-40"
+              className="h-12 min-w-[88px] rounded-full border border-line-strong bg-raised px-5 text-[13.5px] font-medium text-ink-2 transition hover:bg-hover disabled:opacity-40"
             >
               Back
             </button>

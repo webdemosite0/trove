@@ -36,7 +36,7 @@ export function SpotCard({
       ref={ref}
       href={href}
       onMouseMove={onMove}
-      className="group relative flex h-full flex-col overflow-hidden rounded-[var(--r-panel)] border border-line bg-canvas p-5 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-[var(--sh-1)]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-[var(--r-panel)] border border-line bg-canvas p-5 transition-all duration-300 hover:border-line-strong hover:shadow-[var(--sh-1)]"
     >
       <span
         aria-hidden
@@ -47,7 +47,7 @@ export function SpotCard({
         }}
       />
       <span
-        className="relative grid size-10 place-items-center rounded-[var(--r-chip)] transition-transform duration-300 group-hover:scale-110"
+        className="relative grid size-10 place-items-center rounded-[var(--r-chip)] transition-transform duration-300"
         style={{
           background: `color-mix(in srgb, ${tone} 14%, transparent)`,
           color: tone,

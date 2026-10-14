@@ -89,11 +89,11 @@ export default function PricingPage() {
             <section
               key={plan.id}
               className={cn(
-                "relative flex flex-col rounded-[var(--r-hero)] border p-6 transition hover:-translate-y-0.5",
+                "relative flex flex-col rounded-[var(--r-hero)] border p-6 transition ",
                 featured
-                  ? "border-violet-400/50 bg-gradient-to-b from-violet-50/80 to-rail shadow-[var(--sh-2)] dark:from-violet-500/10"
+                  ? "border-accent/50 bg-raised shadow-[var(--shadow-md)]"
                   : isTeam
-                    ? "border-sky-400/35 bg-gradient-to-b from-sky-50/60 to-rail dark:from-sky-500/10"
+                    ? "border-line-strong bg-raised"
                     : "border-line bg-rail",
               )}
             >
@@ -274,7 +274,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="mt-10 rounded-[var(--r-hero)] border border-sky-400/25 bg-gradient-to-r from-sky-500/[0.08] to-violet-500/[0.08] p-6 sm:p-8">
+      <section className="mt-10 rounded-[var(--r-hero)] border border-line bg-sunk p-6 sm:p-8">
         <h2 className="text-[18px] font-semibold text-ink">Why Team exists</h2>
         <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed text-ink-2">
           Solo plans keep work private to one account. When a company needs members,

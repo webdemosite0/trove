@@ -26,7 +26,7 @@ function Card({
     <Link
       href={href}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-line bg-raised p-6 transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-[0_24px_64px_-24px_rgba(99,102,241,0.35)] sm:p-7",
+        "group relative flex flex-col overflow-hidden rounded-xl border border-line bg-raised p-6 transition-all duration-300  hover:border-line-strong  sm:p-7",
         className,
       )}
     >
@@ -52,7 +52,7 @@ function CardHead({
   return (
     <div className="mb-5">
       <span
-        className="mb-4 grid size-11 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110"
+        className="mb-4 grid size-11 place-items-center rounded-xl transition-transform duration-300"
         style={{ background: `${tone}1a`, color: tone }}
       >
         <Icon size={20} />

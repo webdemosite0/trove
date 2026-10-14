@@ -60,7 +60,7 @@ function Column({
                 className="group flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-hover"
               >
                 <span
-                  className="grid size-9 shrink-0 place-items-center rounded-xl transition-transform duration-200 group-hover:scale-105"
+                  className="grid size-9 shrink-0 place-items-center rounded-xl transition-transform duration-200"
                   style={{ background: `${it.tone}14`, color: it.tone }}
                 >
                   <Icon size={17} aria-hidden />

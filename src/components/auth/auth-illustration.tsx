@@ -32,7 +32,7 @@ export function AuthIllustration() {
         </div>
       </div>
 
-      <div className="absolute left-4 top-[30%] hidden w-[210px] rounded-xl border border-white/14 bg-black/24 p-4 text-white shadow-2xl backdrop-blur-2xl sm:block lg:left-6 lg:top-[31%]">
+      <div className="absolute left-4 top-[30%] hidden w-[210px] rounded-xl border border-white/14 bg-black/24 p-4 text-white shadow-[var(--shadow-md)] backdrop-blur-2xl sm:block lg:left-6 lg:top-[31%]">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/55">Your work</p>
           <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[9px] font-medium text-emerald-200">Ready</span>

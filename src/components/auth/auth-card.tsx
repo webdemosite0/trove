@@ -152,7 +152,7 @@ export function AuthCard({
       ) : null}
 
       {!isLogin && refCode ? (
-        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-fuchsia-300/40 bg-gradient-to-r from-fuchsia-50 via-violet-50 to-sky-50 dark:border-fuchsia-400/20 dark:from-fuchsia-500/10 dark:via-violet-500/10 dark:to-sky-500/10 px-3.5 py-3 text-left">
+        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-line bg-accent-soft px-3.5 py-3 text-left">
           <span className="mt-0.5 text-[16px]" aria-hidden>
             🎁
           </span>
@@ -239,7 +239,7 @@ export function AuthCard({
         <button
           type="submit"
           disabled={pending}
-          className="btn-grad group flex h-12 w-full items-center justify-center gap-2 rounded-[14px] text-[14px] font-semibold text-white shadow-[0_10px_28px_-12px_var(--btn-glow)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:translate-y-0 disabled:opacity-60"
+          className="btn-grad group flex h-10 w-full items-center justify-center gap-2 rounded-[var(--r-control)] text-[14px] font-medium transition disabled:opacity-60"
         >
           {pending ? (
             <>
@@ -280,7 +280,7 @@ export function AuthCard({
             {googleEnabled ? (
               <a
                 href="/api/auth/google"
-                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-[13px] border border-line-strong bg-canvas/65 text-[12.5px] font-semibold text-ink-2 transition hover:-translate-y-0.5 hover:border-accent/25 hover:bg-hover"
+                className="flex h-10 w-full items-center justify-center gap-2.5 rounded-[var(--r-control)] border border-line bg-canvas text-[13px] font-medium text-ink-2 transition-colors hover:border-line-strong hover:bg-hover"
               >
                 <FcGoogle size={18} />
                 {isLogin ? "Sign in with Google" : "Sign up with Google"}
@@ -289,7 +289,7 @@ export function AuthCard({
             {microsoftEnabled ? (
               <a
                 href="/api/auth/microsoft"
-                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-[13px] border border-line-strong bg-canvas/65 text-[12.5px] font-semibold text-ink-2 transition hover:-translate-y-0.5 hover:border-accent/25 hover:bg-hover"
+                className="flex h-11 w-full items-center justify-center gap-2.5 rounded-[13px] border border-line-strong bg-canvas/65 text-[12.5px] font-semibold text-ink-2 transition hover:border-accent/25 hover:bg-hover"
               >
                 <MicrosoftIcon />
                 {isLogin ? "Sign in with Microsoft" : "Sign up with Microsoft"}
@@ -297,7 +297,7 @@ export function AuthCard({
             ) : (
               <span
                 title="Add Microsoft env vars on Vercel to enable"
-                className="flex h-11 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-[13px] border border-line bg-sunk text-[12.5px] font-medium text-ink-4"
+                className="flex h-10 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-[var(--r-control)] border border-line bg-sunk text-[13px] font-medium text-ink-4"
               >
                 <MicrosoftIcon />
                 Microsoft

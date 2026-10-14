@@ -34,7 +34,7 @@ export function LandingTrustedBar({ models }: { models: ChatModelOption[] }) {
               </span>
             </Reveal>
           ))}
-          <Link href="/signup" className="ml-1 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-white transition hover:-translate-y-0.5 hover:bg-black" aria-label="Sign up to connect integrations">
+          <Link href="/signup" className="ml-1 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-white transition hover:bg-black" aria-label="Sign up to connect integrations">
             <FiArrowRight size={14} />
           </Link>
         </div>
@@ -52,7 +52,7 @@ export function LandingTrustedBar({ models }: { models: ChatModelOption[] }) {
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {shownModels.map((model, index) => (
               <Reveal key={model.id} delay={index * 28} as="div">
-                <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-zinc-200/90 bg-white px-2.5 py-1 pr-3 text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-zinc-200/90 bg-white px-2.5 py-1 pr-3 text-zinc-700 shadow-sm transition hover:shadow-md">
                   <ModelMark brand={model.brand} size={24} />
                   <span className="min-w-0 text-left">
                     <span className="block max-w-[150px] truncate text-[11.5px] font-semibold leading-4 text-zinc-800 sm:text-[12px]">{model.label}</span>

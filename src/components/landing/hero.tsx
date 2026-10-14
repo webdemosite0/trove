@@ -47,12 +47,7 @@ const CAPABILITIES = [
 function ProductVisual() {
   return (
     <div className="relative mx-auto mt-12 max-w-[1020px] sm:mt-16">
-      {/* glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-x-8 -top-12 bottom-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(99,102,241,0.22),transparent_70%)] blur-2xl dark:bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(129,140,248,0.28),transparent_70%)]"
-      />
-      <div className="lp-hero-in relative overflow-hidden rounded-xl border border-line bg-raised shadow-[0_40px_120px_-32px_rgba(99,102,241,0.4)] sm:rounded-xl" style={{ animationDelay: "340ms" }}>
+      <div className="lp-hero-in relative overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--shadow-lg)]" style={{ animationDelay: "340ms" }}>
         {/* window chrome */}
         <div className="flex items-center gap-2 border-b border-line bg-sunk/60 px-4 py-3">
           <span className="size-2.5 rounded-full bg-[#ff5f57]" />
@@ -66,7 +61,7 @@ function ProductVisual() {
           {/* chat side */}
           <div className="space-y-3 border-b border-line p-4 sm:border-b-0 sm:border-r sm:p-5">
             <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-xl rounded-br-md bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white shadow-lg shadow-violet-500/20">
+              <div className="max-w-[85%] rounded-xl rounded-br-md bg-hover px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ink">
                 Build a landing page for my coffee roastery — warm, premium, with a wholesale section.
               </div>
             </div>
@@ -100,7 +95,6 @@ function ProductVisual() {
                 <span className="text-[11px] text-ink-4">Download · Publish</span>
               </div>
             </div>
-            <div className="pointer-events-none absolute -bottom-3 left-1/2 h-8 w-3/4 -translate-x-1/2 rounded-full bg-black/20 blur-xl dark:bg-black/50" />
           </div>
         </div>
       </div>
@@ -156,29 +150,14 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
   }
 
   return (
-    <section className="relative overflow-hidden px-4 pb-10 pt-8 sm:px-5 sm:pb-16 sm:pt-14 lg:pt-20">
-      {/* aurora backdrop */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-[-320px] h-[640px] w-[min(1100px,120vw)] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(139,92,246,0.28),rgba(99,102,241,0.14),transparent)] blur-3xl dark:bg-[radial-gradient(closest-side,rgba(139,92,246,0.32),rgba(99,102,241,0.16),transparent)]" />
-        <div className="absolute left-[8%] top-[10%] h-72 w-72 rounded-full bg-fuchsia-400/15 blur-3xl dark:bg-fuchsia-500/12" />
-        <div className="absolute right-[6%] top-[22%] h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-500/12" />
-        <div
-          className="absolute inset-0 opacity-[0.35] dark:opacity-[0.22]"
-          style={{
-            backgroundImage: "linear-gradient(rgba(128,128,128,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(128,128,128,0.09) 1px, transparent 1px)",
-            backgroundSize: "54px 54px",
-            maskImage: "radial-gradient(ellipse 75% 55% at 50% 0%, black 30%, transparent 75%)",
-            WebkitMaskImage: "radial-gradient(ellipse 75% 55% at 50% 0%, black 30%, transparent 75%)",
-          }}
-        />
-      </div>
+    <section className="relative px-4 pb-10 pt-10 sm:px-5 sm:pb-16 sm:pt-16 lg:pt-24">
 
       <div className="relative mx-auto max-w-[1060px] text-center">
         <Link
           href="/features/tros"
-          className="lp-hero-in group mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-raised/80 py-1.5 pl-2 pr-3.5 text-[12.5px] font-medium text-ink-2 shadow-sm backdrop-blur-md transition hover:border-line-strong hover:text-ink sm:mb-7 sm:text-[13px]"
+          className="lp-hero-in group mb-6 inline-flex items-center gap-2 rounded-full border border-line bg-canvas py-1 pl-1 pr-3 text-[12.5px] font-medium text-ink-3 transition-colors hover:border-line-strong hover:text-ink sm:mb-8 sm:text-[13px]"
         >
-          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
             <FiZap size={11} /> New
           </span>
           Meet Tros — AI specialists you brief
@@ -186,18 +165,16 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         </Link>
 
         <h1
-          className="lp-hero-in mx-auto max-w-[16ch] text-[clamp(2.4rem,1.6rem+4.2vw,4.9rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-ink"
+          className="lp-hero-in mx-auto max-w-[18ch] text-[clamp(2.25rem,1.6rem+3vw,3.9rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-ink"
           style={{ animationDelay: "70ms" }}
         >
           Describe the work.
           <br />
-          <span className="bg-gradient-to-r from-violet-600 via-indigo-500 to-fuchsia-500 bg-clip-text text-transparent dark:from-violet-400 dark:via-indigo-300 dark:to-fuchsia-400">
-            Get the files.
-          </span>
+          <span className="text-ink-4">Get the files.</span>
         </h1>
 
         <p
-          className="lp-hero-in mx-auto mt-4 max-w-[56ch] text-[15px] leading-relaxed text-ink-3 sm:mt-6 sm:text-[18px]"
+          className="lp-hero-in mx-auto mt-4 max-w-[54ch] text-[15px] leading-relaxed text-ink-3 sm:mt-5 sm:text-[17px]"
           style={{ animationDelay: "140ms" }}
         >
           Trove is the AI workspace for businesses, solo entrepreneurs, and one-person
@@ -206,8 +183,8 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         </p>
 
         <div className="lp-hero-in mx-auto mt-6 max-w-[760px] sm:mt-9" style={{ animationDelay: "200ms" }}>
-          <div className="rounded-xl border border-line bg-raised/85 p-1.5 shadow-[0_24px_80px_-24px_rgba(99,102,241,0.4),0_0_0_1px_rgba(99,102,241,0.07)] backdrop-blur-xl sm:rounded-xl sm:p-2">
-            <div className="relative flex min-h-[72px] flex-col rounded-[15px] bg-gradient-to-b from-sunk/90 to-raised px-3.5 py-3 ring-1 ring-line sm:min-h-[88px] sm:rounded-xl sm:px-5 sm:py-3.5">
+          <div className="rounded-xl border border-line bg-raised shadow-[var(--shadow-md)]">
+            <div className="relative flex min-h-[72px] flex-col rounded-xl px-3.5 py-3 sm:min-h-[96px] sm:px-4 sm:py-3.5">
               <textarea
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
@@ -225,7 +202,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
               {!value && (
                 <span className="pointer-events-none absolute left-3.5 top-3 max-w-[calc(100%-5rem)] text-left text-[13.5px] leading-6 text-ink-4 sm:left-5 sm:top-3.5 sm:text-[16px]">
                   {typed}
-                  <span className="ml-0.5 inline-block h-[1.1em] w-[2px] animate-pulse bg-violet-500 align-middle" />
+                  <span className="ml-0.5 inline-block h-[1.1em] w-px animate-pulse bg-ink-3 align-middle" />
                 </span>
               )}
               <div className="mt-auto flex items-center justify-between gap-2 pt-2.5 sm:pt-3">
@@ -234,7 +211,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                 <button
                   type="button"
                   onClick={() => go()}
-                  className="group inline-flex h-11 items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-[13.5px] font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:-translate-y-0.5 hover:from-violet-500 hover:to-indigo-500 active:scale-[0.98] sm:text-[14.5px]"
+                  className="btn-grad group inline-flex h-9 items-center gap-1.5 rounded-[var(--r-control)] px-4 text-[13.5px] font-medium"
                 >
                   Build
                   <FiArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
@@ -251,7 +228,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
                   key={chip.label}
                   type="button"
                   onClick={() => go(chip.prompt)}
-                  className="lp-chip-in inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-line bg-raised/90 px-3 py-1.5 text-[12px] font-medium text-ink-2 shadow-sm transition hover:-translate-y-0.5 hover:border-line-strong hover:text-ink hover:shadow-md sm:px-3.5 sm:py-2 sm:text-[13px]"
+                  className="lp-chip-in inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-line bg-canvas px-3 py-1.5 text-[12.5px] font-medium text-ink-3 transition-colors hover:border-line-strong hover:text-ink sm:text-[13px]"
                   style={{ animationDelay: `${260 + i * 40}ms` }}
                 >
                   <Icon size={13} aria-hidden />
@@ -265,7 +242,7 @@ export function Hero({ freeCredits }: { freeCredits: number }) {
         <p className="lp-hero-in mt-4 text-[12px] text-ink-3 sm:mt-6 sm:text-[13.5px]" style={{ animationDelay: "300ms" }}>
           {freeCredits > 0 ? (
             <>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{freeCredits} free credits</span>
+              <span className="font-medium text-ink">{freeCredits} free credits</span>
               {" "}on signup · No card required
             </>
           ) : (

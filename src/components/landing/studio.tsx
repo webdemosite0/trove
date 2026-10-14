@@ -46,7 +46,7 @@ export function Studio() {
               className={cn(
                 "flex h-full flex-col rounded-[var(--r-panel)] border border-line bg-canvas p-5",
                 "shadow-[var(--sh-1)] transition-[transform,box-shadow] duration-[var(--t-hover)]",
-                "hover:-translate-y-[2px] hover:shadow-[var(--sh-2)]",
+                " hover:shadow-[var(--sh-2)]",
               )}
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4">

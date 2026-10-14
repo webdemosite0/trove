@@ -367,7 +367,7 @@ export function LiveDemo() {
           </button>
         </div>
 
-        <div className="mt-5 overflow-hidden rounded-xl border border-line bg-raised shadow-[0_32px_80px_-32px_rgba(99,102,241,0.28)]">
+        <div className="mt-5 overflow-hidden rounded-xl border border-line bg-raised">
           <div className="grid lg:grid-cols-[360px_1fr]">
             {/* Transcript */}
             <div className="flex min-h-[380px] flex-col gap-3 border-b border-line bg-sunk/60 p-4 sm:p-5 lg:border-b-0 lg:border-r">

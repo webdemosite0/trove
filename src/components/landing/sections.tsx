@@ -65,7 +65,7 @@ export function AgentFlow() {
               <div
                 className={cn(
                   "flex w-full items-center gap-2 rounded-[var(--r-control)] border border-line bg-canvas px-3 py-2.5",
-                  "shadow-[var(--sh-1)] transition-transform duration-[var(--t-hover)] hover:-translate-y-[2px]",
+                  "shadow-[var(--sh-1)] transition-transform duration-[var(--t-hover)] ",
                   "md:justify-center",
                 )}
               >
@@ -190,7 +190,7 @@ export function UseCases() {
               className={cn(
                 "group flex items-center gap-2 rounded-[var(--r-control)] border border-line bg-canvas px-4 py-2.5",
                 "text-[14px] text-ink-2 transition-[transform,border-color,box-shadow] duration-[var(--t-hover)]",
-                "hover:-translate-y-[2px] hover:border-line-strong hover:text-ink hover:shadow-[var(--sh-2)]",
+                " hover:border-line-strong hover:text-ink hover:shadow-[var(--sh-2)]",
               )}
             >
               {u.label}
@@ -278,14 +278,6 @@ export function PricingPreview({
 export function FinalCta() {
   return (
     <section className="relative overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 40rem 20rem at 50% 110%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 70%)",
-        }}
-      />
       <div className="relative mx-auto max-w-[1140px] px-5 py-24 text-center lg:px-8 lg:py-32">
         <span aria-hidden className="mx-auto mb-6 block w-fit opacity-70">
           <TroveOrb size={44} state="thinking" />

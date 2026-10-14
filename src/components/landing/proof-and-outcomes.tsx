@@ -151,7 +151,7 @@ export function Outcomes() {
               className={cn(
                 "group flex flex-col overflow-hidden rounded-[var(--r-panel)] border border-line bg-canvas",
                 "transition-[transform,border-color,box-shadow] duration-[var(--t-hover)]",
-                "hover:-translate-y-[3px] hover:border-line-strong hover:shadow-[var(--sh-2)]",
+                " hover:border-line-strong hover:shadow-[var(--sh-2)]",
               )}
             >
               <span

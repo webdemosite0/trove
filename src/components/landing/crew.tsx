@@ -39,14 +39,14 @@ export function CrewSection() {
             <Link
               key={m.name}
               href="/tros"
-              className="group flex items-center gap-2.5 rounded-xl border border-line bg-canvas p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/40"
+              className="group flex items-center gap-2.5 rounded-xl border border-line bg-canvas p-2.5 text-left transition-colors duration-200 hover:border-line-strong hover:bg-sunk"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imgUrl(m.img)}
                 alt={`${m.name} the Tro`}
                 loading="lazy"
-                className="size-10 shrink-0 rounded-xl bg-raised object-cover ring-1 ring-line transition-transform duration-200 group-hover:scale-105"
+                className="size-10 shrink-0 rounded-xl bg-raised object-cover ring-1 ring-line transition-transform duration-200"
               />
               <span className="min-w-0">
                 <span className="block truncate text-[13px] font-semibold text-ink">{m.name}</span>

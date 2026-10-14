@@ -19,19 +19,19 @@ const BENEFITS = [
     icon: FiMessageSquare,
     title: "One AI workspace",
     body: "Chat, build, research, and create without jumping between tools.",
-    tone: "from-violet-500/18 to-fuchsia-500/10 text-violet-600 dark:text-violet-300",
+    tone: "border border-line bg-sunk text-ink-3",
   },
   {
     icon: FiFolder,
     title: "Projects with context",
     body: "Keep files, prompts, integrations, and project history together.",
-    tone: "from-sky-500/18 to-cyan-500/10 text-sky-600 dark:text-sky-300",
+    tone: "border border-line bg-sunk text-ink-3",
   },
   {
     icon: FiZap,
     title: "Connected actions",
     body: "Use your integrations and business context directly from Trove.",
-    tone: "from-amber-400/18 to-orange-500/10 text-amber-700 dark:text-amber-300",
+    tone: "border border-line bg-sunk text-ink-3",
   },
 ] as const;
 
@@ -42,15 +42,6 @@ export default function AuthLayout({
 }) {
   return (
     <main className="relative min-h-dvh overflow-hidden bg-canvas text-ink">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 8% 12%, color-mix(in oklab, var(--color-violet) 20%, transparent), transparent 34%), radial-gradient(circle at 92% 8%, color-mix(in oklab, var(--color-accent) 17%, transparent), transparent 30%), radial-gradient(circle at 78% 92%, rgba(236,72,153,.10), transparent 32%)",
-        }}
-      />
-
       <div className="relative mx-auto flex min-h-dvh w-full max-w-[1440px] flex-col px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
         <header className="flex items-center justify-between">
           <Link
@@ -64,23 +55,15 @@ export default function AuthLayout({
         </header>
 
         <div className="grid flex-1 items-center gap-8 py-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,.92fr)] lg:gap-12 xl:gap-16">
-          <aside className="relative hidden min-h-[640px] overflow-hidden rounded-[34px] border border-line-strong bg-raised/72 p-8 shadow-[var(--elev-lift)] backdrop-blur-xl lg:flex lg:flex-col xl:p-10">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(145deg, color-mix(in oklab, var(--color-violet) 15%, transparent), transparent 42%), radial-gradient(circle at 88% 14%, rgba(56,189,248,.18), transparent 30%), radial-gradient(circle at 12% 90%, rgba(236,72,153,.12), transparent 34%)",
-              }}
-            />
+          <aside className="relative hidden min-h-[640px] overflow-hidden rounded-[var(--r-hero)] border border-line bg-sunk p-8 lg:flex lg:flex-col xl:p-10">
 
             <div className="relative z-10 max-w-[600px]">
-              <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">
-                <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-line bg-canvas px-3 py-1 text-[12px] font-medium text-ink-3">
+                <span className="size-1.5 rounded-full bg-emerald-500" />
                 Your AI business workspace
               </span>
 
-              <h2 className="mt-6 max-w-[11ch] text-[clamp(2.2rem,4vw,4.6rem)] font-semibold leading-[0.98] tracking-[-0.055em] text-ink">
+              <h2 className="mt-6 max-w-[14ch] text-[clamp(2rem,3vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-ink">
                 Turn work into progress.
               </h2>
               <p className="mt-5 max-w-[48ch] text-[15px] leading-7 text-ink-3">
@@ -92,10 +75,10 @@ export default function AuthLayout({
               {BENEFITS.map(({ icon: Icon, title, body, tone }) => (
                 <div
                   key={title}
-                  className="rounded-xl border border-line bg-canvas/50 p-4 backdrop-blur-sm"
+                  className="rounded-xl border border-line bg-canvas p-4"
                 >
                   <span
-                    className={`grid size-10 place-items-center rounded-xl bg-gradient-to-br ${tone}`}
+                    className={`grid size-9 place-items-center rounded-[var(--r-control)] ${tone}`}
                   >
                     <Icon size={17} />
                   </span>
@@ -106,7 +89,7 @@ export default function AuthLayout({
             </div>
 
             <div className="relative z-10 mt-auto pt-8">
-              <div className="overflow-hidden rounded-xl border border-line-strong bg-canvas/70 p-3 shadow-[var(--sh-2)] backdrop-blur-sm">
+              <div className="overflow-hidden rounded-xl border border-line bg-canvas p-3 shadow-[var(--shadow-sm)]">
                 <div className="rounded-xl border border-line bg-raised p-3">
                   <div className="flex items-center gap-2 border-b border-line pb-3">
                     <span className="size-2 rounded-full bg-rose-400/70" />
@@ -124,8 +107,8 @@ export default function AuthLayout({
                           key={item}
                           className={
                             index === 1
-                              ? "rounded-xl bg-gradient-to-r from-violet-500/12 to-sky-500/10 px-2.5 py-2 text-[10.5px] font-semibold text-ink"
-                              : "rounded-xl px-2.5 py-2 text-[10.5px] text-ink-4"
+                              ? "rounded-md bg-hover px-2.5 py-2 text-[10.5px] font-medium text-ink"
+                              : "rounded-md px-2.5 py-2 text-[10.5px] text-ink-4"
                           }
                         >
                           {item}
@@ -142,14 +125,14 @@ export default function AuthLayout({
                           </span>
                         </div>
                         <div className="mt-3 space-y-2">
-                          <div className="h-2.5 w-[62%] rounded-full bg-gradient-to-r from-violet-500/40 to-sky-500/30" />
+                          <div className="h-2.5 w-[62%] rounded-full bg-accent/40" />
                           <div className="h-2 w-full rounded-full bg-ink/[0.07]" />
                           <div className="h-2 w-[82%] rounded-full bg-ink/[0.06]" />
                         </div>
                         <div className="mt-4 grid grid-cols-3 gap-2">
-                          <div className="h-14 rounded-xl bg-violet-500/10" />
-                          <div className="h-14 rounded-xl bg-sky-500/10" />
-                          <div className="h-14 rounded-xl bg-fuchsia-500/10" />
+                          <div className="h-14 rounded-lg bg-sunk" />
+                          <div className="h-14 rounded-lg bg-sunk" />
+                          <div className="h-14 rounded-lg bg-sunk" />
                         </div>
                       </div>
                     </div>
@@ -160,7 +143,7 @@ export default function AuthLayout({
           </aside>
 
           <section className="mx-auto flex w-full max-w-[500px] flex-col justify-center lg:max-w-[470px]">
-            <div className="rounded-xl border border-line-strong bg-raised/88 px-5 py-7 shadow-[var(--elev-lift)] backdrop-blur-xl sm:px-8 sm:py-9">
+            <div className="rounded-xl border border-line bg-raised px-5 py-7 shadow-[var(--shadow-sm)] sm:px-8 sm:py-9">
               <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
                 <BrandLockup orbSize={28} wordSize={19} sweep={false} />
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-sunk px-2.5 py-1 text-[10px] font-medium text-ink-4">
