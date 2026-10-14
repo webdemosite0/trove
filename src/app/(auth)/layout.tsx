@@ -19,19 +19,19 @@ const BENEFITS = [
     icon: FiMessageSquare,
     title: "One AI workspace",
     body: "Chat, build, research, and create without jumping between tools.",
-    tone: "border border-line bg-sunk text-ink-3",
+    tone: "bg-white/15 text-white",
   },
   {
     icon: FiFolder,
     title: "Projects with context",
     body: "Keep files, prompts, integrations, and project history together.",
-    tone: "border border-line bg-sunk text-ink-3",
+    tone: "bg-white/15 text-white",
   },
   {
     icon: FiZap,
     title: "Connected actions",
     body: "Use your integrations and business context directly from Trove.",
-    tone: "border border-line bg-sunk text-ink-3",
+    tone: "bg-white/15 text-white",
   },
 ] as const;
 
@@ -55,18 +55,18 @@ export default function AuthLayout({
         </header>
 
         <div className="grid flex-1 items-center gap-8 py-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,.92fr)] lg:gap-12 xl:gap-16">
-          <aside className="relative hidden min-h-[640px] overflow-hidden rounded-[var(--r-hero)] border border-line bg-sunk p-8 lg:flex lg:flex-col xl:p-10">
+          <aside className="lv-hero lv-hero--compact relative hidden min-h-[640px] overflow-hidden rounded-[var(--r-hero)] p-8 text-white lg:flex lg:flex-col xl:p-10">
 
             <div className="relative z-10 max-w-[600px]">
-              <span className="inline-flex items-center gap-2 rounded-full border border-line bg-canvas px-3 py-1 text-[12px] font-medium text-ink-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white/85 backdrop-blur">
                 <span className="size-1.5 rounded-full bg-emerald-500" />
                 Your AI business workspace
               </span>
 
-              <h2 className="mt-6 max-w-[14ch] text-[clamp(2rem,3vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-ink">
+              <h2 className="mt-6 max-w-[14ch] text-[clamp(2rem,3vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-white">
                 Turn work into progress.
               </h2>
-              <p className="mt-5 max-w-[48ch] text-[15px] leading-7 text-ink-3">
+              <p className="mt-5 max-w-[48ch] text-[15px] leading-7 text-white/75">
                 Trove keeps your business context, connected tools, projects, and AI work in one place—so every new task starts with context instead of a blank screen.
               </p>
             </div>
@@ -75,15 +75,15 @@ export default function AuthLayout({
               {BENEFITS.map(({ icon: Icon, title, body, tone }) => (
                 <div
                   key={title}
-                  className="rounded-xl border border-line bg-canvas p-4"
+                  className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-md"
                 >
                   <span
                     className={`grid size-9 place-items-center rounded-[var(--r-control)] ${tone}`}
                   >
                     <Icon size={17} />
                   </span>
-                  <p className="mt-3 text-[12.5px] font-semibold text-ink">{title}</p>
-                  <p className="mt-1 text-[11.5px] leading-5 text-ink-4">{body}</p>
+                  <p className="mt-3 text-[12.5px] font-semibold text-white">{title}</p>
+                  <p className="mt-1 text-[11.5px] leading-5 text-white/70">{body}</p>
                 </div>
               ))}
             </div>
